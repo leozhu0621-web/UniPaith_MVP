@@ -51,8 +51,7 @@ def _school_snapshot(m: dict) -> dict:
 
 def _program_snapshot(spec: dict) -> dict:
     slug = spec["slug"]
-    is_ug = spec["degree_type"] == "bachelors"
-    cost = u._undergrad_cost() if is_ug else u._grad_cost_fallback(spec)
+    tuition, cost = u._program_tuition(spec)
     outcomes = dict(u._OUTCOMES_BY_SLUG.get(slug, {}))
     outcomes["_standard"] = u._program_standard(slug, spec)
     kw = u._PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(u._KEYWORDS_BY_SCHOOL[spec["school"]])
@@ -66,6 +65,7 @@ def _program_snapshot(spec: dict) -> dict:
         "department": spec.get("department"),
         "tracks": spec.get("tracks"),
         "application_requirements": u._requirements_for(spec),
+        "tuition": tuition,
         "cost_data": cost,
         "outcomes_data": outcomes,
         "class_profile": u._CLASS_PROFILE_BY_SLUG.get(slug),
@@ -177,3 +177,50 @@ def test_no_field_echo_departments():
     for slug in ("usc-full-time-mba-program-mba", "usc-law-jd"):
         o = u._OUTCOMES_BY_SLUG[slug]
         assert o["employment_rate"] and o["conditions"] and o["source"]
+
+
+_TUITION_OMITTED_SLUGS = u._TUITION_OMIT_SLUGS | {
+    spec["slug"] for spec in u.PROGRAMS if spec.get("delivery_format") == "online"
+}
+
+
+def test_matcher_core_tuition_is_published_catalog_wide():
+    """REPAIR_BACKLOG #1: catalog shipped 0% tuition (matcher-blind on budget)."""
+    missing = [
+        spec["slug"]
+        for spec in u.PROGRAMS
+        if u._program_tuition(spec)[0] is None and spec["slug"] not in _TUITION_OMITTED_SLUGS
+    ]
+    assert not missing, f"programs missing published tuition: {missing[:8]}"
+    for spec in u.PROGRAMS:
+        if u._program_tuition(spec)[0] is None:
+            assert spec["slug"] in _TUITION_OMITTED_SLUGS
+            omitted = u._program_standard(spec["slug"], spec)["omitted"]
+            assert "cost_data.tuition_usd" in omitted
+
+
+def test_graduate_tiers_carry_published_tuition():
+    """Whole-tier null is matcher starvation — on-campus tiers must be filled."""
+    from collections import Counter
+
+    null_by_dt: Counter[str] = Counter()
+    for spec in u.PROGRAMS:
+        if u._program_tuition(spec)[0] is None and spec.get("delivery_format") != "online":
+            null_by_dt[spec["degree_type"]] += 1
+    assert null_by_dt["masters"] == 0
+    assert null_by_dt["phd"] == 0
+    assert null_by_dt["professional"] == 0
+    assert null_by_dt["bachelors"] == 0
+    assert null_by_dt["diploma"] == 1
+
+
+def test_professional_tiers_carry_distinct_published_rates():
+    """Professional degrees must not all carry the general flat graduate sticker."""
+    prof_rates = {
+        u._program_tuition(spec)[0]
+        for spec in u.PROGRAMS
+        if spec["degree_type"] == "professional"
+    }
+    assert len(prof_rates) >= 4
+    assert u._TUITION_JD_ANNUAL in prof_rates
+    assert u._TUITION_DDS_ANNUAL in prof_rates
