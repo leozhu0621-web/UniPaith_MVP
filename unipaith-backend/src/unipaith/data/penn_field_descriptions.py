@@ -533,6 +533,27 @@ SLUG_DESCRIPTIONS: dict[str, str] = {
         "probability, mathematical statistics, survival analysis, categorical data, and "
         "statistical computing for biomedical research, culminating in a master's thesis."
     ),
+    # Federal CIP-rollup rows resolved to Penn's real degrees (REPAIR_BACKLOG #3) — each
+    # body is researched from the program's own Penn page, not the federal taxonomy title.
+    "penn-research-and-experimental-psychology-phd": (
+        "Penn's psychology department — the oldest continuously functioning in North "
+        "America — trains doctoral researchers across cognition, perception, neuroscience, "
+        "and social and clinical science, with dissertation work in faculty labs and an "
+        "APA-approved clinical track."
+    ),
+    "penn-clinical-counseling-and-applied-psychology-ms": (
+        "Founded by Martin Seligman at Penn's School of Arts and Sciences, the Master of "
+        "Applied Positive Psychology (MAPP) was the world's first degree in positive "
+        "psychology — a hybrid, one-year program applying the science of well-being, "
+        "resilience, and human flourishing to careers in business, education, health, and "
+        "coaching."
+    ),
+    "penn-business-administration-management-and-operations-phd": (
+        "Wharton's doctoral program in Management prepares scholars for research and "
+        "faculty careers, with specializations in strategy, organizational behavior, human "
+        "resources, and international business; admitted students receive a multi-year "
+        "funded fellowship covering tuition and a stipend."
+    ),
     "penn-wharton-mba": (
         "Wharton's full-time MBA — the flagship two-year program of the world's first "
         "collegiate business school, with 18+ majors and one of the deepest finance "

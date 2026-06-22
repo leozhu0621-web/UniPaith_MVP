@@ -1292,8 +1292,20 @@ _ROLLUP_DROP: frozenset[str] = frozenset({
 # department / graduate-group pages:
 #  • Linguistics: BA + PhD graduate field; the AM is submatriculation-only, no standalone
 #    terminal master's admit.
+#  • Research and Experimental Psychology (federal CIP 42.27): Penn's Department of
+#    Psychology confers one Psychology degree line — the BA and the A.M. already ship as
+#    the CIP-42.01 "Psychology" / "Master of Arts in Psychology" flagships, so the 42.27
+#    BA and MA are duplicates and are dropped (the 42.27 PhD fills the real doctoral gap;
+#    see _ROLLUP_LEVEL_RESOLVE). catalog.upenn.edu/undergraduate/programs/psychology-ba.
+#  • Clinical, Counseling and Applied Psychology (federal CIP 42.28): Penn's only School
+#    of Arts & Sciences degree in this CIP is the Master of Applied Positive Psychology
+#    (resolved below); Penn publishes no standalone graduate certificate in this area, so
+#    the certificate row is dropped rather than minted under the federal taxonomy title.
 _ROLLUP_LEVEL_DROP: frozenset[tuple[str, str]] = frozenset({
     ("Linguistic, Comparative, and Related Language Studies and Services", "masters"),
+    ("Research and Experimental Psychology", "bachelors"),
+    ("Research and Experimental Psychology", "masters"),
+    ("Clinical, Counseling and Applied Psychology", "certificate"),
 })
 
 # (rollup title, degree_type) → Penn's real PER-LEVEL degree name, where the conferred
@@ -1304,6 +1316,17 @@ _ROLLUP_LEVEL_DROP: frozenset[tuple[str, str]] = frozenset({
 #  • The CIP-26.11 graduate rows map to two DISTINCT real Perelman programs: the PhD to the
 #    Genomics and Computational Biology graduate group, the MS to Biostatistics (Graduate
 #    Group in Epidemiology and Biostatistics) — both housed in the Perelman School of Medicine.
+#  • Research and Experimental Psychology PhD (CIP 42.27) → the Department of Psychology
+#    doctoral program, conferred as "Doctor of Philosophy in Psychology"
+#    (catalog.upenn.edu/graduate/programs/psychology-phd).
+#  • Business Administration, Management and Operations PhD (CIP 52.02) → the Wharton
+#    Management Department doctoral program, conferred as "Doctor of Philosophy in
+#    Management" (catalog.upenn.edu/graduate/programs/management-phd; the 52.02 BS = the
+#    Wharton BS in Economics and the 52.02 master's = the Wharton MBA, which already ship
+#    as flagships, so only the PhD needed resolving).
+#  • Clinical, Counseling and Applied Psychology master's (CIP 42.28) → Penn's Master of
+#    Applied Positive Psychology (SAS / LPS); the designation is overridden below
+#    (it is "Master of …", not the school-default "Master of Arts in …").
 _ROLLUP_LEVEL_RESOLVE: dict[tuple[str, str], str] = {
     ("Electrical, Electronics, and Communications Engineering", "phd"): (
         "Electrical and Systems Engineering"
@@ -1312,6 +1335,19 @@ _ROLLUP_LEVEL_RESOLVE: dict[tuple[str, str], str] = {
         "Genomics and Computational Biology"
     ),
     ("Biomathematics, Bioinformatics, and Computational Biology", "masters"): "Biostatistics",
+    ("Research and Experimental Psychology", "phd"): "Psychology",
+    ("Business Administration, Management and Operations", "phd"): "Management",
+    ("Clinical, Counseling and Applied Psychology", "masters"): "Applied Positive Psychology",
+}
+
+# (rollup title, degree_type) → the institution's full conferred designation, applied
+# AFTER the field is resolved when the real degree's designation is NOT the school-default
+# (e.g. Penn's professional Master of Applied Positive Psychology is "Master of …", never
+# the SAS-default "Master of Arts in …"). Verified against catalog.upenn.edu.
+_ROLLUP_FULL_NAME: dict[tuple[str, str], str] = {
+    ("Clinical, Counseling and Applied Psychology", "masters"): (
+        "Master of Applied Positive Psychology"
+    ),
 }
 
 # (rollup title, degree_type) → real OWNING school override (the IPEDS row tags these to
@@ -1815,7 +1851,9 @@ def _build_catalog() -> list[dict]:
         # tag (e.g. GCB / Biostatistics are Perelman, not SAS) — override so the conferred
         # name, school_id, website and department all match the real owning unit.
         school = _ROLLUP_LEVEL_SCHOOL.get((field_name, dtype), school)
-        pname = _conferred_program_name(real_name, dtype, school)
+        pname = _ROLLUP_FULL_NAME.get((field_name, dtype)) or _conferred_program_name(
+            real_name, dtype, school
+        )
         spec = {
             "slug": slug,
             "school": school,
@@ -1854,9 +1892,9 @@ def _normalize_all_program_names() -> None:
         resolved = _resolve_rollup(field, p["degree_type"])
         if resolved is None:
             continue
-        p["program_name"] = _conferred_program_name(
-            resolved, p["degree_type"], p["school"]
-        )
+        p["program_name"] = _ROLLUP_FULL_NAME.get(
+            (field, p["degree_type"])
+        ) or _conferred_program_name(resolved, p["degree_type"], p["school"])
 
 
 def _dedupe_conferred_name_collisions() -> None:
@@ -1910,6 +1948,27 @@ _rollup_names = [
 ]
 if _rollup_names:
     _catalog_errors.append(f"CIP-rollup program names: {_rollup_names[:5]}")
+# Federal CIP rollup/aggregation TITLES whose comma-and form carries NONE of the
+# punctuation tells above (no ", General"/", Other", no "/", no "…and Linguistics"), so
+# the regex gate misses them — they ship verbatim as a degree name the institution does
+# NOT confer (REPAIR_BACKLOG #3, miss #2 run-79 tell (b): field part byte-identical to a
+# federal CIP code→title). Resolve each to Penn's real degree (above) — never ship the
+# taxonomy title. This is the deterministic whole-class gate so the class cannot regress.
+_FEDERAL_CIP_TITLES: frozenset[str] = frozenset({
+    "Business Administration, Management and Operations",  # CIP 52.02
+    "Clinical, Counseling and Applied Psychology",  # CIP 42.28
+    "Biochemistry, Biophysics and Molecular Biology",  # CIP 26.02
+    "Research and Experimental Psychology",  # CIP 42.27
+    "Physiology, Pathology and Related Sciences",  # CIP 26.09
+})
+_cip_title_names = [
+    p["program_name"]
+    for p in PROGRAMS
+    if _real_field_of(p.get("program_name", "")) in _FEDERAL_CIP_TITLES
+    or (p.get("department") or "") in _FEDERAL_CIP_TITLES
+]
+if _cip_title_names:
+    _catalog_errors.append(f"federal CIP rollup-title names: {_cip_title_names[:5]}")
 _cip_in_name = [
     p["program_name"]
     for p in PROGRAMS
@@ -1988,6 +2047,16 @@ _FULL_NAME_BY_SLUG: dict[str, str] = {p["slug"]: p["program_name"] for p in PROG
 
 # Official program/department home pages (verified to resolve at author time).
 _WEBSITE_BY_SLUG: dict[str, str] = {
+    # Resolved federal-CIP-rollup rows → their real Penn program pages.
+    "penn-research-and-experimental-psychology-phd": (
+        "https://psychology.sas.upenn.edu/graduate"
+    ),
+    "penn-clinical-counseling-and-applied-psychology-ms": (
+        "https://www.lps.upenn.edu/degree-programs/mapp"
+    ),
+    "penn-business-administration-management-and-operations-phd": (
+        "https://mgmt.wharton.upenn.edu/programs/phd/"
+    ),
     "penn-wharton-mba": "https://mba.wharton.upenn.edu/",
     "penn-wharton-economics-bs": "https://undergrad.wharton.upenn.edu/",
     "penn-computer-science-bse": "https://www.cis.upenn.edu/",
@@ -2453,6 +2522,36 @@ _COST_BY_SLUG: dict[str, dict] = {
         "source": "Annenberg School for Communication — Doctoral Program Financial Support",
         "source_url": "https://www.asc.upenn.edu/graduate/doctorate-communication/financial-support",
         "year": "2025-26",
+    },
+    # Master of Applied Positive Psychology (MAPP) — the federal CIP-42.28 master's,
+    # resolved to Penn's real SAS / LPS professional degree. Penn LPS bills MAPP at its own
+    # per-semester professional rate, distinct from the standard SAS academic-graduate rate
+    # ($46,540) the school-keyed _grad_cost would otherwise apply — so the published LPS
+    # rate is stamped here, never the generic SAS rate copied onto a professional program
+    # (run-76 copy-down guard). First-party LPS tuition page, 2026-27.
+    "penn-clinical-counseling-and-applied-psychology-ms": {
+        "tuition_usd": 59424,
+        "breakdown": {
+            "tuition_per_semester": 29712,
+            "course_units_per_semester": 4,
+            "fall_spring_full_time_tuition": 59424,
+            "program_fee_one_time": 3600,
+            "general_fee_per_semester": 2054,
+            "summer_course_unit_tuition_est": 7958,
+            "total_program_cost": 75090,
+        },
+        "funded": False,
+        "note": (
+            "Penn LPS bills the Master of Applied Positive Psychology at $29,712 per "
+            "semester (4 course units) for 2026-27 — a full-time fall-plus-spring academic "
+            "year of $59,424 in tuition. With the one-time $3,600 program fee, the $2,054 "
+            "per-semester general fee, and the summer course unit (about $7,958), the full "
+            "one-year program totals roughly $75,090. This LPS professional rate is distinct "
+            "from both the undergraduate sticker and the standard SAS academic-graduate rate."
+        ),
+        "source": "Penn LPS — Master of Applied Positive Psychology, Tuition and Fees",
+        "source_url": "https://www.lps.upenn.edu/degree-programs/mapp/tuition",
+        "year": "2026-27",
     },
 }
 
