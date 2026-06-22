@@ -65,7 +65,7 @@ def _program_snapshot(spec: dict) -> dict:
         }
     else:
         cost_override = g._COST_BY_SLUG.get(slug)
-        cost = cost_override if cost_override is not None else g._grad_cost_fallback(spec)
+        cost = cost_override if cost_override is not None else g._grad_cost(spec)
     if slug == "gatech-mba":
         outcomes = dict(g._MBA_OUTCOMES)
     else:

@@ -1115,19 +1115,117 @@ _COST_BY_SLUG: dict[str, dict] = {
         "source_url": "https://pe.gatech.edu/degrees/analytics",
         "year": "2024-25",
     },
+    "gatech-online-ms-cybersecurity": {
+        "tuition_usd": 11808,
+        "tuition_basis": "total program",
+        "funded": False,
+        "note": (
+            "The 32-credit Online MS in Cybersecurity (OMS Cyber) is billed per credit hour "
+            "($369/credit on the Fall 2025 Bursar schedule), totaling roughly $11,808 in "
+            "tuition — the program is advertised at under $12,000 total, a fraction of a "
+            "comparable on-campus or peer online cybersecurity master's."
+        ),
+        "source": "Georgia Tech Office of the Bursar (Fall 2025) + GTPE OMS Cybersecurity",
+        "source_url": "https://pe.gatech.edu/degrees/cybersecurity",
+        "year": "2025-26",
+    },
 }
+
+# ── Published graduate tuition (REPAIR_BACKLOG #2 — master's/professional starvation) ──
+# Georgia Tech is a public university; the University System of Georgia Board of Regents
+# publishes a standard full-time graduate tuition that applies to every graduate program
+# EXCEPT those on the Bursar's differential-tuition list. The figures below are the Fall
+# 2025 Bursar full-time (12+ credit) per-semester rates DOUBLED to an academic-year total
+# (the same in-state basis the undergraduate row uses), verified against the official
+# Bursar "Fall 2025 Tuition and Fee Rates per Semester" schedule. Funding (assistantships)
+# is a SEPARATE signal — these are the published sticker tuition the matcher scores on.
+_TUITION_GRAD_IN_STATE = 14416  # $7,208/sem standard graduate rate × 2 semesters
+_TUITION_GRAD_OUT_STATE = 31210  # $15,605/sem standard graduate rate × 2 semesters
+
+# slug → (annual in-state, annual out-of-state) for Bursar DIFFERENTIAL-tuition programs
+# (each its own published rate, distinct from the standard graduate rate and from each
+# other — never one uniform number flattened across the tier).
+_GRAD_TUITION_BY_SLUG: dict[str, tuple[int, int]] = {
+    "gatech-mba": (30246, 43646),  # Scheller Full-Time MBA — $15,123/$21,823 per sem
+    "gatech-quantitative-computational-finance-ms": (18026, 41390),  # MSQCF
+    "gatech-analytics-ms": (29936, 43398),  # on-campus MS Analytics (MSANLT) — premium
+    "gatech-electrical-computer-engineering-ms": (16888, 36564),  # MSECE
+    "gatech-human-computer-interaction-ms": (16466, 37922),  # MSHCI
+    "gatech-robotics-ms": (16458, 37914),  # MSROBO
+    "gatech-bioinformatics-ms": (16930, 39294),  # MSBINF
+    "gatech-supply-chain-engineering-ms": (16980, 40586),  # MSSCE
+    "gatech-march": (18506, 35482),  # Master of Architecture (MARCH)
+    "gatech-mcrp": (17332, 34258),  # Master of City & Regional Planning (MCRP)
+    "gatech-gist-ms": (17332, 34258),  # MS Geographic Information Science & Tech (MSGIST)
+    "gatech-masters-industrial-design": (18506, 37708),  # Master of Industrial Design (MID)
+    "gatech-music-technology-ms": (17956, 34910),  # MS Music Technology (MSMT)
+    "gatech-urban-design-msud": (18506, 35482),  # MS Urban Design (MSUD)
+    "gatech-building-construction-facility-management-ms": (20004, 42498),  # MSBCFM
+}
+
+# Graduate programs Georgia Tech does NOT publish a single annual tuition for — executive
+# cohort programs billed per residence term and GTPE professional master's billed at
+# program-specific per-credit rates. tuition_usd is omitted-with-reason (never guessed).
+_GRAD_TUITION_OMIT: frozenset[str] = frozenset({
+    "gatech-mba-global-business-executive",  # Executive MBA — $21,140.75/residence term
+    "gatech-mba-management-technology-executive",  # Executive MBA — $21,140.75/residence term
+    "gatech-applied-systems-engineering-pmase",  # GTPE professional master's — per-credit
+    "gatech-manufacturing-leadership-pmml",  # GTPE professional master's — per-credit
+    "gatech-occupational-safety-health-pmosh",  # GTPE professional master's — per-credit
+})
 
 
 def _grad_cost_fallback(spec: dict) -> dict:
     return {
+        "funded": spec.get("degree_type") == "phd",
         "note": (
             "Tuition for this graduate/professional program is billed by the Georgia Tech "
-            "Bursar (per-credit-hour for most graduate programs) and varies by residency and "
-            "enrollment; a verified single per-program figure is not published. Research "
-            "master's and doctoral students are typically funded through assistantships."
+            "Bursar (per-credit-hour or per residence term) and varies by residency and "
+            "enrollment; a verified single per-program annual figure is not published. "
+            "Research master's and doctoral students are typically funded through "
+            "assistantships that cover tuition."
         ),
         "source": "Georgia Tech Bursar / program tuition page",
         "source_url": _website_for(spec),
+    }
+
+
+def _grad_cost(spec: dict) -> dict:
+    """Published GT graduate cost for a non-bachelor's program.
+
+    A verified per-program override (``_COST_BY_SLUG``) wins; then funded doctorates and
+    executive / GTPE programs with no published annual figure omit tuition_usd with a
+    sourced reason; then Bursar differential programs carry their own published rate; every
+    other graduate program carries the standard published full-time graduate tuition
+    (REPAIR_BACKLOG #2 — never leave a knowable, institution-published tier null).
+    """
+    slug = spec["slug"]
+    if spec.get("degree_type") == "phd" or slug in _GRAD_TUITION_OMIT:
+        return _grad_cost_fallback(spec)
+    diff = _GRAD_TUITION_BY_SLUG.get(slug)
+    if diff is not None:
+        tin, tout = diff
+        basis = "Bursar differential-tuition program"
+    else:
+        tin, tout = _TUITION_GRAD_IN_STATE, _TUITION_GRAD_OUT_STATE
+        basis = "standard graduate rate (University System of Georgia)"
+    return {
+        "tuition_usd": tin,
+        "tuition_basis": f"annual, in-state — {basis}",
+        "funded": False,
+        "breakdown": {
+            "tuition_in_state": tin,
+            "tuition_out_of_state": tout,
+        },
+        "note": (
+            f"Published Georgia Tech graduate tuition (Fall 2025 Bursar full-time rate × "
+            f"two semesters): ${tin:,} in-state / ${tout:,} out-of-state, plus required "
+            f"fees. Set by the University System of Georgia Board of Regents; many research "
+            f"students receive assistantships that cover tuition separately."
+        ),
+        "source": "Georgia Tech Office of the Bursar — Fall 2025 Tuition and Fee Rates",
+        "source_url": "https://bursar.gatech.edu/tuition-fees",
+        "year": "2025-26",
     }
 
 
@@ -1737,8 +1835,10 @@ def _program_standard(slug: str, spec: dict | None = None) -> dict:
         omitted.append("outcomes_data.employment_rate")
     # Graduate/professional programs without a verified per-program tuition omit tuition_usd
     # (their cost_data carries a sourced "see the program page" record instead).
-    if spec.get("degree_type") != "bachelors" and slug not in _COST_BY_SLUG:
-        omitted.append("cost_data.tuition_usd")
+    if spec.get("degree_type") != "bachelors":
+        cost = _COST_BY_SLUG.get(slug) or _grad_cost(spec)
+        if cost.get("tuition_usd") is None:
+            omitted.append("cost_data.tuition_usd")
     if slug not in _TRACKS_BY_SLUG:
         omitted.append("tracks")
     if slug not in _CLASS_PROFILE_BY_SLUG:
@@ -1812,8 +1912,9 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 p.tuition = cost_override["tuition_usd"]
                 p.cost_data = cost_override
             else:
-                p.tuition = None
-                p.cost_data = _grad_cost_fallback(spec)
+                cost = _grad_cost(spec)
+                p.tuition = cost.get("tuition_usd")
+                p.cost_data = cost
         p.application_requirements = _requirements_for(spec)
         if slug == "gatech-mba":
             outcomes = dict(_MBA_OUTCOMES)
