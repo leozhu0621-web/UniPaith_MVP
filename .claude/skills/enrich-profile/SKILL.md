@@ -352,12 +352,25 @@ Concrete misses observed in the first runs — each broke a real page:
      Architectural History / Historic Preservation). Two reliable tells separate the two:
      (a) the federal **"…and Related … Studies and Services"** / **"…, and
      {parent-discipline} Engineering/Biology"** suffix no real degree prints; and (b) the
-     SAME multi-clause string appearing **verbatim across ≥2 DIFFERENT institutions'
-     catalogs** — a real major name is institution-specific (Yale's "Ethics, Politics, and
-     Economics" is Yale's alone), so an identical string shared by several peers is the
-     shared CIP title, not three coincidentally-identical real majors. Resolve a CIP title
-     to the institution's real published degree name + owning department; NEVER mangle or
-     "de-rollup" a verified real multi-clause major. Evidence: live API this run — Cornell
+     field part is **byte-identical to a federal CIP rollup / aggregation TITLE in the IPEDS
+     code→title table the enricher already sources from** (e.g. CIP 52.02 "Business
+     Administration, Management and Operations", 42.28 "Clinical, Counseling and Applied
+     Psychology", 26.02 "Biochemistry, Biophysics and Molecular Biology", 42.27 "Research and
+     Experimental Psychology") — a string the institution does NOT confer under that literal
+     name. This is the DETERMINISTIC tell the enricher can actually RUN, because it holds the
+     CIP titles: match every `program_name` field part against the CIP rollup-title set and FAIL
+     on any equal-to-a-rollup-title hit. **Cross-institution verbatim repetition is only a HINT
+     to look the field up against the CIP table — NEVER sufficient proof on its own.** The prior
+     premise ("a real major name is institution-specific, so any string shared by ≥2 peers is the
+     CIP title") is FALSE and the live fleet disproves it: dozens of REAL conferred degrees are
+     shared verbatim across peers — "Materials Science and Engineering" (11 catalogs), "Electrical
+     and Computer Engineering" (8), "Astronomy and Astrophysics" (4), "Civil and Environmental
+     Engineering" (4), "Ecology and Evolutionary Biology" (5), "Slavic Languages and Literatures"
+     (6), "Romance Languages and Literatures" (4) — none of which is a CIP rollup title, so a blunt
+     "shared ⇒ rollup" scan MANGLES real names (the live over-trigger this run) AND, because it is
+     unusable, it lets the enricher skip the tell entirely and ship the genuine rollups. Resolve a
+     CIP title to the institution's real published degree name + owning department; NEVER mangle or
+     "de-rollup" a verified real multi-clause major, even one shared across peers. Evidence: live API this run — Cornell
      (12 rows), Harvard (11), Penn (10) ship these five verbatim CIP titles across
      bachelor's / master's / PhD / certificate levels (the identical strings on all three =
      the CIP mint), while gold MIT ships 0 of them and carries its real "Science,
