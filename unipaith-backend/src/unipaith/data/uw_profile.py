@@ -41,10 +41,24 @@ reports tri-campus academic staff rather than a single Seattle instructional-
 faculty headcount, so ``scale.faculty_count`` is omitted (the 20:1 student-faculty
 ratio is kept). UW does not publish a single university-wide placement rate or a
 uniform top-employer-industries list across all colleges, so those two institution
-outcome fields are omitted (the Scorecard ten-year median earnings is kept). Most
-graduate/professional programs bill tuition per quarter and publish no single
-annual figure, so those carry a sourced "see the program's tuition page" record
-rather than a guessed number.     This repair (2026-06-20) replaces generic Wikipedia field definitions and credential-
+outcome fields are omitted (the Scorecard ten-year median earnings is kept).
+
+Published tuition (2026-06-22 repair — REPAIR_BACKLOG #4, catalog-wide 0% tuition):
+every program now carries UW's published 2025-26 WA-resident annual tuition as the
+matcher budget signal (the prior "see the program's tuition page" placeholder left the
+whole catalog matcher-blind on budget). Bachelor's carry the resident undergraduate
+sticker ($13,406); master's and PhD carry the resident graduate Tier I sticker
+($19,011) — UW charges one flat graduate operating fee per residency (cf. UT-Austin's
+flat resident-graduate rate), and a funded research PhD keeps the published sticker
+because funding is a separate matcher signal, not a $0 budget. The four bespoke
+professional schools carry their own published resident annual rates (Law $47,073,
+Medicine $57,968, Dentistry $59,226, Pharmacy $36,708) and the two graduate-schedule
+clinical doctorates their published resident annual rate (DNP $35,064, DPT $27,807).
+Only the Doctor of Audiology keeps ``cost_data.tuition_usd`` omitted-with-reason — it
+bills on UW's variable graduate-tier schedule and publishes no single verified annual
+resident figure, so it is omitted rather than guessed.
+
+    This repair (2026-06-20) replaces generic Wikipedia field definitions and credential-
     frame shared bodies with UW-specific field clauses (``uw_field_descriptions.py``),
     distinct per-credential sibling bodies (``frame_stripped_shared_body`` = 0), and
     collapsed Education PhD concentration splits into ``tracks`` on ``uw-education-phd``.
@@ -3097,34 +3111,138 @@ _COST_SRC_URL = (
 )
 
 
+# == Published tuition (2025-26 academic year, WA resident) ==
+# UW publishes an annual resident tuition per credential level (UW Office of Planning &
+# Budgeting tuition dashboards + UW Financial Aid student budgets). UW's own statement is
+# that only Dentistry, Law, Medicine, and Pharmacy carry bespoke professional rates; every
+# other graduate/professional program bills on the graduate tuition schedule. The matcher
+# reads ``tuition`` as the budget-fit signal, so each program carries UW's published WA-
+# resident annual sticker for its tier (resident is the fleet convention — cf. UF / UCLA /
+# UT-Austin). Funding is a SEPARATE signal, so a funded research PhD carries the published
+# resident graduate sticker (the matcher's budget input), not $0.
+_TUITION_UG_RESIDENT = 13406  # UW WA-resident undergraduate annual tuition, 2025-26
+_TUITION_UG_NONRES = 44460  # UW non-resident undergraduate annual tuition (admit.washington.edu)
+_TUITION_GRAD_RESIDENT = 19011  # UW WA-resident graduate Tier I annual tuition, 2025-26
+_TUITION_FA_SRC = (
+    "UW Office of Planning & Budgeting / UW Student Financial Aid — student budgets (WA "
+    "resident, 2025-26)"
+)
+_TUITION_FA_URL = "https://www.washington.edu/financialaid/getting-started/student-budgets/"
+
+# Bespoke per-program resident annual tuition (each program's own published cost page).
+_PROFESSIONAL_TUITION: dict[str, dict] = {
+    "Juris Doctor": {
+        "resident": 47073,
+        "source": "UW School of Law — Tuition & Fees (WA resident, 2025-26)",
+        "source_url": "https://www.law.uw.edu/admissions/financing/tuition",
+    },
+    "Doctor of Medicine": {
+        "resident": 57968,
+        "source": "UW School of Medicine — Cost of Attendance (WA resident, 2025-26)",
+        "source_url": "https://education.uwmedicine.org/student-affairs/financial-aid/cost-of-attendance/",
+    },
+    "Doctor of Dental Surgery": {
+        "resident": 59226,
+        "source": "UW School of Dentistry — Projected Costs (WA resident, first year, 2025-26)",
+        "source_url": "https://dental.washington.edu/students/admissions/projected-costs/",
+    },
+    "Doctor of Pharmacy": {
+        "resident": 36708,
+        "source": "UW School of Pharmacy — Tuition & Financial Aid (WA resident, 2025-26)",
+        "source_url": "https://sop.washington.edu/pharmd/admissions/tuition-and-financial-aid/",
+    },
+    "Doctor of Nursing Practice": {
+        "resident": 35064,  # state tracks: $11,688/quarter × 3 quarters
+        "source": "UW School of Nursing — Costs (WA resident, state tracks, 2025-26)",
+        "source_url": "https://nursing.uw.edu/admissions/costs/",
+    },
+    "Doctor of Physical Therapy": {
+        "resident": 27807,  # $9,269/quarter × 3 quarters
+        "source": "UW Rehabilitation Medicine — Doctor of Physical Therapy (WA resident, 2025-26)",
+        "source_url": "https://rehab.washington.edu/education/degrees/doctor-of-physical-therapy",
+    },
+    # "Doctor of Audiology" is intentionally absent: it bills on UW's variable graduate-tier
+    # schedule and publishes no single verified annual resident figure, so its tuition is
+    # omitted-with-reason rather than guessed.
+}
+
+
+def _tuition_for(spec: dict) -> int | None:
+    """Published WA-resident annual tuition for a program, or None when honestly omitted."""
+    if spec["degree_type"] == "professional":
+        pr = _PROFESSIONAL_TUITION.get(spec["program_name"])
+        return pr["resident"] if pr else None
+    if spec["degree_type"] == "bachelors":
+        return _TUITION_UG_RESIDENT
+    return _TUITION_GRAD_RESIDENT  # masters + phd: flat resident graduate Tier I sticker
+
+
 def _undergrad_cost() -> dict:
     return {
+        "tuition_usd": _TUITION_UG_RESIDENT,
         "total_cost_of_attendance": _UNDERGRAD_COA,
         "avg_net_price": _AVG_NET_PRICE,
+        "breakdown": {
+            "tuition_in_state": _TUITION_UG_RESIDENT,
+            "tuition_out_of_state": _TUITION_UG_NONRES,
+        },
         "funded": False,
         "note": (
-            "UW's published academic-year cost of attendance is about $32,446 and the average net "
-            "price after grant aid is about $14,091 (College Scorecard, UNITID 236948). In-state "
-            "students pay public tuition; out-of-state and international tuition is higher, and "
-            "tuition varies by program. See UW Student Fiscal Services for current figures."
+            "WA-resident undergraduate annual tuition is $13,406 (UW Office of Planning & "
+            "Budgeting, 2025-26); the average net price after grant aid is about $14,091 "
+            "(College Scorecard, UNITID 236948). Non-residents pay the out-of-state rate shown "
+            "in the breakdown."
         ),
-        "source": _COST_SRC,
-        "source_url": _COST_SRC_URL,
-        "year": "2023-24",
+        "source": _TUITION_FA_SRC,
+        "source_url": _TUITION_FA_URL,
+        "year": "2025-26",
     }
 
 
-def _grad_cost_fallback(spec: dict) -> dict:
+def _grad_cost(spec: dict) -> dict:
+    """Cost record for a graduate / professional program, carrying its published tuition."""
+    if spec["degree_type"] == "professional":
+        pr = _PROFESSIONAL_TUITION.get(spec["program_name"])
+        if pr is None:  # Doctor of Audiology — omitted-with-reason
+            return {
+                "funded": False,
+                "note": (
+                    "The Doctor of Audiology bills on UW's variable graduate-tier tuition "
+                    "schedule; UW publishes no single verified annual WA-resident figure for it, "
+                    "so a tuition number is omitted here rather than guessed."
+                ),
+                "source": "UW Office of Planning & Budgeting / program tuition page",
+                "source_url": _website_for(spec),
+            }
+        return {
+            "tuition_usd": pr["resident"],
+            "funded": False,
+            "note": (
+                "Annual professional-program tuition (WA resident); non-residents pay a higher "
+                "published rate. See the program's tuition page for the current figure."
+            ),
+            "source": pr["source"],
+            "source_url": pr["source_url"],
+            "year": "2025-26",
+        }
+    funded = spec["degree_type"] == "phd"
     return {
+        "tuition_usd": _TUITION_GRAD_RESIDENT,
+        "funded": funded,
         "note": (
-            "Tuition for this graduate/professional program is set by UW and is typically billed "
-            "per quarter (and varies by residency, program, and online vs. on-campus delivery), so "
-            "a single verified annual figure is not published here. Many doctoral students are "
-            "funded through assistantships and fellowships. See the program's tuition page for "
-            "current figures."
+            "UW charges one flat WA-resident graduate Tier I tuition ($19,011, 2025-26) across "
+            "its state-supported master's and doctoral programs; non-residents and fee-based "
+            "programs pay a higher published rate."
+            + (
+                " Most UW PhD students are funded through assistantships and fellowships that "
+                "cover tuition; the published sticker is shown as the matcher's budget input."
+                if funded
+                else ""
+            )
         ),
-        "source": "UW Office of Planning & Budgeting / program tuition page",
-        "source_url": _website_for(spec),
+        "source": _TUITION_FA_SRC,
+        "source_url": _TUITION_FA_URL,
+        "year": "2025-26",
     }
 
 
@@ -3723,7 +3841,12 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
 
 
 def _program_standard(slug: str, spec: dict) -> dict:
-    omitted: list[str] = ["cost_data.tuition_usd"]
+    # Every program now carries UW's published WA-resident tuition (REPAIR_BACKLOG #4) except
+    # the Doctor of Audiology, which bills on a variable graduate-tier schedule with no single
+    # published annual figure — so tuition is omitted-with-reason only for that program.
+    omitted: list[str] = []
+    if _tuition_for(spec) is None:
+        omitted.append("cost_data.tuition_usd")
     if slug not in _TRACKS_BY_SLUG:
         omitted.append("tracks")
     if slug not in _OUTCOMES_BY_SLUG:
@@ -3859,12 +3982,11 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.delivery_format = spec.get("delivery_format", "on_campus")
         _kw = _PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(_KEYWORDS_BY_SCHOOL[spec["school"]])
         p.content_sources = _program_content(spec["school"], _kw)
+        p.tuition = _tuition_for(spec)
         if spec["degree_type"] == "bachelors":
-            p.tuition = None
             p.cost_data = _undergrad_cost()
         else:
-            p.tuition = None
-            p.cost_data = _grad_cost_fallback(spec)
+            p.cost_data = _grad_cost(spec)
         p.application_requirements = _requirements_for(spec)
         outcomes = dict(_OUTCOMES_BY_SLUG.get(slug, {}))
         outcomes["_standard"] = _program_standard(slug, spec)
