@@ -34,6 +34,19 @@ def _assert_no_cip_rollup_names(programs: list[dict]) -> None:
         or _ROLLUP_TELL.search(p.get("department") or "")
     ]
     assert not bad, f"{len(bad)} programs still carry a CIP-rollup name/department: {bad[:5]}"
+    # Regression guard (REPAIR_BACKLOG #1, run 77): a verbatim federal CIP-taxonomy title
+    # the _ROLLUP_TELL punctuation regex misses (no ", General"/slash/known comma-list)
+    # still leaks if a row's field is left UNRESOLVED. Every key in _ROLLUP_RESOLVE /
+    # _ROLLUP_DROP is, by construction, a federal rollup title Cornell does not award under
+    # that name — so a shipped program whose field equals one of those keys failed to
+    # resolve. Zero false positives (resolved rows carry the real name, e.g. "Linguistics").
+    _rollup_keys = set(cu._ROLLUP_RESOLVE) | set(cu._ROLLUP_DROP)
+    leaked = [
+        p["program_name"]
+        for p in programs
+        if field_of(p["program_name"]) in _rollup_keys
+    ]
+    assert not leaked, f"{len(leaked)} programs ship an UNRESOLVED CIP-rollup field: {leaked[:5]}"
 
 
 def _required_fields_of_section(level: str, section_id: str) -> set[str]:
@@ -161,8 +174,11 @@ def test_catalog_breadth_and_shape():
     assert len(cu.SCHOOLS) == 14
     # Breadth is a REALNESS gate, not a frozen count: de-fabricating the Scorecard rollup
     # buckets (federal "Other"/"General" CIP titles → real Cornell degrees or dropped)
-    # legitimately shrinks the catalog below the old padded 260 (enrich-profile miss #2).
-    assert len(cu.PROGRAMS) >= 235
+    # legitimately shrinks the catalog below the old padded 260 (enrich-profile miss #2);
+    # resolving the 5 residual federal CIP titles (REPAIR_BACKLOG #1) dropped 4 more rows
+    # for credential levels Cornell does not confer (Linguistics MA, Computational Biology
+    # BS, Architectural History BS/MA) → 233 verified real programs.
+    assert len(cu.PROGRAMS) >= 233
     _assert_no_cip_rollup_names(cu.PROGRAMS)
     assert len(set(cu.PROGRAM_SLUGS)) == len(cu.PROGRAM_SLUGS)
     assert cu.RANKING_DATA["ownership_type"] == "private"
@@ -235,7 +251,7 @@ def test_structure_integrity():
     # Slugs are unique.
     assert len(cu.PROGRAM_SLUGS) == len(set(cu.PROGRAM_SLUGS)), "duplicate program slug"
     # Full catalog breadth: College Scorecard Field-of-Study list for UNITID 190415.
-    assert len(cu.PROGRAMS) >= 235, "verified real Cornell catalog breadth (de-padded)"
+    assert len(cu.PROGRAMS) >= 233, "verified real Cornell catalog breadth (de-padded)"
     # Every program sets a delivery_format, and at least one online + one hybrid exist.
     fmts = {p.get("delivery_format") for p in cu.PROGRAMS}
     assert None not in fmts
