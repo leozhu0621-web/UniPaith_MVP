@@ -175,6 +175,37 @@ def test_catalog_is_structurally_real():
         assert not re.search(r", General$|, Other$", field), f"CIP rollup tell in {name}"
         assert "Area Studies" not in name, f"rollup bucket in {name}"
         assert "Related Services" not in name, f"rollup bucket in {name}"
+    _assert_no_cip_rollup_names(h.PROGRAMS)
+
+
+def _assert_no_cip_rollup_names(programs: list[dict]) -> None:
+    """Miss #2 whole-class gate: zero federal CIP-taxonomy titles in program_name."""
+    import re
+
+    from unipaith.profile_standard.anti_stub import field_of
+
+    _rollup_tell = re.compile(
+        r", (General|Other)\b"
+        r"|, and (Group Studies|Linguistics|Administration|Technicians)\b"
+        r"|, Literatures, and\b"
+        r"|, Pharmaceutical Sciences, and\b"
+        r"|\band Related (?:Sciences|Services)\b"
+        r"|[A-Za-z]/[A-Za-z]"
+    )
+    bad = [
+        p["program_name"]
+        for p in programs
+        if _rollup_tell.search(field_of(p["program_name"]))
+        or _rollup_tell.search(p.get("department") or "")
+    ]
+    assert not bad, f"{len(bad)} programs still carry a CIP-rollup name/department: {bad[:5]}"
+    _rollup_keys = set(h._ROLLUP_RESOLVE) | set(h._ROLLUP_DROP)
+    leaked = [
+        p["program_name"]
+        for p in programs
+        if field_of(p["program_name"]) in _rollup_keys
+    ]
+    assert not leaked, f"{len(leaked)} programs ship an UNRESOLVED CIP-rollup field: {leaked[:5]}"
 
 
 def test_institution_has_campus_photo_gallery():

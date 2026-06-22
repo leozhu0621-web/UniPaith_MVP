@@ -1463,6 +1463,12 @@ _ROLLUP_RESOLVE: dict[str, str] = {
 #    reassigned to HSPH via _SLUG_SCHOOL_OVERRIDE (only the certificate is dropped).
 #  • Architectural History: no standalone GSD master's; PhD work sits under GSD PhD
 #    areas or FAS History of Art and Architecture (the IPEDS ms/cert rows are federal mint).
+#  • Physiology, Pathology and Related Sciences (CIP 26.09): the federal "…and Related
+#    Sciences" suffix form (run-78 un-enumerated residual, REPAIR_BACKLOG #1). Harvard
+#    does not confer a standalone FAS graduate certificate under this CIP title — human
+#    physiology and pathobiology live in MCB/OEB research and HMS graduate courses
+#    (HBTM), not a named FAS certificate (HMS HMX Physiology Fundamentals is
+#    professional continuing education, a different credential).
 _ROLLUP_LEVEL_DROP: frozenset[tuple[str, str]] = frozenset({
     ("Linguistic, Comparative, and Related Language Studies and Services", "masters"),
     ("Linguistic, Comparative, and Related Language Studies and Services", "certificate"),
@@ -1472,6 +1478,7 @@ _ROLLUP_LEVEL_DROP: frozenset[tuple[str, str]] = frozenset({
     ("Biomathematics, Bioinformatics, and Computational Biology", "certificate"),
     ("Architectural History, Criticism, and Conservation", "masters"),
     ("Architectural History, Criticism, and Conservation", "certificate"),
+    ("Physiology, Pathology and Related Sciences", "certificate"),
 })
 
 # slug → real owning school, for an IPEDS row whose Field-of-Study completion is coded to
@@ -3331,7 +3338,12 @@ _assign_descriptions(PROGRAMS)
 # ── Catalog quality gate (anti-stub miss #2/#8/#9, gold MIT = 0 on each) ───────
 _ROLLUP_NAME_RE = re.compile(
     r", General\b|, Other\b|, and Linguistics\b|, Pharmaceutical Sciences, and "
-    r"Administration\b|, and Group Studies\b|, and Technicians\b|/"
+    r"Administration\b|, and Group Studies\b|, and Technicians\b|, and Related Services\b"
+    # Federal "…and Related Sciences/Services" suffix WITHOUT a preceding comma (the
+    # CIP 26.09 "Physiology, Pathology and Related Sciences" form — run-78 whole-class
+    # durable gate so any future un-resolved same-class title raises the build error).
+    r"|\band Related (?:Sciences|Services)\b"
+    r"|[A-Za-z]/[A-Za-z]"
 )
 _CIP_CODE_RE = re.compile(r"\(CIP\s*\d|\b\d\d\.\d\d\b")
 _catalog_errors = validate_catalog(PROGRAMS)
