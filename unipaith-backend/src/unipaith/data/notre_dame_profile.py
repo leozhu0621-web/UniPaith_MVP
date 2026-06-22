@@ -26,12 +26,13 @@ honestly omitted (recorded in that node's ``_standard.omitted``) — never guess
 
 Honest caveats stamped into ``_standard.omitted``: Notre Dame does not publish a single
 university-wide placement rate or a uniform top-employer-industries list, so those two
-institution outcome fields are omitted. Graduate/professional programs bill tuition per
-term or per credit and publish no single annual figure, so those carry a sourced
-"see the program's tuition page" record rather than a guessed number. Per-program deep
-fields (class profile, faculty roster) and ``external_reviews`` for niche research
-degrees with no distinct third-party coverage are recorded in each node's
-``_standard.omitted``; the flagship coverable programs carry researched reviews.
+institution outcome fields are omitted. Per-program deep fields (class profile, faculty
+roster) and ``external_reviews`` for niche research degrees with no distinct third-party
+coverage are recorded in each node's ``_standard.omitted``; the flagship coverable programs
+carry researched reviews. Graduate-tier tuition (2026-06-22, ndgradtuition1): every
+master's and professional program carries a verified published rate from the Office of
+Student Accounts or the Law School; funded Ph.D./J.S.D./D.M.A. and the MSM (assistantship-
+covered) carry verified $0 with ``funded=True``.
 
 The catalog is Notre Dame's REAL degree set: every row carries its CONFERRED degree
 designation, its real owning college/department, and a per-credential field-specific
@@ -1015,6 +1016,218 @@ _COST_SRC = (
     SCORECARD_URL,
 )
 
+# ── Published graduate-tier tuition (REPAIR_BACKLOG #4 — master's/professional
+# starvation behind a 100% bachelor's tier) ──────────────────────────────────
+# Notre Dame publishes graduate/professional tuition BY PROGRAM or SCHOOL on the
+# Office of Student Accounts rate sheets (2026-27). Program.tuition is the matcher's
+# ANNUAL budget signal. Values are school/program-distinct — never the $67,444
+# undergraduate sticker copied down. Funded research doctorates (Ph.D., J.S.D., D.M.A.
+# with assistantships) and the MSM (100% tuition via assistantship) carry verified
+# $0 with funded=True; funding is a separate matcher signal.
+_GS_FULLTIME_TUITION = 69110  # Graduate School full-time tuition (most terminal master's)
+_ARCH_TUITION = 69110  # M.Arch / M.ADU — same published rate on the GS sheet
+_MGA_TUITION = 69110  # Master of Global Affairs
+_ESTEEM_TUITION = 69610  # ESTEEM: summer + academic-year tuition components ($69,610 total)
+_ACMS_MS_TUITION = 55248  # ACMS traditional 12-credit load: $27,624 × 2 semesters
+_MBA_TUITION = 75460  # Two-year MBA tuition (Fall & Spring)
+_MSA_TUITION = 55660  # Master of Science in Accountancy
+_MSBA_TUITION = 69630  # MSBA Summer/Fall/Spring track tuition ($13,926 + $55,704)
+_MSF_TUITION = 74618  # MS Finance: summer ($21,604) + Fall/Spring tuition ($53,014)
+_JD_TUITION = 75816  # J.D. 2026-27 (Law School bulletin)
+_LLM_TUITION = 37892  # LL.M. 2026-27 (Law School)
+
+_GS_TUITION_SRC = (
+    "Notre Dame Office of Student Accounts — Graduate Programs Academic Year 2026-2027",
+    "https://studentaccounts.nd.edu/rates/graduate-programs/",
+)
+_MENDOZA_TUITION_SRC = (
+    "Notre Dame Office of Student Accounts — Graduate Business Programs Academic Year 2026-2027",
+    "https://studentaccounts.nd.edu/rates/graduate-business-programs/",
+)
+_LAW_TUITION_SRC = (
+    "Notre Dame Law School — Cost of Attendance",
+    "https://law.nd.edu/admissions/cost-of-attendance/",
+)
+_LLM_TUITION_SRC = (
+    "Notre Dame Law School — LL.M. Admissions",
+    "https://law.nd.edu/academics/llm-international-human-rights-law/admissions/",
+)
+
+
+def _gs_masters_cost(field: str) -> dict:
+    return {
+        "tuition_usd": _GS_FULLTIME_TUITION,
+        "funded": False,
+        "note": (
+            f"Standard full-time Graduate School tuition for the terminal master's in {field} "
+            "($34,555 per semester); self-funded terminal master's pay the published GS rate."
+        ),
+        "source": _GS_TUITION_SRC[0],
+        "source_url": _GS_TUITION_SRC[1],
+        "year": "2026-27",
+    }
+
+
+def _mendoza_ms_cost(program: str, tuition: int, note: str) -> dict:
+    return {
+        "tuition_usd": tuition,
+        "funded": False,
+        "note": note,
+        "source": _MENDOZA_TUITION_SRC[0],
+        "source_url": _MENDOZA_TUITION_SRC[1],
+        "year": "2026-27",
+    }
+
+
+def _law_cost(degree: str, tuition: int, note: str) -> dict:
+    return {
+        "tuition_usd": tuition,
+        "funded": False,
+        "note": note,
+        "source": _LAW_TUITION_SRC[0] if degree == "J.D." else _LLM_TUITION_SRC[0],
+        "source_url": _LAW_TUITION_SRC[1] if degree == "J.D." else _LLM_TUITION_SRC[1],
+        "year": "2026-27",
+    }
+
+
+def _funded_assistantship_cost(school: str, source: str, source_url: str) -> dict:
+    return {
+        "tuition_usd": 0,
+        "funded": True,
+        "note": (
+            f"{school}: every admitted student receives a graduate assistantship covering "
+            "full tuition plus health insurance and a stipend; students still pay living "
+            "costs, fees and personal expenses."
+        ),
+        "source": source,
+        "source_url": source_url,
+        "year": "2026-27",
+    }
+
+
+_SACRED_MUSIC_FUNDED_SRC = (
+    "Sacred Music at Notre Dame — Assistantships and Funding",
+    "https://sacredmusic.nd.edu/graduate-program/assistantships/",
+)
+
+_COST_BY_SLUG: dict[str, dict] = {
+    # College of Engineering — standard GS full-time master's
+    "notre-dame-aerospace-mechanical-engineering-ms": _gs_masters_cost(
+        "Aerospace and Mechanical Engineering"
+    ),
+    "notre-dame-civil-environmental-engineering-ms": _gs_masters_cost(
+        "Civil and Environmental Engineering and Earth Sciences"
+    ),
+    "notre-dame-computer-science-engineering-ms": _gs_masters_cost("Computer Science and Engineering"),
+    "notre-dame-electrical-engineering-ms": _gs_masters_cost("Electrical Engineering"),
+    "notre-dame-data-science-ms": _gs_masters_cost("Data Science"),
+    "notre-dame-esteem-ms": {
+        "tuition_usd": _ESTEEM_TUITION,
+        "funded": False,
+        "note": (
+            "ESTEEM tuition combines the summer session ($13,822) and the academic-year "
+            "component ($55,288) for the one-year program ($69,610 total tuition)."
+        ),
+        "source": _GS_TUITION_SRC[0],
+        "source_url": _GS_TUITION_SRC[1],
+        "year": "2026-27",
+    },
+    # College of Science
+    "notre-dame-acms-ms": {
+        "tuition_usd": _ACMS_MS_TUITION,
+        "funded": False,
+        "note": (
+            "ACMS traditional master's tuition at a 12-credit-hour load "
+            "($27,624 per semester × two semesters)."
+        ),
+        "source": _GS_TUITION_SRC[0],
+        "source_url": _GS_TUITION_SRC[1],
+        "year": "2026-27",
+    },
+    "notre-dame-mathematics-ms": _gs_masters_cost("Mathematics"),
+    # College of Arts and Letters — GS terminal master's / MFA
+    "notre-dame-classics-ma": _gs_masters_cost("Classics"),
+    "notre-dame-early-christian-studies-ma": _gs_masters_cost("Early Christian Studies"),
+    "notre-dame-english-ma": _gs_masters_cost("English"),
+    "notre-dame-french-francophone-studies-ma": _gs_masters_cost("French and Francophone Studies"),
+    "notre-dame-medieval-studies-ma": _gs_masters_cost("Medieval Studies"),
+    "notre-dame-creative-writing-mfa": _gs_masters_cost("Creative Writing"),
+    "notre-dame-design-mfa": _gs_masters_cost("Design"),
+    "notre-dame-sacred-music-msm": _funded_assistantship_cost(
+        "Sacred Music at Notre Dame", *_SACRED_MUSIC_FUNDED_SRC
+    ),
+    # Keough School
+    "notre-dame-global-affairs-mga": {
+        "tuition_usd": _MGA_TUITION,
+        "funded": False,
+        "note": "Master of Global Affairs tuition (same published GS full-time rate).",
+        "source": _GS_TUITION_SRC[0],
+        "source_url": _GS_TUITION_SRC[1],
+        "year": "2026-27",
+    },
+    # Mendoza College of Business — distinct published Mendoza rates
+    "notre-dame-mba": _mendoza_ms_cost(
+        "MBA",
+        _MBA_TUITION,
+        "Two-year MBA tuition ($37,730 per semester × two semesters).",
+    ),
+    "notre-dame-finance-ms": _mendoza_ms_cost(
+        "Finance",
+        _MSF_TUITION,
+        (
+            "Master of Science in Finance tuition combines the summer session ($21,604) "
+            "and Fall/Spring tuition ($53,014)."
+        ),
+    ),
+    "notre-dame-business-analytics-ms": _mendoza_ms_cost(
+        "Business Analytics",
+        _MSBA_TUITION,
+        (
+            "MSBA Summer/Fall/Spring track tuition ($13,926 summer + $55,704 Fall/Spring "
+            "components)."
+        ),
+    ),
+    "notre-dame-accountancy-ms": _mendoza_ms_cost(
+        "Accountancy",
+        _MSA_TUITION,
+        "Master of Science in Accountancy tuition ($27,830 per semester × two semesters).",
+    ),
+    # School of Architecture
+    "notre-dame-march": {
+        "tuition_usd": _ARCH_TUITION,
+        "funded": False,
+        "note": (
+            "Master of Architecture tuition (M.Arch., M.ADU and Historic Preservation share "
+            "the published GS full-time rate on the Student Accounts sheet)."
+        ),
+        "source": _GS_TUITION_SRC[0],
+        "source_url": _GS_TUITION_SRC[1],
+        "year": "2026-27",
+    },
+    "notre-dame-madu": {
+        "tuition_usd": _ARCH_TUITION,
+        "funded": False,
+        "note": (
+            "Master of Architectural Design and Urbanism tuition (same published rate as "
+            "M.Arch. on the Student Accounts sheet)."
+        ),
+        "source": _GS_TUITION_SRC[0],
+        "source_url": _GS_TUITION_SRC[1],
+        "year": "2026-27",
+    },
+    # Notre Dame Law School
+    "notre-dame-jd": _law_cost(
+        "J.D.",
+        _JD_TUITION,
+        "Notre Dame Law School J.D. tuition for the 2026-27 academic year.",
+    ),
+    "notre-dame-llm": _law_cost(
+        "LL.M.",
+        _LLM_TUITION,
+        "Notre Dame Law School LL.M. tuition for the 2026-27 academic year.",
+    ),
+}
+
 _REQ_UNDERGRAD = {
     "materials": [
         {"name": "Common Application or Coalition Application", "required": True},
@@ -1137,7 +1350,6 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
 _TRACKS_BY_SLUG: dict = {}
 _CLASS_PROFILE_BY_SLUG: dict = {}
 _FACULTY_BY_SLUG: dict = {}
-_COST_BY_SLUG: dict = {}
 _PROGRAM_KEYWORDS_BY_SLUG: dict[str, list[str]] = {
     "notre-dame-mba": ["MBA", "Mendoza College of Business", "finance", "consulting"],
     "notre-dame-business-analytics-ms": ["business analytics", "MSBA", "Mendoza College of Business", "data"],
@@ -1266,7 +1478,11 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.cip_code = spec.get("cip")
         kw = _PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(_KEYWORDS_BY_SCHOOL[spec["school"]])
         p.content_sources = _program_content(spec["school"], kw)
-        if spec["degree_type"] == "bachelors":
+        cost_override = _COST_BY_SLUG.get(slug)
+        if cost_override is not None:
+            p.tuition = cost_override.get("tuition_usd")
+            p.cost_data = dict(cost_override)
+        elif spec["degree_type"] == "bachelors":
             p.tuition = _TUITION_UG
             p.cost_data = {
                 "tuition_usd": _TUITION_UG,
