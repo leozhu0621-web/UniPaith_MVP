@@ -55,9 +55,7 @@ def _gaps_are_all_omitted(level: str, res, omitted: set[str]) -> tuple[bool, set
 def _program_snapshot(slug: str) -> dict:
     """Mirror the columns _apply_programs writes for a program slug."""
     spec = next(p for p in cu.PROGRAMS if p["slug"] == slug)
-    cost = cu._cost_for(spec)
-    if cost is None:
-        cost = {"funded": False, "note": "see program website", "source": "x", "source_url": "x"}
+    _, cost = cu._program_tuition(spec)
     if slug == cu._FLAGSHIP:
         outcomes = dict(cu._MBA_OUTCOMES)
     else:
@@ -268,6 +266,49 @@ def test_every_node_has_standard_stamp():
 
 def test_institution_has_media_credit():
     assert cu.SCHOOL_OUTCOMES.get("media_credit"), "Campus photo must carry attribution"
+
+
+def test_graduate_tuition_not_undergrad_copy_down():
+    """REPAIR_BACKLOG run 75 HIGH #2: graduate rows must not carry the UG sticker except
+    documented Professional Tier 1 programs whose published catalog rate equals it."""
+    tier1 = cu._TIER1_SLUGS
+    bad = [
+        p["slug"]
+        for p in cu.PROGRAMS
+        if p["degree_type"] != "bachelors"
+        and (t := cu._program_tuition(p)[0]) == cu._TUITION_UG_ENDOWED
+        and p["slug"] not in tier1
+        and p["slug"] != cu._FLAGSHIP
+    ]
+    assert not bad, f"{len(bad)} grad programs still carry undergrad sticker: {bad[:8]}"
+
+
+def test_research_phd_tuition_is_funded_not_sticker():
+    phd = [p for p in cu.PROGRAMS if p["degree_type"] == "phd"]
+    assert len(phd) >= 70
+    for p in phd:
+        tuition, cost = cu._program_tuition(p)
+        assert tuition == 0, p["slug"]
+        assert cost.get("funded") is True
+        assert cost.get("published_tuition_sticker") == cu._TUITION_PHD
+
+
+def test_research_masters_use_distinct_endowed_rate():
+    ms = [
+        p
+        for p in cu.PROGRAMS
+        if p["degree_type"] == "masters"
+        and p["slug"] != cu._FLAGSHIP
+        and p["slug"] not in cu._TIER1_SLUGS
+        and p["slug"] not in cu._TIER2_SLUGS
+        and p["slug"] not in cu._TUITION_OMIT_SLUGS
+        and p["school"] not in cu._STATUTORY_SCHOOLS
+        and p["school"] != cu._HUMAN_ECOLOGY
+        and "nutrition" not in p["slug"]
+    ]
+    for p in ms:
+        tuition, _ = cu._program_tuition(p)
+        assert tuition == cu._TUITION_MS_ENDOWED, p["slug"]
 
 
 def test_coverable_programs_have_reviews():
