@@ -67,6 +67,15 @@ designations (Bachelor of Arts/Science, Master of Arts/Science, Doctor of Philos
 gold MIT = 0% possessive); drops residual federal rollup buckets (Culinary Arts,
 Foods/HR-at-Johnson) and resolves ORIE / Human Development / Nutritional Sciences
 rollups to real Cornell degree names (REPAIR BACKLOG #7 / SKILL miss #2).
+
+Tuition VALUE-correctness (2026-06-22, cornelltuition1, REPAIR_BACKLOG run 75 HIGH #2):
+stamps Cornell's published 2025-26 per-credential rate from the official catalog /
+bursar (research PhD $20,800 · endowed research M.S./M.A. $29,500 · contract-college
+graduate $20,800 · professional Tier 1 $71,266 · Tier 2 $46,658 · Johnson Two-Year MBA
+$86,596 · Law J.D. $84,722 · D.V.M. $66,604 non-resident · Weill M.D. $76,486) — never
+the $71,266 endowed undergraduate sticker copied onto research master's / PhD rows.
+Fully-funded research doctorates omit matcher ``tuition`` with the published sticker in
+the note; executive / per-credit online programs remain honestly omitted.
 """
 
 from __future__ import annotations
@@ -91,7 +100,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Cornell University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-21"
+ENRICHED_AT = "2026-06-22"
 
 _PEER_SIGNATURES: tuple[str, ...] = (
     " SAS",
@@ -2380,17 +2389,70 @@ _TRACKS_BY_SLUG: dict[str, dict] = {
     },
 }
 
-# ── Program-specific cost ──────────────────────────────────────────────────
-# Cornell 2025-26 endowed-college undergraduate tuition; cost of attendance and average
-# net price are College Scorecard / Cornell budget figures.
+# ── Program-specific cost / tuition (matcher-core budget signal) ───────────
+# Cornell 2025-26 published rates — Academic Catalog / Bursar (2025-2026 edition).
+# REPAIR_BACKLOG run 75 HIGH #2: never stamp the endowed undergraduate sticker on
+# graduate / professional rows; each tier carries its own published rate.
+_TUI_SRC = "Cornell University Academic Catalog — Bursar, Tuition and Billing (2025-26)"
+_TUI_SRC_URL = "https://catalog.cornell.edu/general-information/tuition/"
+_TUI_SRC_MED = "Weill Cornell Medicine — Cost of Attendance (Medical Doctor, 2025-26)"
+_TUI_SRC_MED_URL = (
+    "https://teach.weill.cornell.edu/student-services/financial-services/"
+    "cost-attendance/medical-doctor"
+)
+_PHD_FUNDING_SRC = "Cornell University Graduate School — Tuition Rates"
+_PHD_FUNDING_URL = "https://gradschool.cornell.edu/financial-support/tuition-rates/"
+
 _TUITION_UG_ENDOWED = 71266
 _TUITION_UG_STATUTORY_NY = 48010
 _UNDERGRAD_COA = 88140
 _AVG_NET_PRICE = 28690
+_TUITION_PHD = 20800
+_TUITION_MS_ENDOWED = 29500
+_TUITION_MS_CONTRACT = 20800
+_TUITION_PROF_TIER1 = 71266  # Professional Tier 1 (catalog rate; equals endowed UG sticker)
+_TUITION_PROF_TIER2 = 46658
+_TUITION_MBA = 86596
+_TUITION_JD = 84722
+_TUITION_DVM_NONRES = 66604
+_TUITION_MD = 76486
 
 # Statutory/contract colleges whose undergraduate programs charge a lower NY-resident
 # tuition (non-residents pay the endowed rate).
-_STATUTORY_SCHOOLS = {_CALS, _DYSON, _HUMAN_ECOLOGY, _ILR}
+_STATUTORY_SCHOOLS = {_CALS, _DYSON, _HUMAN_ECOLOGY, _ILR, _BROOKS}
+
+# Professional Tier 1 (M.Eng, select M.P.S./M.M.H.) — catalog Professional Degree Tier 1.
+_TIER1_SLUGS = frozenset({
+    "cornell-meng-ms",
+    "cornell-business-administration-ms",
+    "cornell-real-estate-ms",
+    "cornell-hospitality-administration-management-ms",
+    "cornell-management-sciences-and-quantitative-methods-ms",
+})
+
+# Professional Tier 2 (M.P.A., M.I.L.R., M.L.A., M.R.P., M.P.H., M.P.S. in contract
+# colleges / Human Ecology / Vet, M.S. Nutrition / Atmospheric Science).
+_TIER2_SLUGS = frozenset({
+    "cornell-mpa-ms",
+    "cornell-ilr-ms",
+    "cornell-public-health-ms",
+    "cornell-landscape-architecture-ms",
+    "cornell-city-urban-community-and-regional-planning-ms",
+    "cornell-atmospheric-sciences-and-meteorology-ms",
+    "cornell-veterinary-biomedical-and-clinical-sciences-ms",
+})
+
+# Executive / per-credit / total-program-cost degrees with no single citable annual rate.
+_TUITION_OMIT_SLUGS = frozenset({
+    "cornell-legal-studies-ms-online",
+    "cornell-emba-americas",
+    "cornell-emha-online",
+    "cornell-empa-online",
+    "cornell-engineering-management-meng-online",
+    "cornell-march",
+    "cornell-legal-research-and-advanced-professional-studies-prof",
+    "cornell-music-prof",
+})
 
 _INTL_VISA = {
     "types": ["F-1", "J-1"],
@@ -2487,28 +2549,167 @@ _COST_BY_SLUG: dict[str, dict] = {
     },
 }
 
-# Programs that publish no citable per-program tuition (graduate/professional/online):
-# cost is recorded as omitted with a reason rather than guessed.
-_COST_OMIT_SLUGS = {
-    "cornell-computer-science-ms",
-    "cornell-information-science-ms",
-    "cornell-electrical-computer-eng-ms",
-    "cornell-operations-research-ms",
-    "cornell-systems-eng-ms",
-    "cornell-meng-ms",
-    "cornell-business-administration-ms",
-    "cornell-ilr-ms",
-    "cornell-mpa-ms",
-    "cornell-legal-studies-ms-online",
-    "cornell-emba-americas",
-    "cornell-engineering-management-meng-online",
-    "cornell-emha-online",
-    "cornell-empa-online",
-    "cornell-jd",
-    "cornell-dvm",
-    "cornell-march",
-    "cornell-md",
-}
+
+def _pub_tuition_cost(
+    tuition: int,
+    note: str,
+    *,
+    source: str = _TUI_SRC,
+    source_url: str = _TUI_SRC_URL,
+    funded: bool = False,
+    extra: dict | None = None,
+) -> dict:
+    cost: dict = {
+        "tuition_usd": tuition,
+        "funded": funded,
+        "note": note,
+        "source": source,
+        "source_url": source_url,
+        "year": "2025-26",
+    }
+    if extra:
+        cost.update(extra)
+    return cost
+
+
+def _omit_tuition_cost(note: str, *, source: str | None = None, source_url: str | None = None) -> dict:
+    return {
+        "funded": False,
+        "note": note,
+        "source": source or _TUI_SRC,
+        "source_url": source_url or _TUI_SRC_URL,
+        "year": "2025-26",
+    }
+
+
+def _is_tier2_masters(spec: dict) -> bool:
+    slug = spec["slug"]
+    if slug in _TIER2_SLUGS:
+        return True
+    if "nutrition" in slug:
+        return True
+    return spec["school"] == _HUMAN_ECOLOGY
+
+
+def _program_tuition(spec: dict) -> tuple[int | None, dict]:
+    """Return (matcher tuition, cost_data) from Cornell-published 2025-26 rates."""
+    slug = spec["slug"]
+    dtype = spec["degree_type"]
+    school = spec["school"]
+
+    if slug in _COST_BY_SLUG:
+        cost = dict(_COST_BY_SLUG[slug])
+        return cost.get("tuition_usd"), cost
+
+    if slug in _TUITION_OMIT_SLUGS:
+        return None, _omit_tuition_cost(
+            "Cornell does not publish a single citable annual tuition for this degree on a "
+            "public page (executive / per-credit / total-program-cost billing); see the "
+            "program website for current rates.",
+            source_url=_WEBSITE_BY_SLUG.get(slug) or _SCHOOL_WEBSITE.get(school),
+        )
+
+    if dtype == "bachelors":
+        note = (
+            "Published 2025-26 Cornell endowed-college undergraduate tuition with the College "
+            "Scorecard cost of attendance and average net price. Cornell meets 100% of "
+            "demonstrated need and is need-blind for U.S. applicants, so most families pay far "
+            "less than the sticker price (average net price ≈ $28,700)."
+        )
+        if school in _STATUTORY_SCHOOLS:
+            note = (
+                "Cornell 2025-26 tuition: the New York State statutory/contract colleges charge "
+                f"${_TUITION_UG_STATUTORY_NY:,} for New York residents and the endowed rate of "
+                f"${_TUITION_UG_ENDOWED:,} for non-residents. College Scorecard cost of "
+                "attendance and average net price shown; Cornell meets 100% of demonstrated "
+                "need for admitted undergraduates."
+            )
+        return _TUITION_UG_ENDOWED, _pub_tuition_cost(
+            _TUITION_UG_ENDOWED,
+            note,
+            extra={
+                "total_cost_of_attendance": _UNDERGRAD_COA,
+                "avg_net_price": _AVG_NET_PRICE,
+                "breakdown": {
+                    "tuition": _TUITION_UG_ENDOWED,
+                    "total_cost_of_attendance": _UNDERGRAD_COA,
+                },
+            },
+        )
+
+    if dtype == "phd":
+        return 0, _pub_tuition_cost(
+            0,
+            (
+                "Cornell Ph.D. students in endowed and contract colleges typically receive full "
+                "tuition plus a stipend through fellowship and assistantship support; the "
+                f"published research-doctoral tuition sticker is ${_TUITION_PHD:,} per year "
+                "before aid."
+            ),
+            source=_PHD_FUNDING_SRC,
+            source_url=_PHD_FUNDING_URL,
+            funded=True,
+            extra={"published_tuition_sticker": _TUITION_PHD},
+        )
+
+    if dtype == "professional":
+        if slug == "cornell-jd":
+            return _TUITION_JD, _pub_tuition_cost(
+                _TUITION_JD,
+                "Published annual tuition for the J.D. program, 2025-26 (Cornell Law School).",
+            )
+        if slug in {"cornell-dvm", "cornell-veterinary-medicine-prof"}:
+            return _TUITION_DVM_NONRES, _pub_tuition_cost(
+                _TUITION_DVM_NONRES,
+                "Published annual tuition for the D.V.M. program (non-New York resident rate), "
+                "2025-26 (Cornell College of Veterinary Medicine).",
+            )
+        if slug == "cornell-md":
+            return _TUITION_MD, _pub_tuition_cost(
+                _TUITION_MD,
+                "Published annual tuition and fees for the M.D. program, 2025-26 (Weill Cornell "
+                "Medicine).",
+                source=_TUI_SRC_MED,
+                source_url=_TUI_SRC_MED_URL,
+            )
+        return None, _omit_tuition_cost(
+            "Cornell does not publish a single citable annual tuition for this professional "
+            "degree on a public page; see the program website for current rates.",
+            source_url=_WEBSITE_BY_SLUG.get(slug) or _SCHOOL_WEBSITE.get(school),
+        )
+
+    if dtype == "masters":
+        if slug in _TIER1_SLUGS:
+            return _TUITION_PROF_TIER1, _pub_tuition_cost(
+                _TUITION_PROF_TIER1,
+                "Published Professional Degree Tier 1 annual tuition, 2025-26 (Cornell Academic "
+                "Catalog — M.Eng / select M.P.S. / M.M.H.).",
+            )
+        if _is_tier2_masters(spec):
+            return _TUITION_PROF_TIER2, _pub_tuition_cost(
+                _TUITION_PROF_TIER2,
+                "Published Professional Degree Tier 2 annual tuition, 2025-26 (Cornell Academic "
+                "Catalog — M.P.A., M.I.L.R., M.L.A., M.R.P., M.P.H., contract-college M.P.S., "
+                "etc.).",
+            )
+        if school in _STATUTORY_SCHOOLS:
+            return _TUITION_MS_CONTRACT, _pub_tuition_cost(
+                _TUITION_MS_CONTRACT,
+                "Published statutory/contract-college research master's / M.A. tuition, 2025-26 "
+                "(Cornell Academic Catalog).",
+            )
+        return _TUITION_MS_ENDOWED, _pub_tuition_cost(
+            _TUITION_MS_ENDOWED,
+            "Published endowed-college research master's (M.S./M.A.) tuition, 2025-26 (Cornell "
+            "Academic Catalog).",
+        )
+
+    return None, _omit_tuition_cost(
+        "Cornell does not publish a citable per-program tuition for this credential on a public "
+        "page; see the program website for current rates.",
+        source_url=_WEBSITE_BY_SLUG.get(slug) or _SCHOOL_WEBSITE.get(school),
+    )
+
 
 # ── Program-specific outcomes (College Scorecard Field of Study, by CIP) ────
 # College Scorecard publishes a Field-of-Study median earnings (one year after completion)
@@ -3651,48 +3852,6 @@ def _program_has_dependents(session: Session, program_id) -> bool:
     return False
 
 
-def _cost_for(spec: dict) -> dict | None:
-    """Return the program's cost_data dict, or None when cost is omitted-with-reason."""
-    slug = spec["slug"]
-    if slug in _COST_BY_SLUG:
-        return dict(_COST_BY_SLUG[slug])
-    if slug in _COST_OMIT_SLUGS:
-        return None
-    # Undergraduate: 2025-26 endowed-college tuition; statutory colleges add the lower
-    # NY-resident rate as a note.
-    note = (
-        "Published 2025-26 Cornell endowed-college undergraduate tuition with the College "
-        "Scorecard cost of attendance and average net price. Cornell meets 100% of "
-        "demonstrated need and is need-blind for U.S. applicants, so most families pay far "
-        "less than the sticker price (average net price ≈ $28,700)."
-    )
-    if spec["school"] in _STATUTORY_SCHOOLS:
-        note = (
-            "Cornell 2025-26 tuition: the New York State statutory/contract colleges charge "
-            f"${_TUITION_UG_STATUTORY_NY:,} for New York residents and the endowed rate of "
-            f"${_TUITION_UG_ENDOWED:,} for non-residents. College Scorecard cost of "
-            "attendance and average net price shown; Cornell meets 100% of demonstrated "
-            "need for admitted undergraduates."
-        )
-    return {
-        "tuition_usd": _TUITION_UG_ENDOWED,
-        "total_cost_of_attendance": _UNDERGRAD_COA,
-        "avg_net_price": _AVG_NET_PRICE,
-        "breakdown": {
-            "tuition": _TUITION_UG_ENDOWED,
-            "total_cost_of_attendance": _UNDERGRAD_COA,
-        },
-        "funded": False,
-        "note": note,
-        "source": "Cornell 2025-26 budget parameters + College Scorecard (UNITID 190415)",
-        "source_url": (
-            "https://news.cornell.edu/stories/2025/03/"
-            "board-trustees-approves-2025-26-budget-parameters"
-        ),
-        "year": "2025-26",
-    }
-
-
 def _program_standard(slug: str, spec: dict) -> dict:
     """Per-program omitted-field list (verified-unavailable), for _standard."""
     omitted: list[str] = []
@@ -3704,9 +3863,7 @@ def _program_standard(slug: str, spec: dict) -> dict:
             "outcomes_data.employment_rate",
             "outcomes_data.top_industries",
         ]
-    if slug in _COST_OMIT_SLUGS:
-        # No citable per-program tuition is published for these graduate/professional/online
-        # degrees.
+    if _program_tuition(spec)[0] is None:
         omitted.append("cost_data.tuition_usd")
     if slug not in _TRACKS_BY_SLUG:
         omitted.append("tracks")
@@ -3759,23 +3916,9 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             p.content_sources = cs
         else:
             p.content_sources = _program_content(spec)
-        # Cost: undergraduate uses published Cornell rates; graduate/professional/online
-        # programs omit a per-program tuition (recorded in _standard.omitted).
-        cost = _cost_for(spec)
-        if cost is not None:
-            p.tuition = cost.get("tuition_usd")
-            p.cost_data = cost
-        else:
-            p.tuition = None
-            p.cost_data = {
-                "funded": False,
-                "note": (
-                    "Cornell does not publish a single citable per-program tuition for this "
-                    "degree on a public page; see the program website for current tuition."
-                ),
-                "source": "Cornell program website",
-                "source_url": _WEBSITE_BY_SLUG.get(slug) or _SCHOOL_WEBSITE.get(spec["school"]),
-            }
+        # Cost: published Cornell 2025-26 per-credential rates (never the undergrad sticker
+        # copied onto graduate rows — REPAIR_BACKLOG run 75 HIGH #2).
+        p.tuition, p.cost_data = _program_tuition(spec)
         # Admissions: undergraduate or generic graduate/professional set by degree type.
         p.application_requirements = _requirements_for(spec)
         # Outcomes precedence: Johnson MBA report → Scorecard FOS (program) → institution.
