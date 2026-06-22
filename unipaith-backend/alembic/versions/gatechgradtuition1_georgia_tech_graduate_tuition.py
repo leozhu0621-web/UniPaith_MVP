@@ -30,11 +30,11 @@ master's (program-specific per-credit rates) — each recorded in that program's
 
 Idempotent: re-applies ``georgia_tech_profile.apply()`` (which prunes nothing here — no
 rows added or dropped, only tuition / cost_data set) and re-derives the matcher's
-target-applicant rows. Chains after ``harvardgradtuition1`` (the concurrent #1090 Harvard
-graduate-tuition repair, also off ``penncipnames1``), keeping ``main`` at a single head.
+target-applicant rows. Chains after ``cornellcip2`` (the latest head at merge time, after
+the concurrent #1090 Harvard and #1093 Cornell repairs), keeping ``main`` at a single head.
 
 Revision ID: gatechgradtuition1
-Revises: harvardgradtuition1
+Revises: cornellcip2
 Create Date: 2026-06-22
 """
 
@@ -49,7 +49,7 @@ from unipaith.models.institution import Institution
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "gatechgradtuition1"
-down_revision = "harvardgradtuition1"
+down_revision = "cornellcip2"
 branch_labels = None
 depends_on = None
 
