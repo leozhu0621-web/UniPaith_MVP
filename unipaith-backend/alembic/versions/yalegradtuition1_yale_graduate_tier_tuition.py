@@ -34,13 +34,13 @@ program's ``_standard.omitted``.
 Idempotent: re-applies ``yale_profile.apply()`` (no rows added/dropped here — only
 tuition / cost_data set) and re-derives the matcher's target-applicant rows.
 
-Head-sync: ``main`` carried a DUAL head at author time — ``gatechgradtuition1`` (GT
-tuition, #1091) and ``penntuition1`` (Penn tuition, #1097) both revised ``harvardcip2``
-after their concurrent auto-merges. This revision sets ``down_revision`` to the pair so it
-also UNIFIES the dual head into one, leaving ``main`` at a single head.
+Head-sync: ``main`` briefly carried a DUAL head — ``gatechgradtuition1`` (GT tuition,
+#1091) and ``penntuition1`` (Penn tuition, #1097) both revised ``harvardcip2`` after their
+concurrent auto-merges; PR #1098's merge-only migration ``penngatechmrg1`` unified that
+pair and is now ``main``'s single head, so this revision simply chains after it.
 
 Revision ID: yalegradtuition1
-Revises: gatechgradtuition1, penntuition1
+Revises: penngatechmrg1
 Create Date: 2026-06-22
 """
 
@@ -55,7 +55,7 @@ from unipaith.models.institution import Institution
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "yalegradtuition1"
-down_revision = ("gatechgradtuition1", "penntuition1")
+down_revision = "penngatechmrg1"
 branch_labels = None
 depends_on = None
 
