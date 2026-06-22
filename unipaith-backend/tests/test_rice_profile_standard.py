@@ -47,14 +47,20 @@ def _school_snapshot(name: str) -> dict:
 
 
 def _program_cost(spec: dict):
-    slug = spec["slug"]
-    override = r._COST_BY_SLUG.get(slug)
-    if override is not None:
-        return override
     if spec["degree_type"] == "bachelors":
-        return {"tuition_usd": r._TUITION_UG, "source": r._COST_SRC[0], "source_url": r._COST_SRC[1]}
-    grad = r._grad_cost(spec)
-    return grad if grad is not None else {"note": "see school page", "source": "x", "source_url": "x"}
+        return {
+            "tuition_usd": r._TUITION_UG,
+            "source": r._COST_SRC[0],
+            "source_url": r._COST_SRC[1],
+        }
+    published = r._published_grad_cost(spec)
+    if published is not None:
+        return published
+    return {
+        "note": "funded or see Rice Bursar graduate tuition pages",
+        "source": "Rice University Bursar",
+        "source_url": "https://bursar.rice.edu/tuition_fee_rates/graduate-programs",
+    }
 
 
 def _program_snapshot(spec: dict) -> dict:
@@ -139,6 +145,16 @@ def test_coverable_programs_have_external_reviews():
     for slug in coverable:
         assert slug in r._REVIEWS_BY_SLUG, slug
         assert r._REVIEWS_BY_SLUG[slug].get("summary"), slug
+
+
+def test_graduate_tiers_carry_published_tuition():
+    """REPAIR_BACKLOG #4 — master's/professional tiers must not be matcher-blind on budget."""
+    for spec in r.PROGRAMS:
+        dtype = spec["degree_type"]
+        if dtype in ("masters", "professional", "certificate"):
+            assert r._grad_has_verified_tuition(spec), spec["slug"]
+        elif dtype == "phd":
+            assert not r._grad_has_verified_tuition(spec), spec["slug"]
 
 
 def test_every_program_is_done():
