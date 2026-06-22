@@ -52,37 +52,12 @@ def _school_snapshot(name: str) -> dict:
 
 def _program_snapshot(spec: dict) -> dict:
     slug = spec["slug"]
-    cost = (
-        {
-            "tuition_usd": p._TUITION_UG_INSTATE,
-            "total_cost_of_attendance": p._UNDERGRAD_COA,
-            "avg_net_price": p._AVG_NET_PRICE,
-            "breakdown": {
-                "tuition_in_state": p._TUITION_UG_INSTATE,
-                "tuition_out_of_state": p._TUITION_UG_OOS,
-            },
-            "funded": False,
-            "source": p._COST_SRC[0],
-            "source_url": p._COST_SRC[1],
-        }
-        if spec["degree_type"] == "bachelors"
-        else (
-            {
-                "tuition_usd": 0,
-                "funded": True,
-                "source": "UC San Diego Graduate Division — Funding",
-                "source_url": "https://grad.ucsd.edu/funding/",
-            }
-            if spec["degree_type"] == "phd"
-            else {
-                "note": "see program page",
-                "source": "UC San Diego program tuition page",
-                "source_url": p._website_for(spec),
-            }
-        )
-    )
+    # Mirror apply(): the published per-tier tuition (or the omit cost for funded
+    # PhDs / self-supporting master's), and the matching tuition_omitted flag.
+    tuition, cost = p._program_tuition(spec)
+    tuition_omitted = spec["degree_type"] == "phd" or tuition is None
     outcomes = dict(p._OUTCOMES_INSTITUTION)
-    outcomes["_standard"] = p._program_standard(slug, spec)
+    outcomes["_standard"] = p._program_standard(slug, spec, tuition_omitted=tuition_omitted)
     kw = p._PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(p._KEYWORDS_BY_SCHOOL[spec["school"]])
     return {
         "program_name": spec["program_name"],
