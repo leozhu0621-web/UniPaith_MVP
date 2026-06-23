@@ -14,6 +14,13 @@ institution seed. This pass takes the INSTITUTION fully to gold and replaces the
 with a real, verified, field-specific catalog across all five degree-granting schools.
 The full Guarini graduate catalog (the remaining PhD/master's programs) and per-program
 review depth are IN-FLIGHT for the next run — recorded honestly, never padded.
+
+Graduate-tier tuition (2026-06-23, dartgradtuition1): stamps published 2026-27
+master's/professional rates from each school's official tuition page — Thayer MEng
+$71,697 (3 terms) / MEM $95,596 (4 terms), Tuck MBA $87,536, Geisel M.D. $75,110,
+Dartmouth Institute on-campus MPH $82,232, Guarini MS $95,596 (4 terms), MALS
+full-time $66,917 — never the $66,123 undergraduate sticker. PhD rows remain
+funded-omit-with-reason.
 """
 
 from __future__ import annotations
@@ -791,6 +798,130 @@ _COST_SRC = (
     "https://financialaid.dartmouth.edu/cost-attendance/cost-attendance-2025-2026",
 )
 
+# ── Published graduate-tier tuition (REPAIR_BACKLOG #4 — master's/professional
+# starvation behind a 100% bachelor's tier) ──────────────────────────────────
+_THAYER_TUITION_SRC = (
+    "Thayer School of Engineering — Tuition & Cost of Attendance 2026-27",
+    "https://engineering.dartmouth.edu/about/financial-aid/tuition-cost-of-attendance",
+)
+_TUCK_TUITION_SRC = (
+    "Tuck School of Business — Cost of Attendance 2026-27",
+    "https://tuck.dartmouth.edu/admissions/finance-your-degree/cost-attendance",
+)
+_GEISEL_MD_SRC = (
+    "Geisel School of Medicine — M.D. Cost of Attendance 2026-27",
+    "https://geiselmed.dartmouth.edu/financial-aid/info/cost-of-attendance/",
+)
+_MPH_TUITION_SRC = (
+    "Dartmouth Health Sciences — MPH and MS tuition 2026-27",
+    "https://healthsciences.dartmouth.edu/education/admissions/tuition-fees",
+)
+_GUARINI_TUITION_SRC = (
+    "Guarini School — Tuition & Living Costs 2026-27",
+    "https://graduate.dartmouth.edu/admissions-financial-aid/tuition-living-costs",
+)
+_THAYER_TERM = 23899  # per quarter
+_THAYER_MENG = _THAYER_TERM * 3  # MEng on-campus (3 terms)
+_THAYER_MEM = _THAYER_TERM * 4  # MEM (4 terms plus summer internship)
+_TUCK_MBA = 87536
+_GEISEL_MD = 75110
+_MPH_ONCAMPUS = 82232
+_GUARINI_4TERM = 95596  # standard Guarini full-time (4 quarters)
+_MALS_FT_4TERM = 66917  # MALS full-time 4-quarter tuition (rounded from $66,917.20)
+
+
+def _annual_grad_cost(
+    tuition_usd: int,
+    *,
+    note: str,
+    source: str,
+    source_url: str,
+    year: str = "2026-27",
+) -> dict:
+    return {
+        "tuition_usd": tuition_usd,
+        "funded": False,
+        "note": note,
+        "source": source,
+        "source_url": source_url,
+        "year": year,
+    }
+
+
+_COST_BY_SLUG: dict[str, dict] = {
+    "dartmouth-engineering-graduate-ms": _annual_grad_cost(
+        _THAYER_MENG,
+        note=(
+            f"Thayer on-campus Master of Engineering tuition: "
+            f"${_THAYER_TERM:,} per quarter × three quarters "
+            f"(${_THAYER_MENG:,} program tuition for the three-term MEng)."
+        ),
+        source=_THAYER_TUITION_SRC[0],
+        source_url=_THAYER_TUITION_SRC[1],
+    ),
+    "dartmouth-engineering-management-ms": _annual_grad_cost(
+        _THAYER_MEM,
+        note=(
+            f"Thayer/Tuck Master of Engineering Management: "
+            f"${_THAYER_TERM:,} per quarter × four quarters "
+            f"(${_THAYER_MEM:,} program tuition; includes a summer internship term)."
+        ),
+        source=_THAYER_TUITION_SRC[0],
+        source_url=_THAYER_TUITION_SRC[1],
+    ),
+    "dartmouth-business-administration-ms": _annual_grad_cost(
+        _TUCK_MBA,
+        note=(
+            f"Tuck full-time MBA academic-year tuition (${_TUCK_MBA:,}; "
+            "2026-27 rate, billed in equal installments across the MBA terms)."
+        ),
+        source=_TUCK_TUITION_SRC[0],
+        source_url=_TUCK_TUITION_SRC[1],
+    ),
+    "dartmouth-medicine-prof": _annual_grad_cost(
+        _GEISEL_MD,
+        note=(
+            f"Geisel School of Medicine M.D. tuition (${_GEISEL_MD:,} per year; "
+            "direct cost billed each academic year of the four-year program)."
+        ),
+        source=_GEISEL_MD_SRC[0],
+        source_url=_GEISEL_MD_SRC[1],
+    ),
+    "dartmouth-public-health-ms": _annual_grad_cost(
+        _MPH_ONCAMPUS,
+        note=(
+            f"On-campus Master of Public Health tuition (${_MPH_ONCAMPUS:,} per "
+            "academic year at The Dartmouth Institute for Health Policy & Clinical "
+            "Practice)."
+        ),
+        source=_MPH_TUITION_SRC[0],
+        source_url=_MPH_TUITION_SRC[1],
+    ),
+    "dartmouth-computer-science-ms": _annual_grad_cost(
+        _GUARINI_4TERM,
+        note=(
+            f"Guarini full-time graduate tuition: ${_THAYER_TERM:,} per quarter "
+            f"× four quarters (${_GUARINI_4TERM:,} annual full-time rate)."
+        ),
+        source=_GUARINI_TUITION_SRC[0],
+        source_url=_GUARINI_TUITION_SRC[1],
+    ),
+    "dartmouth-liberal-studies-ms": _annual_grad_cost(
+        _MALS_FT_4TERM,
+        note=(
+            f"MALS full-time tuition: four-quarter rate of ${_MALS_FT_4TERM:,} "
+            "(Guarini published MALS full-time cost of attendance table)."
+        ),
+        source=_GUARINI_TUITION_SRC[0],
+        source_url=_GUARINI_TUITION_SRC[1],
+    ),
+}
+
+
+def _grad_has_verified_tuition(spec: dict) -> bool:
+    return spec["slug"] in _COST_BY_SLUG
+
+
 # ── Outcomes ──────────────────────────────────────────────────────────────
 # Dartmouth reports career outcomes college-wide (no per-program employment split), so
 # every program carries the institution-wide College Scorecard median earnings and omits
@@ -959,7 +1090,7 @@ def _program_standard(slug: str, spec: dict) -> dict:
     # publishes no per-program employment rate or industry split), so the program-level
     # employment_rate / top_industries are omitted on every node.
     omitted += ["outcomes_data.employment_rate", "outcomes_data.top_industries"]
-    if spec["degree_type"] != "bachelors":
+    if spec["degree_type"] != "bachelors" and not _grad_has_verified_tuition(spec):
         omitted.append("cost_data.tuition_usd")
     if slug not in _TRACKS_BY_SLUG:
         omitted.append("tracks")
@@ -1104,7 +1235,11 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.catalog_source = "curated"
         p.delivery_format = spec["delivery_format"]
         p.content_sources = _program_content(spec["school"], spec["keywords"])
-        if spec["degree_type"] == "bachelors":
+        cost_override = _COST_BY_SLUG.get(slug)
+        if cost_override is not None:
+            p.tuition = cost_override.get("tuition_usd")
+            p.cost_data = dict(cost_override)
+        elif spec["degree_type"] == "bachelors":
             p.tuition = _TUITION_UG
             p.cost_data = {
                 "tuition_usd": _TUITION_UG,
@@ -1129,14 +1264,21 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         else:
             p.tuition = None
             p.cost_data = {
+                "funded": spec["degree_type"] == "phd",
                 "note": (
-                    "Tuition for this graduate/professional program is published on the "
-                    "school's official tuition page; doctoral students at Dartmouth are "
-                    "typically funded. A verified per-program figure is not yet recorded "
-                    "here."
+                    "Doctoral students at Dartmouth are typically funded via research "
+                    "grants or fellowships; tuition is waived for funded PhD students. "
+                    "See the Guarini School or Thayer School tuition schedule for the "
+                    "published sticker."
+                    if spec["degree_type"] == "phd"
+                    else (
+                        "Tuition for this graduate/professional program is published on "
+                        "the school's official tuition page; a verified per-program figure "
+                        "is not yet recorded here."
+                    )
                 ),
-                "source": "Dartmouth College — program tuition page",
-                "source_url": _SCHOOL_WEBSITE.get(spec["school"]),
+                "source": _GUARINI_TUITION_SRC[0],
+                "source_url": _GUARINI_TUITION_SRC[1],
             }
         p.application_requirements = _requirements_for(spec)
         outcomes = dict(_OUTCOMES_INSTITUTION)
