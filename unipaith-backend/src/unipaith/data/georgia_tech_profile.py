@@ -1130,6 +1130,80 @@ _COST_BY_SLUG: dict[str, dict] = {
         "source_url": "https://pe.gatech.edu/degrees/cybersecurity",
         "year": "2026-27",
     },
+    # ── Professional-tier tuition (REPAIR_BACKLOG — prof 3/8 → 8/8) ──
+    "gatech-mba-global-business-executive": {
+        "tuition_usd": 87100,
+        "tuition_basis": "total program",
+        "funded": False,
+        "note": (
+            "Scheller Executive MBA (Global Business track) inclusive program fee for the "
+            "2025-26 class: $87,100 total (paid across four semesters plus a $1,500 "
+            "non-refundable enrollment deposit applied to the first term). Covers tuition, "
+            "fees, textbooks, parking, meals during class sessions, select international "
+            "residency costs, and executive career coaching."
+        ),
+        "source": "Georgia Tech Scheller College of Business — Executive MBA Tuition and Financing",
+        "source_url": (
+            "https://www.scheller.gatech.edu/explore-programs/mba-programs/"
+            "executive-mba/tuition-and-financing/index.html"
+        ),
+        "year": "2025-26",
+    },
+    "gatech-mba-management-technology-executive": {
+        "tuition_usd": 87100,
+        "tuition_basis": "total program",
+        "funded": False,
+        "note": (
+            "Scheller Executive MBA (Management of Technology track) inclusive program fee "
+            "for the 2025-26 class: $87,100 total — the same turnkey Executive MBA program "
+            "fee structure as the Global Business track (four-semester payment schedule)."
+        ),
+        "source": "Georgia Tech Scheller College of Business — Executive MBA Tuition and Financing",
+        "source_url": (
+            "https://www.scheller.gatech.edu/explore-programs/mba-programs/"
+            "executive-mba/tuition-and-financing/index.html"
+        ),
+        "year": "2025-26",
+    },
+    "gatech-applied-systems-engineering-pmase": {
+        "tuition_usd": 34150,
+        "tuition_basis": "total program",
+        "funded": False,
+        "note": (
+            "GTPE Professional Master's in Applied Systems Engineering: 10 three-credit "
+            "courses (30 credit hours) at $3,415 tuition per course = $34,150 total program "
+            "tuition (mandatory student fees billed separately each enrolled term)."
+        ),
+        "source": "Georgia Tech Professional Education — PMASE tuition and fees",
+        "source_url": "https://pe.gatech.edu/degrees/pmase",
+        "year": "2025-26",
+    },
+    "gatech-manufacturing-leadership-pmml": {
+        "tuition_usd": 34150,
+        "tuition_basis": "total program",
+        "funded": False,
+        "note": (
+            "GTPE Professional Master's in Manufacturing Leadership: 10 three-credit courses "
+            "(30 credit hours) at $3,415 tuition per course = $34,150 total program tuition "
+            "(mandatory student fees billed separately each enrolled term)."
+        ),
+        "source": "Georgia Tech Professional Education — PMML tuition and fees",
+        "source_url": "https://pe.gatech.edu/degrees/pmml",
+        "year": "2025-26",
+    },
+    "gatech-occupational-safety-health-pmosh": {
+        "tuition_usd": 34150,
+        "tuition_basis": "total program",
+        "funded": False,
+        "note": (
+            "GTPE Professional Master's in Occupational Safety and Health: 10 three-credit "
+            "courses (30 credit hours) at $3,415 tuition per course = $34,150 total program "
+            "tuition (mandatory student fees billed separately each enrolled term)."
+        ),
+        "source": "Georgia Tech Professional Education — PMOSH tuition and fees",
+        "source_url": "https://pe.gatech.edu/degrees/pmosh",
+        "year": "2025-26",
+    },
 }
 
 # ── Published graduate tuition (REPAIR_BACKLOG #2 — master's/professional starvation) ──
@@ -1165,16 +1239,9 @@ _GRAD_TUITION_BY_SLUG: dict[str, tuple[int, int]] = {
     "gatech-building-construction-facility-management-ms": (20204, 43772),  # MSBCFM
 }
 
-# Graduate programs Georgia Tech does NOT publish a single annual tuition for — executive
-# cohort programs billed per residence term and GTPE professional master's billed at
-# program-specific per-credit rates. tuition_usd is omitted-with-reason (never guessed).
-_GRAD_TUITION_OMIT: frozenset[str] = frozenset({
-    "gatech-mba-global-business-executive",  # Executive MBA — $21,775/residence term (Fall 2026)
-    "gatech-mba-management-technology-executive",  # Executive MBA — $21,775/residence term
-    "gatech-applied-systems-engineering-pmase",  # GTPE professional master's — per-credit
-    "gatech-manufacturing-leadership-pmml",  # GTPE professional master's — per-credit
-    "gatech-occupational-safety-health-pmosh",  # GTPE professional master's — per-credit
-})
+# Slugs whose tuition is intentionally omitted (funded doctorates only — professional /
+# executive / GTPE programs now carry verified totals in ``_COST_BY_SLUG``).
+_GRAD_TUITION_OMIT: frozenset[str] = frozenset()
 
 
 def _grad_cost_fallback(spec: dict) -> dict:
@@ -1195,11 +1262,10 @@ def _grad_cost_fallback(spec: dict) -> dict:
 def _grad_cost(spec: dict) -> dict:
     """Published GT graduate cost for a non-bachelor's program.
 
-    A verified per-program override (``_COST_BY_SLUG``) wins; then funded doctorates and
-    executive / GTPE programs with no published annual figure omit tuition_usd with a
-    sourced reason; then Bursar differential programs carry their own published rate; every
-    other graduate program carries the standard published full-time graduate tuition
-    (REPAIR_BACKLOG #2 — never leave a knowable, institution-published tier null).
+    A verified per-program override (``_COST_BY_SLUG``) wins at apply-time; funded
+    doctorates omit tuition_usd with a sourced reason; then Bursar differential programs
+    carry their own published rate; every other graduate program carries the standard
+    published full-time graduate tuition (never leave a knowable tier null).
     """
     slug = spec["slug"]
     if spec.get("degree_type") == "phd" or slug in _GRAD_TUITION_OMIT:
