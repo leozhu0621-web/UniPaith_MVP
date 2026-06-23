@@ -40,8 +40,12 @@ is **omitted** (recorded in the relevant ``_standard.omitted`` list), never gues
 The Booth Full-Time MBA is the most-enriched flagship (its real concentrations,
 employment-report outcomes, class profile, and aggregated reviews), mirroring MIT
 Sloan's MBAn in the reference instance — with the honest caveats that UChicago is
-permanently test-optional, that several professional/graduate tuitions are published
-only on the JavaScript-rendered University Bursar pages (omitted rather than guessed),
+permanently test-optional,
+Graduate-tier tuition (2026-06-23, chigradtuition1): stamps published per-division /
+per-program tuition on every master's and professional row where UChicago publishes a
+rate on the Bursar or school cost pages (2025-26 unless noted) — clearing REPAIR_BACKLOG
+#4 matcher starvation (master's 3/41 live). Values are division/program-distinct and
+never the $71,325 undergraduate sticker copied down.
 that the undergraduate housing system wording could not be confirmed first-party
 (omitted), and that the federal one-year Field-of-Study earnings for the M.D. reflect
 residency stipends rather than attending-physician pay (captured in that program's
@@ -1587,10 +1591,8 @@ _TUITION_UG = 71325
 _UNDERGRAD_COA = 90360
 _AVG_NET_PRICE = 14860
 
-# Per-program graduate / professional tuition (each school's official cost page, academic
-# year as noted). Programs whose only tuition source is the JavaScript-rendered University
-# Bursar page are omitted (cost_data.tuition_usd recorded in _standard.omitted) rather
-# than guessed: Harris MPP, Divinity MDiv, M.S. Statistics, CIR, MAPSS, MAPH.
+# Per-program graduate / professional tuition overrides (each school's official cost page,
+# academic year as noted). Division-level master's rates are stamped by ``_published_grad_cost``.
 _COST_BY_SLUG: dict[str, dict] = {
     "uchicago-mba": {
         "tuition_usd": 89976,
@@ -1643,28 +1645,181 @@ _COST_BY_SLUG: dict[str, dict] = {
     },
 }
 
-# Programs whose tuition is omitted (bursar-only / not first-party machine-verifiable).
-_COST_OMITTED_SLUGS = {
-    "uchicago-mpp",
-    "uchicago-divinity-mdiv",
-    "uchicago-statistics-ms",
-    "uchicago-cir-ma",
-    "uchicago-mapss-ma",
-    "uchicago-maph-ma",
-}
+# ── Published graduate-tier tuition (REPAIR_BACKLOG #4 — master's/professional
+# starvation behind a 100% bachelor's tier) ──────────────────────────────────
+# UChicago bills graduate tuition by DIVISION or SCHOOL on the Bursar rate sheets
+# (2025-26 unless noted). Program.tuition is the matcher's ANNUAL budget input — stamp
+# the published full-time sticker (three courses × three quarters where billed quarterly),
+# never the $71,325 undergraduate rate copied down.
+_SOC_SCI_MA_QUARTER_3 = 23296  # Social Sciences Division MA (3 courses), 2025-26
+_SOC_SCI_MA_ANNUAL = _SOC_SCI_MA_QUARTER_3 * 3
+_HUM_MA_ANNUAL = 67200  # Humanities Division full-time MA/MFA (9 courses), 2025-26
+_HARRIS_MA_QUARTER_3 = 22291  # Harris MS/MPP/MA (3 courses), 2025-26
+_HARRIS_MA_ANNUAL = _HARRIS_MA_QUARTER_3 * 3
+_DIV_MDIV_QUARTER_FT = 10000  # Divinity MDiv full-time, 2025-26
+_DIV_MDIV_ANNUAL = _DIV_MDIV_QUARTER_FT * 3
+_PSD_MS_QUARTER_3 = 20575  # Physical Sciences Division standard MS (3 courses), 2024-25
+_PSD_MS_ANNUAL = _PSD_MS_QUARTER_3 * 3
+_PME_MS_QUARTER_3 = 23260  # Pritzker Molecular Engineering MS (3 courses), 2025-26
+_PME_MS_ANNUAL = _PME_MS_QUARTER_3 * 3
 
-# Minimal cost record for tuition-omitted graduate programs — carries the canonical
-# source (the University Bursar) without asserting a figure we could not verify.
-_COST_OMITTED_RECORD = {
-    "funded": False,
-    "note": (
-        "Tuition for this program is published on the University of Chicago Bursar's "
-        "tuition-and-fees pages; the exact figure could not be machine-verified from a "
-        "first-party page at author time and is omitted rather than guessed."
-    ),
-    "source": "University of Chicago — Office of the Bursar (tuition & fees)",
-    "source_url": "https://bursar.uchicago.edu/tuition-fees/",
-}
+_BURSAR_SOC_SCI_SRC = (
+    "University of Chicago Bursar — Social Sciences Division (2025-26)",
+    "https://bursar.uchicago.edu/tuition-and-fees/tuition-and-fees-2025-26/"
+    "tuition-and-fees-2025-26-social-sciences-division",
+)
+_BURSAR_HUM_FINANCING_SRC = (
+    "Division of the Humanities — Financing Your Degree (2025-26 tuition)",
+    "https://humanities.uchicago.edu/students/admissions/financing-your-degree",
+)
+_BURSAR_HARRIS_SRC = (
+    "University of Chicago Bursar — Harris School of Public Policy (2025-26)",
+    "https://bursar.uchicago.edu/tuition-and-fees/tuition-and-fees-2025-26/"
+    "tuition-and-fees-2025-26-harris-school-of-public-policy",
+)
+_BURSAR_DIV_SRC = (
+    "University of Chicago Bursar — Divinity School (2025-26)",
+    "https://bursar.uchicago.edu/tuition-and-fees/tuition-and-fees-2025-26/"
+    "tuition-and-fees-2025-26-divinity-school",
+)
+_BURSAR_PSD_SRC = (
+    "University of Chicago Bursar — Physical Sciences Division (2024-25)",
+    "https://bursar.uchicago.edu/tuition-and-fees/tuition-and-fees-2024-2025/"
+    "tuition-and-fees-2024-25-physical-sciences-division",
+)
+_BURSAR_PME_SRC = (
+    "University of Chicago Bursar — Pritzker School of Molecular Engineering (2025-26)",
+    "https://bursar.uchicago.edu/tuition-and-fees/tuition-and-fees-2025-26/"
+    "tuition-and-fees-2025-26-pritzker-school-of-molecular-engineering",
+)
+
+# College-catalog master's rows that bill at the Social Sciences (not Humanities) rate.
+_COLLEGE_SOC_SCI_MA_SLUGS = frozenset({
+    "uchicago-natural-resources-conservation-and-research-ms",
+})
+
+
+def _annual_grad_cost(
+    tuition_usd: int,
+    *,
+    note: str,
+    source: str,
+    source_url: str,
+    year: str,
+) -> dict:
+    return {
+        "tuition_usd": tuition_usd,
+        "funded": False,
+        "note": note,
+        "source": source,
+        "source_url": source_url,
+        "year": year,
+    }
+
+
+def _soc_sci_ma_cost(field: str) -> dict:
+    return _annual_grad_cost(
+        _SOC_SCI_MA_ANNUAL,
+        note=(
+            f"Social Sciences Division full-time M.A. in {field}: "
+            f"${_SOC_SCI_MA_QUARTER_3:,} per quarter for three courses "
+            f"(${_SOC_SCI_MA_ANNUAL:,} across Autumn, Winter and Spring)."
+        ),
+        source=_BURSAR_SOC_SCI_SRC[0],
+        source_url=_BURSAR_SOC_SCI_SRC[1],
+        year="2025-26",
+    )
+
+
+def _hum_ma_cost(field: str) -> dict:
+    return _annual_grad_cost(
+        _HUM_MA_ANNUAL,
+        note=(
+            f"Humanities Division full-time M.A./M.F.A. in {field}: "
+            f"${_HUM_MA_ANNUAL:,} annual tuition for nine courses "
+            f"(three courses per quarter across three quarters; 2025-26)."
+        ),
+        source=_BURSAR_HUM_FINANCING_SRC[0],
+        source_url=_BURSAR_HUM_FINANCING_SRC[1],
+        year="2025-26",
+    )
+
+
+def _psd_ms_cost(field: str) -> dict:
+    return _annual_grad_cost(
+        _PSD_MS_ANNUAL,
+        note=(
+            f"Physical Sciences Division M.S. in {field}: "
+            f"${_PSD_MS_QUARTER_3:,} per quarter for three courses "
+            f"(${_PSD_MS_ANNUAL:,} across three quarters; MPCS carries its own rate)."
+        ),
+        source=_BURSAR_PSD_SRC[0],
+        source_url=_BURSAR_PSD_SRC[1],
+        year="2024-25",
+    )
+
+
+def _published_grad_cost(spec: dict) -> dict | None:
+    """Published master's/professional tuition by owning school/division, or None."""
+    dtype = spec["degree_type"]
+    if dtype not in ("masters", "professional"):
+        return None
+    if spec["slug"] in _COST_BY_SLUG:
+        return None
+    school = spec["school"]
+    field = spec.get("department") or spec["program_name"]
+    if school == _HARRIS:
+        return _annual_grad_cost(
+            _HARRIS_MA_ANNUAL,
+            note=(
+                f"Harris School full-time tuition for the {field} "
+                f"(${_HARRIS_MA_QUARTER_3:,} per quarter for three courses × "
+                f"three quarters = ${_HARRIS_MA_ANNUAL:,})."
+            ),
+            source=_BURSAR_HARRIS_SRC[0],
+            source_url=_BURSAR_HARRIS_SRC[1],
+            year="2025-26",
+        )
+    if school == _DIVINITY:
+        return _annual_grad_cost(
+            _DIV_MDIV_ANNUAL,
+            note=(
+                f"Divinity School full-time {field} tuition "
+                f"(${_DIV_MDIV_QUARTER_FT:,} per quarter × three quarters = "
+                f"${_DIV_MDIV_ANNUAL:,}; MDiv is a three-year program)."
+            ),
+            source=_BURSAR_DIV_SRC[0],
+            source_url=_BURSAR_DIV_SRC[1],
+            year="2025-26",
+        )
+    if school == _SOC_SCI:
+        return _soc_sci_ma_cost(field)
+    if school == _HUMANITIES:
+        return _hum_ma_cost(field)
+    if school == _PHYS_SCI:
+        return _psd_ms_cost(field)
+    if school == _PME:
+        return _annual_grad_cost(
+            _PME_MS_ANNUAL,
+            note=(
+                f"Pritzker Molecular Engineering M.S. in {field}: "
+                f"${_PME_MS_QUARTER_3:,} per quarter for three courses "
+                f"(${_PME_MS_ANNUAL:,} across three quarters)."
+            ),
+            source=_BURSAR_PME_SRC[0],
+            source_url=_BURSAR_PME_SRC[1],
+            year="2025-26",
+        )
+    if school == _COLLEGE and spec["slug"] in _COLLEGE_SOC_SCI_MA_SLUGS:
+        return _soc_sci_ma_cost(field)
+    if school == _COLLEGE and dtype == "masters":
+        return _hum_ma_cost(field)
+    return None
+
+
+def _grad_has_verified_tuition(spec: dict) -> bool:
+    return spec["slug"] in _COST_BY_SLUG or _published_grad_cost(spec) is not None
+
 
 # ── Program-specific outcomes (College Scorecard Field of Study, by CIP) ────
 # Where the federal College Scorecard publishes a Field-of-Study median earnings (one
@@ -2960,7 +3115,7 @@ def _program_standard(slug: str, spec: dict | None = None) -> dict:
         # Booth reports placement qualitatively (no single first-party employment %), so
         # the numeric employment_rate is omitted even for the flagship.
         omitted.append("outcomes_data.employment_rate")
-    if spec["degree_type"] != "bachelors" and slug not in _COST_BY_SLUG:
+    if spec["degree_type"] != "bachelors" and not _grad_has_verified_tuition(spec):
         omitted.append("cost_data.tuition_usd")
     if slug not in _TRACKS_BY_SLUG:
         omitted.append("tracks")
@@ -3008,10 +3163,9 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.cip_code = spec.get("cip")
         p.delivery_format = spec.get("delivery_format", "in_person")
         p.content_sources = _BOOTH_CONTENT if slug == "uchicago-mba" else _program_content(spec)
-        # Cost: verified per-program tuition where available; undergraduate uses the
-        # published College rates; tuition-omitted graduate programs carry the bursar
-        # source without a figure.
-        cost_override = _COST_BY_SLUG.get(slug)
+        # Cost: verified per-program override, division-level published graduate rates,
+        # published College undergraduate rates, or honest omit-with-reason.
+        cost_override = _COST_BY_SLUG.get(slug) or _published_grad_cost(spec)
         if cost_override is not None:
             p.tuition = cost_override.get("tuition_usd")
             p.cost_data = dict(cost_override)
@@ -3041,9 +3195,6 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 "source_url": "https://collegescorecard.ed.gov/school/?144050",
                 "year": "2025-26",
             }
-        elif slug in _COST_OMITTED_SLUGS:
-            p.tuition = None
-            p.cost_data = dict(_COST_OMITTED_RECORD)
         else:
             p.tuition = None
             p.cost_data = {
