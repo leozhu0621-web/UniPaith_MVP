@@ -29,6 +29,12 @@ programs (49/49 total external_reviews on coverable programs).
 
 Structural repair (2026-06-16, dukeprof5): replaced classification-only program
 descriptions with field-specific clauses from ``duke_field_descriptions.py``.
+
+Graduate-tier tuition (2026-06-23, dukegradtuition1): stamps published 2025-26
+professional rates from each school's official tuition page — M.D. $72,297,
+JD/LLM dual $93,450, DPT $42,000, OTD $43,000, DNP $32,880 (avg semester × 2),
+CRNA DNP $70,460 — never the $70,265 undergraduate sticker. PhD rows remain
+funded-omit-with-reason.
 """
 
 from __future__ import annotations
@@ -1080,8 +1086,8 @@ _GRAD_EXPLICIT: list[tuple] = [
         36,
         "on_campus",
         "https://law.duke.edu/apply/degreeprograms/jdllm",
-        None,
-        None,
+        93450,
+        "year",
         "A three-year dual degree pairing the J.D. with an LL.M. in international and "
         "comparative law.",
     ),
@@ -1092,8 +1098,8 @@ _GRAD_EXPLICIT: list[tuple] = [
         36,
         "on_campus",
         "https://law.duke.edu/llmle/jd",
-        None,
-        None,
+        93450,
+        "year",
         "A three-year dual degree pairing the J.D. with an LL.M. in law and entrepreneurship.",
     ),
     (
@@ -1128,8 +1134,8 @@ _GRAD_EXPLICIT: list[tuple] = [
         48,
         "on_campus",
         "https://medschool.duke.edu/education/md-program",
-        None,
-        None,
+        72297,
+        "year",
         "Duke's M.D. program, known for compressing the basic sciences into the first "
         "year to free the third year for scholarly research.",
     ),
@@ -1151,8 +1157,8 @@ _GRAD_EXPLICIT: list[tuple] = [
         36,
         "on_campus",
         "https://medschool.duke.edu/education/health-professions-education-programs/doctor-physical-therapy",
-        None,
-        None,
+        42000,
+        "year",
         "A clinical doctorate preparing physical therapists for evidence-based practice.",
     ),
     (
@@ -1162,8 +1168,8 @@ _GRAD_EXPLICIT: list[tuple] = [
         36,
         "on_campus",
         "https://medschool.duke.edu/education/health-professions-education-programs/occupational-therapy-doctorate",
-        None,
-        None,
+        43000,
+        "year",
         "An entry-level clinical doctorate in occupational therapy.",
     ),
     (
@@ -1280,8 +1286,8 @@ _GRAD_EXPLICIT: list[tuple] = [
         36,
         "hybrid",
         "https://nursing.duke.edu/academic-programs/dnp-program-nursing",
-        None,
-        None,
+        32880,
+        "year",
         "A practice doctorate for advanced-practice and executive-leadership nurses, "
         "delivered in a distance-based format with on-campus intensives.",
     ),
@@ -1292,8 +1298,8 @@ _GRAD_EXPLICIT: list[tuple] = [
         36,
         "on_campus",
         "https://nursing.duke.edu/academic-programs/dnp-program-nursing",
-        None,
-        None,
+        70460,
+        "year",
         "A full-time DNP educating certified registered nurse anesthetists.",
     ),
     (
@@ -1901,6 +1907,161 @@ _COST_SRC = (
     "Duke Board of Trustees 2025-26 cost of attendance + College Scorecard (UNITID 198419)",
     "https://collegescorecard.ed.gov/school/?198419",
 )
+
+
+_COST_SRC = (
+    "Duke Board of Trustees 2025-26 cost of attendance + College Scorecard (UNITID 198419)",
+    "https://collegescorecard.ed.gov/school/?198419",
+)
+
+# ── Published professional-tier tuition (REPAIR_BACKLOG #4 — professional-tier
+# starvation behind a 100% bachelor's tier) ─────────────────────────────────
+_LAW_TUITION_SRC = (
+    "Duke University School of Law — Tuition & Fees 2025-26",
+    "https://law.bulletins.duke.edu/policies/tuition",
+)
+_MED_MD_SRC = (
+    "Duke University School of Medicine — M.D. Financial Aid 2025-26",
+    "https://medschool.duke.edu/education/health-professions-education-programs/"
+    "doctor-medicine-md-program/financial-aid-doctor",
+)
+_DPT_TUITION_SRC = (
+    "Duke Doctor of Physical Therapy — Tuition",
+    "https://medschool.duke.edu/education/health-professions-education-programs/"
+    "doctor-physical-therapy-program/admissions/tuition",
+)
+_OTD_TUITION_SRC = (
+    "Duke Occupational Therapy Doctorate — Financial Aid 2025-26",
+    "https://medschool.duke.edu/education/health-professions-education-programs/"
+    "occupational-therapy-doctorate/apply-duke-otd/financial-aid",
+)
+_DNP_TUITION_SRC = (
+    "Duke University School of Nursing — DNP Tuition & Fees 2025-26",
+    "https://nursing.duke.edu/academic-programs/dnp-program-nursing/dnp-tuition-fees",
+)
+_DIVINITY_TUITION_SRC = (
+    "Duke Divinity School — Tuition & Financial Aid",
+    "https://divinity.duke.edu/admissions/tuition-financial-aid",
+)
+
+_LAW_JD_ANNUAL = 83400  # JD (2025-26 bulletin; existing verified rate)
+_LAW_JDLLM_ANNUAL = 93450  # JD/LLM dual (2025-26 bulletin)
+_MED_MD_ANNUAL = 72297  # fall $36,149 + spring $36,148
+_DPT_ANNUAL = 42000
+_OTD_ANNUAL = 43000
+_DNP_SEMESTER = 16440  # published average DNP tuition per semester
+_DNP_ANNUAL = _DNP_SEMESTER * 2  # fall + spring academic year
+_CRNA_SEMESTER = 35230  # published average nurse-anesthesia DNP per semester
+_CRNA_ANNUAL = _CRNA_SEMESTER * 2
+_DMIN_ANNUAL = 31500
+
+
+def _annual_grad_cost(
+    tuition_usd: int,
+    *,
+    note: str,
+    source: str,
+    source_url: str,
+    year: str = "2025-26",
+) -> dict:
+    return {
+        "tuition_usd": tuition_usd,
+        "funded": False,
+        "note": note,
+        "source": source,
+        "source_url": source_url,
+        "year": year,
+    }
+
+
+_COST_BY_SLUG: dict[str, dict] = {
+    "duke-juris-doctor-jd-prof": _annual_grad_cost(
+        _LAW_JD_ANNUAL,
+        note=(
+            f"Duke Law J.D. academic-year tuition (${_LAW_JD_ANNUAL:,}; 2025-26 "
+            "School of Law bulletin)."
+        ),
+        source=_LAW_TUITION_SRC[0],
+        source_url=_LAW_TUITION_SRC[1],
+    ),
+    "duke-jd-llm-in-international-and-comparative-law-prof": _annual_grad_cost(
+        _LAW_JDLLM_ANNUAL,
+        note=(
+            f"JD/LLM dual-degree academic-year tuition (${_LAW_JDLLM_ANNUAL:,}; "
+            "2025-26 School of Law bulletin — higher than the standalone J.D. rate)."
+        ),
+        source=_LAW_TUITION_SRC[0],
+        source_url=_LAW_TUITION_SRC[1],
+    ),
+    "duke-jd-llm-in-law-and-entrepreneurship-prof": _annual_grad_cost(
+        _LAW_JDLLM_ANNUAL,
+        note=(
+            f"JD/LLM in Law & Entrepreneurship academic-year tuition "
+            f"(${_LAW_JDLLM_ANNUAL:,}; 2025-26 School of Law bulletin)."
+        ),
+        source=_LAW_TUITION_SRC[0],
+        source_url=_LAW_TUITION_SRC[1],
+    ),
+    "duke-doctor-of-medicine-md-prof": _annual_grad_cost(
+        _MED_MD_ANNUAL,
+        note=(
+            f"Duke School of Medicine M.D. tuition (${_MED_MD_ANNUAL:,} per academic "
+            "year; fall + spring billing)."
+        ),
+        source=_MED_MD_SRC[0],
+        source_url=_MED_MD_SRC[1],
+    ),
+    "duke-doctor-of-physical-therapy-dpt-prof": _annual_grad_cost(
+        _DPT_ANNUAL,
+        note=(
+            f"DPT program tuition (${_DPT_ANNUAL:,} per program year; billed in equal "
+            "installments across fall, spring, and summer in year one)."
+        ),
+        source=_DPT_TUITION_SRC[0],
+        source_url=_DPT_TUITION_SRC[1],
+    ),
+    "duke-occupational-therapy-doctorate-otd-prof": _annual_grad_cost(
+        _OTD_ANNUAL,
+        note=(
+            f"OTD program tuition (${_OTD_ANNUAL:,} per program year; fall + spring + "
+            "summer billing in year one)."
+        ),
+        source=_OTD_TUITION_SRC[0],
+        source_url=_OTD_TUITION_SRC[1],
+    ),
+    "duke-doctor-of-nursing-practice-dnp-prof": _annual_grad_cost(
+        _DNP_ANNUAL,
+        note=(
+            f"Average DNP tuition (${_DNP_SEMESTER:,} per fall/spring semester × 2 = "
+            f"${_DNP_ANNUAL:,} academic-year tuition; Duke publishes per-credit rates "
+            "with this published semester average for a fall start)."
+        ),
+        source=_DNP_TUITION_SRC[0],
+        source_url=_DNP_TUITION_SRC[1],
+    ),
+    "duke-doctor-of-nursing-practice-nurse-anesthesia-prof": _annual_grad_cost(
+        _CRNA_ANNUAL,
+        note=(
+            f"Average nurse-anesthesia DNP tuition (${_CRNA_SEMESTER:,} per "
+            f"fall/spring semester × 2 = ${_CRNA_ANNUAL:,} academic-year tuition)."
+        ),
+        source=_DNP_TUITION_SRC[0],
+        source_url=_DNP_TUITION_SRC[1],
+    ),
+    "duke-doctor-of-ministry-dmin-prof": _annual_grad_cost(
+        _DMIN_ANNUAL,
+        note=(
+            f"Duke Divinity D.Min. academic-year tuition (${_DMIN_ANNUAL:,}; "
+            "hybrid professional doctorate)."
+        ),
+        source=_DIVINITY_TUITION_SRC[0],
+        source_url=_DIVINITY_TUITION_SRC[1],
+    ),
+}
+
+
+def _grad_has_verified_tuition(spec: dict) -> bool:
+    return spec["slug"] in _COST_BY_SLUG or spec.get("tuition") is not None
 
 
 def _grad_cost(spec: dict) -> dict | None:
@@ -2739,7 +2900,7 @@ def _program_standard(slug: str, spec: dict | None = None) -> dict:
         ]
     # Graduate/professional programs without a verified per-program tuition omit tuition_usd
     # (their cost_data carries a sourced "see the school's tuition page" record instead).
-    if spec.get("degree_type") != "bachelors" and spec.get("tuition") is None:
+    if spec.get("degree_type") != "bachelors" and not _grad_has_verified_tuition(spec):
         omitted.append("cost_data.tuition_usd")
     if slug not in _TRACKS_BY_SLUG:
         omitted.append("tracks")
@@ -2811,7 +2972,8 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 "year": "2025-26",
             }
         else:
-            grad_cost = _grad_cost(spec)
+            cost_override = _COST_BY_SLUG.get(slug)
+            grad_cost = cost_override or _grad_cost(spec)
             if grad_cost is not None:
                 p.tuition = grad_cost["tuition_usd"]
                 p.cost_data = grad_cost
