@@ -13,9 +13,15 @@ Scope note (resumption clause, SKILL §"Scope & resumption"): Emory was a 5-stub
 institution seed with 2 campus photos and a dead feed. This pass takes the INSTITUTION
 fully to gold, expands the verified campus-photo gallery to four entries, wires working
 Trumba events + News Center atom feeds, and replaces the stubs with a real, verified,
-field-specific catalog of 46 programs across eight degree-granting schools. The full
-Laney graduate catalog and per-program review depth are IN-FLIGHT for the next run —
-recorded honestly, never padded.
+field-specific catalog of 46 programs across eight degree-granting schools.
+
+Graduate-tier tuition (2026-06-23, emorygradtuition1): stamps published 2025-26
+master's/professional rates from Emory Student Financial Services — Laney $73,200,
+Goizueta MBA $76,900, Rollins MPH $43,264 / MSPH $50,186, Candler MDiv $27,500,
+Law JD $69,510, Medicine MD $59,000 — never the $64,280 undergraduate sticker.
+PhD rows remain funded-omit-with-reason. The full Laney graduate catalog and deeper
+per-program review coverage are IN-FLIGHT for a future run — recorded honestly, never
+padded.
 """
 
 # ruff: noqa: E501
@@ -674,6 +680,145 @@ _COST_SRC = (
     "https://studentaid.emory.edu/undergraduate/cost/index.html",
 )
 
+_BURSAR_TUITION_SRC = (
+    "Emory University Student Financial Services — 2025-2026 Tuition Rates",
+    "https://studentfinancials.emory.edu/_includes/documents/tuition_rates_25-26.pdf",
+)
+_LAW_COA_SRC = (
+    "Emory Student Financial Aid — Law (JD) cost of attendance 2025-26",
+    "https://studentaid.emory.edu/_includes/documents/sections/graduate/apply/coa_law.pdf",
+)
+
+# ── Published graduate-tier tuition (REPAIR_BACKLOG #4 — master's/professional
+# starvation behind a 100% bachelor's tier) ──────────────────────────────────
+# Emory bills graduate/professional tuition BY SCHOOL on the Student Financial Services
+# rate sheet (2025-26). Program.tuition is the matcher's ANNUAL budget input — stamp the
+# published full-time sticker, never the $64,280 undergraduate rate copied down.
+_LGS_SEM = 24400  # Laney Graduate School per term (fall/spring/summer)
+_LGS_ANNUAL = _LGS_SEM * 3  # $73,200 across three terms
+_GOIZUETA_MBA_SEM = 38450  # Traditional full-time MBA per term
+_GOIZUETA_MBA_ANNUAL = _GOIZUETA_MBA_SEM * 2  # fall + spring academic year
+_ROLLINS_MPH_SEM = 21632  # Traditional MPH (4-semester plan) per term
+_ROLLINS_MPH_ANNUAL = _ROLLINS_MPH_SEM * 2
+_ROLLINS_MSPH_SEM = 25093  # Traditional MSPH per term
+_ROLLINS_MSPH_ANNUAL = _ROLLINS_MSPH_SEM * 2
+_CANDLER_MDIV_SEM = 13750  # MDiv / MRL / MRPL / MTS / ThM per term
+_CANDLER_MDIV_ANNUAL = _CANDLER_MDIV_SEM * 2  # $27,500 fall + spring
+_LAW_JD_ANNUAL = 69510  # JD fixed annual tuition (12+ credits)
+_MED_MD_SEM = 29500  # M.D. per fall/spring term (summer not billed)
+_MED_MD_ANNUAL = _MED_MD_SEM * 2  # $59,000
+
+
+def _annual_grad_cost(
+    tuition_usd: int,
+    *,
+    note: str,
+    source: str,
+    source_url: str,
+    year: str,
+) -> dict:
+    return {
+        "tuition_usd": tuition_usd,
+        "funded": False,
+        "note": note,
+        "source": source,
+        "source_url": source_url,
+        "year": year,
+    }
+
+
+_COST_BY_SLUG: dict[str, dict] = {
+    "emory-business-administration-mba": _annual_grad_cost(
+        _GOIZUETA_MBA_ANNUAL,
+        note=(
+            "Goizueta Traditional full-time MBA tuition: "
+            f"${_GOIZUETA_MBA_SEM:,} per fall and spring term "
+            f"(${_GOIZUETA_MBA_ANNUAL:,} academic-year tuition; summer terms "
+            "bill at the same per-term rate when enrolled)."
+        ),
+        source=_BURSAR_TUITION_SRC[0],
+        source_url=_BURSAR_TUITION_SRC[1],
+        year="2025-26",
+    ),
+    "emory-public-health-mph": _annual_grad_cost(
+        _ROLLINS_MPH_ANNUAL,
+        note=(
+            "Rollins Traditional MPH (four-semester plan): "
+            f"${_ROLLINS_MPH_SEM:,} per fall and spring term "
+            f"(${_ROLLINS_MPH_ANNUAL:,} academic-year tuition on the "
+            "four-semester plan)."
+        ),
+        source=_BURSAR_TUITION_SRC[0],
+        source_url=_BURSAR_TUITION_SRC[1],
+        year="2025-26",
+    ),
+    "emory-public-health-msph": _annual_grad_cost(
+        _ROLLINS_MSPH_ANNUAL,
+        note=(
+            "Rollins Traditional MSPH: "
+            f"${_ROLLINS_MSPH_SEM:,} per fall and spring term "
+            f"(${_ROLLINS_MSPH_ANNUAL:,} academic-year tuition on the "
+            "four-semester plan)."
+        ),
+        source=_BURSAR_TUITION_SRC[0],
+        source_url=_BURSAR_TUITION_SRC[1],
+        year="2025-26",
+    ),
+    "emory-theology-mdiv": _annual_grad_cost(
+        _CANDLER_MDIV_ANNUAL,
+        note=(
+            "Candler Master of Divinity: "
+            f"${_CANDLER_MDIV_SEM:,} per fall and spring term "
+            f"(${_CANDLER_MDIV_ANNUAL:,} academic-year tuition; MDiv is a "
+            "three-year program)."
+        ),
+        source=_BURSAR_TUITION_SRC[0],
+        source_url=_BURSAR_TUITION_SRC[1],
+        year="2025-26",
+    ),
+    "emory-law-prof": _annual_grad_cost(
+        _LAW_JD_ANNUAL,
+        note=(
+            "Emory Law J.D. fixed tuition for 12 or more credit hours per "
+            f"academic year (${_LAW_JD_ANNUAL:,} fall 2025–spring 2026)."
+        ),
+        source=_LAW_COA_SRC[0],
+        source_url=_LAW_COA_SRC[1],
+        year="2025-26",
+    ),
+    "emory-medicine-prof": _annual_grad_cost(
+        _MED_MD_ANNUAL,
+        note=(
+            "Emory School of Medicine M.D. tuition: "
+            f"${_MED_MD_SEM:,} per fall and spring term "
+            f"(${_MED_MD_ANNUAL:,} academic-year tuition; medical students are "
+            "not assessed tuition in summer terms)."
+        ),
+        source=_BURSAR_TUITION_SRC[0],
+        source_url=_BURSAR_TUITION_SRC[1],
+        year="2025-26",
+    ),
+    "emory-computer-science-ms": _annual_grad_cost(
+        _LGS_ANNUAL,
+        note=(
+            "Laney Graduate School full-time tuition: "
+            f"${_LGS_SEM:,} per term across fall, spring, and summer "
+            f"(${_LGS_ANNUAL:,} annual full-time rate)."
+        ),
+        source=_BURSAR_TUITION_SRC[0],
+        source_url=_BURSAR_TUITION_SRC[1],
+        year="2025-26",
+    ),
+}
+
+
+def _published_grad_cost(spec: dict) -> dict | None:
+    return None
+
+
+def _grad_has_verified_tuition(spec: dict) -> bool:
+    return spec["slug"] in _COST_BY_SLUG or _published_grad_cost(spec) is not None
+
 _OUTCOMES_CONDITIONS = (
     "Institution-wide median earnings of federally aided students measured 10 years after "
     "entry (U.S. Dept. of Education College Scorecard); not a program-specific figure."
@@ -813,7 +958,7 @@ def _program_standard(slug: str, spec: dict) -> dict:
         "outcomes_data.employment_rate",
         "outcomes_data.top_industries",
     ]
-    if spec["degree_type"] != "bachelors":
+    if spec["degree_type"] != "bachelors" and not _grad_has_verified_tuition(spec):
         omitted.append("cost_data.tuition_usd")
     if slug not in _TRACKS_BY_SLUG:
         omitted.append("tracks")
@@ -955,7 +1100,11 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.catalog_source = "curated"
         p.delivery_format = spec["delivery_format"]
         p.content_sources = _program_content(spec["school"], spec["keywords"])
-        if spec["degree_type"] == "bachelors":
+        cost_override = _COST_BY_SLUG.get(slug) or _published_grad_cost(spec)
+        if cost_override is not None:
+            p.tuition = cost_override.get("tuition_usd")
+            p.cost_data = dict(cost_override)
+        elif spec["degree_type"] == "bachelors":
             p.tuition = _TUITION_UG
             p.cost_data = {
                 "tuition_usd": _TUITION_UG,
@@ -977,13 +1126,20 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         else:
             p.tuition = None
             p.cost_data = {
+                "funded": spec["degree_type"] == "phd",
                 "note": (
-                    "Tuition for this graduate/professional program is published on the "
-                    "school's official tuition page; doctoral students at Emory are "
-                    "typically funded. A verified per-program figure is not yet recorded here."
+                    "Doctoral students at Emory are typically funded via fellowships or "
+                    "assistantships when admitted; tuition is waived for funded PhD students. "
+                    "See the Laney Graduate School tuition schedule for the published sticker."
+                    if spec["degree_type"] == "phd"
+                    else (
+                        "Tuition for this graduate/professional program is published on the "
+                        "school's official tuition page; a verified per-program figure is not "
+                        "yet recorded here."
+                    )
                 ),
-                "source": "Emory University — program tuition page",
-                "source_url": _SCHOOL_WEBSITE.get(spec["school"]),
+                "source": _BURSAR_TUITION_SRC[0],
+                "source_url": _BURSAR_TUITION_SRC[1],
             }
         p.application_requirements = _requirements_for(spec)
         outcomes = dict(_OUTCOMES_INSTITUTION)
