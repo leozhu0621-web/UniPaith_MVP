@@ -3979,6 +3979,101 @@ def _phd_funded_cost() -> dict:
     }
 
 
+def _annual_prof_cost(
+    tuition_usd: int,
+    *,
+    note: str,
+    source: str,
+    source_url: str,
+    year: str,
+) -> dict:
+    return {
+        "tuition_usd": tuition_usd,
+        "funded": False,
+        "note": note,
+        "source": source,
+        "source_url": source_url,
+        "year": year,
+    }
+
+
+# Published professional-tier tuition (REPAIR_BACKLOG #4 — professional tier 0/4 live).
+# Each rate is the school’s own published registration/tuition figure for California residents
+# (distinct from the $15,202 undergraduate sticker and the $21,115 academic-graduate rate).
+_LAW_TUITION_SRC = (
+    "UCLA School of Law — J.D. Tuition and Fees",
+    "https://law.ucla.edu/admissions/jd-admissions/tuition-fees",
+)
+_MED_TUITION_SRC = (
+    "David Geffen School of Medicine — How Much Does Medical School Cost?",
+    "https://medschool.ucla.edu/education/md-education/financial-aid-scholarships/how-much-is-medical-school",
+)
+_DDS_TUITION_SRC = (
+    "UCLA School of Dentistry — DDS Tuition and Costs",
+    "https://dentistry.ucla.edu/academics-admissions/dds-program/tuition-and-costs",
+)
+_DNP_TUITION_SRC = (
+    "UCLA School of Nursing — Post BS-DNP Program Tuition & Fees",
+    "https://nursing.ucla.edu/programs-admissions/financial-aid/tuition-fees/tuition-fees-post-bs-dnp-program",
+)
+
+_JD_ANNUAL = 61_744  # 2025-26 CA resident (Law At-a-Glance + ABA Standard 509)
+_MD_ANNUAL = 54_656  # 2026-27 1st-year Tuition & Fees, CA resident (DGSOM COA table)
+_DDS_ANNUAL = 52_880  # 1st-year Tuition & Fees, CA resident (PDST DDS program)
+_DNP_ANNUAL = 45_440  # 2025-26 estimated registration fees, CA resident (Post BS-DNP)
+
+_COST_BY_SLUG: dict[str, dict] = {
+    "ucla-juris-doctor-prof": _annual_prof_cost(
+        _JD_ANNUAL,
+        note=(
+            f"UCLA Law J.D. academic-year tuition and fees (${_JD_ANNUAL:,}; California "
+            "resident; 2025-26 School of Law At-a-Glance / ABA Standard 509, excluding "
+            "optional UCSHIP if waived)."
+        ),
+        source=_LAW_TUITION_SRC[0],
+        source_url=_LAW_TUITION_SRC[1],
+        year="2025-26",
+    ),
+    "ucla-doctor-of-medicine-prof": _annual_prof_cost(
+        _MD_ANNUAL,
+        note=(
+            f"David Geffen School of Medicine M.D. 1st-year tuition and fees "
+            f"(${_MD_ANNUAL:,}; California resident; 2026-27 DGSOM cost-of-attendance "
+            "table, including Professional Degree Supplemental Tuition)."
+        ),
+        source=_MED_TUITION_SRC[0],
+        source_url=_MED_TUITION_SRC[1],
+        year="2026-27",
+    ),
+    "ucla-doctor-of-dental-surgery-prof": _annual_prof_cost(
+        _DDS_ANNUAL,
+        note=(
+            f"UCLA School of Dentistry D.D.S. 1st-year tuition and fees (${_DDS_ANNUAL:,}; "
+            "California resident; PDST program per the school's published DDS budget table, "
+            "excluding UCSHIP if waived)."
+        ),
+        source=_DDS_TUITION_SRC[0],
+        source_url=_DDS_TUITION_SRC[1],
+        year="2025-26",
+    ),
+    "ucla-doctor-of-nursing-practice-prof": _annual_prof_cost(
+        _DNP_ANNUAL,
+        note=(
+            f"UCLA School of Nursing Post BS-DNP estimated registration fees "
+            f"(${_DNP_ANNUAL:,}; California resident; 2025-26 projected mandatory "
+            "systemwide + PDST + campus fees per the nursing program tuition table)."
+        ),
+        source=_DNP_TUITION_SRC[0],
+        source_url=_DNP_TUITION_SRC[1],
+        year="2025-26",
+    ),
+}
+
+
+def _prof_has_verified_tuition(spec: dict) -> bool:
+    return spec.get("slug") in _COST_BY_SLUG
+
+
 # Professional / self-supporting master's degrees carry a separate (higher) supplemental or
 # self-supporting tuition schedule, NOT the academic systemwide graduate rate — stamping the
 # academic rate on an MBA / MPH / MEng would be a wrong fact, so these are omitted-with-reason
@@ -4476,6 +4571,10 @@ def _cost_for(spec: dict) -> tuple[int | None, dict]:
     dt = spec["degree_type"]
     if dt == "bachelors":
         return _TUITION_UG_IN_STATE, _undergrad_cost()
+    if dt == "professional":
+        cost_override = _COST_BY_SLUG.get(spec.get("slug", ""))
+        if cost_override is not None:
+            return cost_override["tuition_usd"], cost_override
     if dt in ("phd", "doctoral"):
         # Only research Doctor of Philosophy degrees carry the standard funded tuition
         # remission. Professional / self-supporting doctorates encoded as "phd" — Ed.D.,
