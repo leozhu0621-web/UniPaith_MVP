@@ -35,6 +35,15 @@ professional rates from each school's official tuition page — M.D. $72,297,
 JD/LLM dual $93,450, DPT $42,000, OTD $43,000, DNP $32,880 (avg semester × 2),
 CRNA DNP $70,460 — never the $70,265 undergraduate sticker. PhD rows remain
 funded-omit-with-reason.
+
+Master's-tier tuition (2026-06-23, dukemstuition1, REPAIR_BACKLOG #4): stamps
+the remaining 17 null master's rows from each school's published 2025-26 / 2026-27
+tuition page — Fuqua Accelerated MBA $107,900 · WEMBA $178,400 · MSQM online
+$72,220 · MBCS $69,900 · Pratt MEng $102,930 · biostatistics $43,771/yr · MHSc
+clinical research $896/credit × 36 · medical physics / population health
+$33,862/sem × 4 · MBS $52,748 · PA $55,327/yr · MMCi $70,312 · MJS $27,050/yr ·
+MSN $2,250/credit × 44 (bulletin 36–49 credit range) — none equal the $70,265
+undergraduate sticker.
 """
 
 from __future__ import annotations
@@ -966,8 +975,8 @@ _GRAD_EXPLICIT: list[tuple] = [
         10,
         "on_campus",
         "https://www.fuqua.duke.edu/programs/accelerated-daytime-mba",
-        None,
-        None,
+        107900,
+        "total",
         "A 10-month MBA for applicants who already hold a master's in management, "
         "joining the Daytime MBA cohort for the second year.",
     ),
@@ -978,8 +987,8 @@ _GRAD_EXPLICIT: list[tuple] = [
         22,
         "hybrid",
         "https://www.fuqua.duke.edu/programs/weekend-executive-mba",
-        None,
-        None,
+        178400,
+        "total",
         "A 22-month executive MBA blending monthly three-day campus residencies with "
         "distance learning for working professionals.",
     ),
@@ -1002,8 +1011,8 @@ _GRAD_EXPLICIT: list[tuple] = [
         10,
         "on_campus",
         "https://www.fuqua.duke.edu/programs/mbcs",
-        None,
-        None,
+        69900,
+        "total",
         "A 10-month master's preparing graduates to lead at the intersection of business, "
         "climate and sustainability.",
     ),
@@ -1026,8 +1035,8 @@ _GRAD_EXPLICIT: list[tuple] = [
         19,
         "online",
         "https://www.fuqua.duke.edu/programs/msqm-business-analytics",
-        None,
-        None,
+        72220,
+        "total",
         "A 19-month online master's in business analytics for working professionals.",
     ),
     (
@@ -1037,8 +1046,8 @@ _GRAD_EXPLICIT: list[tuple] = [
         19,
         "online",
         "https://www.fuqua.duke.edu/programs/msqm-health-analytics",
-        None,
-        None,
+        72220,
+        "total",
         "A 19-month online master's applying analytics to the healthcare sector for "
         "working professionals.",
     ),
@@ -1121,8 +1130,8 @@ _GRAD_EXPLICIT: list[tuple] = [
         24,
         "hybrid",
         "https://judicialstudies.duke.edu/",
-        None,
-        None,
+        27050,
+        "year",
         "A hybrid degree of the Bolch Judicial Institute for sitting judges, combining "
         "summer on-campus sessions with a thesis.",
     ),
@@ -1179,8 +1188,8 @@ _GRAD_EXPLICIT: list[tuple] = [
         24,
         "on_campus",
         "https://medschool.duke.edu/education/health-professions-education-programs/physician-assistant-program",
-        None,
-        None,
+        55327,
+        "year",
         "The nation's first physician assistant program, awarding the Master of Health Sciences.",
     ),
     (
@@ -1190,8 +1199,8 @@ _GRAD_EXPLICIT: list[tuple] = [
         10,
         "on_campus",
         "https://medschool.duke.edu/education/health-professions-education-programs/master-biomedical-sciences",
-        None,
-        None,
+        52748,
+        "year",
         "A 10-month master's strengthening the academic record of students preparing for "
         "health-professional school.",
     ),
@@ -1202,8 +1211,8 @@ _GRAD_EXPLICIT: list[tuple] = [
         24,
         "on_campus",
         "https://biostat.duke.edu/education-and-training/master-biostatistics",
-        None,
-        None,
+        43771,
+        "year",
         "A two-year master's in biostatistics across clinical/translational, biomedical "
         "data science, mathematical statistics and health-AI tracks.",
     ),
@@ -1214,8 +1223,8 @@ _GRAD_EXPLICIT: list[tuple] = [
         24,
         "online",
         "https://biostat.duke.edu/education-and-training/master-health-sciences-clinical-research",
-        None,
-        None,
+        32256,
+        "total",
         "An online, synchronous master's training health professionals in clinical "
         "research methods.",
     ),
@@ -1226,8 +1235,8 @@ _GRAD_EXPLICIT: list[tuple] = [
         24,
         "on_campus",
         "https://medicalphysics.duke.edu/",
-        None,
-        None,
+        135448,
+        "total",
         "A CAMPEP-accredited, two-year master's in medical physics across imaging, "
         "therapy, nuclear-medicine and health-physics tracks.",
     ),
@@ -1238,8 +1247,8 @@ _GRAD_EXPLICIT: list[tuple] = [
         24,
         "on_campus",
         "https://populationhealth.duke.edu/education/ms-population-health-sciences",
-        None,
-        None,
+        135448,
+        "total",
         "A two-year master's training researchers in the methods of population health.",
     ),
     (
@@ -1249,8 +1258,8 @@ _GRAD_EXPLICIT: list[tuple] = [
         12,
         "hybrid",
         "https://medschool.duke.edu/education/health-professions-education-programs/master-management-clinical-informatics",
-        None,
-        None,
+        70312,
+        "total",
         "A 12-month hybrid master's blending online study with monthly on-campus sessions "
         "in clinical and health informatics.",
     ),
@@ -1274,8 +1283,8 @@ _GRAD_EXPLICIT: list[tuple] = [
         24,
         "hybrid",
         "https://nursing.duke.edu/academic-programs/msn-master-science-nursing",
-        None,
-        None,
+        99000,
+        "total",
         "A hybrid master's preparing advanced-practice nurses across nurse-practitioner "
         "specialties from family to psychiatric-mental-health care.",
     ),
@@ -1473,8 +1482,8 @@ _GRAD_EXPLICIT: list[tuple] = [
         16,
         "hybrid",
         "https://masters.pratt.duke.edu/aipi/",
-        None,
-        None,
+        102930,
+        "total",
         "A professional MEng building AI and machine-learning products, offered on campus "
         "or online.",
     ),
@@ -1530,8 +1539,8 @@ _GRAD_EXPLICIT: list[tuple] = [
         18,
         "hybrid",
         "https://masters.pratt.duke.edu/cybersecurity/",
-        None,
-        None,
+        102930,
+        "total",
         "A professional MEng in cybersecurity, offered on campus or online.",
     ),
     (
@@ -1541,8 +1550,8 @@ _GRAD_EXPLICIT: list[tuple] = [
         18,
         "hybrid",
         "https://masters.pratt.duke.edu/fintech/",
-        None,
-        None,
+        102930,
+        "total",
         "A professional MEng in financial technology, offered on campus or online.",
     ),
     (
