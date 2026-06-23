@@ -1792,7 +1792,224 @@ _UNDERGRAD_COA = 45619
 _ROOM_BOARD = 23750
 _BOOKS_SUPPLIES = 1131
 _AVG_NET_PRICE = 13481
-_COST_BY_SLUG: dict[str, dict] = {}
+_FEE_SCHEDULE_SRC = (
+    "UC Berkeley Office of the Registrar — Fee Schedule (2024-25 cohort)",
+    "https://registrar.berkeley.edu/tuition-fees/fee-schedule/",
+)
+_SSGPDP_SRC = (
+    "UC Berkeley Office of the Registrar — Self-Supporting Graduate Professional "
+    "Degree Programs",
+    "https://registrar.berkeley.edu/tuition-fees/"
+    "self-supporting-graduate-professional-degree-programs-ssgpdp/",
+)
+_LLM_TUITION_SRC = (
+    "UC Berkeley Law — LL.M. Cost of Attendance",
+    "https://www.law.berkeley.edu/admissions/financial-aid/llm-financial-aid/"
+    "cost-of-attendance/",
+)
+_MFE_TUITION_SRC = (
+    "UC Berkeley Haas — Master of Financial Engineering Cost of Attendance",
+    "https://haas.berkeley.edu/financial-aid/master-of-financial-engineering/cost/",
+)
+# Berkeley SHIP per semester on the 2024-25 registrar fee schedule (excluded from tuition).
+_HEALTH_INS_SEM = 3924
+
+
+def _annual_resident_tuition(continuing_student_total_per_sem: float) -> int:
+    """Fall + spring mandatory tuition/fees/PDST for CA residents (excl. health insurance)."""
+    return int((continuing_student_total_per_sem - _HEALTH_INS_SEM) * 2)
+
+
+def _annual_prof_cost(
+    tuition_usd: int,
+    *,
+    note: str,
+    source: str,
+    source_url: str,
+    year: str = "2024-25",
+) -> dict:
+    return {
+        "tuition_usd": tuition_usd,
+        "funded": False,
+        "note": note,
+        "source": source,
+        "source_url": source_url,
+        "year": year,
+    }
+
+
+# Published professional-tier tuition (REPAIR_BACKLOG #4 — professional tier 0/20 live).
+# Rates from the registrar fee schedule (PDST programs) and SSGPDP (self-supporting).
+_TUITION_HAAS_MBA = _annual_resident_tuition(42_323.75)
+_TUITION_LAW_JD = _annual_resident_tuition(37_091.75)
+_TUITION_MPP = _annual_resident_tuition(19_238.75)
+_TUITION_MPH = _annual_resident_tuition(17_830.75)
+_TUITION_MSW = _annual_resident_tuition(16_088.75)
+_TUITION_OPTOMETRY = _annual_resident_tuition(25_126.75)
+_TUITION_CED = _annual_resident_tuition(16_928.75)
+_TUITION_MENG = _annual_resident_tuition(29_230.75)
+_TUITION_MIMS = _annual_resident_tuition(16_936.75)
+_TUITION_GRAD_ACADEMIC = _annual_resident_tuition(12_380.75)
+_TUITION_LLM = 79_327  # SSGPDP Traditional LL.M. program fee (Fall 2025 cohort)
+_TUITION_MFE = 92_269  # SSGPDP full-time MFE program fee (Spring 2026 cohort)
+
+_CED_PROF_SLUGS = frozenset(
+    {
+        "berkeley-architecture-prof",
+        "berkeley-city-urban-community-and-regional-planning-prof",
+        "berkeley-landscape-architecture-prof",
+        "berkeley-architectural-sciences-and-technology-prof",
+    }
+)
+_MENG_PROF_SLUGS = frozenset(
+    {
+        "berkeley-engineering-general-prof",
+        "berkeley-biomedical-medical-engineering-prof",
+        "berkeley-civil-engineering-prof",
+        "berkeley-electrical-electronics-and-communications-engineering-prof",
+        "berkeley-mechanical-engineering-prof",
+        "berkeley-nuclear-engineering-prof",
+        "berkeley-operations-research-prof",
+    }
+)
+# IPEDS "professional" rows with no PDST line — billed on the Graduate: Academic schedule.
+_ACADEMIC_GRAD_PROF_SLUGS = frozenset(
+    {
+        "berkeley-natural-resources-conservation-and-research-prof",
+        "berkeley-applied-mathematics-prof",
+        "berkeley-materials-sciences-prof",
+    }
+)
+
+_COST_BY_SLUG: dict[str, dict] = {
+    "berkeley-law-prof": _annual_prof_cost(
+        _TUITION_LAW_JD,
+        note=(
+            f"Berkeley Law J.D. academic-year tuition and fees (${_TUITION_LAW_JD:,}; "
+            "California resident; fall + spring on the registrar professional Law "
+            "schedule, excluding health insurance)."
+        ),
+        source=_FEE_SCHEDULE_SRC[0],
+        source_url=_FEE_SCHEDULE_SRC[1],
+    ),
+    "berkeley-legal-research-and-advanced-professional-studies-prof": _annual_prof_cost(
+        _TUITION_LLM,
+        note=(
+            f"Berkeley Law Traditional LL.M. program fee (${_TUITION_LLM:,}; covers "
+            "instruction and campus-based fees for the fall + spring academic year; "
+            "self-supporting program per the registrar SSGPDP schedule)."
+        ),
+        source=_LLM_TUITION_SRC[0],
+        source_url=_LLM_TUITION_SRC[1],
+    ),
+    "berkeley-business-administration-management-and-operations-prof": _annual_prof_cost(
+        _TUITION_HAAS_MBA,
+        note=(
+            f"Haas full-time M.B.A. academic-year tuition and PDST (${_TUITION_HAAS_MBA:,}; "
+            "California resident; fall + spring on the registrar Haas professional "
+            "schedule, excluding health insurance)."
+        ),
+        source=_FEE_SCHEDULE_SRC[0],
+        source_url=_FEE_SCHEDULE_SRC[1],
+    ),
+    "berkeley-management-sciences-and-quantitative-methods-prof": _annual_prof_cost(
+        _TUITION_MFE,
+        note=(
+            f"Haas full-time Master of Financial Engineering program fee "
+            f"(${_TUITION_MFE:,}; self-supporting one-year program per the registrar "
+            "SSGPDP schedule; excludes optional pre-program preparation courses)."
+        ),
+        source=_MFE_TUITION_SRC[0],
+        source_url=_MFE_TUITION_SRC[1],
+    ),
+    "berkeley-public-policy-analysis-prof": _annual_prof_cost(
+        _TUITION_MPP,
+        note=(
+            f"Goldman School M.P.P. academic-year tuition and PDST (${_TUITION_MPP:,}; "
+            "California resident; fall + spring on the registrar M.P.P. schedule)."
+        ),
+        source=_FEE_SCHEDULE_SRC[0],
+        source_url=_FEE_SCHEDULE_SRC[1],
+    ),
+    "berkeley-public-health-prof": _annual_prof_cost(
+        _TUITION_MPH,
+        note=(
+            f"Berkeley School of Public Health M.P.H. academic-year tuition and PDST "
+            f"(${_TUITION_MPH:,}; California resident; fall + spring on the registrar "
+            "Public Health professional schedule)."
+        ),
+        source=_FEE_SCHEDULE_SRC[0],
+        source_url=_FEE_SCHEDULE_SRC[1],
+    ),
+    "berkeley-social-work-prof": _annual_prof_cost(
+        _TUITION_MSW,
+        note=(
+            f"Berkeley School of Social Welfare M.S.W. academic-year tuition and PDST "
+            f"(${_TUITION_MSW:,}; California resident; fall + spring on the registrar "
+            "Social Welfare professional schedule)."
+        ),
+        source=_FEE_SCHEDULE_SRC[0],
+        source_url=_FEE_SCHEDULE_SRC[1],
+    ),
+    "berkeley-optometry-prof": _annual_prof_cost(
+        _TUITION_OPTOMETRY,
+        note=(
+            f"Berkeley Optometry O.D. academic-year tuition and PDST (${_TUITION_OPTOMETRY:,}; "
+            "California resident; fall + spring on the registrar Optometry professional "
+            "schedule)."
+        ),
+        source=_FEE_SCHEDULE_SRC[0],
+        source_url=_FEE_SCHEDULE_SRC[1],
+    ),
+    "berkeley-information-science-studies-prof": _annual_prof_cost(
+        _TUITION_MIMS,
+        note=(
+            f"Berkeley School of Information M.I.M.S. academic-year tuition and PDST "
+            f"(${_TUITION_MIMS:,}; California resident; fall + spring on the registrar "
+            "Information Management professional schedule)."
+        ),
+        source=_FEE_SCHEDULE_SRC[0],
+        source_url=_FEE_SCHEDULE_SRC[1],
+    ),
+}
+for _ced_slug in _CED_PROF_SLUGS:
+    _COST_BY_SLUG[_ced_slug] = _annual_prof_cost(
+        _TUITION_CED,
+        note=(
+            f"College of Environmental Design professional master's (M.Arch./M.C.P./M.L.A.) "
+            f"academic-year tuition and PDST (${_TUITION_CED:,}; California resident; "
+            "fall + spring on the registrar CED professional schedule)."
+        ),
+        source=_FEE_SCHEDULE_SRC[0],
+        source_url=_FEE_SCHEDULE_SRC[1],
+    )
+for _meng_slug in _MENG_PROF_SLUGS:
+    _COST_BY_SLUG[_meng_slug] = _annual_prof_cost(
+        _TUITION_MENG,
+        note=(
+            f"Berkeley Master of Engineering academic-year tuition and PDST "
+            f"(${_TUITION_MENG:,}; California resident; fall + spring on the registrar "
+            "College of Engineering M.Eng. professional schedule)."
+        ),
+        source=_FEE_SCHEDULE_SRC[0],
+        source_url=_FEE_SCHEDULE_SRC[1],
+    )
+for _acad_slug in _ACADEMIC_GRAD_PROF_SLUGS:
+    _COST_BY_SLUG[_acad_slug] = _annual_prof_cost(
+        _TUITION_GRAD_ACADEMIC,
+        note=(
+            f"Graduate Division academic-year tuition and fees (${_TUITION_GRAD_ACADEMIC:,}; "
+            "California resident; this IPEDS professional row maps to Berkeley's "
+            "Graduate: Academic schedule — no professional-degree supplemental tuition "
+            "applies)."
+        ),
+        source=_FEE_SCHEDULE_SRC[0],
+        source_url=_FEE_SCHEDULE_SRC[1],
+    )
+
+
+def _prof_has_verified_tuition(spec: dict) -> bool:
+    return spec["slug"] in _COST_BY_SLUG
 
 # ── Program-specific outcomes (College Scorecard Field of Study, by CIP) ────
 # Where the federal College Scorecard publishes a Field-of-Study median earnings
@@ -2975,6 +3192,23 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 "source_url": "https://grad.berkeley.edu/admissions/application-process/cost/",
                 "year": "2024-25",
             }
+        elif spec["degree_type"] == "professional":
+            cost_override = _COST_BY_SLUG.get(slug)
+            if cost_override is not None:
+                p.tuition = cost_override.get("tuition_usd")
+                p.cost_data = dict(cost_override)
+            else:
+                p.tuition = None
+                p.cost_data = {
+                    "funded": False,
+                    "note": (
+                        "Berkeley professional-degree programs publish distinct tuition "
+                        "schedules; see the program website or the Office of the Registrar "
+                        "fee schedule for current charges."
+                    ),
+                    "source": _FEE_SCHEDULE_SRC[0],
+                    "source_url": _FEE_SCHEDULE_SRC[1],
+                }
         elif (
             spec["degree_type"] in ("masters", "certificate")
             and slug not in _PROFESSIONAL_MASTERS_SLUGS
@@ -3006,8 +3240,8 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                     "schedules; see the program website or the Office of the Registrar "
                     "fee schedule for current charges."
                 ),
-                "source": "UC Berkeley Office of the Registrar — Fee Schedule",
-                "source_url": "https://registrar.berkeley.edu/tuition-fees/fee-schedule/",
+                "source": _FEE_SCHEDULE_SRC[0],
+                "source_url": _FEE_SCHEDULE_SRC[1],
             }
         p.application_requirements = _requirements_for(spec)
         # Outcomes precedence: Scorecard FOS (program) → institution median.
