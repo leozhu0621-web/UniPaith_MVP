@@ -45,8 +45,11 @@ def _school_snapshot(name: str) -> dict:
 
 def _program_snapshot(spec: dict) -> dict:
     slug = spec["slug"]
-    cost = (
-        {
+    cost_override = p._COST_BY_SLUG.get(slug) or p._published_grad_cost(spec)
+    if cost_override is not None:
+        cost = dict(cost_override)
+    elif spec["degree_type"] == "bachelors":
+        cost = {
             "tuition_usd": p._TUITION_UG,
             "total_cost_of_attendance": p._UNDERGRAD_COA,
             "avg_net_price": p._AVG_NET_PRICE,
@@ -58,13 +61,13 @@ def _program_snapshot(spec: dict) -> dict:
             "source": p._COST_SRC[0],
             "source_url": p._COST_SRC[1],
         }
-        if spec["degree_type"] == "bachelors"
-        else {
+    else:
+        cost = {
+            "funded": spec["degree_type"] == "phd",
             "note": "see program page",
-            "source": "Emory University — program tuition page",
-            "source_url": p._SCHOOL_WEBSITE.get(spec["school"]),
+            "source": p._BURSAR_TUITION_SRC[0],
+            "source_url": p._BURSAR_TUITION_SRC[1],
         }
-    )
     outcomes = dict(p._OUTCOMES_INSTITUTION)
     outcomes["_standard"] = p._program_standard(slug, spec)
     return {
@@ -135,3 +138,16 @@ def test_every_program_is_conformant_or_omitted():
 def test_flagship_mba_has_reviews():
     assert p._FLAGSHIP in p._REVIEWS_BY_SLUG
     assert p._REVIEWS_BY_SLUG[p._FLAGSHIP]["sources"]
+
+
+def test_graduate_tiers_carry_published_tuition():
+    """REPAIR_BACKLOG #4 — master's/professional tiers must not be matcher-blind on budget."""
+    for spec in p.PROGRAMS:
+        dtype = spec["degree_type"]
+        if dtype in ("masters", "professional"):
+            assert p._grad_has_verified_tuition(spec), spec["slug"]
+            cost = p._COST_BY_SLUG.get(spec["slug"]) or p._published_grad_cost(spec)
+            assert cost is not None and cost.get("tuition_usd") is not None, spec["slug"]
+            assert cost["tuition_usd"] != p._TUITION_UG, spec["slug"]
+        elif dtype == "phd":
+            assert not p._grad_has_verified_tuition(spec), spec["slug"]
