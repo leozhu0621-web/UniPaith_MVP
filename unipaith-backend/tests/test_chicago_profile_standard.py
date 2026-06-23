@@ -71,13 +71,11 @@ def _program_snapshot(slug: str) -> dict:
         else:
             outcomes = dict(c._OUTCOMES_INSTITUTION)
     outcomes["_standard"] = c._program_standard(slug, spec)
-    cost_override = c._COST_BY_SLUG.get(slug)
+    cost_override = c._COST_BY_SLUG.get(slug) or c._published_grad_cost(spec)
     if cost_override is not None:
         cost = dict(cost_override)
     elif is_undergrad:
         cost = {"tuition_usd": c._TUITION_UG, "source": "x"}
-    elif slug in c._COST_OMITTED_SLUGS:
-        cost = dict(c._COST_OMITTED_RECORD)
     elif spec["degree_type"] in ("masters", "professional", "phd", "certificate"):
         cost = {
             "funded": spec["degree_type"] == "phd",
@@ -234,3 +232,16 @@ def test_no_name_prefixed_descriptions():
 def test_no_cip_prefix_program_names():
     for spec in c.PROGRAMS:
         assert not c._PREFIX_NAME_RE.match(spec["program_name"]), spec["slug"]
+
+
+def test_graduate_tiers_carry_published_tuition():
+    """REPAIR_BACKLOG #4 — master's/professional tiers must not be matcher-blind on budget."""
+    for spec in c.PROGRAMS:
+        dtype = spec["degree_type"]
+        if dtype in ("masters", "professional"):
+            assert c._grad_has_verified_tuition(spec), spec["slug"]
+            cost = c._COST_BY_SLUG.get(spec["slug"]) or c._published_grad_cost(spec)
+            assert cost is not None and cost.get("tuition_usd") is not None, spec["slug"]
+            assert cost["tuition_usd"] != c._TUITION_UG, spec["slug"]
+        elif dtype == "phd":
+            assert not c._grad_has_verified_tuition(spec), spec["slug"]
