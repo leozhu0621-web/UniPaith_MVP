@@ -60,6 +60,8 @@ def _program_snapshot(slug: str) -> dict:
             "source": "x",
             "source_url": "x",
         }
+    elif spec["degree_type"] == "professional" and slug in b._COST_BY_SLUG:
+        cost = dict(b._COST_BY_SLUG[slug])
     else:
         cost = {
             "funded": spec["degree_type"] == "phd",
