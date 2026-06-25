@@ -206,12 +206,26 @@ SLUG_PROGRAM_NAMES: dict[str, str] = {
     "ucsd-psychology-general-bs": "Bachelor of Science in Psychology",
     "ucsd-public-health-bs": "Bachelor of Science in Public Health",
     "ucsd-business-administration-management-and-operations-ms": "Master of Business Administration",
+    # The IPEDS CIP→name resolution produced approximate graduate names UCSD does not
+    # confer. Resolved to the institution's REAL published degree (verify-or-omit):
+    #  • CIP 52.08 at Rady is the Master of Quantitative Finance — Rady confers no
+    #    "MS in Finance" (rady.ucsd.edu/programs).
+    #  • CIP 45.09 at GPS is the Master of International Affairs — GPS confers no
+    #    "MS in International Relations" (gps.ucsd.edu/academics/mia.html).
+    #  • CIP 51.07 in the School of Medicine is the Master of Advanced Studies in the
+    #    Leadership of Healthcare Organizations (lhco.ucsd.edu).
+    "ucsd-finance-and-financial-management-services-ms": "Master of Quantitative Finance",
+    "ucsd-international-relations-and-national-security-studies-ms": "Master of International Affairs",
+    "ucsd-health-and-medical-administrative-services-ms": "Master of Advanced Studies in Leadership of Healthcare Organizations",
     "ucsd-medicine-prof": "Doctor of Medicine",
     "ucsd-pharmacy-prof": "Doctor of Pharmacy",
     "ucsd-data-science-ms": "Master of Science in Data Science",
 }
 
 SLUG_DEPARTMENTS: dict[str, str] = {
+    "ucsd-finance-and-financial-management-services-ms": "Rady School of Management",
+    "ucsd-international-relations-and-national-security-studies-ms": "School of Global Policy and Strategy",
+    "ucsd-health-and-medical-administrative-services-ms": "School of Medicine",
     "ucsd-computer-science-bs": "Department of Computer Science and Engineering",
     "ucsd-cognitive-science-bs": "Department of Cognitive Science",
     "ucsd-biology-general-bs": "Division of Biological Sciences",

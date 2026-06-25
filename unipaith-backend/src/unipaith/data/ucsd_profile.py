@@ -377,6 +377,16 @@ PROGRAMS: list[dict] = [
 _EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
 _EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.get("cip")}
 
+# IPEDS CIP×award-level rows that resolve to NO real UC San Diego degree are dropped
+# rather than shipped under a fabricated name (the inviolable no-fabrication rule). The
+# Rady School of Management offers MBA variants, the Master of Science in Business
+# Analytics, the Master of Quantitative Finance, and the Master of Professional
+# Accountancy — it confers NO information-technology-management master's
+# (rady.ucsd.edu/programs), so the CIP 11.10 row maps to no real program.
+_DROP_SLUGS = {
+    "ucsd-computer-information-technology-administration-and-management-ms",
+}
+
 
 def _department_for(field_name: str, school: str) -> str:
     """Owning department — map CIP titles to UCSD's published unit names."""
@@ -575,7 +585,7 @@ def _build_catalog() -> list[dict]:
     out: list[dict] = []
     seen = set(_EXISTING_SLUGS)
     for slug, school, field_name, dtype, cip, dur, fmt, _legacy_desc in _IPEDS_CATALOG:
-        if slug in seen:
+        if slug in seen or slug in _DROP_SLUGS:
             continue
         # UC San Diego's academic departments award NO graduate certificates — the only
         # certificates UCSD offers are professional/continuing-education credentials from
@@ -642,6 +652,22 @@ _catalog_errors.extend(_fabricated_unit_violations(PROGRAMS))
 _catalog_errors.extend(_shared_description_violations(PROGRAMS))
 if _catalog_errors:
     raise RuntimeError(f"UCSD catalog quality gate failed: {_catalog_errors}")
+
+# Matcher-core CIP coverage gate (enrich-profile §"Also enrich for the MATCH" +
+# REPAIR_BACKLOG #1): every program must carry the IPEDS-reported CIP-2020 family code
+# for UNITID 110680 — the matcher's field/interest join key (resolved by 2-digit family
+# against ref_majors). The code is already on every spec for the breadth cross-check;
+# stamping it is a no-research fill. No silent catalog-wide null; a genuinely uncodeable
+# field would be recorded omitted-with-reason in _program_standard.
+_cip_missing = [p["slug"] for p in PROGRAMS if not p.get("cip")]
+if _cip_missing:
+    raise RuntimeError(
+        f"UCSD catalog missing cip_code on {len(_cip_missing)} rows: {_cip_missing[:5]}"
+    )
+_cip_bad = sorted({p["cip"] for p in PROGRAMS if not re.fullmatch(r"\d{2}\.\d{2,4}", p["cip"])})
+if _cip_bad:
+    raise RuntimeError(f"UCSD catalog has malformed cip_code values: {_cip_bad}")
+
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 _SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 
@@ -666,6 +692,8 @@ _TUITION_MD_INSTATE = 44715     # Doctor of Medicine, resident
 _TUITION_MD_OOS = 56960
 _TUITION_PHARMD_INSTATE = 50345  # Doctor of Pharmacy, resident
 _TUITION_PHARMD_OOS = 62590
+_TUITION_MBA_INSTATE = 52058    # Rady Full-Time MBA (state-supported), resident, annual
+_TUITION_MBA_OOS = 57201        # Rady Full-Time MBA, nonresident, annual
 _GRAD_COST_SRC = (
     "UC San Diego Office of the Registrar — Graduate Registration Fees 2024-25",
     "https://students.ucsd.edu/finances/fees/registration/previous/2024-25/graduate.html",
@@ -673,6 +701,10 @@ _GRAD_COST_SRC = (
 _MD_COST_SRC = (
     "UC San Diego Office of the Registrar — School of Medicine Registration Fees 2024-25",
     "https://students.ucsd.edu/finances/fees/registration/previous/2024-25/som.html",
+)
+_MBA_COST_SRC = (
+    "UC San Diego Office of the Registrar — Rady School Registration Fees 2024-25",
+    "https://students.ucsd.edu/finances/fees/registration/previous/2024-25/rady.html",
 )
 _PHARMD_COST_SRC = (
     "UC San Diego Office of the Registrar — Skaggs School of Pharmacy Registration Fees 2024-25",
@@ -685,8 +717,10 @@ _PHARMD_COST_SRC = (
 # the School of Global Policy & Strategy, and the Herbert Wertheim School of Public
 # Health (the MPH). Their tuition is recorded omitted-with-reason rather than priced at
 # the academic-graduate rate (which would understate a self-supporting program — the
-# "coverage is not correctness" trap). The standalone executive MS in Health
-# Administration is handled by name below.
+# "coverage is not correctness" trap). The School of Medicine's self-supporting MAS in
+# the Leadership of Healthcare Organizations is handled by name below. The Rady
+# Full-Time MBA is the EXCEPTION — state-supported with a published annual rate, so it
+# is priced (see _program_tuition).
 _SELF_SUPPORTING_MASTERS_SCHOOLS = {RADY, GPS, PUBHEALTH}
 
 
@@ -745,11 +779,25 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
             return _TUITION_PHARMD_INSTATE, _grad_fee_cost(_TUITION_PHARMD_INSTATE, _TUITION_PHARMD_OOS, _PHARMD_COST_SRC, "Pharm.D.")
         return None, _omit_cost(spec)
     if dt == "masters":
+        # The Rady Full-Time MBA is STATE-SUPPORTED and publishes a single annual
+        # tuition + fees figure (resident/nonresident) on the same basis as the academic
+        # tiers above — so it is priced, not omitted. Read verbatim from the registrar's
+        # Rady fee table (the MBA professional supplemental tuition is already included).
+        if name == "Master of Business Administration":
+            return _TUITION_MBA_INSTATE, _grad_fee_cost(
+                _TUITION_MBA_INSTATE, _TUITION_MBA_OOS, _MBA_COST_SRC, "Full-Time MBA"
+            )
         # Self-supporting / professional-fee master's record tuition omitted-with-reason
         # (per-unit cohort billing, no single annual figure on the academic basis here) —
         # never the academic-graduate rate applied to a program billed off a separate
-        # self-supporting schedule.
-        if school in _SELF_SUPPORTING_MASTERS_SCHOOLS or name == "Master of Science in Health Administration":
+        # self-supporting schedule. Covers the remaining Rady masters (MS Business
+        # Analytics, Master of Quantitative Finance), the GPS Master of International
+        # Affairs, the MPH, and the self-supporting MAS in Leadership of Healthcare
+        # Organizations (handled by name).
+        if (
+            school in _SELF_SUPPORTING_MASTERS_SCHOOLS
+            or name == "Master of Advanced Studies in Leadership of Healthcare Organizations"
+        ):
             return None, _omit_cost(spec)
         # academic graduate: the standard state-supported UC graduate tuition & fees
         return _TUITION_GRAD_INSTATE, _grad_fee_cost(_TUITION_GRAD_INSTATE, _TUITION_GRAD_OOS, _GRAD_COST_SRC, "academic graduate")
@@ -1201,6 +1249,11 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.catalog_source = "curated"
         p.delivery_format = spec.get("delivery_format", "on_campus")
         p.department = spec.get("department")
+        # Matcher-core: the CIP join key to ref_majors + the field-66 vocabulary
+        # (the interest/field signal alongside the dense description embedding). The
+        # value is the IPEDS-reported CIP-2020 family code for UNITID 110680 already
+        # carried on every spec for the breadth cross-check — never a guess.
+        p.cip_code = spec.get("cip")
         kw = _PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(_KEYWORDS_BY_SCHOOL[spec["school"]])
         p.content_sources = _program_content(spec["school"], kw)
         tuition, cost = _program_tuition(spec)
