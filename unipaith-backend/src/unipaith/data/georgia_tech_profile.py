@@ -982,6 +982,170 @@ def _derive(slug: str) -> tuple[str, str, str]:
     return field, "masters", field
 
 
+# Matcher-core CIP-2020 code per program (REPAIR_BACKLOG #1 — cip_code starvation).
+# `cip_code` is the CIP join key the CPEF matcher uses to resolve a program's field to
+# `ref_majors` + the field-66 interest vocabulary, so a null catalog is scored field-blind.
+# Every code below is a verified NCES CIP-2020 six-digit code (NN.NNNN) that (a) is the
+# canonical code for that field, (b) exists in data/reference/ref_majors.jsonl (the matcher
+# join target), and (c) sits within a CIP-4 family Georgia Tech actually reports to IPEDS,
+# cross-checked against the U.S. Dept. of Education College Scorecard field-of-study list
+# for UNITID 139755 (api.data.gov collegescorecard latest.programs.cip_4_digit). Never a
+# guess; a genuinely uncodeable program would be recorded in _standard.omitted. Keyed on the
+# catalog slug (the raw _CATALOG slug, without the "gatech-" prefix).
+_CIP_BY_SLUG: dict[str, str] = {
+    # ── College of Computing ──
+    "computer-science-bs": "11.0701",
+    "computer-science-ms": "11.0701",
+    "computer-science-phd": "11.0701",
+    "computational-media-bs": "11.0801",
+    "cybersecurity-ms": "11.1003",
+    "human-computer-interaction-ms": "11.0105",
+    "bioinformatics-ms": "26.1103",
+    "bioinformatics-phd": "26.1103",
+    "computational-science-engineering-ms": "11.0101",
+    "computational-science-engineering-phd": "11.0101",
+    "robotics-ms": "14.4201",
+    "robotics-phd": "14.4201",
+    "human-centered-computing-phd": "11.0105",
+    "machine-learning-phd": "11.0102",
+    "algorithms-combinatorics-optimization-phd": "27.0301",
+    # ── College of Engineering ──
+    "aerospace-engineering-bs": "14.0201",
+    "aerospace-engineering-ms": "14.0201",
+    "aerospace-engineering-phd": "14.0201",
+    "biomedical-engineering-bs": "14.0501",
+    "biomedical-engineering-ms": "14.0501",
+    "biomedical-engineering-phd": "14.0501",
+    "bioengineering-ms": "14.0501",
+    "bioengineering-phd": "14.0501",
+    "chemical-biomolecular-bs": "14.0702",
+    "chemical-engineering-ms": "14.0701",
+    "chemical-engineering-phd": "14.0701",
+    "civil-engineering-bs": "14.0801",
+    "civil-engineering-ms": "14.0801",
+    "civil-engineering-phd": "14.0801",
+    "computer-engineering-bs": "14.0901",
+    "electrical-engineering-bs": "14.1001",
+    "electrical-computer-engineering-ms": "14.1001",
+    "electrical-computer-engineering-phd": "14.1001",
+    "environmental-engineering-bs": "14.1401",
+    "environmental-engineering-ms": "14.1401",
+    "environmental-engineering-phd": "14.1401",
+    "industrial-engineering-bs": "14.3501",
+    "industrial-engineering-ms": "14.3501",
+    "industrial-engineering-phd": "14.3501",
+    "materials-science-bs": "14.1801",
+    "materials-science-engineering-ms": "14.1801",
+    "materials-science-phd": "14.1801",
+    "mechanical-engineering-bs": "14.1901",
+    "mechanical-engineering-ms": "14.1901",
+    "mechanical-engineering-phd": "14.1901",
+    "mechanical-engineering-undesignated-ms": "14.1901",
+    "nuclear-radiological-bs": "14.2301",
+    "nuclear-engineering-ms": "14.2301",
+    "nuclear-engineering-phd": "14.2301",
+    "engineering-science-mechanics-ms": "14.1101",
+    "engineering-science-mechanics-phd": "14.1101",
+    "health-systems-ms": "14.3501",
+    "medical-physics-ms": "51.2205",
+    "operations-research-ms": "14.3701",
+    "operations-research-phd": "14.3701",
+    "statistics-ms": "27.0501",
+    "supply-chain-engineering-ms": "14.3501",
+    "applied-systems-engineering-pmase": "14.2701",
+    "manufacturing-leadership-pmml": "14.3601",
+    # ── College of Sciences ──
+    "applied-physics-bs": "40.0801",
+    "physics-bs": "40.0801",
+    "physics-ms": "40.0801",
+    "physics-phd": "40.0801",
+    "astrophysics-bs": "40.0801",
+    "atmospheric-oceanic-sciences-bs": "40.0601",
+    "earth-atmospheric-sciences-ms": "40.0601",
+    "earth-atmospheric-sciences-phd": "40.0601",
+    "solid-earth-planetary-sciences-bs": "40.0601",
+    "biochemistry-bs": "26.0202",
+    "biology-bs": "26.0101",
+    "biology-ms": "26.0101",
+    "biology-phd": "26.0101",
+    "chemistry-bs": "40.0501",
+    "chemistry-ms": "40.0501",
+    "chemistry-phd": "40.0501",
+    "environmental-science-bs": "03.0104",
+    "mathematics-bs": "27.0101",
+    "mathematics-ms": "27.0101",
+    "mathematics-phd": "27.0101",
+    "mathematics-computing-bs": "27.0303",
+    "neuroscience-bs": "26.1501",
+    "psychology-bs": "42.2701",
+    "psychology-ms": "42.2701",
+    "psychology-phd": "42.2701",
+    "applied-physiology-phd": "26.0908",
+    "ocean-science-engineering-phd": "30.3201",
+    "quantitative-biosciences-phd": "26.1104",
+    # ── College of Design ──
+    "architecture-ms": "04.0201",
+    "architecture-phd": "04.0201",
+    "march": "04.0201",
+    "industrial-design-bs": "50.0404",
+    "masters-industrial-design": "50.0404",
+    "building-construction-facility-management-ms": "04.0902",
+    "building-construction-phd": "04.0902",
+    "construction-science-and-management-bs": "04.0902",
+    "gist-ms": "45.0702",
+    "mcrp": "04.0301",
+    "city-regional-planning-phd": "04.0301",
+    "urban-analytics-ms": "04.0301",
+    "urban-planning-and-spatial-analytics-bs": "04.0301",
+    "urban-design-msud": "04.0401",
+    "music-technology-bs": "50.0913",
+    "music-technology-ms": "50.0913",
+    "music-technology-phd": "50.0913",
+    "master-real-estate-development": "04.1001",
+    "occupational-safety-health-pmosh": "15.0701",
+    "arts-entertainment-creative-technologies-bs": "50.0411",
+    # ── Ivan Allen College of Liberal Arts ──
+    "applied-language-intercultural-studies-bs": "16.0101",
+    "applied-languages-intercultural-studies-ms": "16.0101",
+    "economics-bs": "45.0601",
+    "economics-ms": "45.0601",
+    "economics-phd": "45.0601",
+    "economics-international-affairs-bs": "45.0601",
+    "global-economics-modern-languages-bs": "45.0601",
+    "history-technology-society-bs": "30.1501",
+    "history-sociology-technology-science-ms": "30.1501",
+    "history-sociology-technology-science-phd": "30.1501",
+    "international-affairs-bs": "45.0901",
+    "international-affairs-ms": "45.0901",
+    "international-affairs-modern-language-bs": "45.0901",
+    "international-affairs-science-technology-ms": "45.0901",
+    "international-affairs-science-technology-phd": "45.0901",
+    "international-security-ms": "45.0902",
+    "literature-media-communication-bs": "09.0702",
+    "digital-media-ms": "09.0702",
+    "digital-media-phd": "09.0702",
+    "global-media-cultures-ms": "09.0702",
+    "public-policy-bs": "44.0501",
+    "public-policy-ms": "44.0501",
+    "public-policy-phd": "44.0501",
+    "global-development-ms": "30.2001",
+    "master-sustainable-energy-environmental-management": "30.3301",
+    # ── Scheller College of Business ──
+    "business-administration-bs": "52.0201",
+    "mba": "52.0201",
+    "mba-global-business-executive": "52.0201",
+    "mba-management-technology-executive": "52.0201",
+    "management-ms": "52.0201",
+    "management-phd": "52.0201",
+    "analytics-ms": "30.7101",
+    "online-ms-analytics": "30.7101",
+    "quantitative-computational-finance-ms": "27.0305",
+    # ── At-scale online master's ──
+    "online-ms-computer-science-omscs": "11.0701",
+    "online-ms-cybersecurity": "11.1003",
+}
+
+
 def _build_catalog() -> list[dict]:
     out: list[dict] = []
     seen: set[str] = set()
@@ -1006,6 +1170,7 @@ def _build_catalog() -> list[dict]:
                 "department": department,
                 "duration_months": _duration(dtype, fmt),
                 "delivery_format": fmt,
+                "cip": _CIP_BY_SLUG.get(slug),
                 "description": description,
             }
         )
@@ -1025,6 +1190,16 @@ def _duration(dtype: str, fmt: str) -> int:
 PROGRAMS: list[dict] = _build_catalog()
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 _SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
+
+# Matcher-core: every program must carry a verified CIP-2020 code (REPAIR_BACKLOG #1).
+# Coverage must be complete (no silent catalog-wide null); a genuinely uncodeable field
+# would be recorded in _standard.omitted. Today the catalog is 100% covered.
+_cip_missing = [p["catalog_slug"] for p in PROGRAMS if not p.get("cip")]
+if _cip_missing:
+    raise ValueError(f"GT catalog missing cip_code on {len(_cip_missing)} rows: {_cip_missing[:5]}")
+_cip_bad = sorted({p["cip"] for p in PROGRAMS if not re.fullmatch(r"\d{2}\.\d{4}", p["cip"])})
+if _cip_bad:
+    raise ValueError(f"GT catalog has malformed cip_code values: {_cip_bad}")
 
 
 def _assert_anti_stub_clean(programs: list[dict]) -> None:
@@ -1915,8 +2090,29 @@ def _program_standard(slug: str, spec: dict | None = None) -> dict:
         omitted.append("faculty_contacts.lead")
     if slug not in _REVIEWS_BY_SLUG:
         omitted.append("external_reviews.summary")
+    if not spec.get("cip"):
+        omitted.append("cip_code")
     # content_sources is set on every program (college feed + program keywords), never omitted.
     return _standard(omitted)
+
+
+def _matcher_tuition(cost: dict) -> int | None:
+    """The scalar ``program.tuition`` the CPEF matcher reads for its budget veto.
+
+    Georgia Tech is a PUBLIC university, so it publishes two residency stickers. The matcher
+    budget feature reads the flat ``program.tuition`` scalar (not the residency-aware net-price
+    estimator), so for the out-of-state + international applicant pool — the majority at a
+    flagship public — the conservative, broadly-correct budget input is the NON-RESIDENT rate
+    (REPAIR_BACKLOG #2 / enrich-profile public non-resident-tuition rule). When a cost record
+    carries a residency breakdown, expose the out-of-state figure; otherwise (residency-flat
+    online/professional totals, funded doctorates) fall back to the published scalar. The
+    honest in-state rate is always preserved in ``cost_data.breakdown``.
+    """
+    breakdown = cost.get("breakdown") or {}
+    oos = breakdown.get("tuition_out_of_state")
+    if oos is not None:
+        return oos
+    return cost.get("tuition_usd")
 
 
 def _apply_programs(session: Session, inst: Institution, school_by_name: dict[str, School]) -> None:
@@ -1940,6 +2136,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.program_name = spec["program_name"]
         p.degree_type = spec["degree_type"]
         p.department = spec.get("department")
+        p.cip_code = spec.get("cip")
         p.duration_months = spec.get("duration_months")
         p.description_text = spec["description"]
         p.website_url = _website_for(spec)
@@ -1954,7 +2151,6 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         # Cost precedence: published GT undergraduate rates for bachelor's → a verified
         # per-program graduate tuition → a sourced "see the program page" record.
         if spec["degree_type"] == "bachelors":
-            p.tuition = _TUITION_UG_IN_STATE
             p.cost_data = {
                 "tuition_usd": _TUITION_UG_IN_STATE,
                 "total_cost_of_attendance": _UNDERGRAD_COA,
@@ -1977,12 +2173,12 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         else:
             cost_override = _COST_BY_SLUG.get(slug)
             if cost_override is not None:
-                p.tuition = cost_override["tuition_usd"]
                 p.cost_data = cost_override
             else:
-                cost = _grad_cost(spec)
-                p.tuition = cost.get("tuition_usd")
-                p.cost_data = cost
+                p.cost_data = _grad_cost(spec)
+        # The matcher's budget scalar is the NON-RESIDENT sticker for this public university
+        # (REPAIR_BACKLOG #2); the in-state rate stays in cost_data.breakdown.
+        p.tuition = _matcher_tuition(p.cost_data)
         p.application_requirements = _requirements_for(spec)
         if slug == "gatech-mba":
             outcomes = dict(_MBA_OUTCOMES)
