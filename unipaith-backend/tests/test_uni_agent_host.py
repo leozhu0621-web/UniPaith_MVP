@@ -134,6 +134,53 @@ async def test_stream_opener_speaks_first_without_a_student_message(db_session, 
 
 
 @pytest.mark.asyncio
+async def test_opener_trigger_includes_known_profile(db_session, mock_student_user):
+    """todo 2.1 — the opener trigger carries a compact summary of what UniPaith
+    already knows (name + goals), so Uni greets by name and won't re-ask."""
+    from unipaith.models.goals import StudentGoal
+    from unipaith.services.uni_agent_host import UniAgentHost
+
+    profile = await ensure_profile(db_session, mock_student_user)
+    profile.first_name = "Ada"
+    db_session.add(
+        StudentGoal(
+            student_id=profile.id,
+            category="academic",
+            specific="Start a Master's program in computer science",
+            source="manual",
+            status="active",
+        )
+    )
+    await db_session.commit()
+
+    fake = _FakeAgentClient()
+    host = UniAgentHost(db_session, client=fake)
+    _ = [ev async for ev in host.stream_opener(mock_student_user.id)]
+
+    trigger = fake.sent_messages[0]
+    assert "[SESSION_START]" in trigger
+    assert "Ada" in trigger
+    assert "computer science" in trigger
+    assert "re-ask" in trigger.lower()
+
+
+@pytest.mark.asyncio
+async def test_opener_trigger_generic_for_blank_profile(db_session, mock_student_user):
+    """A brand-new student with nothing on file gets the generic opener (fail-soft),
+    not an empty 'here's what we know' block."""
+    from unipaith.services.uni_agent_host import UniAgentHost
+
+    await ensure_profile(db_session, mock_student_user)
+    fake = _FakeAgentClient()
+    host = UniAgentHost(db_session, client=fake)
+    _ = [ev async for ev in host.stream_opener(mock_student_user.id)]
+
+    trigger = fake.sent_messages[0]
+    assert "[SESSION_START]" in trigger
+    assert "already knows" not in trigger  # no summary block for an empty profile
+
+
+@pytest.mark.asyncio
 async def test_stream_turn_raises_on_setup_failure(db_session, mock_student_user):
     """Setup failure must propagate so the API can fall back to the orchestrator."""
     from unipaith.services.uni_agent_host import UniAgentHost

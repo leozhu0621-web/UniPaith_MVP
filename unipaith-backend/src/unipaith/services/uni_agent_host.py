@@ -54,11 +54,54 @@ class UniAgentHost:
         also carries the bound managed-agent session id."""
         return await DiscoveryService(self.db).start_unified_session(user_id)
 
+    async def _opener_trigger(self, user_id: UUID) -> str:
+        """Build the SESSION_START trigger, enriched with a compact summary of what
+        UniPaith already knows about the student (todo 2.1), so Uni greets by name
+        and doesn't re-ask anything answered at signup / in the profile. The live
+        platform agent can read the full profile via its get_profile tool, but
+        nothing forces it to BEFORE greeting — pushing the summary here makes the
+        very first message context-aware. Fail-soft: any snapshot error, or a
+        student with nothing on file yet, falls back to the generic trigger."""
+        try:
+            from unipaith.services.student_service import StudentService
+
+            snap = await StudentService(self.db).get_full_snapshot(user_id)
+        except Exception:
+            return _OPENER_TRIGGER
+
+        lines: list[str] = []
+        first_name = (snap.get("profile") or {}).get("first_name")
+        if first_name:
+            lines.append(f"- First name: {first_name}")
+        goals = [g.get("specific") for g in (snap.get("goals") or []) if g.get("specific")]
+        if goals:
+            lines.append("- Goals so far: " + "; ".join(goals[:4]))
+        needs = [n.get("signal") for n in (snap.get("needs") or []) if n.get("signal")]
+        if needs:
+            lines.append("- Needs / priorities: " + "; ".join(needs[:4]))
+        strat = snap.get("active_strategy") or {}
+        target = " → ".join(
+            x for x in (strat.get("career_target"), strat.get("target_degree")) if x
+        )
+        if target:
+            lines.append(f"- Direction: {target}")
+
+        if not lines:
+            return _OPENER_TRIGGER
+        return (
+            _OPENER_TRIGGER
+            + "\n\nHere is what UniPaith already knows about this student — greet them by "
+            "name and DO NOT re-ask anything already on file; build on it instead:\n"
+            + "\n".join(lines)
+        )
+
     async def stream_opener(self, user_id: UUID) -> AsyncIterator[tuple[str, dict]]:
         """Uni speaks first. Kick the platform session with a SESSION_START
-        trigger so the agent greets and leads, persisting only her reply (the
-        student said nothing). Same SSE contract as a normal turn."""
-        async for event in self.stream_turn(user_id, content=_OPENER_TRIGGER, mirror_student=False):
+        trigger (enriched with the student's known profile, todo 2.1) so the agent
+        greets, by name, and leads — persisting only her reply (the student said
+        nothing). Same SSE contract as a normal turn."""
+        trigger = await self._opener_trigger(user_id)
+        async for event in self.stream_turn(user_id, content=trigger, mirror_student=False):
             yield event
 
     async def stream_turn(

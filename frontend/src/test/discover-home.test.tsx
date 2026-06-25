@@ -83,10 +83,12 @@ describe('DiscoverHomePage — Uni guided workspace', () => {
     expect(screen.queryByText("Let's figure out what you're looking for")).not.toBeInTheDocument()
   })
 
-  it('offers counselor-style ways-in (gentle quick replies)', async () => {
+  it('shows no canned quick-reply chips — replies come only from Uni (todo 2.3)', async () => {
     renderHome()
     await screen.findByText(/I'm Uni/)
-    expect(screen.getByText("I'm not sure where to start")).toBeInTheDocument()
-    expect(screen.getByText('Could you give an example?')).toBeInTheDocument()
+    // The hard-coded "phone-menu" fallbacks are gone; with no AI-suggested options
+    // the chip row is simply absent (the student types or uses the enrich card).
+    expect(screen.queryByText("I'm not sure where to start")).not.toBeInTheDocument()
+    expect(screen.queryByText('Could you give an example?')).not.toBeInTheDocument()
   })
 })
