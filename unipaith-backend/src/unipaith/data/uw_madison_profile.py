@@ -1272,6 +1272,38 @@ _PROFESSIONAL_TUITION: dict[str, tuple[int, int]] = {
 }
 
 
+# Per-slug tuition overrides for programs billed differently from the standard full-time
+# resident graduate sticker. The College-wide online Master of Engineering (InterPro) is
+# a 30-credit, fully-online program billed PER CREDIT, not at the full-time grad rate, so
+# the generic _GRAD_TUITION ($12,404) would understate its real published cost.
+_MENG_PER_CREDIT = 1300  # interpro.wisc.edu — current online MEng rate, 2025-26
+_MENG_CREDITS = 30
+# Programs explicitly published as part-time (working-professional schedule) — drives the
+# matcher's `wants_part_time` flexibility fit. The online MEng is "100% online, part-time."
+_PART_TIME_SLUGS = frozenset({"uw-madison-engineering-general-ms"})
+_TUITION_BY_SLUG: dict[str, tuple[int, dict]] = {
+    "uw-madison-engineering-general-ms": (
+        _MENG_PER_CREDIT * _MENG_CREDITS,  # 30 credits × $1,300/credit = $39,000
+        {
+            "tuition_usd": _MENG_PER_CREDIT * _MENG_CREDITS,
+            "per_credit_usd": _MENG_PER_CREDIT,
+            "credits": _MENG_CREDITS,
+            "funded": False,
+            "note": (
+                "Published per-credit tuition for the fully-online College-wide Master of "
+                f"Engineering (Interdisciplinary Professional Programs): ${_MENG_PER_CREDIT:,}"
+                f"/credit × {_MENG_CREDITS} credits ≈ "
+                f"${_MENG_PER_CREDIT * _MENG_CREDITS:,} total. Same rate for residents and "
+                "nonresidents (online program)."
+            ),
+            "source": "UW–Madison Interdisciplinary Professional Programs (InterPro)",
+            "source_url": "https://interpro.wisc.edu/online-graduate-programs/masters-degrees/",
+            "year": "2025-26",
+        },
+    ),
+}
+
+
 def _pub_tuition_cost(res: int, oos: int, note: str, *, funded: bool = False) -> dict:
     return {
         "tuition_usd": res,
@@ -1286,6 +1318,9 @@ def _pub_tuition_cost(res: int, oos: int, note: str, *, funded: bool = False) ->
 
 def _program_tuition(spec: dict) -> tuple[int | None, dict]:
     """Return (matcher_tuition, cost_data) from UW-published 2025-26 rates."""
+    slug_override = _TUITION_BY_SLUG.get(spec.get("slug", ""))
+    if slug_override is not None:
+        return slug_override
     school = spec["school"]
     dtype = spec["degree_type"]
     name = spec["program_name"]
@@ -1813,6 +1848,8 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.is_published = True
         p.catalog_source = "curated"
         p.delivery_format = spec.get("delivery_format", "on_campus")
+        if slug in _PART_TIME_SLUGS:
+            p.part_time_available = True
         p.department = spec.get("department")
         kw = _PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(_KEYWORDS_BY_SCHOOL[spec["school"]])
         p.content_sources = _program_content(spec["school"], kw)

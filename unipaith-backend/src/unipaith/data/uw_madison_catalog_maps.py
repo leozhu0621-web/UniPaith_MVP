@@ -275,6 +275,12 @@ SLUG_PROGRAM_NAMES: dict[str, str] = {
     "uw-madison-business-administration-bs": "Bachelor of Business Administration",
     "uw-madison-computer-science-bs": "Bachelor of Science in Computer Science",
     "uw-madison-economics-bs": "Bachelor of Arts in Economics",
+    # Federal CIP 14.01 "Engineering, General" rollup → UW-Madison's real College-wide
+    # Master of Engineering (MEng), administered through Interdisciplinary Professional
+    # Programs. The generic certificate row is dropped (no single generic engineering
+    # graduate certificate exists; the InterPro capstone certificates are separately named).
+    # Source: guide.wisc.edu/graduate/engineering-college-wide/engineering-meng/.
+    "uw-madison-engineering-general-ms": "Master of Engineering",
     "uw-madison-law-prof": "Juris Doctor",
     "uw-madison-mba-ms": "Master of Business Administration",
     "uw-madison-mechanical-engineering-bs": "Bachelor of Science in Mechanical Engineering",
@@ -293,6 +299,7 @@ SLUG_DEPARTMENTS: dict[str, str] = {
     "uw-madison-business-administration-bs": "Wisconsin School of Business",
     "uw-madison-computer-science-bs": "Department of Computer Sciences",
     "uw-madison-economics-bs": "Department of Economics",
+    "uw-madison-engineering-general-ms": "Interdisciplinary Professional Programs",
     "uw-madison-law-prof": "Law School",
     "uw-madison-mba-ms": "Wisconsin School of Business",
     "uw-madison-mechanical-engineering-bs": "Department of Mechanical Engineering",

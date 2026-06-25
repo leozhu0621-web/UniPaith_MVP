@@ -481,6 +481,9 @@ SLUG_DESCRIPTIONS: dict[str, str] = {
     "uw-madison-area-studies-ms": (
         "The LACIS master's degree is a 30-credit interdisciplinary program drawing on over 100 affiliated faculty across some 40 disciplines, with Spanish and Portuguese language study and graduate seminars numbered 700 and above; designated a National Resource Center since 1961, the program publishes the Luso-Brazilian Review."
     ),
+    "uw-madison-engineering-general-ms": (
+        "The College of Engineering's Master of Engineering is a part-time degree for working professionals, administered through Interdisciplinary Professional Programs, with named options in Engineering Data Analytics, Polymer Engineering, and Sustainable Systems Engineering."
+    ),
     "uw-madison-biomedical-engineering-bs": (
         "Biomedical engineering integrates device design, tissue engineering, and UW Hospital clinical immersion through the College of Engineering and SMPH partnership."
     ),
