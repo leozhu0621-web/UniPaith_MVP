@@ -531,6 +531,7 @@ export default function ExplorePage() {
                     onToggleFollow={toggleFollow}
                     nextEventByInstitution={nextEventByInst}
                     onEventClick={() => setSub('events')}
+                    browseWhenIdle
                   />
                 </div>
               ) : (

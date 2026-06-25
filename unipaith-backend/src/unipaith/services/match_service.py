@@ -694,6 +694,36 @@ class MatchService:
             await self.db.flush()
         return out
 
+    def cached_program_embeddings(self, programs: list[Any]) -> dict[Any, list[float]]:
+        """Read-only sibling of ``ensure_program_embeddings``: return the
+        ALREADY-stored embedding for each program and compute NOTHING.
+
+        The request path (onboarding match seed, ``/me/matches`` refresh, the lazy
+        GET recompute) uses this so a recompute never blocks on embedding the
+        catalog. ``ensure_program_embeddings`` embeds every not-yet-cached program
+        one-at-a-time; at ~7k programs that is thousands of sequential embedding
+        API calls per request — minutes of work that blew the ~60s ALB/request
+        timeout, so a fresh student's onboarding completion and matches refresh
+        timed out and they saw zero matches.
+
+        Safe: the matcher drops the cosine term + renormalizes weights for any
+        program without an embedding (see ``compute_matches_for_student`` /
+        ``features_from_row``), so matches are still produced and banded — just
+        without the cosine bonus for not-yet-embedded programs. A background job
+        (``ensure_program_embeddings`` over the catalog) backfills coverage off
+        the request path. Synchronous, no I/O, no DB writes.
+        """
+        out: dict[Any, list[float]] = {}
+        for p in programs:
+            stored = p.embedding
+            if (
+                isinstance(stored, list)
+                and stored
+                and getattr(p, "embedding_version", None) == getattr(p, "feature_version", None)
+            ):
+                out[p.id] = [float(x) for x in stored]
+        return out
+
     # ── Internals ─────────────────────────────────────────────────────
 
     async def _student_features(self, student_id: UUID) -> StudentFeatures | None:

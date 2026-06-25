@@ -643,6 +643,32 @@ Concrete misses observed in the first runs — each broke a real page:
      coverable programs still lack reviews. "Omitted-pending until a resume that
      never comes" is the exact bug that left the ENTIRE fleet at ~1 reviewed
      program each — do not repeat it.
+   - **`who_its_for` ("Who it's for") is a UNIVERSAL depth field — fill it on EVERY
+     program; a catalog-wide 0% is a depth FAILURE, never a legitimate omission.**
+     The other deep fields named above are COVERAGE-GATED — a program may genuinely
+     have no third-party `external_reviews`, no published `class_profile` admit stats,
+     no named `faculty_contacts`, or no formal `tracks`, so a real null recorded in
+     `_standard.omitted` is honest there (and even gold MIT/Princeton are sparse on
+     them). `who_its_for` is NOT coverage-gated: every program — undergrad or graduate,
+     famous or obscure — can state the applicant it fits, derived from its own published
+     audience / fit / admissions / "is this program right for you" material. So an empty
+     `who_its_for` is un-done depth, not an honest omission, and `_standard.omitted` is
+     warranted only for a genuinely audience-less program (effectively never). Same
+     gold-contrast bar as the description: a field-specific 1–2 sentence statement of the
+     applicant the program fits (background, goals, readiness) — never a classification
+     stub ("for students interested in {field}"). Stamp it in the SAME pass that fills
+     `cip_code` / tuition: a matcher-core repair pass that ships `cip_code` + tuition but
+     leaves `who_its_for` null has done a single dimension, not the depth pass (the
+     recurring dimension-at-a-time root cause). This TIGHTENS the depth gate for ONE
+     measurable universal field; it loosens nothing (no-fabrication holds via the
+     gold-contrast bar; omit-with-reason still applies to the coverage-gated fields).
+     Evidence: live API this run — `who_its_for` is populated on 100% of EVERY program of
+     the 11 gold-complete catalogs (MIT, Princeton, Caltech, Harvard, Yale, Columbia,
+     Cornell, Stanford, Chicago, Penn, UCLA) yet 0% on 29 others — including the freshly
+     matcher-core-repaired UT-Austin / UW-Seattle / Georgia Tech / UCSD — a stark
+     11-full / 29-empty / 0-partial split that is the dimension-skip fingerprint, while
+     `tracks` / `class_profile` / `faculty_contacts` are sparse even on gold (so those
+     stay coverage-gated; `who_its_for` is the one gold fills 100%).
    - Set `delivery_format` (`on_campus` / `online` / `hybrid`) on every program.
 3. **Links everywhere — were missing (issue: campus resources & others have no
    links).** Whenever you name a lab, institute, research center, campus resource,

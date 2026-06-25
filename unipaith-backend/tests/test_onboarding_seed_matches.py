@@ -129,6 +129,60 @@ async def test_onboarding_completion_seeds_feature_vector_and_matches(
 
 
 @pytest.mark.asyncio
+async def test_onboarding_seed_does_not_embed_catalog(db_session: AsyncSession, monkeypatch):
+    """Regression: the in-request match recompute must NEVER embed the catalog.
+    ensure_program_embeddings embeds every uncached program one-at-a-time; at ~7k
+    programs that timed out onboarding completion / matches refresh and a fresh
+    student saw zero matches. The recompute now uses cached embeddings only, so
+    matches still seed without any embedding work."""
+    from unipaith.services.match_service import MatchService
+
+    student = await _seed_student(db_session)
+    programs = await _seed_published_programs(db_session, n=3)
+    _stub_emitter(monkeypatch)
+
+    async def _must_not_call(self, programs):  # noqa: ANN001, ARG001
+        raise AssertionError("request path must not embed the catalog (use cached only)")
+
+    monkeypatch.setattr(MatchService, "ensure_program_embeddings", _must_not_call)
+
+    svc = StudentService(db_session)
+    await svc.patch_onboarding_state(
+        student.user_id,
+        PatchOnboardingStateRequest(
+            answers=OnboardingAnswers(degree_level="masters", interests=["cs_data_ai"]),
+            completed=True,
+        ),
+    )
+    await db_session.commit()
+
+    rows = (
+        (await db_session.execute(select(MatchResult).where(MatchResult.student_id == student.id)))
+        .scalars()
+        .all()
+    )
+    assert len(rows) == len(programs), "matches seed via cached-only embeddings, no catalog embed"
+
+
+@pytest.mark.asyncio
+async def test_cached_program_embeddings_reads_only(db_session: AsyncSession):
+    """cached_program_embeddings returns only already-stored, version-current
+    vectors and computes nothing (no embed calls, no DB writes)."""
+    from unipaith.services.match_service import MatchService
+
+    programs = await _seed_published_programs(db_session, n=3)
+    programs[0].embedding = [0.2] * 8
+    programs[0].embedding_version = programs[0].feature_version
+    programs[1].embedding = [0.3] * 8
+    programs[1].embedding_version = (programs[1].feature_version or 0) + 99  # stale → skipped
+    await db_session.commit()
+
+    out = MatchService(db_session).cached_program_embeddings(programs)
+    assert set(out) == {programs[0].id}  # only the fresh, embedded one
+    assert out[programs[0].id] == [0.2] * 8
+
+
+@pytest.mark.asyncio
 async def test_onboarding_seed_is_fail_soft(db_session: AsyncSession, monkeypatch):
     """If the emitter blows up, onboarding still completes (no feature vector,
     no matches, no exception) — the student seeds on their first Discovery turn."""

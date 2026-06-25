@@ -6,7 +6,10 @@ while an adjacent field (CS↔engineering, CS↔data-science) and unlabeled prog
 pass untouched. Also pins the onboarding interest-track → canonical-field map.
 """
 
-from unipaith.services.match.field_canon import interest_track_to_field
+from unipaith.services.match.field_canon import (
+    fields_offered_for_program,
+    interest_track_to_field,
+)
 from unipaith.services.matching import ProgramFeatures, StudentFeatures, score
 
 _CS_STUDENT = StudentFeatures(
@@ -68,6 +71,35 @@ def test_student_without_a_stated_field_is_not_vetoed():
     )
     bd = score(blank, _program("mba", ["business"]), cpef_enabled=True).fitness_breakdown
     assert [d for d in bd["dealbreakers"] if d["key"] == "field"] == []
+
+
+def test_name_classified_unrelated_degrees_are_vetoed():
+    """The fix: a program with no explicit fields_offered but an unrelated DEGREE
+    NAME (MBA / Juris Doctor / Animal Science / Nursing) now classifies via the
+    program name and trips the veto for a CS applicant — before, it returned no
+    field token and slipped straight into her 'for you' picks."""
+    for name in (
+        "Master of Business Administration",
+        "Juris Doctor",
+        "Bachelor of Laws",
+        "Animal Science",
+        "Doctor of Veterinary Medicine",
+        "Nursing",
+    ):
+        fields = fields_offered_for_program(program_name=name)
+        assert fields, f"{name} should now classify into a field"
+        assert _field_dealbreakers(_program(name, fields)), f"{name} should trip the CS field veto"
+
+
+def test_name_classified_adjacent_degree_not_vetoed():
+    """CS-adjacent degrees classified from their name stay un-vetoed."""
+    for name in (
+        "Bachelor of Science in Computer Science",
+        "Data Science",
+        "Software Engineering",
+    ):
+        fields = fields_offered_for_program(program_name=name)
+        assert _field_dealbreakers(_program(name, fields)) == [], f"{name} not vetoed for CS"
 
 
 def test_interest_track_to_field_mapping():
