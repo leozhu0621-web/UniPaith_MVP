@@ -82,7 +82,7 @@ def test_eval_suite_case_counts_equal_what_the_runner_reads_off_disk():
     assert {"safety_crisis", "redteam"} <= floors
 
 
-def test_agents_are_claude_with_tiers_from_the_registry():
+def test_agents_run_on_qwen_with_tiers_from_the_registry():
     payload = build_chatbot_eval(app.routes)
     from unipaith.ai.agent_registry import tier_for
 
@@ -91,8 +91,9 @@ def test_agents_are_claude_with_tiers_from_the_registry():
     assert keys == {"student_advisor", "faculty_assistant"}
     for a in payload["agents"]:
         assert a["tier"] == tier_for(a["agent_name"])
-    # The §11 acceptance claim: both agents are Claude, verifiable via provider.
-    assert payload["summary"]["all_agents_claude"] is True
+    # 2026-06-25: Uni's conversation moved to Qwen via Together, so the agents are
+    # no longer pinned to Claude — `all_agents_claude` is now False.
+    assert payload["summary"]["all_agents_claude"] is False
 
 
 def test_safety_floor_coverage_is_live():
