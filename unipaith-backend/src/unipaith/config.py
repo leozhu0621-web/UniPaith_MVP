@@ -233,6 +233,16 @@ class Settings(BaseSettings):
     uni_agent_id: str = ""
     uni_environment_id: str = ""
 
+    # Host-side discovery-signal safety net for the managed agent. When ON, every
+    # real student turn runs the in-app extractor (the same A2 extractor the
+    # orchestrator uses) and persists goals/needs/identity even if the platform
+    # agent never calls its save_signals tool — then recomputes per-track
+    # completion. This is what guarantees Profile/Goals/Needs counters move and
+    # matches unlock on the managed path (the agent calling save_signals is not
+    # guaranteed). Best-effort: a failure never breaks the turn. Default OFF in
+    # code; enabled per-environment via AI_UNI_HOST_EXTRACTOR_V1.
+    ai_uni_host_extractor_v1: bool = False
+
     # Single bearer key for the UniPaith MCP data API (`/mcp`). A request that
     # presents this key may read/write ANY student's data (all-data access, by
     # explicit product direction) — guard it like a master credential. Empty

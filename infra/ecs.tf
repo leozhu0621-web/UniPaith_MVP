@@ -214,6 +214,11 @@ resource "aws_ecs_task_definition" "backend" {
       # here is how we follow a new agent version/id.
       { name = "UNI_AGENT_ID", value = "agent_01Gcox2cnu9zvUCR5Lfb9ymg" },
       { name = "UNI_ENVIRONMENT_ID", value = "env_01N43sA3tmVhij3YYZgWzAP2" },
+      # Host-side discovery-signal safety net: every real student turn runs the
+      # in-app extractor + recomputes completion even if the platform agent never
+      # calls save_signals — guarantees the Profile/Goals/Needs counters move and
+      # matches unlock on the managed path. Best-effort; never a 5xx.
+      { name = "AI_UNI_HOST_EXTRACTOR_V1", value = "true" },
       # Material ingest — "upload any file, Uni reads it, turns it into My Space."
       # Additive + flag-gated; on any read failure the student enters data
       # manually (never a 5xx). Uses the existing ANTHROPIC_API_KEY (native

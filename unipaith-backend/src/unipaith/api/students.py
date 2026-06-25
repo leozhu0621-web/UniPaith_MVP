@@ -1067,6 +1067,11 @@ async def _recompute_catalog_matches(db: AsyncSession, student_id: UUID) -> None
     from unipaith.services.match_service import MatchService
     from unipaith.services.program_features import program_row_from_orm
 
+    # Bootstrap a feature vector when the student has signals but none yet — the
+    # managed-agent path (and a brand-new student who hit Explore/Refresh straight
+    # after a conversation) never emits one on its own, so without this the matcher
+    # returns [] forever. No-op when a vector already exists.
+    await MatchService(db).ensure_feature_vector(student_id)
     # Re-derive the feature vector from the structured tables when the student's
     # matches are stale (a profile/goals/needs/strategy edit flagged them) — so we
     # score against the CURRENT profile. invalidate_for_profile_change only bumps the

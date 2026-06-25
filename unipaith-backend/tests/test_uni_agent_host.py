@@ -181,6 +181,114 @@ async def test_opener_trigger_generic_for_blank_profile(db_session, mock_student
 
 
 @pytest.mark.asyncio
+async def test_host_extractor_safety_net_captures_signals_and_moves_completion(
+    db_session, mock_student_user, monkeypatch
+):
+    """ai_uni_host_extractor_v1 — when the platform agent never calls save_signals,
+    the host still extracts + persists the student's signals and recomputes
+    per-track completion. This is the keystone that makes the Profile/Goals/Needs
+    counters move and unlocks matches on the managed path."""
+    from decimal import Decimal
+
+    from sqlalchemy import select
+
+    from unipaith.ai.extractor import ExtractedSignals
+    from unipaith.config import settings
+    from unipaith.models.discovery import DiscoverySession
+    from unipaith.models.goals import StudentGoal
+    from unipaith.services.uni_agent_host import UniAgentHost
+
+    profile = await ensure_profile(db_session, mock_student_user)
+
+    class _FakeExtractor:
+        async def extract(
+            self, *, student_turn, student_id=None, discovery_message_id=None, db=None
+        ):
+            return ExtractedSignals(
+                goals=[
+                    {
+                        "category": "academic",
+                        "specific": "Study computer science at a bachelor's level",
+                        "completeness": 1.0,
+                        "evidence": student_turn,
+                    }
+                ],
+                confidence_per_key={"goals": Decimal("0.85")},
+                raw_response={"goals": ["cs"]},
+            )
+
+    monkeypatch.setattr("unipaith.ai.extractor.get_extractor", lambda: _FakeExtractor())
+    monkeypatch.setattr(settings, "ai_uni_host_extractor_v1", True)
+
+    # _FakeAgentClient calls get_profile_snapshot but NOT save_signals.
+    host = UniAgentHost(db_session, client=_FakeAgentClient())
+    _ = [ev async for ev in host.stream_turn(mock_student_user.id, content="I want to study CS")]
+
+    goals = (
+        (await db_session.execute(select(StudentGoal).where(StudentGoal.student_id == profile.id)))
+        .scalars()
+        .all()
+    )
+    assert goals, "host extractor safety net persisted the student's goal"
+
+    sess = (
+        (
+            await db_session.execute(
+                select(DiscoverySession).where(DiscoverySession.student_id == profile.id)
+            )
+        )
+        .scalars()
+        .first()
+    )
+    # The keystone bug was that the managed path NEVER wrote completion_breakdown
+    # (so _completion_for_student read every track as 0 and matches never unlocked).
+    # Post-fix it is computed from the structured signals and written each turn.
+    assert sess is not None and sess.completion_breakdown is not None, (
+        "completion_breakdown written"
+    )
+    assert set(sess.completion_breakdown) == {"profile", "goals", "needs"}
+
+
+@pytest.mark.asyncio
+async def test_host_extractor_skipped_when_agent_saves_signals(
+    db_session, mock_student_user, monkeypatch
+):
+    """When the agent DOES call save_signals, the host trusts it and does NOT run
+    the redundant safety-net extractor (no double LLM call)."""
+    from unipaith.config import settings
+    from unipaith.services.uni_agent_host import UniAgentHost
+
+    await ensure_profile(db_session, mock_student_user)
+    called = {"n": 0}
+
+    class _SavingAgentClient(_FakeAgentClient):
+        async def stream(self, session_id):
+            yield _Event("agent.message", content=[_Block("Got it. ")])
+            yield _Event(
+                "agent.custom_tool_use",
+                id="sevt_save",
+                name="save_signals",
+                input={"signals": [{"type": "goal", "content": "study CS", "evidence": "x"}]},
+            )
+            yield _Event("agent.message", content=[_Block("Anything else?")])
+            yield _Event("session.status_idle", stop_reason=_Stop("end_turn"))
+
+    class _FakeExtractor:
+        async def extract(self, **kw):
+            called["n"] += 1
+            from unipaith.ai.extractor import ExtractedSignals
+
+            return ExtractedSignals()
+
+    monkeypatch.setattr("unipaith.ai.extractor.get_extractor", lambda: _FakeExtractor())
+    monkeypatch.setattr(settings, "ai_uni_host_extractor_v1", True)
+
+    host = UniAgentHost(db_session, client=_SavingAgentClient())
+    _ = [ev async for ev in host.stream_turn(mock_student_user.id, content="I want to study CS")]
+    assert called["n"] == 0, "safety-net extractor must be skipped when agent saved signals"
+
+
+@pytest.mark.asyncio
 async def test_stream_turn_raises_on_setup_failure(db_session, mock_student_user):
     """Setup failure must propagate so the API can fall back to the orchestrator."""
     from unipaith.services.uni_agent_host import UniAgentHost

@@ -155,6 +155,10 @@ async def tool_save_signals(
         db=db, student_id=student_id, session_id=session_id, extraction=extraction
     )
     await db.commit()
+    # Make the Profile/Goals/Needs counters move and unlock the handoff gate:
+    # the typed signals are persisted above, but discovery completion lives on
+    # the session and is otherwise only written by the in-app orchestrator.
+    await disc.recompute_completion_for_session(session_id)
     completion = await disc.get_completion_map(user_id)
     handoff = await disc.evaluate_handoff(user_id)
     return {
@@ -220,27 +224,27 @@ async def tool_search_programs(
 async def tool_get_matches(
     db: AsyncSession, user_id: UUID, tool_input: dict[str, Any]
 ) -> dict[str, Any]:
-    """Surface the student's top matches — gated on discovery handoff readiness.
+    """Surface the student's top matches.
 
-    A student who hasn't gone far enough gets ``ready=False`` plus what's still
-    missing, so the agent keeps the conversation going instead of guessing."""
+    Bootstraps a StudentFeatureVector from whatever signals the student has shared
+    (the live managed-agent path persists typed signals but never emits a vector —
+    that hook lives only in the in-app orchestrator). So 'See programs that fit me'
+    returns real matches as soon as there are goals/needs to score, instead of
+    bouncing to an empty page until full discovery handoff. When there's not enough
+    signal to build a vector, reports ``ready=False`` plus what's still missing so
+    the agent keeps the conversation going instead of guessing. Best-effort: an
+    emit/embed failure degrades to the not-ready state, never a 5xx."""
     from unipaith.services.match_service import MatchService
 
     disc = DiscoveryService(db)
-    handoff = await disc.evaluate_handoff(user_id)
-    if not handoff.get("should_handoff"):
+    student_id = await disc._profile_id_for_user(user_id)
+    if not await MatchService(db).ensure_feature_vector(student_id):
+        handoff = await disc.evaluate_handoff(user_id)
         return {
             "ready": False,
             "completion": {k: float(v) for k, v in (handoff.get("completion") or {}).items()},
             "reason": handoff.get("reason"),
         }
-    student_id = await disc._profile_id_for_user(user_id)
-    # The live managed-agent path persists signals to the structured tables but
-    # never emits a StudentFeatureVector (that hook lives only in the in-app
-    # orchestrator). Without a vector the matcher returns [] forever — so ensure one
-    # exists here before recomputing. Best-effort: a Haiku/embed failure must never
-    # break the agent turn (the recompute then degrades to its own empty state).
-    await _ensure_feature_vector(db, student_id)
     await disc._recompute_matches_for_student(student_id=student_id)
     matches = await MatchService(db).list_matches_for_display(student_id, limit=8)
     return {"ready": True, "matches": matches}
@@ -249,23 +253,12 @@ async def tool_get_matches(
 async def _ensure_feature_vector(db: AsyncSession, student_id: UUID) -> None:
     """Emit a StudentFeatureVector from the structured tables if the student has
     none yet — closes the managed-agent gap where Discovery completes but the
-    matcher has nothing to score. No-op when a vector already exists; best-effort
-    on emit so it never breaks the turn."""
+    matcher has nothing to score. Delegates to the canonical
+    MatchService.ensure_feature_vector (no-op when a vector already exists;
+    best-effort so it never breaks the turn)."""
     from unipaith.services.match_service import MatchService
 
-    if await MatchService(db)._student_feature_record(student_id) is not None:
-        return
-    try:
-        from unipaith.ai.artifacts import snapshot_from_structured_tables
-        from unipaith.ai.feature_emitter import get_feature_emitter, persist_features
-
-        snapshot = await snapshot_from_structured_tables(db, student_id)
-        features = await get_feature_emitter().emit(snapshot=snapshot, student_id=student_id, db=db)
-        if features.is_valid():
-            await persist_features(db=db, student_id=student_id, features=features)
-            await db.commit()
-    except Exception:  # pragma: no cover — degraded path, never breaks the turn
-        logger.exception("ensure_feature_vector: emit failed for student=%s", student_id)
+    await MatchService(db).ensure_feature_vector(student_id)
 
 
 # ── generate_strategy ─────────────────────────────────────────────────────
