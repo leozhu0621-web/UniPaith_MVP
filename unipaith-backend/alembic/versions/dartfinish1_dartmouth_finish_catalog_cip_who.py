@@ -30,7 +30,7 @@ chain advances and the deploy ships; ``dartmouth_profile.apply()`` is idempotent
 enrichment routine re-applies it next run.
 
 Revision ID: dartfinish1
-Revises: cipmergeofmerges1, columbiacip1
+Revises: columbiadualmerge1
 Create Date: 2026-06-25
 """
 
@@ -44,12 +44,8 @@ from unipaith.data import dartmouth_profile
 from unipaith.models.institution import Institution, Program, ProgramPreference
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
-# NOTE: dartfinish1 also UNIFIES main's dual alembic head — #1163 (cipmergeofmerges1)
-# and #1164 (columbiacip1) both merged the same (berkvandydartmerge1, cip3waymerge1) pair,
-# leaving main with two heads (deploys blocked). Revising BOTH here makes dartfinish1 the
-# single head and clears the dual-head at the same time as shipping Dartmouth.
 revision = "dartfinish1"
-down_revision = ("cipmergeofmerges1", "columbiacip1")
+down_revision = "columbiadualmerge1"
 branch_labels = None
 depends_on = None
 
