@@ -105,7 +105,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "University of Pennsylvania"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-19"
+ENRICHED_AT = "2026-06-25"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -1348,6 +1348,9 @@ _ROLLUP_FULL_NAME: dict[tuple[str, str], str] = {
     ("Clinical, Counseling and Applied Psychology", "masters"): (
         "Master of Applied Positive Psychology"
     ),
+    # Penn confers the M.P.H., not a generic "M.S. in Public Health" — name the row by
+    # the real conferred degree so it matches the cited MPH tuition (Perelman MPH).
+    ("Public Health", "masters"): "Master of Public Health (MPH)",
 }
 
 # slug → metadata overrides for a resolved row whose real program differs from the
@@ -2048,6 +2051,24 @@ try:
         _catalog_errors.append(f"template-slot artifacts on {len(_template)} programs")
 except ImportError:
     pass
+# ── Matcher-core cip_code coverage gate (REPAIR_BACKLOG #1, "Also enrich for the
+# MATCH") ──────────────────────────────────────────────────────────────────────
+# cip_code is the CIP join key the CPEF matcher uses to resolve a program's field to
+# ref_majors + the field-66 vocabulary (the interest/field signal alongside the dense
+# description embedding). It is serialized on GET /programs/{id}, so a catalog-wide null
+# is matcher STARVATION, not an honest omission. Every Penn row already carries the IPEDS
+# CIP it was built/cross-checked from, so cip_code is a stamp, never a guess — fail the
+# build if any row lacks one or carries a malformed code.
+_cip_missing = [p["slug"] for p in PROGRAMS if not p.get("cip")]
+if _cip_missing:
+    _catalog_errors.append(
+        f"missing cip_code on {len(_cip_missing)} programs: {_cip_missing[:5]}"
+    )
+_cip_malformed = sorted(
+    {p["cip"] for p in PROGRAMS if p.get("cip") and not re.fullmatch(r"\d{2}\.\d{2}", p["cip"])}
+)
+if _cip_malformed:
+    _catalog_errors.append(f"malformed cip_code values: {_cip_malformed[:5]}")
 if _catalog_errors:
     raise RuntimeError(f"Penn catalog quality gate failed: {_catalog_errors}")
 for _p in PROGRAMS:
@@ -2068,6 +2089,7 @@ _WEBSITE_BY_SLUG: dict[str, str] = {
     "penn-clinical-counseling-and-applied-psychology-ms": (
         "https://www.lps.upenn.edu/degree-programs/mapp"
     ),
+    "penn-public-health-ms": "https://mph.med.upenn.edu/",
     "penn-business-administration-management-and-operations-phd": (
         "https://mgmt.wharton.upenn.edu/programs/phd/"
     ),
@@ -2611,6 +2633,12 @@ _GSE_FT_TUITION = _GSE_CU * 8  # 66,240 (full-time academic year)
 # full-time academic year (8 c.u.) is $57,280 tuition.
 _NURSING_CU = 7160
 _NURSING_FT_TUITION = _NURSING_CU * 8  # 57,280
+# Penn MPH (Perelman): $5,490 per course unit, 2026-27. The MPH financing page states
+# half-time is 2 c.u./semester, so full-time is the 4-c.u./semester cap — a full-time
+# academic year of 8 c.u. is $43,920 in tuition (the 14-c.u. degree spans about two years
+# at that pace). Same per-c.u. × full-time-load derivation as SEAS/GSE/Nursing above.
+_MPH_CU = 5490
+_MPH_FT_TUITION = _MPH_CU * 8  # 43,920
 
 
 def _grad_cost(spec: dict) -> dict | None:
@@ -2620,6 +2648,34 @@ def _grad_cost(spec: dict) -> dict | None:
     citable per-tier rate, or ``None`` to omit-with-reason (no single citable per-program
     rate — academic research master's, per-credit graduate certificates, the LL.M./ML).
     """
+    # Penn MPH — a distinct, citable per-c.u. Perelman rate (slug-keyed: the other Perelman
+    # master's rows are funded/specialized and remain honestly omitted, so this cannot be
+    # keyed on (Perelman, masters)).
+    if spec["slug"] == "penn-public-health-ms":
+        return {
+            "tuition_usd": _MPH_FT_TUITION,
+            "breakdown": {
+                "tuition_per_course_unit": _MPH_CU,
+                "full_time_course_units_per_year": 8,
+                "tuition": _MPH_FT_TUITION,
+                "degree_course_units": 14,
+                "estimated_degree_tuition": _MPH_CU * 14,
+            },
+            "funded": False,
+            "note": (
+                "Penn's Master of Public Health (Perelman School of Medicine) is billed per "
+                "course unit ($5,490 per c.u., 2026-27). Half-time is 2 c.u. per semester, so "
+                "full-time is the 4-c.u./semester cap — a full-time academic year (8 c.u.) is "
+                "$43,920 in tuition, and the 14-c.u. degree (about two years) totals roughly "
+                "$76,860. The MPH program awards merit- and need-based scholarships."
+            ),
+            "source": (
+                "Penn Student Registration & Financial Services — Perelman School of Medicine "
+                "Master's Program Costs (MPH), 2026-27"
+            ),
+            "source_url": "https://srfs.upenn.edu/costs-budgeting/med/masters",
+            "year": "2026-27",
+        }
     key = (spec["school"], spec["degree_type"])
     if key == (_SAS, "masters"):
         return {
@@ -4544,6 +4600,8 @@ def _program_standard(slug: str, spec: dict | None = None) -> dict:
         omitted.append("faculty_contacts.lead")
     if slug not in _REVIEWS_BY_SLUG:
         omitted.append("external_reviews.summary")
+    if not spec.get("cip"):
+        omitted.append("cip_code")
     explicit_req_slugs = {
         "penn-wharton-mba", "penn-md", "penn-jd", "penn-dmd", "penn-vmd",
         "penn-march", "penn-msw", "penn-gse-higher-education-msed", "penn-communication-phd",
@@ -4581,6 +4639,8 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.website_url = _WEBSITE_BY_SLUG.get(slug) or _SCHOOL_WEBSITE.get(spec["school"])
         p.school_id = school_by_name[spec["school"]].id
         p.department = spec.get("department")
+        # Matcher-core CIP join key (interest/field signal) — verified IPEDS code per row.
+        p.cip_code = spec.get("cip")
         p.is_published = True
         p.catalog_source = "curated"
         p.delivery_format = _delivery_format(spec.get("delivery_format", "in_person"))
