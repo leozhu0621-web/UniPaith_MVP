@@ -102,24 +102,30 @@ export default function PrepReadiness() {
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <ReadinessCell
           label="Recommenders"
-          value={`${recReceived}/${recTotal} received`}
+          value={recTotal === 0 ? 'None yet' : `${recReceived}/${recTotal} received`}
           tone={recWaiting > 0 ? 'warning' : 'default'}
           onClick={() => navigate('/s/prep?tab=recommenders')}
         />
         <ReadinessCell
           label="Interviews"
-          value={needResponse > 0 ? `${needResponse} need a response` : 'All responded'}
+          value={
+            interviews.length === 0
+              ? 'None yet'
+              : needResponse > 0
+                ? `${needResponse} need a response`
+                : 'All responded'
+          }
           tone={needResponse > 0 ? 'warning' : 'default'}
           onClick={() => navigate('/s/prep?tab=interviews')}
         />
         <ReadinessCell
           label="Documents"
-          value={`${docs.length} on file`}
+          value={docs.length === 0 ? 'None yet' : `${docs.length} on file`}
           onClick={() => navigate('/s/prep?tab=documents')}
         />
         <ReadinessCell
           label="Workshops"
-          value={`${runs.length} feedback run${runs.length === 1 ? '' : 's'}`}
+          value={runs.length === 0 ? 'None yet' : `${runs.length} feedback run${runs.length === 1 ? '' : 's'}`}
           onClick={() => navigate('/s/prep?tab=workshops')}
         />
       </div>

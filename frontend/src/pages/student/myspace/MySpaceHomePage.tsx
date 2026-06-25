@@ -21,7 +21,6 @@ import { listWorkshopRuns } from '../../../api/workshops-feedback'
 import { getThreads } from '../../../api/inbox'
 import { listClarifications } from '../../../api/intake'
 import { getProfile, getOnboarding } from '../../../api/students'
-import { useAuthStore } from '../../../stores/auth-store'
 import Coachmark from '../../../components/ui/Coachmark'
 import { buildUpNext } from './home/upNext'
 import TodaysFocus from './home/TodaysFocus'
@@ -43,7 +42,6 @@ const STALE = 60_000
 export default function MySpaceHomePage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { user } = useAuthStore()
 
   // Nudge a recommender from the home dashboard — same action as the
   // Applications → Recommenders tab (POST /students/me/recommendations/:id/send).
@@ -109,7 +107,10 @@ export default function MySpaceHomePage() {
 
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
-  const firstName = profile.data?.first_name || user?.email?.split('@')[0] || ''
+  // Never greet by the email local-part — "Good afternoon, maya.student.1782…"
+  // reads as a bug. With no real first name the header is just the greeting (the
+  // `firstName ? …` guard below already handles the empty case).
+  const firstName = profile.data?.first_name?.trim() || ''
 
   return (
     <PageContainer>

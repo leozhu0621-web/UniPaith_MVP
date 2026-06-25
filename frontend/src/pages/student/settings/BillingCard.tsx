@@ -1,17 +1,15 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { CreditCard, Sparkles } from 'lucide-react'
+import { CreditCard } from 'lucide-react'
 import { confirmDialog } from '../../../stores/confirm-store'
 import Button from '../../../components/ui/Button'
 import Badge from '../../../components/ui/Badge'
 import Skeleton from '../../../components/ui/Skeleton'
-import Toggle from '../../../components/ui/Toggle'
 import StripeSubscriptionForm from '../../../components/student/StripeSubscriptionForm'
 import SettingsSection from './SettingsSection'
 import {
   cancelStudentBilling,
   resumeStudentBilling,
-  setAdFree,
   upgradeStudentBilling,
   type StudentBilling,
 } from '../../../api/billing'
@@ -44,11 +42,6 @@ export default function BillingCard() {
         'Could not update your plan'
       showToast(msg, 'error')
     },
-  })
-  const adFreeMut = useMutation({
-    mutationFn: (enabled: boolean) => setAdFree(enabled),
-    onSuccess: refresh,
-    onError: () => showToast('Could not update ad-free', 'error'),
   })
   const cancelMut = useMutation({
     mutationFn: cancelStudentBilling,
@@ -88,7 +81,6 @@ export default function BillingCard() {
                 ${billing.monthly_total_usd}
                 <span className="text-xs font-normal text-muted-foreground">/mo</span>
               </div>
-              {billing.ad_free && <div className="text-xs text-muted-foreground">incl. ad-free</div>}
             </div>
           </div>
 
@@ -98,23 +90,6 @@ export default function BillingCard() {
               {billing.payment_method_brand} •••• {billing.payment_method_last4}
             </div>
           )}
-
-          <div className="flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2.5">
-            <div>
-              <p className="text-sm font-medium text-foreground flex items-center gap-1.5">
-                <Sparkles size={14} className="text-secondary" /> Ad-free experience
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Remove ads across UniPaith · +${billing.ad_free_addon_usd}/mo
-              </p>
-            </div>
-            <Toggle
-              checked={billing.ad_free}
-              disabled={adFreeMut.isPending}
-              onChange={v => adFreeMut.mutate(v)}
-              label="Ad-free"
-            />
-          </div>
 
           {billing.invoices.length > 0 && (
             <div className="text-sm text-muted-foreground">

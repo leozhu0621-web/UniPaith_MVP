@@ -17,6 +17,18 @@ from unipaith.models.user import User, UserRole
 logger = logging.getLogger("unipaith.auth")
 
 
+def _first_name_from_claims(claims: dict[str, Any]) -> str | None:
+    """Best first name from a Google/OIDC ID-token claim set: ``given_name``, else
+    the first token of ``name``. Blank → None (mirrors signup's normalization), so
+    a Google-created student is greeted by their name instead of their email
+    local-part (the root of the "Good afternoon, maya.student.1782…" greeting)."""
+    given = (claims.get("given_name") or "").strip()
+    if given:
+        return given
+    full = (claims.get("name") or "").strip()
+    return full.split()[0] if full else None
+
+
 def _get_cognito_client():  # type: ignore[no-untyped-def]
     kwargs: dict = {"region_name": settings.aws_region}
     if settings.aws_access_key_id and settings.aws_secret_access_key:
@@ -269,7 +281,9 @@ class AuthService:
             await self.db.refresh(user)
 
             if role == "student":
-                self.db.add(StudentProfile(user_id=user.id))
+                self.db.add(
+                    StudentProfile(user_id=user.id, first_name=_first_name_from_claims(claims))
+                )
                 await self.db.flush()
 
             logger.info("Created new user via Google: %s (%s)", email, role)
@@ -343,7 +357,9 @@ class AuthService:
             await self.db.flush()
             await self.db.refresh(user)
             if role == "student":
-                self.db.add(StudentProfile(user_id=user.id))
+                self.db.add(
+                    StudentProfile(user_id=user.id, first_name=_first_name_from_claims(claims))
+                )
                 await self.db.flush()
             logger.info("Created new user via Google sign-in: %s (%s)", email, role)
         elif not user.cognito_sub:

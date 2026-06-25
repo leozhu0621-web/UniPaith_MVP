@@ -196,7 +196,11 @@ export default function DiscoverRail({ followedIds, onToggleFollow, onOpenTab, o
       {/* Following + suggestions */}
       <RailCard icon={Bell} title={`Following · ${followCount}`} action={{ label: 'Manage', onClick: onManageFollowing }}>
         {suggestions.length === 0 ? (
-          <p className="text-xs text-muted-foreground px-1">Not following any schools yet.</p>
+          <p className="text-xs text-muted-foreground px-1">
+            {followCount > 0
+              ? `Following ${followCount} school${followCount === 1 ? '' : 's'} — no new suggestions right now.`
+              : 'No schools to suggest yet.'}
+          </p>
         ) : (
           <>
             <p className="text-[10px] uppercase tracking-wide text-muted-foreground px-1 mb-1">Add to your feed</p>
