@@ -98,6 +98,7 @@ _ALIASES: tuple[tuple[str, str], ...] = (
 _CIP_FAMILY_FIELD: dict[str, str] = {
     "11": "computer_science",  # Computer & Information Sciences
     "14": "engineering",  # Engineering
+    "22": "political_science",  # Legal Professions & Studies (same head as law_policy interest)
     "26": "biology",  # Biological & Biomedical Sciences
     "27": "mathematics",  # Mathematics & Statistics
     "40": "physics",  # Physical Sciences (chemistry/physics — physics as head)
