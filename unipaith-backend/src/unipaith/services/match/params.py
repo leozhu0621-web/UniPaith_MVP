@@ -101,6 +101,15 @@ FIELD_SIM_TABLE: dict[tuple[str, str], float] = {
     ("english", "history"): 0.4,
 }
 
+# Below this best-field-fit, a program is treated as WRONG-DISCIPLINE for the
+# student and vetoed in her ranking (todo 3.2). ``fit_categorical`` returns 1.0 for
+# an exact field match, the curated FIELD_SIM_TABLE value (0.4–0.8) for a *related*
+# field, and 0.0 for an *unrelated* one. A floor of 0.35 therefore sinks ONLY the
+# unrelated case (0.0) while letting every adjacent field in the sim table (≥0.4 —
+# e.g. CS↔data-science, CS↔engineering) pass untouched, so interdisciplinary
+# matches are never buried.
+FIELD_VETO_FLOOR: float = 0.35
+
 # Confidence is clamped off the open interval so precision stays finite.
 _C_LO, _C_HI = 0.01, 0.99
 

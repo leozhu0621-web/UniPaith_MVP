@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
@@ -66,6 +67,8 @@ from unipaith.schemas.student import (
     UpsertSchedulingRequest,
     UpsertVisaInfoRequest,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class StudentService:
@@ -897,6 +900,7 @@ class StudentService:
         if data.completed and not state.get("completed_at"):
             state["completed_at"] = now_iso
             await self._fan_in_onboarding_answers(profile.id, answers)
+            await self._seed_matches_from_onboarding(profile.id)
         if data.dismissed and not state.get("dismissed_at"):
             state["dismissed_at"] = now_iso
         profile.onboarding_state = state
@@ -941,9 +945,23 @@ class StudentService:
 
         if degree or term:
             label = self._DEGREE_LABELS.get(degree, degree) if degree else "degree"
+            # Surface the intended field (mapped from the wizard's interest track)
+            # in the goal text so the feature emitter's snapshot carries the
+            # discipline — without it the academic goal reads "Start a Master's
+            # program" with no field, and the matcher can't tell CS from law.
+            from unipaith.services.match.field_canon import interest_track_to_field
+
+            field_label: str | None = None
+            for it in answers.get("interests") or []:
+                token = interest_track_to_field(it)
+                if token:
+                    field_label = token.replace("_", " ")
+                    break
             specific = f"Start a {label} program"
+            if field_label:
+                specific += f" in {field_label}"
             if term:
-                specific += f" in {term}"
+                specific += f" ({term})"
             self.db.add(
                 StudentGoal(
                     student_id=student_id,
@@ -955,6 +973,34 @@ class StudentService:
 
         await self.db.flush()
         await self._update_onboarding(student_id)
+
+    async def _seed_matches_from_onboarding(self, student_id: UUID) -> None:
+        """todo 1.1 — the moment onboarding completes, emit a feature vector and
+        compute matches so a brand-new student sees recommendations immediately,
+        instead of an empty Discover until they happen to chat with Uni.
+
+        Reuses the SAME emit→persist→recompute path Discovery uses (single source
+        of truth — ``DiscoveryService._emit_features_for_completion``). Best-effort
+        + fail-soft: any failure (thin snapshot, LLM/embedding hiccup, no published
+        catalog) leaves the student match-less until their first Discovery turn —
+        the prior behaviour — and NEVER breaks the onboarding PATCH.
+        """
+        try:
+            # Local imports — avoid a circular load (discovery_service → AI stack →
+            # back into matching) and defer the heavy import to actual completion.
+            from unipaith.ai.artifacts import snapshot_from_structured_tables
+            from unipaith.services.discovery_service import DiscoveryService
+
+            snapshot = await snapshot_from_structured_tables(self.db, student_id)
+            await DiscoveryService(self.db)._emit_features_for_completion(
+                student_id=student_id, snapshot=snapshot
+            )
+        except Exception:  # pragma: no cover — degraded path
+            logger.exception(
+                "Onboarding match seed failed for student=%s — matches will seed "
+                "on the student's first Discovery turn instead.",
+                student_id,
+            )
 
     def _compute_next_step(
         self, steps: list[str], profile: StudentProfile

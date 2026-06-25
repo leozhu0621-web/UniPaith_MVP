@@ -59,6 +59,7 @@ from .match import fits as _fits
 from .match.params import (
     DEFAULT_PARAMS,
     FIELD_SIM_TABLE,
+    FIELD_VETO_FLOOR,
     clamp01,
     confidence_to_gain,
     prior_for,
@@ -596,6 +597,23 @@ def _build_cpef_signals(
     if p_target and s_lvl and s_lvl != "unknown":
         ok = _education_compat(s_lvl, p_target)
         dealbreakers.append({"key": "degree", "v": (1.0 if ok else p["epsilon"]), "rho": veto_rho})
+
+    # field-of-study veto (todo 3.2 — stop recommending wrong-discipline programs,
+    # e.g. an MBA or JD to a Computer-Science applicant). When the student states an
+    # intended field AND the program lists offered fields AND the best field fit is
+    # below FIELD_VETO_FLOOR (i.e. the fields are *unrelated*, fit→0.0), sink the
+    # program in HER ranking. GATED + fail-soft + confidence-aware (veto_rho), exactly
+    # like the degree/budget/geo breakers: no stated field or no program fields → no
+    # veto, and any field merely *adjacent* in FIELD_SIM_TABLE (≥0.4 — CS↔data-science,
+    # CS↔engineering, …) passes untouched, so interdisciplinary matches are never
+    # buried. ``s_field`` / ``p_fields`` are the same canonical tokens the graded
+    # "field" signal above uses, so the veto and the signal can never disagree.
+    if s_field is not None and p_fields:
+        field_fit = _fits.fit_categorical_best(s_field, list(p_fields), FIELD_SIM_TABLE)
+        if field_fit < FIELD_VETO_FLOOR:
+            dealbreakers.append(
+                {"key": "field", "v": max(p["epsilon"], field_fit), "rho": veto_rho}
+            )
     if s_budget is not None and p_tuition is not None and not s.get("needs_aid", False):
         ceiling = float(s_budget) * (1.0 + p["delta"])
         if float(p_tuition) > ceiling:
