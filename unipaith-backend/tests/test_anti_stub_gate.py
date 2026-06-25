@@ -29,7 +29,7 @@ from unipaith.profile_standard.anti_stub import (
 # Grow as scrape-built catalogs are researched per-program (UT-Austin still carries it).
 SCRAPE_DEBRIS_CLEAN = [
     "mit", "usc", "uiuc", "nyu", "columbia", "michigan", "cornell", "bu", "brown",
-    "vanderbilt", "dartmouth",
+    "vanderbilt", "dartmouth", "georgetown",
 ]
 
 # Catalogs whose per-program descriptions have been verified gold-equal (every metric 0).
@@ -95,6 +95,14 @@ CERTIFIED_CLEAN = [
     #             departments, field-specific per-program descriptions; Vanderbilt News +
     #             LiveWhale feeds; 5-photo verified gallery; published 2025-26 tuition per tier
     #             (vanderbiltprof1)
+    "georgetown",  # institution seed (5 empty-desc stubs) → gold + verified 190-program
+    #             catalog across the ten schools (College, SFS, McDonough, McCourt, Nursing,
+    #             Health, Medicine/BGE, Law, GSAS, SCS); Bulletin-sourced conferred names +
+    #             real owning departments + field-specific per-program descriptions; cip_code
+    #             + who_its_for on every row; THE FEED + LiveWhale events feeds; 4-photo
+    #             verified gallery; published 2025-26 tuition (undergrad 100%, JD/MD/MBA/LLM,
+    #             McCourt + GSAS per-credit) with per-credit grad rows omitted-with-reason
+    #             (georgetownprof1)
     # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
     # junk; re-added after stanfordprof11 regeneration matching Michigan/UW repair model.
 ]
@@ -167,7 +175,7 @@ _FRAME_STRIPPED_CLEAN = [
     "mit", "rice", "uf", "usc", "uw_madison", "jhu", "uiuc", "uw", "harvard", "nyu",
     "ut_austin", "columbia", "michigan", "duke", "georgia_tech", "ucla", "berkeley",
     "stanford",     "penn", "cornell", "notre_dame", "bu", "vanderbilt", "ucsd",
-    "dartmouth",
+    "dartmouth", "georgetown",
 ]
 
 
@@ -197,6 +205,7 @@ def test_credential_siblings_have_no_frame_stripped_shared_body(name: str):
 _ABS_FLOOR_CLEAN = [
     "nyu", "mit", "columbia", "michigan", "ucla", "jhu", "berkeley", "uf", "stanford",
     "penn", "cornell", "ut_austin", "notre_dame", "bu", "vanderbilt", "ucsd", "dartmouth",
+    "georgetown",
 ]
 
 
