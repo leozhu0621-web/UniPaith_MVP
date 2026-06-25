@@ -404,7 +404,7 @@ class DiscoveryService:
                 db=self.db,
             )
 
-            assistant_text = orch_response.text or "(empty response)"
+            assistant_text = orch_response.text
             assistant_signals = {
                 "_phase": "A2",
                 "requested_layer_advance": orch_response.requested_layer_advance,
@@ -415,6 +415,16 @@ class DiscoveryService:
                 # Interactive UX Phase 2 — optional multi/scale affordance hint.
                 "suggested_input": orch_response.suggested_input,
             }
+            if not assistant_text:
+                # The orchestrator returned no text — never show a dead
+                # "(empty response)" string. Serve a real next probe and tag
+                # rule_based so the UI shows the limited-mode banner instead.
+                assistant_text = (
+                    verdict.next_probe_hint
+                    if verdict is not None and verdict.next_probe_hint
+                    else _rule_based_opener(session.track, session.layer)
+                )
+                assistant_signals["_mode"] = "rule_based"
         except Exception as exc:  # pragma: no cover — degraded path
             logger.exception(
                 "Discovery v2 turn failed for session=%s; serving rule-based prompt",
@@ -832,18 +842,24 @@ class DiscoveryService:
                     record_calls = payload.record_artifact_calls or record_calls
                     requested_advance = payload.requested_layer_advance or requested_advance
                     advance_rationale = payload.advance_rationale or advance_rationale
+                    stream_signals = {
+                        "_phase": "A3_2_stream",
+                        "requested_layer_advance": requested_advance,
+                        "advance_rationale": advance_rationale,
+                        "record_artifact_calls": record_calls,
+                        "suggested_options": payload.suggested_options,
+                        "suggested_input": payload.suggested_input,
+                    }
+                    if not final_text:
+                        # Never persist/show a dead "(empty response)" — serve a
+                        # real probe and tag rule_based for the limited-mode banner.
+                        final_text = _rule_based_opener(session.track, session.layer)
+                        stream_signals["_mode"] = "rule_based"
                     assistant = DiscoveryMessage(
                         session_id=session.id,
                         role="assistant",
-                        content=final_text or "(empty response)",
-                        extracted_signals={
-                            "_phase": "A3_2_stream",
-                            "requested_layer_advance": requested_advance,
-                            "advance_rationale": advance_rationale,
-                            "record_artifact_calls": record_calls,
-                            "suggested_options": payload.suggested_options,
-                            "suggested_input": payload.suggested_input,
-                        },
+                        content=final_text,
+                        extracted_signals=stream_signals,
                     )
                     self.db.add(assistant)
                     await self.db.flush()

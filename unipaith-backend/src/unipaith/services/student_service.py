@@ -124,10 +124,23 @@ class StudentService:
         strategy = await StrategyService(self.db).get_active(user_id)
         completion = await DiscoveryService(self.db).get_completion_map(user_id)
 
+        answers = (profile.onboarding_state or {}).get("answers") or {}
         return {
             "profile": {
                 "first_name": profile.first_name,
                 "last_name": profile.last_name,
+                # Surfaced so the agent stops re-asking what it already has — the
+                # gender re-ask and the stage / "what's drawing you in" re-ask both
+                # came from these living in a column / onboarding_state the
+                # snapshot never exposed.
+                "gender_identity": profile.gender_identity,
+                "country_of_residence": profile.country_of_residence,
+            },
+            "onboarding": {
+                "stage": answers.get("stage"),
+                "interests": answers.get("interests"),
+                "degree_level": answers.get("degree_level"),
+                "budget_band": answers.get("budget_band"),
             },
             "goals": [
                 {"category": g.category, "specific": g.specific, "status": g.status} for g in goals
