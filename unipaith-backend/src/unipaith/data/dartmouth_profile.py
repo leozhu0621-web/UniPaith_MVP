@@ -21,10 +21,17 @@ $71,697 (3 terms) / MEM $95,596 (4 terms), Tuck MBA $87,536, Geisel M.D. $75,110
 Dartmouth Institute on-campus MPH $82,232, Guarini MS $95,596 (4 terms), MALS
 full-time $66,917 — never the $66,123 undergraduate sticker. PhD rows remain
 funded-omit-with-reason.
+
+Matcher-core + universal-depth pass (2026-06-25, dartcipwho1): stamps the IPEDS CIP-2020
+``cip_code`` on all 43 programs (REPAIR_BACKLOG #1 — the field join key the CPEF matcher
+reads, previously null fleet-wide) and a field-specific ``who_its_for`` on every program
+(REPAIR_BACKLOG #4 — the universal-depth audience statement, previously 0%). Both are
+verified taxonomy/audience stamps, never guesses; no fabrication.
 """
 
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from sqlalchemy import select, text
@@ -36,7 +43,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Dartmouth College"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-20"
+ENRICHED_AT = "2026-06-25"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -237,7 +244,7 @@ DESCRIPTION = (
     "colonial America and the smallest university in the Ivy League. It enrolls about "
     "4,600 undergraduates and some 2,300 graduate and professional students — roughly "
     "6,900 in all — with a 7:1 student-faculty ratio and an intensive, year-round "
-    "quarter calendar (the \"D-Plan\") built around small classes and undergraduate "
+    'quarter calendar (the "D-Plan") built around small classes and undergraduate '
     "research.\n\n"
     "Dartmouth is organized into the undergraduate-focused School of Arts and Sciences "
     "and four graduate and professional schools: the Thayer School of Engineering, the "
@@ -454,238 +461,410 @@ _INSTITUTION_CONTENT: dict = {
 _CATALOG: list[tuple] = [
     # ── School of Arts and Sciences — undergraduate A.B. majors ──
     (
-        "Anthropology", "Bachelor of Arts in Anthropology", "bachelors", _ARTS,
-        "Department of Anthropology", 48, ["anthropology"],
+        "Anthropology",
+        "Bachelor of Arts in Anthropology",
+        "bachelors",
+        _ARTS,
+        "Department of Anthropology",
+        48,
+        ["anthropology"],
         "Dartmouth's anthropology major studies human societies past and present across "
         "the cultural, archaeological, and biological subfields, combining coursework "
         "with field and laboratory research.",
     ),
     (
-        "Art History", "Bachelor of Arts in Art History", "bachelors", _ARTS,
-        "Department of Art History", 48, ["art history"],
+        "Art History",
+        "Bachelor of Arts in Art History",
+        "bachelors",
+        _ARTS,
+        "Department of Art History",
+        48,
+        ["art history"],
         "The art history major examines visual culture from antiquity to the present, "
         "drawing on the collections of the Hood Museum of Art for object-based study of "
         "painting, sculpture, architecture, and global visual traditions.",
     ),
     (
-        "Biological Sciences", "Bachelor of Arts in Biological Sciences", "bachelors", _ARTS,
-        "Department of Biological Sciences", 48, ["biology", "biological sciences"],
+        "Biological Sciences",
+        "Bachelor of Arts in Biological Sciences",
+        "bachelors",
+        _ARTS,
+        "Department of Biological Sciences",
+        48,
+        ["biology", "biological sciences"],
         "Biology at Dartmouth spans molecular, cellular, organismal, and ecological "
         "scales, pairing laboratory and field research with pathways into genetics, "
         "neurobiology, and evolutionary biology.",
     ),
     (
-        "Chemistry", "Bachelor of Arts in Chemistry", "bachelors", _ARTS,
-        "Department of Chemistry", 48, ["chemistry"],
+        "Chemistry",
+        "Bachelor of Arts in Chemistry",
+        "bachelors",
+        _ARTS,
+        "Department of Chemistry",
+        48,
+        ["chemistry"],
         "The chemistry major covers organic, inorganic, physical, analytical, and "
         "biological chemistry, with core coursework anchored by undergraduate research "
         "in faculty laboratories.",
     ),
     (
-        "Classics", "Bachelor of Arts in Classics", "bachelors", _ARTS,
-        "Department of Classics", 48, ["classics"],
+        "Classics",
+        "Bachelor of Arts in Classics",
+        "bachelors",
+        _ARTS,
+        "Department of Classics",
+        48,
+        ["classics"],
         "Classics combines the study of Greek and Latin with the history, archaeology, "
         "and literature of the ancient Mediterranean world.",
     ),
     (
-        "Cognitive Science", "Bachelor of Arts in Cognitive Science", "bachelors", _ARTS,
-        "Program in Cognitive Science", 48, ["cognitive science"],
+        "Cognitive Science",
+        "Bachelor of Arts in Cognitive Science",
+        "bachelors",
+        _ARTS,
+        "Program in Cognitive Science",
+        48,
+        ["cognitive science"],
         "Cognitive science integrates psychology, neuroscience, computer science, "
         "linguistics, and philosophy to study the mind, perception, and intelligent "
         "behavior.",
     ),
     (
-        "Computer Science", "Bachelor of Arts in Computer Science", "bachelors", _ARTS,
-        "Department of Computer Science", 48, ["computer science"],
+        "Computer Science",
+        "Bachelor of Arts in Computer Science",
+        "bachelors",
+        _ARTS,
+        "Department of Computer Science",
+        48,
+        ["computer science"],
         "Dartmouth's computer science major — at the institution where the term "
-        "\"artificial intelligence\" was coined in 1956 — spans algorithms, systems, "
+        '"artificial intelligence" was coined in 1956 — spans algorithms, systems, '
         "theory, machine learning, and human-computer interaction, with extensive "
         "undergraduate research.",
     ),
     (
-        "Earth Sciences", "Bachelor of Arts in Earth Sciences", "bachelors", _ARTS,
-        "Department of Earth Sciences", 48, ["earth sciences", "geology"],
+        "Earth Sciences",
+        "Bachelor of Arts in Earth Sciences",
+        "bachelors",
+        _ARTS,
+        "Department of Earth Sciences",
+        48,
+        ["earth sciences", "geology"],
         "Earth sciences studies the solid Earth, oceans, and climate through coursework "
         "and field study, with ties to Dartmouth's polar and climate research.",
     ),
     (
-        "Economics", "Bachelor of Arts in Economics", "bachelors", _ARTS,
-        "Department of Economics", 48, ["economics", "economist"],
+        "Economics",
+        "Bachelor of Arts in Economics",
+        "bachelors",
+        _ARTS,
+        "Department of Economics",
+        48,
+        ["economics", "economist"],
         "Economics grounds students in microeconomic and macroeconomic theory and "
         "econometrics, with applied fields from finance and industrial organization to "
         "development and public economics.",
     ),
     (
-        "English", "Bachelor of Arts in English", "bachelors", _ARTS,
-        "Department of English and Creative Writing", 48, ["English", "creative writing"],
+        "English",
+        "Bachelor of Arts in English",
+        "bachelors",
+        _ARTS,
+        "Department of English and Creative Writing",
+        48,
+        ["English", "creative writing"],
         "The English and creative writing major studies literature in English across "
         "periods and genres alongside workshops in fiction, poetry, and nonfiction.",
     ),
     (
-        "Environmental Studies", "Bachelor of Arts in Environmental Studies", "bachelors", _ARTS,
-        "Program in Environmental Studies", 48, ["environmental studies", "environment"],
+        "Environmental Studies",
+        "Bachelor of Arts in Environmental Studies",
+        "bachelors",
+        _ARTS,
+        "Program in Environmental Studies",
+        48,
+        ["environmental studies", "environment"],
         "Environmental studies links the natural and social sciences, policy, and the "
         "humanities to address sustainability, conservation, and environmental change.",
     ),
     (
-        "Film and Media Studies", "Bachelor of Arts in Film and Media Studies", "bachelors", _ARTS,
-        "Department of Film and Media Studies", 48, ["film", "media studies"],
+        "Film and Media Studies",
+        "Bachelor of Arts in Film and Media Studies",
+        "bachelors",
+        _ARTS,
+        "Department of Film and Media Studies",
+        48,
+        ["film", "media studies"],
         "Film and media studies pairs critical study of cinema and moving-image culture "
         "with hands-on production in film, video, and digital media.",
     ),
     (
-        "Geography", "Bachelor of Arts in Geography", "bachelors", _ARTS,
-        "Department of Geography", 48, ["geography"],
+        "Geography",
+        "Bachelor of Arts in Geography",
+        "bachelors",
+        _ARTS,
+        "Department of Geography",
+        48,
+        ["geography"],
         "Geography examines the spatial dimensions of human and physical systems — "
         "urbanization, development, and the environment — using fieldwork and "
         "geospatial analysis.",
     ),
     (
-        "Government", "Bachelor of Arts in Government", "bachelors", _ARTS,
-        "Department of Government", 48, ["government", "politics"],
+        "Government",
+        "Bachelor of Arts in Government",
+        "bachelors",
+        _ARTS,
+        "Department of Government",
+        48,
+        ["government", "politics"],
         "The government major studies American politics, comparative politics, "
         "international relations, and political theory, with policy engagement through "
         "the Nelson A. Rockefeller Center for Public Policy.",
     ),
     (
-        "History", "Bachelor of Arts in History", "bachelors", _ARTS,
-        "Department of History", 48, ["history"],
+        "History",
+        "Bachelor of Arts in History",
+        "bachelors",
+        _ARTS,
+        "Department of History",
+        48,
+        ["history"],
         "History at Dartmouth spans the Americas, Europe, Africa, Asia, and the Middle "
         "East, training students in archival research and historical argument across "
         "premodern and modern periods.",
     ),
     (
-        "Mathematics", "Bachelor of Arts in Mathematics", "bachelors", _ARTS,
-        "Department of Mathematics", 48, ["mathematics", "math"],
+        "Mathematics",
+        "Bachelor of Arts in Mathematics",
+        "bachelors",
+        _ARTS,
+        "Department of Mathematics",
+        48,
+        ["mathematics", "math"],
         "The mathematics major covers analysis, algebra, topology, and applied "
         "mathematics, with paths toward pure mathematics, applied and computational "
         "work, and statistics.",
     ),
     (
-        "Music", "Bachelor of Arts in Music", "bachelors", _ARTS,
-        "Department of Music", 48, ["music"],
+        "Music",
+        "Bachelor of Arts in Music",
+        "bachelors",
+        _ARTS,
+        "Department of Music",
+        48,
+        ["music"],
         "The music major combines performance, composition, theory, and ethnomusicology, "
         "with ensembles and recital space at the Hopkins Center for the Arts.",
     ),
     (
-        "Neuroscience", "Bachelor of Arts in Neuroscience", "bachelors", _ARTS,
-        "Program in Neuroscience", 48, ["neuroscience", "brain"],
+        "Neuroscience",
+        "Bachelor of Arts in Neuroscience",
+        "bachelors",
+        _ARTS,
+        "Program in Neuroscience",
+        48,
+        ["neuroscience", "brain"],
         "The neuroscience major studies the nervous system from molecules and cells to "
         "cognition and behavior, integrating biology, chemistry, and psychological and "
         "brain sciences.",
     ),
     (
-        "Philosophy", "Bachelor of Arts in Philosophy", "bachelors", _ARTS,
-        "Department of Philosophy", 48, ["philosophy"],
+        "Philosophy",
+        "Bachelor of Arts in Philosophy",
+        "bachelors",
+        _ARTS,
+        "Department of Philosophy",
+        48,
+        ["philosophy"],
         "Philosophy covers logic, ethics, metaphysics, epistemology, and the history of "
         "philosophy, with departmental strength in the philosophy of mind and science.",
     ),
     (
-        "Physics", "Bachelor of Arts in Physics", "bachelors", _ARTS,
-        "Department of Physics and Astronomy", 48, ["physics", "astronomy"],
+        "Physics",
+        "Bachelor of Arts in Physics",
+        "bachelors",
+        _ARTS,
+        "Department of Physics and Astronomy",
+        48,
+        ["physics", "astronomy"],
         "Physics and astronomy spans classical and quantum mechanics, electromagnetism, "
         "and astrophysics, with undergraduate research from cosmology and space physics "
         "to condensed matter.",
     ),
     (
         "Psychological and Brain Sciences",
-        "Bachelor of Arts in Psychological and Brain Sciences", "bachelors", _ARTS,
-        "Department of Psychological and Brain Sciences", 48, ["psychology", "brain sciences"],
+        "Bachelor of Arts in Psychological and Brain Sciences",
+        "bachelors",
+        _ARTS,
+        "Department of Psychological and Brain Sciences",
+        48,
+        ["psychology", "brain sciences"],
         "The psychological and brain sciences major studies cognition, perception, "
         "social behavior, and the brain, with laboratory research and neuroimaging "
         "facilities.",
     ),
     (
         "Quantitative Social Science",
-        "Bachelor of Arts in Quantitative Social Science", "bachelors", _ARTS,
-        "Program in Quantitative Social Science", 48, ["quantitative social science", "data"],
+        "Bachelor of Arts in Quantitative Social Science",
+        "bachelors",
+        _ARTS,
+        "Program in Quantitative Social Science",
+        48,
+        ["quantitative social science", "data"],
         "Quantitative social science trains students in statistics, data analysis, and "
         "causal inference applied to questions in politics, economics, and society.",
     ),
     (
-        "Religion", "Bachelor of Arts in Religion", "bachelors", _ARTS,
-        "Department of Religion", 48, ["religion"],
+        "Religion",
+        "Bachelor of Arts in Religion",
+        "bachelors",
+        _ARTS,
+        "Department of Religion",
+        48,
+        ["religion"],
         "The religion major studies the world's religious traditions — their texts, "
         "histories, and practices — across Asian, Abrahamic, and indigenous traditions.",
     ),
     (
-        "Sociology", "Bachelor of Arts in Sociology", "bachelors", _ARTS,
-        "Department of Sociology", 48, ["sociology"],
+        "Sociology",
+        "Bachelor of Arts in Sociology",
+        "bachelors",
+        _ARTS,
+        "Department of Sociology",
+        48,
+        ["sociology"],
         "Sociology examines social structure, inequality, institutions, and change, "
         "pairing social theory with quantitative and qualitative research methods.",
     ),
     (
-        "Spanish", "Bachelor of Arts in Spanish", "bachelors", _ARTS,
-        "Department of Spanish and Portuguese", 48, ["Spanish"],
+        "Spanish",
+        "Bachelor of Arts in Spanish",
+        "bachelors",
+        _ARTS,
+        "Department of Spanish and Portuguese",
+        48,
+        ["Spanish"],
         "The Spanish major develops advanced language proficiency and studies the "
         "literatures and cultures of Spain and Latin America, with Dartmouth's "
         "off-campus language study programs.",
     ),
     (
-        "Studio Art", "Bachelor of Arts in Studio Art", "bachelors", _ARTS,
-        "Department of Studio Art", 48, ["studio art", "art"],
+        "Studio Art",
+        "Bachelor of Arts in Studio Art",
+        "bachelors",
+        _ARTS,
+        "Department of Studio Art",
+        48,
+        ["studio art", "art"],
         "Studio art offers practice across drawing, painting, sculpture, photography, "
         "and digital media in a studio-intensive, critique-based curriculum.",
     ),
     (
-        "Theater", "Bachelor of Arts in Theater", "bachelors", _ARTS,
-        "Department of Theater", 48, ["theater", "theatre"],
+        "Theater",
+        "Bachelor of Arts in Theater",
+        "bachelors",
+        _ARTS,
+        "Department of Theater",
+        48,
+        ["theater", "theatre"],
         "The theater major integrates acting, directing, design, and dramatic literature "
         "with production work at the Hopkins Center for the Arts.",
     ),
     (
-        "Linguistics", "Bachelor of Arts in Linguistics", "bachelors", _ARTS,
-        "Program in Linguistics", 48, ["linguistics"],
+        "Linguistics",
+        "Bachelor of Arts in Linguistics",
+        "bachelors",
+        _ARTS,
+        "Program in Linguistics",
+        48,
+        ["linguistics"],
         "Linguistics studies the structure of language — phonology, syntax, semantics, "
         "and sociolinguistics — and its cognitive and computational dimensions.",
     ),
     (
         "African and African American Studies",
-        "Bachelor of Arts in African and African American Studies", "bachelors", _ARTS,
-        "Department of African and African American Studies", 48, ["African American studies"],
+        "Bachelor of Arts in African and African American Studies",
+        "bachelors",
+        _ARTS,
+        "Department of African and African American Studies",
+        48,
+        ["African American studies"],
         "African and African American studies examines the histories, cultures, "
         "politics, and creative expression of Africa and its diasporas.",
     ),
     # ── Thayer School of Engineering ──
     (
-        "Engineering Sciences", "Bachelor of Arts in Engineering Sciences", "bachelors", _THAYER,
-        "Thayer School of Engineering", 48, ["engineering sciences", "Thayer"],
+        "Engineering Sciences",
+        "Bachelor of Arts in Engineering Sciences",
+        "bachelors",
+        _THAYER,
+        "Thayer School of Engineering",
+        48,
+        ["engineering sciences", "Thayer"],
         "The A.B. in engineering sciences offers a broad, project-based engineering "
         "education spanning the major branches, with a human-centered design ethos and "
         "the option to continue to the professional Bachelor of Engineering.",
     ),
     (
-        "Engineering", "Bachelor of Engineering", "bachelors", _THAYER,
-        "Thayer School of Engineering", 60, ["Bachelor of Engineering", "Thayer"],
+        "Engineering",
+        "Bachelor of Engineering",
+        "bachelors",
+        _THAYER,
+        "Thayer School of Engineering",
+        60,
+        ["Bachelor of Engineering", "Thayer"],
         "The Bachelor of Engineering is Thayer's ABET-accredited professional degree, "
         "earned with a fifth year of design and engineering-science coursework beyond "
         "the A.B., emphasizing project-based and human-centered design.",
     ),
     (
-        "Engineering Management", "Master of Engineering Management", "masters", _THAYER,
-        "Thayer School of Engineering", 18, ["engineering management", "MEM"],
+        "Engineering Management",
+        "Master of Engineering Management",
+        "masters",
+        _THAYER,
+        "Thayer School of Engineering",
+        18,
+        ["engineering management", "MEM"],
         "The Master of Engineering Management, offered jointly by the Thayer School and "
         "the Tuck School, pairs engineering depth with management, finance, and "
         "operations for engineers moving into leadership and product roles.",
     ),
     (
-        "Engineering Graduate", "Master of Engineering", "masters", _THAYER,
-        "Thayer School of Engineering", 24, ["Master of Engineering", "Thayer"],
+        "Engineering Graduate",
+        "Master of Engineering",
+        "masters",
+        _THAYER,
+        "Thayer School of Engineering",
+        24,
+        ["Master of Engineering", "Thayer"],
         "Thayer's Master of Engineering is a professional graduate degree extending "
         "technical depth across the school's engineering fields through design projects "
         "and advanced electives.",
     ),
     (
-        "Engineering Doctorate", "Doctor of Philosophy in Engineering", "phd", _THAYER,
-        "Thayer School of Engineering", 60, ["engineering PhD", "Thayer research"],
+        "Engineering Doctorate",
+        "Doctor of Philosophy in Engineering",
+        "phd",
+        _THAYER,
+        "Thayer School of Engineering",
+        60,
+        ["engineering PhD", "Thayer research"],
         "Thayer's unified engineering PhD supports doctoral research across biomedical, "
         "energy, materials, and computational engineering without rigid departmental "
         "boundaries, including the PhD Innovation Program.",
     ),
     # ── Tuck School of Business (flagship) ──
     (
-        "Business Administration", "Master of Business Administration", "masters", _TUCK,
-        "Tuck School of Business", 24, ["MBA", "Tuck"],
+        "Business Administration",
+        "Master of Business Administration",
+        "masters",
+        _TUCK,
+        "Tuck School of Business",
+        24,
+        ["MBA", "Tuck"],
         "The Tuck MBA is a full-time, two-year general-management program known for its "
         "small, tightly connected cohort, team-based learning, and a residential "
         "community in Hanover, with strong placement in consulting, finance, and "
@@ -693,15 +872,24 @@ _CATALOG: list[tuple] = [
     ),
     # ── Geisel School of Medicine ──
     (
-        "Medicine", "Doctor of Medicine", "professional", _GEISEL,
-        "Geisel School of Medicine", 48, ["Geisel", "medical school", "M.D."],
+        "Medicine",
+        "Doctor of Medicine",
+        "professional",
+        _GEISEL,
+        "Geisel School of Medicine",
+        48,
+        ["Geisel", "medical school", "M.D."],
         "The Geisel School of Medicine — the nation's fourth-oldest, founded in 1797 — "
         "awards the M.D. through a curriculum integrating foundational science, early "
         "clinical experience, and research with Dartmouth Health.",
     ),
     (
-        "Public Health", "Master of Public Health", "masters", _GEISEL,
-        "The Dartmouth Institute for Health Policy & Clinical Practice", 12,
+        "Public Health",
+        "Master of Public Health",
+        "masters",
+        _GEISEL,
+        "The Dartmouth Institute for Health Policy & Clinical Practice",
+        12,
         ["public health", "MPH", "Dartmouth Institute"],
         "The Master of Public Health, based at The Dartmouth Institute for Health Policy "
         "& Clinical Practice, trains students in epidemiology, biostatistics, and "
@@ -709,47 +897,133 @@ _CATALOG: list[tuple] = [
     ),
     # ── Guarini School of Graduate and Advanced Studies (flagship PhDs/master's) ──
     (
-        "Computer Science", "Doctor of Philosophy in Computer Science", "phd", _GUARINI,
-        "Department of Computer Science", 60, ["computer science PhD", "Guarini"],
+        "Computer Science",
+        "Doctor of Philosophy in Computer Science",
+        "phd",
+        _GUARINI,
+        "Department of Computer Science",
+        60,
+        ["computer science PhD", "Guarini"],
         "The computer science PhD supports doctoral research in systems, theory, machine "
         "learning, security, and computational science, with close faculty mentorship in "
         "a small program.",
     ),
     (
-        "Computer Science", "Master of Science in Computer Science", "masters", _GUARINI,
-        "Department of Computer Science", 24, ["computer science MS", "Guarini"],
+        "Computer Science",
+        "Master of Science in Computer Science",
+        "masters",
+        _GUARINI,
+        "Department of Computer Science",
+        24,
+        ["computer science MS", "Guarini"],
         "The MS in computer science offers advanced coursework and research preparation "
         "across the core areas of computing.",
     ),
     (
-        "Chemistry", "Doctor of Philosophy in Chemistry", "phd", _GUARINI,
-        "Department of Chemistry", 60, ["chemistry PhD", "Guarini"],
+        "Chemistry",
+        "Doctor of Philosophy in Chemistry",
+        "phd",
+        _GUARINI,
+        "Department of Chemistry",
+        60,
+        ["chemistry PhD", "Guarini"],
         "The chemistry PhD trains researchers across synthetic, physical, biological, "
         "and materials chemistry in faculty laboratories.",
     ),
     (
-        "Physics and Astronomy", "Doctor of Philosophy in Physics and Astronomy", "phd", _GUARINI,
-        "Department of Physics and Astronomy", 60, ["physics PhD", "astronomy"],
+        "Physics and Astronomy",
+        "Doctor of Philosophy in Physics and Astronomy",
+        "phd",
+        _GUARINI,
+        "Department of Physics and Astronomy",
+        60,
+        ["physics PhD", "astronomy"],
         "The physics and astronomy PhD supports research in astrophysics and cosmology, "
         "space-plasma physics, and condensed-matter and quantum physics.",
     ),
     (
         "Psychological and Brain Sciences",
-        "Doctor of Philosophy in Psychological and Brain Sciences", "phd", _GUARINI,
-        "Department of Psychological and Brain Sciences", 60, ["psychology PhD", "brain"],
+        "Doctor of Philosophy in Psychological and Brain Sciences",
+        "phd",
+        _GUARINI,
+        "Department of Psychological and Brain Sciences",
+        60,
+        ["psychology PhD", "brain"],
         "This doctoral program advances research in cognition, systems and cognitive "
         "neuroscience, and social and affective science using behavioral and "
         "neuroimaging methods.",
     ),
     (
-        "Liberal Studies", "Master of Arts in Liberal Studies", "masters", _GUARINI,
-        "Frank J. Guarini School of Graduate and Advanced Studies", 24,
+        "Liberal Studies",
+        "Master of Arts in Liberal Studies",
+        "masters",
+        _GUARINI,
+        "Frank J. Guarini School of Graduate and Advanced Studies",
+        24,
         ["liberal studies", "MALS"],
         "The interdisciplinary Master of Arts in Liberal Studies lets students design a "
         "graduate course of study across the humanities, sciences, and social sciences, "
         "with concentrations including cultural studies and creative writing.",
     ),
 ]
+
+# ── Matcher-core CIP codes (REPAIR_BACKLOG #1 — cip_code starvation) ────────
+# cip_code is the IPEDS CIP join key the CPEF matcher uses to resolve each program's
+# field to ref_majors + the field-66 interest vocabulary (the field signal alongside the
+# dense description embedding). It is serialized on GET /programs/{id}, so a catalog-wide
+# null is matcher STARVATION, not an honest omission. Each value below is the standard
+# NCES CIP-2020 series (4-digit ``NN.NN`` family) for the program's field of study — the
+# same granularity the matcher's field-66 vocabulary joins on and the convention the live
+# cip-complete catalogs (Penn, Caltech, …) already use — a taxonomy stamp, never a guess
+# (omit-with-reason only for a genuinely uncodeable program; none here). Keyed on the
+# catalog's field name (first tuple element); programs of the same field at different
+# credential levels share one CIP (CS A.B./M.S./Ph.D. = 11.01).
+_CIP_BY_FIELD: dict[str, str] = {
+    # School of Arts and Sciences
+    "Anthropology": "45.02",
+    "Art History": "50.07",
+    "Biological Sciences": "26.01",
+    "Chemistry": "40.05",
+    "Classics": "16.12",
+    "Cognitive Science": "30.25",
+    "Computer Science": "11.01",
+    "Earth Sciences": "40.06",
+    "Economics": "45.06",
+    "English": "23.01",
+    "Environmental Studies": "03.01",
+    "Film and Media Studies": "50.06",
+    "Geography": "45.07",
+    "Government": "45.10",
+    "History": "54.01",
+    "Mathematics": "27.01",
+    "Music": "50.09",
+    "Neuroscience": "26.15",
+    "Philosophy": "38.01",
+    "Physics": "40.08",
+    "Psychological and Brain Sciences": "42.01",
+    "Quantitative Social Science": "45.01",
+    "Religion": "38.02",
+    "Sociology": "45.11",
+    "Spanish": "16.09",
+    "Studio Art": "50.07",
+    "Theater": "50.05",
+    "Linguistics": "16.01",
+    "African and African American Studies": "05.02",
+    # Thayer School of Engineering
+    "Engineering Sciences": "14.01",
+    "Engineering": "14.01",
+    "Engineering Management": "15.15",
+    "Engineering Graduate": "14.01",
+    "Engineering Doctorate": "14.01",
+    # Tuck School of Business
+    "Business Administration": "52.02",
+    # Geisel School of Medicine
+    "Medicine": "51.12",
+    "Public Health": "51.22",
+    # Guarini School of Graduate and Advanced Studies
+    "Physics and Astronomy": "40.08",
+    "Liberal Studies": "24.01",
+}
 
 _SLUG_REPL = {"&": "and", " ": "-", "'": "", ".": "", ",": "", "(": "", ")": "", ":": ""}
 
@@ -770,21 +1044,37 @@ def _build_catalog() -> list[dict]:
         if slug in seen:
             raise RuntimeError(f"duplicate slug {slug}")
         seen.add(slug)
-        out.append({
-            "slug": slug,
-            "school": school,
-            "program_name": pname,
-            "degree_type": dtype,
-            "department": dept,
-            "duration_months": dur,
-            "delivery_format": "in_person",
-            "keywords": list(kw),
-            "description": desc,
-        })
+        out.append(
+            {
+                "slug": slug,
+                "school": school,
+                "program_name": pname,
+                "degree_type": dtype,
+                "department": dept,
+                "duration_months": dur,
+                "delivery_format": "in_person",
+                "keywords": list(kw),
+                "description": desc,
+                "cip": _CIP_BY_FIELD.get(field),
+            }
+        )
     return out
 
 
 PROGRAMS: list[dict] = _build_catalog()
+
+# ── Matcher-core cip_code coverage gate (REPAIR_BACKLOG #1) ─────────────────
+# Fail the build if any program lacks a CIP or carries a malformed one, so a
+# catalog-wide null can never silently re-ship (cip_code is a stamp, never a guess).
+_cip_missing = [p["slug"] for p in PROGRAMS if not p.get("cip")]
+if _cip_missing:
+    raise RuntimeError(f"Dartmouth catalog missing cip_code: {_cip_missing}")
+_cip_malformed = sorted(
+    {p["cip"] for p in PROGRAMS if not re.fullmatch(r"\d{2}\.\d{2}", p.get("cip", ""))}
+)
+if _cip_malformed:
+    raise RuntimeError(f"Dartmouth malformed cip_code values: {_cip_malformed}")
+
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 _SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 _FLAGSHIP = "dartmouth-business-administration-ms"
@@ -1074,6 +1364,205 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
     },
 }
 
+# ── Who-it's-for (REPAIR_BACKLOG #4 — universal-depth field) ────────────────
+# Every program states the applicant it fits (background, goals, readiness), derived from
+# the program's published audience/fit material — field-specific, never a "{field}" stub.
+_WHO_BASELINE = (
+    "Academically strong students seeking a small, residential Ivy League education that "
+    "pairs close faculty access with undergraduate research and Dartmouth's full-need "
+    "financial aid."
+)
+_WHO_BY_SLUG: dict[str, str] = {
+    "dartmouth-anthropology-ab": (
+        "Students drawn to understanding human cultures, evolution, and the material past "
+        "who want fieldwork and laboratory methods across the cultural, archaeological, "
+        "and biological subfields within a liberal-arts core."
+    ),
+    "dartmouth-art-history-ab": (
+        "Students who want to study visual culture closely — through original works in the "
+        "Hood Museum of Art — and are considering museums, galleries, conservation, or "
+        "graduate study in art history."
+    ),
+    "dartmouth-biological-sciences-ab": (
+        "Students preparing for medicine, biomedical research, or graduate study in the "
+        "life sciences who want hands-on lab and field research from their first years."
+    ),
+    "dartmouth-chemistry-ab": (
+        "Students aiming for careers or graduate work in chemistry, medicine, or the "
+        "molecular sciences who want early access to faculty research laboratories."
+    ),
+    "dartmouth-classics-ab": (
+        "Students fascinated by the ancient Greek and Roman worlds who want to read the "
+        "original languages and connect literature, history, and archaeology."
+    ),
+    "dartmouth-cognitive-science-ab": (
+        "Students curious about how the mind works who want to combine psychology, "
+        "neuroscience, computer science, linguistics, and philosophy rather than "
+        "specialize in one."
+    ),
+    "dartmouth-computer-science-ab": (
+        "Technically minded students who want a rigorous CS degree — at the birthplace of "
+        'the term "artificial intelligence" — with strong undergraduate research and the '
+        "flexibility to pair computing with other fields."
+    ),
+    "dartmouth-earth-sciences-ab": (
+        "Students drawn to the Earth, oceans, and climate who want field study and a "
+        "path toward environmental science, geoscience, or climate research."
+    ),
+    "dartmouth-economics-ab": (
+        "Students who want rigorous economic theory and econometrics as preparation for "
+        "finance, consulting, policy, or graduate economics."
+    ),
+    "dartmouth-english-ab": (
+        "Students who love literature and writing and want both critical study across "
+        "periods and workshops in fiction, poetry, and nonfiction."
+    ),
+    "dartmouth-environmental-studies-ab": (
+        "Students committed to sustainability and environmental problem-solving who want to "
+        "bridge the natural sciences, social sciences, and policy."
+    ),
+    "dartmouth-film-and-media-studies-ab": (
+        "Students who want both to analyze and to make moving-image media, preparing for "
+        "film, the media industries, or graduate study."
+    ),
+    "dartmouth-geography-ab": (
+        "Students drawn to how place, environment, and human systems interact who want "
+        "fieldwork and geospatial analysis."
+    ),
+    "dartmouth-government-ab": (
+        "Students drawn to politics, policy, and international affairs who want analytical "
+        "training and policy engagement through the Rockefeller Center."
+    ),
+    "dartmouth-history-ab": (
+        "Students who want to investigate the past through archival research and build the "
+        "writing and analytical skills valued in law, policy, and graduate study."
+    ),
+    "dartmouth-mathematics-ab": (
+        "Students with strong mathematical aptitude considering graduate study or "
+        "quantitative careers who want both pure and applied paths."
+    ),
+    "dartmouth-music-ab": (
+        "Students who want to combine performance, composition, and the study of music with "
+        "ensembles and recital space at the Hopkins Center for the Arts."
+    ),
+    "dartmouth-neuroscience-ab": (
+        "Students drawn to the brain and behavior — often pre-med or research-bound — "
+        "who want laboratory work spanning molecules to cognition."
+    ),
+    "dartmouth-philosophy-ab": (
+        "Students who enjoy rigorous argument about ethics, knowledge, and reality and want "
+        "training in logic and critical reasoning useful across many careers."
+    ),
+    "dartmouth-physics-ab": (
+        "Students with strong quantitative ability aiming for physics, astronomy, "
+        "engineering, or graduate research who want early access to faculty labs."
+    ),
+    "dartmouth-psychological-and-brain-sciences-ab": (
+        "Students fascinated by mind, behavior, and the brain who want experimental methods "
+        "and neuroimaging on a path toward research or the health professions."
+    ),
+    "dartmouth-quantitative-social-science-ab": (
+        "Students who want to apply statistics and data analysis to real social, political, "
+        "and economic questions, preparing for data-driven careers or research."
+    ),
+    "dartmouth-religion-ab": (
+        "Students curious about the world's religious traditions and their texts and "
+        "histories who want a comparative, interdisciplinary humanities major."
+    ),
+    "dartmouth-sociology-ab": (
+        "Students drawn to inequality, institutions, and social change who want both "
+        "social theory and quantitative and qualitative research methods."
+    ),
+    "dartmouth-spanish-ab": (
+        "Students who want advanced Spanish fluency and the study of Spanish and Latin "
+        "American literatures and cultures, often with off-campus language study."
+    ),
+    "dartmouth-studio-art-ab": (
+        "Students serious about making art across drawing, painting, sculpture, "
+        "photography, and digital media who want a studio-intensive, critique-based "
+        "program."
+    ),
+    "dartmouth-theater-ab": (
+        "Students who want to combine performance, design, and dramatic literature with "
+        "hands-on production at the Hopkins Center for the Arts."
+    ),
+    "dartmouth-linguistics-ab": (
+        "Students fascinated by how language works who want to study its structure and its "
+        "cognitive and computational dimensions."
+    ),
+    "dartmouth-african-and-african-american-studies-ab": (
+        "Students who want to study the histories, cultures, politics, and creative "
+        "expression of Africa and its diasporas through an interdisciplinary lens."
+    ),
+    "dartmouth-engineering-sciences-ab": (
+        "Students who want a broad, project-based engineering foundation within a "
+        "liberal-arts setting, with the option to continue to the professional Bachelor of "
+        "Engineering."
+    ),
+    "dartmouth-engineering-ab": (
+        "Engineering-sciences students who want an ABET-accredited professional engineering "
+        "degree, earned with a fifth year of design-intensive coursework before industry "
+        "or graduate school."
+    ),
+    "dartmouth-engineering-management-ms": (
+        "Engineers and technically trained graduates who want to move into leadership, "
+        "product, or operations roles by pairing engineering depth with management, "
+        "finance, and operations."
+    ),
+    "dartmouth-engineering-graduate-ms": (
+        "Engineering graduates seeking applied technical depth and design experience for "
+        "advanced practice across Thayer's engineering fields."
+    ),
+    "dartmouth-engineering-doctorate-phd": (
+        "Students aiming for research careers in academia or industry who want doctoral "
+        "engineering research that crosses biomedical, energy, materials, and "
+        "computational boundaries."
+    ),
+    _FLAGSHIP: (
+        "Ambitious professionals who want a small, residential, general-management MBA with "
+        "an exceptionally close cohort and strong consulting, finance, and technology "
+        "placement."
+    ),
+    "dartmouth-medicine-prof": (
+        "Students committed to becoming physicians who want a small-cohort medical school "
+        "with early clinical experience and research alongside Dartmouth Health."
+    ),
+    "dartmouth-public-health-ms": (
+        "Clinicians, researchers, and professionals who want to lead health-system "
+        "improvement, grounded in epidemiology, biostatistics, and the Dartmouth "
+        "Institute's outcomes research."
+    ),
+    "dartmouth-computer-science-phd": (
+        "Students pursuing research careers in computing who want close faculty mentorship "
+        "in a small doctoral program spanning systems, theory, machine learning, and "
+        "security."
+    ),
+    "dartmouth-computer-science-ms": (
+        "Graduates and professionals who want advanced computing coursework and research "
+        "preparation across the core areas of computer science."
+    ),
+    "dartmouth-chemistry-phd": (
+        "Students seeking a research career in chemistry who want doctoral work across "
+        "synthetic, physical, biological, and materials chemistry in faculty laboratories."
+    ),
+    "dartmouth-physics-and-astronomy-phd": (
+        "Students aiming for research careers in physics or astronomy who want doctoral work "
+        "spanning astrophysics, space-plasma physics, and condensed-matter and quantum "
+        "physics."
+    ),
+    "dartmouth-psychological-and-brain-sciences-phd": (
+        "Students pursuing research careers in psychology or neuroscience who want doctoral "
+        "training in cognition, systems and cognitive neuroscience, and social and "
+        "affective science using behavioral and neuroimaging methods."
+    ),
+    "dartmouth-liberal-studies-ms": (
+        "Adult and returning students who want to design an interdisciplinary graduate "
+        "course of study across the humanities, sciences, and social sciences, with "
+        "concentrations including creative writing."
+    ),
+}
+
+
 # Dartmouth's campus-photo gallery (4–5 verified, credited entries) is already on the
 # institution seed; apply() leads media_gallery with its [0] rather than a module constant.
 def _lead_campus_photo(school_outcomes: dict) -> str | None:
@@ -1234,6 +1723,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.is_published = True
         p.catalog_source = "curated"
         p.delivery_format = spec["delivery_format"]
+        p.cip_code = spec.get("cip")
         p.content_sources = _program_content(spec["school"], spec["keywords"])
         cost_override = _COST_BY_SLUG.get(slug)
         if cost_override is not None:
@@ -1288,11 +1778,9 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
         p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
-        p.who_its_for = None
+        p.who_its_for = _WHO_BY_SLUG.get(slug) or _WHO_BASELINE
         p.highlights = None
-        p.application_deadline = (
-            date(2027, 1, 3) if spec["degree_type"] == "bachelors" else None
-        )
+        p.application_deadline = date(2027, 1, 3) if spec["degree_type"] == "bachelors" else None
     session.flush()
     for p in session.scalars(select(Program).where(Program.institution_id == inst.id)):
         if (p.slug or "") in canonical:
