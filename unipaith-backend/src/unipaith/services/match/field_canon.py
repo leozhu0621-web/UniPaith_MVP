@@ -88,6 +88,33 @@ _ALIASES: tuple[tuple[str, str], ...] = (
     ("literature", "english"),
     ("history", "history"),
     ("engineering", "engineering"),
+    # Common professional / unrelated-to-tech degrees mapped to the CLOSEST
+    # EXISTING canonical token (no new tokens → no sim-table risk), so they
+    # actually classify and the wrong-discipline veto can fire. Before this they
+    # returned [] (no field token), which is why an MBA / Juris Doctor / Animal
+    # Science surfaced in a Computer-Science student's "for you" picks. Law maps
+    # to political_science to match the onboarding wizard's law_policy track.
+    ("master of business administration", "business"),
+    ("business administration", "business"),
+    ("mba", "business"),
+    ("marketing", "business"),
+    ("entrepreneurship", "business"),
+    ("juris doctor", "political_science"),
+    ("jurisprudence", "political_science"),
+    ("public policy", "political_science"),
+    ("juris", "political_science"),
+    ("law", "political_science"),
+    ("animal science", "biology"),
+    ("veterinary", "biology"),
+    ("agricultur", "biology"),
+    ("zoology", "biology"),
+    ("nursing", "public_health"),
+    ("pharmacy", "public_health"),
+    ("dentistry", "public_health"),
+    ("dental", "public_health"),
+    ("nutrition", "public_health"),
+    ("medicine", "public_health"),
+    ("medical", "public_health"),
 )
 
 # CIP full 2-digit family → canonical token (the program-side fallback when the
