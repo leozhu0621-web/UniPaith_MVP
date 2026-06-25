@@ -12,7 +12,7 @@ from unipaith.core.data_safety import assert_core_role_coverage
 from unipaith.core.middleware import setup_middleware
 from unipaith.core.observability import ContextJsonFormatter
 from unipaith.core.scheduler import setup_scheduler, shutdown_scheduler
-from unipaith.core.security import assert_secure_auth_config
+from unipaith.core.security import assert_secure_auth_config, warn_if_ai_provider_unconfigured
 from unipaith.database import async_session
 
 
@@ -201,6 +201,12 @@ async def lifespan(app: FastAPI):  # noqa: ARG001
     # environment. Deliberately OUTSIDE a try/except: this MUST fail boot, not be
     # swallowed like the best-effort schema bootstraps below.
     assert_secure_auth_config()
+
+    # todo 4.1 — loud boot alarm if the Anthropic key is missing (outside mock
+    # mode). Does NOT fail boot: a missing AI key degrades gracefully to the
+    # rule-based fallback, so it logs.error (alertable) instead of refusing to
+    # serve. /ready surfaces the same signal for post-boot detection.
+    warn_if_ai_provider_unconfigured()
 
     # Ensure schools table exists (bypasses broken Alembic chain)
     try:

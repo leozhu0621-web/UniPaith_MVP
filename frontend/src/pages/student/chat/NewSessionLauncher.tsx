@@ -489,6 +489,9 @@ export default function NewSessionLauncher({ recentSession, onSessionStart }: Pr
                 onApplied={(result) => {
                   const n = Object.values(result.counts || {}).reduce((a, b) => a + b, 0);
                   void qc.invalidateQueries({ queryKey: ["discovery", "livingProfile"] });
+                  // The Profile tabs read the profile blob under ['profile'];
+                  // invalidate it so imported academics/tests show immediately (5.4).
+                  void qc.invalidateQueries({ queryKey: ["profile"] });
                   void qc.invalidateQueries({ queryKey: ["goals"] });
                   void qc.invalidateQueries({ queryKey: ["needs"] });
                   void qc.invalidateQueries({ queryKey: ["identity"] });

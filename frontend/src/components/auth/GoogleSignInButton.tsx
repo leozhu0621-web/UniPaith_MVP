@@ -71,10 +71,12 @@ export default function GoogleSignInButton({
       <div
         className="flex items-center gap-3 text-xs text-muted-foreground"
         role="separator"
-        aria-label="or use email"
+        aria-label="or continue with Google"
       >
+        {/* The divider sits BELOW the email form and ABOVE the Google button, so it
+            introduces Google — "or use email" read backwards (todo 3.4). */}
         <span aria-hidden="true" className="h-px flex-1 bg-border" />
-        <span aria-hidden="true">or use email</span>
+        <span aria-hidden="true">or continue with Google</span>
         <span aria-hidden="true" className="h-px flex-1 bg-border" />
       </div>
       <button

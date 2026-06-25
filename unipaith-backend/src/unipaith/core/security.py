@@ -47,6 +47,38 @@ def assert_secure_auth_config() -> None:
         )
 
 
+def ai_provider_configured() -> bool:
+    """True unless the Anthropic key is missing while real AI is expected.
+
+    In mock mode (dev / CI) the deterministic stub is intentional, so no key is
+    needed and this returns True. Pure presence check — no network call — so the
+    ``/ready`` probe can call it cheaply.
+    """
+    if settings.ai_mock_mode:
+        return True
+    return bool(settings.anthropic_api_key.strip())
+
+
+def warn_if_ai_provider_unconfigured() -> None:
+    """todo 4.1 — raise a loud, operator-visible alarm when the Anthropic key is
+    missing, so Uni chat doesn't silently degrade to canned replies unnoticed.
+
+    Logs a single ``logger.error`` (greppable / CloudWatch-alertable) rather than
+    refusing to boot: a missing AI key degrades GRACEFULLY to the rule-based
+    fallback, so failing the whole API closed would be worse than the problem it
+    guards. ``/ready`` reports the same signal for ongoing (post-boot, e.g.
+    revoked-key) detection. Gated on ``not ai_mock_mode`` so dev/CI (which boot
+    with an empty key under the deterministic mock) stay silent."""
+    if ai_provider_configured():
+        return
+    logger.error(
+        "AI ALARM: ANTHROPIC_API_KEY is empty (environment=%r, ai_mock_mode=False) — "
+        "Uni chat and every LLM agent will silently fall back to canned / rule-based "
+        "output. Set ANTHROPIC_API_KEY to restore real AI.",
+        settings.environment,
+    )
+
+
 class CognitoClaims(BaseModel):
     sub: str
     email: str

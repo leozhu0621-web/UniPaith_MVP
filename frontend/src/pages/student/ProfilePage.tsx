@@ -95,18 +95,18 @@ export default function ProfilePage() {
 
   return (
     <PageContainer>
-      {/* Import lives on its own My Space surface now (/s/import); a slim
-          pointer keeps it discoverable from the Profile. */}
-      <button
-        type="button"
-        onClick={() => navigate('/s/import')}
-        className="mb-6 flex w-full items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3 text-left transition-colors hover:border-secondary/50 hover:bg-secondary/5"
-      >
-        <div>
-          <p className="text-sm font-semibold text-foreground">Import from a file</p>
-        </div>
-        <span className="shrink-0 text-sm font-medium text-secondary">Open Import →</span>
-      </button>
+      {/* Import lives on its own My Space surface (/s/import). A small, right-aligned
+          pointer keeps it discoverable WITHOUT dominating the top of the page, so
+          Basic info is the first substantive thing the student sees (todo 3.5). */}
+      <div className="mb-4 flex justify-end">
+        <button
+          type="button"
+          onClick={() => navigate('/s/import')}
+          className="text-sm font-medium text-secondary hover:underline"
+        >
+          Import from a file →
+        </button>
+      </div>
 
       {/* Tab strip — finding 8: proper ARIA tablist attributes. Hidden on lg+
           where the My Space rail's Profile group already lists every sub-tab
