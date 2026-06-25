@@ -1092,13 +1092,16 @@ async def _recompute_catalog_matches(db: AsyncSession, student_id: UUID) -> None
         return
     program_rows = [program_row_from_orm(p) for p in programs]
     svc = MatchService(db)
-    # Spec 65 §3 — embed the catalog so the matcher's cosine term fires, but only
-    # when matching will actually run (Discovery done + consent granted). On the
-    # empty-state path compute_matches_for_student returns [] after its own
-    # guards, so skip embedding to avoid catalog-sized work for no matches.
+    # Use ONLY already-cached program embeddings here — never embed the catalog
+    # inside the request. ensure_program_embeddings embeds every uncached program
+    # sequentially; at ~7k programs that is minutes of embedding calls that blew
+    # the request/ALB timeout, so /me/matches?refresh and the lazy recompute timed
+    # out and the student saw zero matches. The matcher drops cosine + renormalizes
+    # for un-embedded programs, so matches still compute fast. A background job
+    # backfills embeddings off the request path.
     program_embeddings: dict = {}
     if await svc.can_match(student_id):
-        program_embeddings = await svc.ensure_program_embeddings(programs)
+        program_embeddings = svc.cached_program_embeddings(programs)
     await svc.compute_matches_for_student(
         student_id,
         program_rows=program_rows,
