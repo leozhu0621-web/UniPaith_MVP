@@ -207,6 +207,64 @@ async def test_matches_for_student_filters_by_level(
 
 
 @pytest.mark.asyncio
+async def test_matches_for_student_prefers_field(
+    db_session: AsyncSession,
+    mock_student_user: User,
+):
+    """A CS student's "suggested for you" surfaces field-relevant awards and stops
+    showing the hydroponics / caregiver analogues that alphabetical level-only
+    matching put first."""
+    db_session.add_all(
+        [
+            Scholarship(
+                external_id="2001",
+                name="Hydroponics Growers Grant",
+                organization="AgOrg",
+                purpose="For aspiring hydroponic farmers.",
+                level_of_study="Bachelor's Degree",
+                award_type="Grant",
+                award_amount="$1,000",
+                url="https://example.org/2001",
+            ),
+            Scholarship(
+                external_id="2002",
+                name="Future Computer Science Scholars",
+                organization="Tech Trust",
+                purpose="Supporting undergraduate computer science and software students.",
+                level_of_study="Bachelor's Degree",
+                award_type="Scholarship",
+                award_amount="$5,000",
+                url="https://example.org/2002",
+            ),
+            Scholarship(
+                external_id="2003",
+                name="Caregiver Support Award",
+                organization="Care Inc",
+                purpose="For medical caregivers.",
+                level_of_study="Bachelor's Degree",
+                award_type="Award",
+                award_amount="$2,000",
+                url="https://example.org/2003",
+            ),
+        ]
+    )
+    db_session.add(mock_student_user)
+    profile = StudentProfile(
+        user_id=mock_student_user.id,
+        first_name="Ada",
+        last_name="Lovelace",
+        onboarding_state={"answers": {"interests": ["cs_data_ai"], "degree_level": "bachelors"}},
+    )
+    db_session.add(profile)
+    await db_session.commit()
+
+    rows = await ScholarshipService(db_session).matches_for_student(mock_student_user.id)
+    ids = {r.external_id for r in rows}
+    assert "2002" in ids, "the field-relevant CS award surfaces"
+    assert "2001" not in ids and "2003" not in ids, "unrelated awards no longer crowd the list"
+
+
+@pytest.mark.asyncio
 async def test_non_student_is_rejected(institution_client: AsyncClient):
     """``require_student`` rejects a non-student caller (Spec §Testing)."""
     resp = await institution_client.get("/api/v1/scholarships")

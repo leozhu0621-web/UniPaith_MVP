@@ -896,6 +896,12 @@ class StudentService:
         state["answers"] = answers
         if data.last_step is not None:
             state["last_step"] = data.last_step
+        # Fan durable preferences (budget / degree / term / regions) into
+        # StudentPreference on EVERY patch that carries answers — not only first
+        # completion — so a budget chosen in setup reaches Costs & Aid + the
+        # program net-price estimator instead of reading blank.
+        if data.answers is not None:
+            await self._fan_in_preferences(profile.id, answers)
         now_iso = datetime.now(UTC).isoformat()
         if data.completed and not state.get("completed_at"):
             state["completed_at"] = now_iso
@@ -907,21 +913,20 @@ class StudentService:
         await self.db.flush()
         return state
 
-    async def _fan_in_onboarding_answers(self, student_id: UUID, answers: dict) -> None:
-        """Map completed-wizard answers into existing structures.
+    async def _fan_in_preferences(self, student_id: UUID, answers: dict) -> None:
+        """Fan the durable wizard answers (degree level / term / regions /
+        budget) into StudentPreference. Safe to call on EVERY onboarding-state
+        patch, not only first completion — so a budget chosen in setup actually
+        reaches the Costs & Aid room + the program net-price estimator. The
+        previous first-completion-only fill meant a budget set before completion
+        (or changed later) never persisted, and both surfaces read blank and
+        told the student to "add a budget" she had already entered.
 
-        Conservative by design — fill-only-if-empty, single-table writes:
-
-        - degree_level / intake_term / geos / budget_band → StudentPreference
-          (``target_degree_level`` / ``target_start_term`` /
-          ``preferred_regions`` / ``budget_min``+``budget_max``); never
-          overwrites a value the student already set.
-        - degree_level and/or intake_term → one ``student_goals`` row
-          (source='manual'), only on the first completion stamp.
-
-        ``interests`` and ``stage`` stay in onboarding_state only — there is
-        no trivially safe target structure (academic records describe schools
-        attended, not aspirations).
+        Conservative: degree / term / regions are fill-only-if-empty (never
+        clobber a value the student set elsewhere). Budget is set from the band
+        when empty OR when the current budget is itself band-derived (so a
+        changed band updates it) — but a hand-set budget that matches no band
+        range is always preserved.
         """
         degree = answers.get("degree_level")
         term = answers.get("intake_term")
@@ -940,8 +945,26 @@ class StudentService:
             pref.target_start_term = term
         if geos and not pref.preferred_regions:
             pref.preferred_regions = list(geos)
-        if band in self._BUDGET_BAND_RANGES and pref.budget_min is None and pref.budget_max is None:
-            pref.budget_min, pref.budget_max = self._BUDGET_BAND_RANGES[band]
+        if band in self._BUDGET_BAND_RANGES:
+            current = (pref.budget_min, pref.budget_max)
+            band_derived = current == (None, None) or current in set(
+                self._BUDGET_BAND_RANGES.values()
+            )
+            if band_derived:
+                pref.budget_min, pref.budget_max = self._BUDGET_BAND_RANGES[band]
+        await self.db.flush()
+
+    async def _fan_in_onboarding_answers(self, student_id: UUID, answers: dict) -> None:
+        """First-completion fan-in: durable preferences (via
+        ``_fan_in_preferences``) PLUS one academic ``student_goals`` row
+        (source='manual'). ``interests`` and ``stage`` stay in onboarding_state
+        only — there is no trivially safe target structure for them.
+        """
+        await self._fan_in_preferences(student_id, answers)
+        degree = answers.get("degree_level")
+        term = answers.get("intake_term")
+        if not (degree or term or answers.get("geos") or answers.get("budget_band")):
+            return
 
         if degree or term:
             label = self._DEGREE_LABELS.get(degree, degree) if degree else "degree"
