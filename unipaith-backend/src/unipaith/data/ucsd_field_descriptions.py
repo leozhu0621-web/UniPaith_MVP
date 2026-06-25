@@ -439,6 +439,24 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
 }
 
 SLUG_DESCRIPTIONS: dict[str, str] = {
+    "ucsd-finance-and-financial-management-services-ms": (
+        "The Rady School's Master of Quantitative Finance is a STEM-designated program in "
+        "financial econometrics, derivatives, and computational methods, pairing graduate "
+        "coursework with applied projects for quantitative roles in asset management, risk, "
+        "and fintech."
+    ),
+    "ucsd-international-relations-and-national-security-studies-ms": (
+        "The School of Global Policy and Strategy's Master of International Affairs is a "
+        "two-year, 98-unit degree pairing core training in economics, management, political "
+        "science, and quantitative methods with a career track and a regional specialization "
+        "across the Americas and Asia."
+    ),
+    "ucsd-health-and-medical-administrative-services-ms": (
+        "The School of Medicine's Master of Advanced Studies in the Leadership of Healthcare "
+        "Organizations is a self-supporting evening degree for working healthcare "
+        "professionals, building finance, law, technology, and leadership skills across 42 "
+        "units completed in one academic year."
+    ),
     "ucsd-public-health-ms": (
         "The Herbert Wertheim School of Public Health's Master of Public Health trains "
         "practitioners in epidemiology, biostatistics, and health-policy analysis, pairing "

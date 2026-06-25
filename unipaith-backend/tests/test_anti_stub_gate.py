@@ -166,7 +166,7 @@ def test_artifact_detector_bites_on_catalog_entry_junk():
 _FRAME_STRIPPED_CLEAN = [
     "mit", "rice", "uf", "usc", "uw_madison", "jhu", "uiuc", "uw", "harvard", "nyu",
     "ut_austin", "columbia", "michigan", "duke", "georgia_tech", "ucla", "berkeley",
-    "stanford",     "penn", "cornell", "notre_dame", "bu", "vanderbilt",
+    "stanford",     "penn", "cornell", "notre_dame", "bu", "vanderbilt", "ucsd",
 ]
 
 
@@ -195,7 +195,7 @@ def test_credential_siblings_have_no_frame_stripped_shared_body(name: str):
 # are NOT here yet on purpose).
 _ABS_FLOOR_CLEAN = [
     "nyu", "mit", "columbia", "michigan", "ucla", "jhu", "berkeley", "uf", "stanford",
-    "penn", "cornell", "ut_austin", "notre_dame", "bu", "vanderbilt",
+    "penn", "cornell", "ut_austin", "notre_dame", "bu", "vanderbilt", "ucsd",
 ]
 
 
