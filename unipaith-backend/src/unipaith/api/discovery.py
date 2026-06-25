@@ -250,12 +250,18 @@ async def discovery_opener_stream(
             "drawing you toward your next step?"
         )
         signals = {
+            # This static opener only runs when the managed agent is off or its
+            # setup failed — i.e. limited mode. Tag it so the UI shows the
+            # "Limited mode active — your replies are still saved" banner
+            # consistently (it already does for the orchestrator's rule_based
+            # turns), instead of silently serving a scripted greeting.
+            "_mode": "rule_based",
             "suggested_options": [
                 "A field I love",
                 "A career goal",
                 "A change of direction",
                 "I'm not sure yet",
-            ]
+            ],
         }
         try:
             session = await _svc(db).start_unified_session(user.id)
