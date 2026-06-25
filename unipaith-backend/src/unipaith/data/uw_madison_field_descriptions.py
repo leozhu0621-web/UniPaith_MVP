@@ -55,9 +55,6 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
     "Archeology": (
         "Classical and Mediterranean archaeology at L&S includes field schools and museum collections tied to the Department of Classical and Ancient Near Eastern Studies."
     ),
-    "Area Studies": (
-        "Area-studies majors at Letters & Science integrate language study with regional history and politics through the International Division and area centers."
-    ),
     "Arts Management": (
         "School of Music and School of Journalism arts management trains nonprofit leadership, venue operations, and audience development with Overture Center for the Arts and Madison civic partnerships."
     ),
@@ -475,6 +472,15 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
 }
 
 SLUG_DESCRIPTIONS: dict[str, str] = {
+    "uw-madison-area-studies-bs": (
+        "The LACIS undergraduate major surveys Latin America, the Caribbean, Spain, and Portugal across anthropology, history, political science, and Spanish and Portuguese, pairing breadth and depth coursework with language study in one of the major U.S. centers for Latin American research."
+    ),
+    "uw-madison-area-studies-cert": (
+        "The Graduate Certificate in African Studies certifies advanced training across at least two disciplines, requiring twelve graduate credits of African Studies Program core courses drawn from the humanities, social sciences, and sometimes natural sciences, together with African-language study."
+    ),
+    "uw-madison-area-studies-ms": (
+        "The LACIS master's degree is a 30-credit interdisciplinary program drawing on over 100 affiliated faculty across some 40 disciplines, with Spanish and Portuguese language study and graduate seminars numbered 700 and above; designated a National Resource Center since 1961, the program publishes the Luso-Brazilian Review."
+    ),
     "uw-madison-biomedical-engineering-bs": (
         "Biomedical engineering integrates device design, tissue engineering, and UW Hospital clinical immersion through the College of Engineering and SMPH partnership."
     ),

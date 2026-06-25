@@ -127,7 +127,6 @@ DEPARTMENT_BY_FIELD: dict[str, str] = {
     "Apparel and Textiles": "Department of Design Studies",
     "Applied Mathematics": "Department of Mathematics",
     "Archeology": "Department of Anthropology",
-    "Area Studies": "International Studies",
     "Arts Management": "School of Journalism and Mass Communication",
     "Astronomy and Astrophysics": "Department of Astronomy",
     "Atmospheric Science": "Department of Atmospheric and Oceanic Sciences",
@@ -269,6 +268,9 @@ DEPARTMENT_BY_FIELD: dict[str, str] = {
 }
 
 SLUG_PROGRAM_NAMES: dict[str, str] = {
+    "uw-madison-area-studies-bs": "Bachelor of Arts in Latin American, Caribbean, and Iberian Studies",
+    "uw-madison-area-studies-cert": "Graduate Certificate in African Studies",
+    "uw-madison-area-studies-ms": "Master of Arts in Latin American, Caribbean, and Iberian Studies",
     "uw-madison-biomedical-engineering-bs": "Bachelor of Science in Biomedical Engineering",
     "uw-madison-business-administration-bs": "Bachelor of Business Administration",
     "uw-madison-computer-science-bs": "Bachelor of Science in Computer Science",
@@ -284,6 +286,9 @@ SLUG_PROGRAM_NAMES: dict[str, str] = {
 }
 
 SLUG_DEPARTMENTS: dict[str, str] = {
+    "uw-madison-area-studies-bs": "Institute for Regional and International Studies",
+    "uw-madison-area-studies-cert": "African Studies Program",
+    "uw-madison-area-studies-ms": "Institute for Regional and International Studies",
     "uw-madison-biomedical-engineering-bs": "Department of Biomedical Engineering",
     "uw-madison-business-administration-bs": "Wisconsin School of Business",
     "uw-madison-computer-science-bs": "Department of Computer Sciences",
@@ -302,7 +307,6 @@ BA_FIELDS = frozenset({
     "African Languages",
     "Anthropology",
     "Archeology",
-    "Area Studies",
     "Classical Studies",
     "Classics",
     "Criminology",
