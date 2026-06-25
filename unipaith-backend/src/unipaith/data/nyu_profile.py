@@ -5795,11 +5795,6 @@ _GRAD_PER_CREDIT: dict[str, tuple[int, str, str, str]] = {
         "NYU Bursar — 2025-26 Tuition and Fee Rates (Rory Meyers College of Nursing per point)",
         "https://bulletins.nyu.edu/graduate/nursing/cost-attendance/tuition-fees/",
     ),
-    _SILVER: (
-        1718, "2025-26",
-        "NYU Bursar — 2025-26 Tuition and Fee Rates (Silver School of Social Work per credit)",
-        "https://www.nyu.edu/students/student-information-and-resources/bills-payments-and-refunds/tuition-and-fee-rates.html",
-    ),
     _GALLATIN: (
         2333, "2025-26",
         "NYU Bursar — 2025-26 Tuition and Fee Rates (Gallatin School of Individualized Study per point)",
@@ -5822,6 +5817,15 @@ _GRAD_FLAT_BY_SCHOOL: dict[str, tuple[int, str, str, str]] = {
         41994, "2025-26",
         "NYU College of Dentistry — Cost of Attendance, M.S. tuition (9 credits/semester)",
         "https://bulletins.nyu.edu/graduate/dentistry/cost-attendance/",
+    ),
+    # Silver M.S.W. is billed $1,718/credit, but the full-time pathway carries ~33 points/year
+    # (the 65-credit degree over two years), NOT NYU's generic 24, so the full-time-year tuition
+    # is $1,718 × 33 ≈ $56,694 — using the 24-credit standard understated it by ~$15k (Codex P2b).
+    _SILVER: (
+        56694, "2025-26",
+        "NYU Silver School of Social Work — M.S.W. ($1,718/credit × ~33 credits in a full-time "
+        "pathway year; the 65-credit degree over two years)",
+        "https://socialwork.nyu.edu/prospective-students/paying-for-your-education/msw/tuition-and-fees.html",
     ),
 }
 
@@ -5891,9 +5895,10 @@ _STERN_COST_BY_SLUG: dict[str, tuple[int, str, str, str, str]] = {
         "2025-26",
     ),
     "nyu-general-management-executives-mba": (
-        238700,
-        "NYU Stern Executive M.B.A. (New York) total program cost is $238,700 for the ~22-month "
-        "program (tuition, fees, materials, residencies, and global immersions).",
+        130200,
+        "NYU Stern Executive M.B.A. (New York) tuition is ~$130,200 per year, annualized from the "
+        "published $238,700 total over the 22-month program (the matcher's tuition field is "
+        "per-year, not the program total).",
         "NYU Stern — Executive MBA Program Costs",
         f"{_STERN_PROG}/executive-mba-nyc/financing-mba/program-costs",
         "2026-27 cohort",
@@ -5915,17 +5920,18 @@ _STERN_COST_BY_SLUG: dict[str, tuple[int, str, str, str, str]] = {
         "2025-26",
     ),
     "nyu-stern-nyu-abu-dhabi-mba": (
-        87500,
-        "NYU Stern Executive M.B.A. at NYU Abu Dhabi total tuition is $87,500 for the 27-credit "
-        "program.",
+        77778,
+        "NYU Stern Executive M.B.A. at NYU Abu Dhabi tuition is ~$77,778 per year, annualized from "
+        "the published $87,500 total for the 27-credit program at NYU's 24-credit full-time year.",
         "NYU Abu Dhabi — Executive MBA Tuition",
         "https://stern.nyuad.nyu.edu/programs-admissions/executive-mba-program/tuition-and-scholarships/tuition/",
         "2026-27",
     ),
     "nyu-global-executive-mba": (
-        208080,
-        "NYU Stern TRIUM Global Executive M.B.A. (with LSE and HEC Paris) program fee is $208,080 "
-        "(Class of 2028), covering tuition, lodging at module sites, materials, and most meals.",
+        156060,
+        "NYU Stern TRIUM Global Executive M.B.A. (with LSE and HEC Paris) tuition is ~$156,060 per "
+        "year, annualized from the published $208,080 program fee (Class of 2028) over the 16-month "
+        "program.",
         "NYU Bulletins — Global Executive MBA (TRIUM)",
         "https://bulletins.nyu.edu/graduate/business/programs/global-executive-mba/",
         "2026-28 cohort",
@@ -5947,19 +5953,40 @@ _STERN_COST_BY_SLUG: dict[str, tuple[int, str, str, str, str]] = {
         "2027 cohort",
     ),
     "nyu-fintech-ms": (
-        87800,
-        "NYU Stern M.S. in Fintech total tuition is $87,800 across the program's four terms.",
+        70240,
+        "NYU Stern M.S. in Fintech tuition is ~$70,240 per year, annualized from the published "
+        "$87,800 total across the program's four terms (~15 months).",
         "NYU Stern — MS in Fintech Cost of Attendance",
         "https://www.stern.nyu.edu/portal-partners/financial-aid/cost-attendance/cost-attendance-ms-fintech-students",
         "2025-26",
     ),
     "nyu-management-ms": (
-        77220,
-        "NYU Stern M.S. in Management (online MiM) total program cost is $77,220 across five "
-        "semesters (tuition, fees, and two residential immersions).",
+        46332,
+        "NYU Stern M.S. in Management (online MiM) tuition is ~$46,332 per year, annualized from the "
+        "published $77,220 total over five semesters (fall 2025 – spring 2027, ~20 months).",
         "NYU Stern — Online MS in Management Tuition & Fees",
         f"{_STERN_PROG}/masters-programs/online-ms-management/financial-aid-tuition/tuition-fees",
         "2025-27 cohort",
+    ),
+    # NYU Shanghai Stern 36-credit M.S. programs, billed at the Stern $2,076/credit M.S. rate
+    # (the published $74,736 36-credit total ÷ 36 = $2,076); $49,824/yr at NYU's 24-credit
+    # full-time year — same basis as MS Quantitative Finance (Codex P2a; verified first-party).
+    "nyu-data-analytics-business-computing-ms": (
+        49824,
+        "NYU Shanghai Stern M.S. in Data Analytics and Business Computing is a 36-credit program "
+        "(published total $74,736 = $2,076/credit); $49,824 at NYU's 24-credit full-time year.",
+        "NYU Shanghai Stern — MS in Data Analytics and Business Computing (Tuition)",
+        "https://stern.shanghai.nyu.edu/en/admissions/ms-data-analytics-and-business-computing",
+        "2026-27",
+    ),
+    "nyu-marketing-retail-science-ms": (
+        49824,
+        "NYU Shanghai Stern M.S. in Marketing and Retail Science is a 36-credit program billed at "
+        "the Stern $2,076/credit M.S. rate ($74,736 total); $49,824 at NYU's 24-credit full-time "
+        "year (12-month track; a 20-month track is also offered).",
+        "NYU Shanghai Stern — MS in Marketing and Retail Science",
+        "https://stern.shanghai.nyu.edu/en/admissions/ms-marketing-and-retail-science",
+        "2026-27",
     ),
     "nyu-quantitative-finance-ms": (
         49824,
