@@ -4,7 +4,7 @@
 // app (Applications, Calendar, DeadlinePill) used the canonical daysUntil (ceil)
 // and said 3. Now it uses daysUntil, so the whole app agrees.
 import { describe, it, expect } from 'vitest'
-import { deadlineInfo } from '../pages/student/explore/cards/programFormat'
+import { deadlineInfo, degreeAbbrev } from '../pages/student/explore/cards/programFormat'
 
 const inDays = (d: number) => new Date(Date.now() + d * 86_400_000).toISOString()
 
@@ -41,5 +41,27 @@ describe('deadlineInfo — canonical daysUntil countdown', () => {
 
   it('returns null when there is no deadline', () => {
     expect(deadlineInfo(null)).toBeNull()
+  })
+
+  it('renders a date-only deadline label via parseISO (local) so the card matches the detail page', () => {
+    // Old `new Date("2099-03-15")` parsed as UTC midnight then rendered local,
+    // rolling back to "Mar 14" west of UTC while the detail page showed "Mar 15".
+    // parseISO keeps it local midnight → "Mar 15" in every timezone.
+    expect(deadlineInfo('2099-03-15')!.text).toBe('Mar 15')
+  })
+})
+
+describe('degreeAbbrev — title-aware monogram', () => {
+  it('distinguishes BA from BS by the program title (not a blanket "BS")', () => {
+    expect(degreeAbbrev('bachelors', 'Bachelor of Arts in English')).toBe('BA')
+    expect(degreeAbbrev('bachelors', 'Bachelor of Science in Computer Science')).toBe('BS')
+    // Ambiguous title → neutral monogram rather than the wrong "BS".
+    expect(degreeAbbrev('bachelors', 'Computer Science')).toBe('BACH')
+  })
+
+  it('handles masters variants and passes other degrees through', () => {
+    expect(degreeAbbrev('masters', 'Master of Business Administration')).toBe('MBA')
+    expect(degreeAbbrev('masters', 'Master of Arts in History')).toBe('MA')
+    expect(degreeAbbrev('phd', 'Doctor of Philosophy')).toBe('PhD')
   })
 })

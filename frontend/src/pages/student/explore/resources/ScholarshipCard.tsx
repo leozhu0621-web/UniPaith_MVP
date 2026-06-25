@@ -3,6 +3,13 @@
 import { Award, Building2, CalendarClock, ExternalLink, GraduationCap } from 'lucide-react'
 import type { Scholarship } from '../../../../api/scholarships'
 
+// Some source rows scraped a min/max range with the separator dropped, e.g.
+// "$500 $1,000". Render those two stuck-together numbers as a readable range —
+// no new precision, just a separator. A single value passes through untouched.
+function formatAward(raw: string): string {
+  return raw.replace(/(\$[\d,]+(?:\.\d+)?)\s+(?=\$[\d,]+)/g, '$1 – ').trim()
+}
+
 export default function ScholarshipCard({ s }: { s: Scholarship }) {
   return (
     <div className="flex h-full flex-col rounded-xl border border-border bg-card p-4">
@@ -27,7 +34,7 @@ export default function ScholarshipCard({ s }: { s: Scholarship }) {
 
       <div className="mt-3 flex flex-wrap gap-1.5">
         {s.award_amount && s.award_amount !== 'N/A' && (
-          <Chip>{s.award_amount}</Chip>
+          <Chip>{formatAward(s.award_amount)}</Chip>
         )}
         {s.award_type && <Chip>{s.award_type}</Chip>}
         {s.deadline && (

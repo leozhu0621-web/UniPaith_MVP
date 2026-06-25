@@ -29,7 +29,7 @@ interface Props {
 // <Link> overlays the row; Save / Follow stay raised sibling buttons.
 export default function ProgramListRow({ program, saved, onSave, onView, comparing, onCompare, onAskCounselor, following, onToggleFollow, appStatus, viewHref }: Props) {
   const href = viewHref ?? `/s/programs/${program.id}`
-  const abbrev = degreeAbbrev(program.degree_type)
+  const abbrev = degreeAbbrev(program.degree_type, program.program_name)
   const deadline = deadlineInfo(program.application_deadline)
   const acceptPct = program.acceptance_rate != null ? Math.round(program.acceptance_rate * 100) : null
   const tuition =
