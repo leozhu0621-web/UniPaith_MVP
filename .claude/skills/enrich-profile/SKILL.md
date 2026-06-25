@@ -279,6 +279,39 @@ Concrete misses observed in the first runs — each broke a real page:
      cannot resolve the major names, FEWER real entries — never one stub named "BA"
      per filler row. A duplicate/abbreviation/`"Programs"`-department name is an
      automatic fabrication failure: drop it or give it its real name.
+   - **The duplicate-name ban is enforced on the RENDERED `(program_name,
+     degree_type)` over the MERGED catalog, NOT on the build slug — a curated row and
+     an IPEDS/CIP-derived row that resolve to the SAME rendered name+degree ship as an
+     EXACT-DUPLICATE live program because the build dedups on `slug` and the per-module
+     self-check never asserts name uniqueness (the dominant live defect this run).** The
+     build keeps a hand-curated `PROGRAMS` list AND an IPEDS/Scorecard-derived list and
+     dedups the union with `seen = set(_EXISTING_SLUGS)` — a SLUG key. But a curated
+     entry (`<univ>-mechanical-engineering-ms`) and a CIP-derived entry
+     (`<univ>-me-masters`) carry DIFFERENT slugs while rendering the IDENTICAL
+     `program_name` + `degree_type` + (often) `department` + `description`, so the
+     slug-dedup passes both and the catalog ships the same real degree TWICE. This is
+     NOT the stub/abbreviation case the bullet above addresses (the rows are fully
+     researched and real) — it is an exact-duplicate of a REAL row, so the remedy is
+     DEDUPE (drop the redundant row, keep one), never rename. It is invisible to the
+     build because (a) the slug-dedup is keyed on the wrong field and (b) the
+     per-module self-check (`_catalog_errors`) asserts credential-prefix / null-dept but
+     NOT `(program_name, degree_type)` uniqueness; and it doubles the program for the
+     student AND double-weights it for the matcher. So after building OR repairing any
+     catalog, re-scan the MERGED catalog (your module's render UNION every other
+     migration that touched this institution — not just your own `PROGRAMS` list) for
+     any `(program_name, degree_type)` that appears more than once and drop the
+     redundant row; this is the run-N enforcement teeth on the terse step-3
+     "dedupe by real name, not just slug" rule. The anti-stub `analyze().verbatim_shared`
+     metric already flags the identical-description symptom — promote it to a hard gate
+     keyed on `(program_name, degree_type)` so a render collision can never ship. Evidence:
+     live API this run — 15 of the ~32 mature live catalogs ship exact-duplicate rows
+     (30 rows total: e.g. Computer Engineering, Political Science, Nursing, Mechanical
+     Engineering, Psychology — the cross-listed/interdisciplinary fields a curated row
+     and an IPEDS row both name), every duplicate identical in name+degree+department+
+     description, several on catalogs otherwise graded clean/gold-tier; the residual
+     `shared_leading_body` / `frame_abs150` counts on those same catalogs are ARTIFACTS
+     of the duplicate pair (two identical bodies), not a separate stub class — they drop
+     to 0 once the duplicate is removed.
    - **A catalog-breadth GATE must assert structural REALNESS, not a raw row COUNT —
      a `len(PROGRAMS) >= N` assertion frozen to a PADDED count FIGHTS de-fabrication
      and FAILS the deploy when you correctly drop the padding (the live regression

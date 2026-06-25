@@ -6607,3 +6607,116 @@ imported `profile_standard/anti_stub.py` and ran `analyze` / `frame_stripped_sha
 cleanly; gold MIT scores 0 on every description metric), and computed the repo's alembic head set on
 `origin/main` direct from the migration files (confirmed the dual head). This grader PR changes only the three
 skill markdown files (no code, no data, no migration), so backend CI is unaffected.
+
+
+## 2026-06-25 — Run 80 (FULL-FLEET sweep of all 300 live + all 40 catalogs · the run-79 CRITICAL dual-head DEPLOY BLOCK is CLEARED · NEW fleet-wide class: 30 exact-duplicate REAL rows on 15 catalogs from slug-vs-render dedup · 1 rule change — gave the duplicate-name ban teeth in miss #2's enforced list)
+
+**Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`,**
+reusing `profile_standard/anti_stub.py` directly (paginated full program list of all 40 program-bearing
+catalogs = 7,141 programs; the other 260 are bare institution-level stubs). Per catalog I computed `analyze`,
+`machine_artifacts`, `scrape_debris`, `template_slot_artifacts`, `frame_stripped_shared_body` (abs150),
+**tuition COVERAGE grouped by `degree_type`**, an **exact-duplicate `(program_name, degree_type)` scan**, a
+**campus-photo proxy (`image_url`) on ALL 300**, and a **name-realness scan** (federal CIP rollup TITLE match
++ "…and Related Sciences/Services" / ", General/Other" / `(CIP NN.NN)` suffix tells). I computed the repo's
+**alembic head set on `origin/main` directly from the migration graph** (AST-parsed `revision` /
+`down_revision`, handling annotated assignments) and read the **open-PR list** (GitHub MCP).
+
+**The run-79 CRITICAL block is CLEARED (verified direct):** `origin/main` is a SINGLE alembic head
+(`gatechproftuition1` — 548 revisions, 1 head). The run-79 dual head (`penntuition1` + `gatechgradtuition1`)
+was unified by merges #1098 + #1106; Deploy Backend's `alembic upgrade head` is unblocked, and the entire
+stranded-PR wave landed and deployed LIVE — Penn/Cornell/Harvard CIP-rollup NAME clears (#1104/#1102/#1096,
+the run-79 entries #2/#3 — `name_realness` rollup scan now finds ZERO of the four named CIP-52.02/42.28/26.02/
+42.27 titles on those three catalogs) and the master's/professional tuition repairs for Columbia/Rice/Chicago/
+Emory/Dartmouth/Berkeley/Duke/UCLA(prof)/GT/Yale/Northwestern/Notre Dame (run-79 entry #4 — Columbia master's
+now 44/44, Rice 29/29, Chicago 41/41, Emory 5/5, Dartmouth 6/6, Berkeley master's 71/74, Duke 38/38, GT 54/54,
+Northwestern 26/26, Notre Dame 23/24, Yale 30/38). The §8-step-5 auto-merge dual-head race is DORMANT again.
+
+**The single most important finding — a NEW fleet-wide class (backlog entry #2):** 30 EXACT-duplicate REAL
+program rows ship across 15 of the ~32 mature catalogs. The catalog build dedups the union of a hand-curated
+`PROGRAMS` list and an IPEDS/CIP-derived list on `seen = set(_EXISTING_SLUGS)` — a SLUG key — so a curated row
+(`<univ>-mechanical-engineering-ms`) and a CIP row (`<univ>-me-masters`) carrying DIFFERENT slugs but
+rendering the IDENTICAL `(program_name, degree_type)` (+ identical department + description, confirmed
+`[exact]`) both ship: the same real degree TWICE. Worst: UW-Seattle ×4, JHU ×4, UIUC ×4, NYU ×2, Columbia ×2,
+Notre Dame ×2, Michigan ×2, Purdue ×2, UF ×2, + Duke/USC/Yale/Northwestern/Emory/GT ×1. The recurring fields
+are the cross-listed/interdisciplinary ones a curated row and an IPEDS row both name (Computer Engineering,
+Political Science, Nursing, Mechanical Engineering, Psychology). Real content → the fix is DEDUPE (drop the
+redundant render), not rename. It doubles the program for the student and DOUBLE-WEIGHTS it for the matcher,
+and it is invisible to the slug-dedup AND to the per-module `_catalog_errors` self-check (which asserts
+credential-prefix / null-dept but NOT `(program_name, degree_type)` uniqueness). Confirmed the mechanism
+direct in `jhu_profile.py` (slug-keyed `seen`) + `jhu_ipeds_catalog.py` (the second MS-Mechanical-Engineering
+source).
+
+**The 1 rule change (bounded; the only genuinely-NEW gap-class after the full-fleet sweep):**
+- **Promoted the slug-vs-rendered-name dedup gap into miss #2's ENFORCED list.** The PRINCIPLE existed (step-3
+  line 1434 "Dedupe (by real name, not just slug)" + miss #2's "no two programs may share an identical name")
+  but as a terse aside with no teeth — the enforced miss list framed duplicates ONLY as the stub/abbreviation
+  naming case ("drop it or give it its real name") and never named the live failure mode now biting 15
+  catalogs: an exact-duplicate of a REAL row produced when a curated entry and an IPEDS-derived entry render
+  the same name+degree, the slug-dedup keyed on the wrong field, and the per-module self-check asserting no
+  name uniqueness over the MERGED catalog. The new sub-bullet under miss #2 states the mechanism, the remedy
+  (DEDUPE the merged catalog on `(program_name, degree_type)`, keep one — never rename a real row), the
+  invisibility (slug-dedup + module-scoped self-check), the matcher double-weight harm, and the live evidence
+  (15 catalogs / 30 rows; the `shared_leading_body`/`frame_abs150` counts on those catalogs are duplicate-pair
+  artifacts that clear with the dup). It also calls for promoting `analyze().verbatim_shared` to a hard gate
+  keyed on `(program_name, degree_type)`. A TIGHTENING (gives an existing terse principle enforcement teeth in
+  the numbered-miss section) — loosens NO invariant. Why only 1 change: the full-fleet sweep found NO other
+  genuinely-new defect CLASS — every other live defect maps to an EXISTING rule, so the bounded/anti-churn
+  rail forbids inventing more; that work is repair-queueing + compliance logging.
+
+**Compliance gaps logged (existing rules the enricher disobeyed — queued, NOT re-added):**
+- **federal CIP-ROLLUP "Area Studies" NAMES still live (miss #2 whole-class), 8 rows:** UC-Berkeley (BA+MA+PhD,
+  dept "Global Studies Program"), UW-Madison (BA+Cert+MS, dept "International Studies"), U-Chicago (BA+MA,
+  dept literally "Area Studies"). "Area Studies" is a federal CIP series title (05.01) miss #2 names
+  explicitly; the Cornell/Penn/Harvard repairs cleared the four 52.02/42.28/26.02/42.27 titles but left this
+  one on these three. Backlog #1 (NEW worst tier).
+- **exact-duplicate REAL rows (step-3 "dedupe by name not slug" + miss #2 duplicate-name ban), 30 rows / 15
+  catalogs:** the new class above. Backlog #2 + the now-enforced miss-#2 sub-bullet + FLAG #1.
+- **master's-tier 0–low% (run-74 per-credential rule), residual on UCLA (97/145, 48 null) + NYU (195/233, 38
+  null) + small (Yale 8, UCSD 7, Penn 7, Notre Dame 1, scattered prof):** the run-79 wave cleared the rest.
+  PhD/cert nulls EXCLUDED (largely funded/per-credit). Backlog #3.
+- **seeds:** 8 flagship seeds null dept + 0% tuition + dead feed (some at 3 photos); ~260 bulk seeds, 33 at
+  ZERO photos. Backlog #4/#5 (unchanged from run 79).
+
+**VERIFIED NOT-A-DEFECT this run (false-positives AVOIDED — do NOT re-queue / do NOT mangle):** the bare-slash
+name heuristic over-triggers on REAL dual-degree / slash-field names ("MD/PhD", "JD/MBA", "Latina/Latino
+Studies", "Asian/Pacific/American Studies", "Radio/Television/Film", "Zoology/Animal Biology", "Combined
+B.S./M.S. in Accounting") — the name tell keys on the CIP-title TABLE + federal suffix forms, NOT on a bare
+slash. The `verbatim_shared` / `shared_leading_body` / `frame_abs150` hits on the 15 duplicate-row catalogs
+are artifacts of the identical duplicate pair, NOT a separate description-stub class. BU Law flat $69,870
+(MD/DMD distinct) still real; GT "Professional Master's in …" (PMASE) still real; MIT's `name_prefixed=1`
+("Master in City Planning") still benign.
+
+**Flags (code/workflow, not grader-editable):** (1) NEW — the build dedups on `slug` not the rendered
+`(program_name, degree_type)`, and the per-module self-check never asserts name uniqueness, so a curated +
+IPEDS render collision ships as an exact duplicate invisible to CI; durable fix = dedup the build union on
+`(program_name, degree_type)` + a name-uniqueness assertion in `test_anti_stub_gate.py` over the merged
+catalog. (2) the enforced anti-stub gate is DESCRIPTION-only and never scans NAMES, so the "Area Studies"
+CIP-rollup names ship undetected; durable fix = a name-realness metric keyed on the CIP-title table over
+`CERTIFIED_CLEAN` (carried from run 79). (3) `cip_code` serialized as a KEY but VALUE None on every program
+incl. gold MIT (re-confirmed). (4) no enforced tuition VALUE/COVERAGE gate; must not fail `grad==undergrad`
+unconditionally (BU flat rate). Run-79 FLAG (dual-head race) is RESOLVED (single head).
+
+**Backlog delta:** complete worst-first rewrite. REMOVED the run-79 CRITICAL #1 (dual-head deploy block —
+single head now), #2/#3 (Harvard/Cornell/Penn CIP-rollup names — repairs landed LIVE, rollup scan = 0), and
+most of #4 (tuition wave landed). NEW worst tier = the "Area Studies" CIP-rollup NAME residual (#1). NEW class
+= the fleet-wide exact-duplicate-row issue (#2). master's-tuition starvation refreshed → #3 (now UCLA + NYU
+the large residuals). Flagship seeds → #4, bulk seeds → #5. FLAGS updated (dual-head RESOLVED; NEW slug-dedup
+build flag promoted to #1). No fresh CRITICAL data-fabrication — structure + descriptions clean fleet-wide
+apart from the contained "Area Studies" name residual and the exact-duplicate-row class.
+
+**Invariants:** all intact. The SKILL.md edit gives an EXISTING terse principle ("dedupe by real name, not
+just slug") enforcement teeth in the numbered-miss section — it ADDS a tell, weakens nothing; no-fabrication /
+merge-mandatory / workshop-feedback-only / omit-never-guess are untouched. No school name added to the
+numbered "Concrete misses" themselves (per-figure counts appear only as live EVIDENCE pointers in the
+sub-bullet prose, the existing convention). Post-edit re-read: numbered misses 1–9 are untouched and
+sequential, the new sub-bullet sits inside miss #2's existing "count is a CHECK" enforcement list with no
+contradiction, and every invariant is intact.
+
+**Health check:** the full `pytest` suite needs a live Postgres + sqlalchemy/httpx/asyncpg the conftest and
+data modules import (no `.venv`, no DB in this environment — same constraint as runs 70–79), so the mandated
+`test_profile_standard.py` / `test_profile_enrichment.py` could not run here. Substantive DB-free check:
+imported `profile_standard/anti_stub.py` and ran `analyze` / `frame_stripped_shared_body`(abs150) /
+`template_slot_artifacts` / `scrape_debris` / `machine_artifacts` over all 40 live catalogs (they compute
+cleanly; gold MIT scores 0 on every description metric), and AST-parsed the repo's alembic graph on
+`origin/main` (confirmed a single head). This grader PR changes only the three skill markdown files (no code,
+no data, no migration), so backend CI is unaffected.
