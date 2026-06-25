@@ -2286,6 +2286,16 @@ class InstitutionService:
             stmt = stmt.order_by(Program.acceptance_rate.desc().nulls_last())
         elif sort_by == "recently_added":
             stmt = stmt.order_by(Program.created_at.desc().nulls_last())
+        elif query and sort_by in (None, "relevance"):
+            # Default a text search to full-text RELEVANCE, not alphabetical: an
+            # exact "computer science" match must outrank tangential "cognitive
+            # science" / "applied math" hits that a bare name sort put first
+            # (ts_query 'comput & scienc' scores a "Computer Science" program above
+            # one matching only 'scienc'). Tie-break alphabetically by name.
+            stmt = stmt.order_by(
+                func.ts_rank(ts_vector, ts_query).desc(),
+                Program.program_name.asc(),
+            )
         else:
             stmt = stmt.order_by(Program.program_name.asc())
 

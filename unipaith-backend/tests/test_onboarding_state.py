@@ -233,6 +233,34 @@ async def test_fan_in_never_overwrites_existing_preferences(
 
 
 @pytest.mark.asyncio
+async def test_budget_fans_in_without_completion(
+    student_client: AsyncClient, db_session: AsyncSession, mock_student_user: User
+):
+    """A budget chosen in setup persists to StudentPreference immediately — not
+    only on the final completion stamp — so Costs & Aid + the program net-price
+    estimator read it instead of telling the student to "add a budget" she set.
+    A later band change updates the band-derived budget."""
+    await _ensure_profile(db_session, mock_student_user)
+
+    resp = await student_client.patch(STATE_URL, json={"answers": {"budget_band": "40k_60k"}})
+    assert resp.status_code == 200
+    assert resp.json()["completed_at"] is None  # NOT completed — the durability fix
+
+    # Column-level select → plain tuple, fresh from the DB (no ORM identity cache).
+    budget = (
+        await db_session.execute(select(StudentPreference.budget_min, StudentPreference.budget_max))
+    ).one()
+    assert budget == (40_000, 60_000)
+
+    # Changing the band updates the band-derived budget (not a hand-set one).
+    await student_client.patch(STATE_URL, json={"answers": {"budget_band": "60k_plus"}})
+    budget = (
+        await db_session.execute(select(StudentPreference.budget_min, StudentPreference.budget_max))
+    ).one()
+    assert budget == (60_000, None)
+
+
+@pytest.mark.asyncio
 async def test_completion_with_no_mappable_answers_skips_fan_in(
     student_client: AsyncClient, db_session: AsyncSession, mock_student_user: User
 ):
