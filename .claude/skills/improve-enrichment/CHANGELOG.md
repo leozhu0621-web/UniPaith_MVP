@@ -6,6 +6,101 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-25 — Run 83 (FULL-FLEET sweep of all 300 live + all 40 catalogs · enricher CLEARED the run-82 exact-duplicate-row class fleet-wide + UCLA cip_code + NYU/UCLA tuition · headline = a NEW matcher-core gap, PUBLIC resident-tuition scalar mis-signal · 1 rule change)
+
+**Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`,**
+reusing `profile_standard/anti_stub.py` directly (paginated full program list of all 40 program-bearing catalogs
+= 7,290 programs; the other 260 are bare institution-level stubs). Per catalog I computed `analyze`,
+`machine_artifacts`, `template_slot_artifacts`, `scrape_debris`, `frame_stripped_shared_body(abs_chars=150)`, an
+exact-duplicate `(program_name, degree_type)` scan (raw AND degree-prefix-normalized), a name-realness scan, and
+per-`degree_type` tuition coverage off the `tuition` scalar carried on every `/programs` list row. Over program
+DETAILS (`GET /programs/{id}`, 12/catalog) I probed `cip_code` + `external_reviews`. Over ALL 300 institutions I
+fetched campus-photo count + posts-feed count (threaded). I read the matcher's tuition consumption DIRECT from
+`program_features.py` + `matching.py` + `net_price_service.py`, and the alembic graph / open-PR list /
+Deploy-Backend run statuses / each module's `cip_code` + `backfill_program_preferences` calls via `git`/MCP.
+
+**Merged + deployed since run 82 (grader PR #1140):** the enricher landed a large repair wave — **#1141 + #1142
+UCLA** (`cip_code` on all 372 + precise CIP-2020 + program-preference refresh; live now 12/12), **#1143 Penn**
+(`cip_code` on all 180 + MPH master's tuition — Deploy-Backend `04717b8` still `in_progress`, so Penn reads
+`cip_code` 0/12 LIVE = deploy-lag, the code DOES assign it at `penn_profile.py:4643`), and **#1139 NYU**
+(master's/professional tuition; deployed green, 194→227/232). UCLA tuition also filled (98→144/146, #1133/#1141).
+
+**TWO run-82 worst tiers CLEARED (verified LIVE):**
+- **Exact-duplicate REAL rows (run-82 #3, 43 rows / 22 catalogs) → ZERO.** The `(program_name, degree_type)` scan
+  returns 0 raw AND 0 normalized on all 40 catalogs; the `frame_abs150` artifacts that accompanied every dup pair
+  are gone (only 3 benign singletons remain). Spot-verified in raw JHU data (the run-82 "BA German / BS Biochem /
+  …" pairs are each now a single unique row). No dedup CODE change merged — the enrichment rebuilds re-deduped. The
+  build-union dedup + name-uniqueness CI gate (FLAG #1) is kept as the durable guard, but the live class is clean.
+- **UCLA `cip_code` 0→100%** (joins Caltech/Princeton/Notre Dame/Chicago + the 6 flagship seeds) and **NYU+UCLA
+  master's tuition** filled.
+
+**HEADLINE — a NEW measurable matcher-core gap: PUBLIC-university resident-tuition scalar MIS-SIGNAL (drives the 1
+rule change).** The CPEF budget feature reads the FLAT `program.tuition` scalar (`program_features.py`
+`tuition_usd_per_year`→`program.tuition` → `matching.py` budget BREAKER `p_tuition > s_budget` + graded
+affordability `fit_range`), NOT the residency-aware net-price OUTPUT estimator (`net_price_service.py`, which
+separately prefers `tuition_out_of_state` for display). Every one of the **11 public catalogs ships the IN-STATE
+resident rate** as that scalar while its `cost_data.breakdown` correctly carries the higher out-of-state rate
+(UCLA `tuition` 15,202 vs out-of-state 49,402 · UT-Austin 11,688 vs 44,908 · Michigan 17,864 vs 63,480 ·
+UW-Seattle 13,406 · UF 6,381 · Berkeley 16,347 · UCSD 16,758 · Wisconsin 12,186 · UIUC 12,992 · Purdue 9,992 ·
+GT 10,512). So for the out-of-state + ALL international applicant pool (the majority at a flagship public), the
+budget veto under-fires 2.5–3.5× and a 49k program reads as comfortably affordable. This is the tuition-VALUE
+analog of the copy-down rule but in the OPPOSITE direction — a value that is too LOW, not copied — and it was
+masked because the editorial card shows the same scalar and the prior tuition rules only checked coverage + the
+copy-down (too-high) direction.
+
+**Findings (with live evidence):**
+- **NEW CLASS → 1 rule change: PUBLIC non-resident-tuition scalar.** Added in the tuition-VALUE block (after the
+  BU flat-rate paragraph, before the cip_code paragraph): for a public university the scalar `tuition` the matcher
+  reads MUST be the NON-RESIDENT (out-of-state) published rate — the conservative, broadly-correct budget input
+  for a national/international pool (and the same value `net_price_service` + Niche/Scorecard already treat as a
+  public's canonical sticker) — while ALWAYS preserving BOTH `tuition_in_state` + `tuition_out_of_state` in
+  `cost_data.breakdown` (already done). Loosens nothing (a choice between two PUBLISHED numbers — omit-never-guess
+  intact). Paired with FLAG #6 (residency-aware budget matching is the durable CODE fix).
+- **COMPLIANCE GAP (rule exists; queued not re-added): `cip_code` starvation.** ~28 mature catalogs still null
+  (6 of 36 modules assign it). Rule = the run-82 cip_code-coverage gate → queued entry #1 + FLAG #3 (coverage
+  metric in CI).
+- **COMPLIANCE GAP: master's/professional-tier tuition residual (per-tier rule).** Smaller post-#1139 — worst
+  UW-Seattle 14, UT-Austin 13, USC 12, Vanderbilt 10. Queued entry #3. PhD/cert nulls excluded (funded/per-credit).
+- **COMPLIANCE GAP: `external_reviews` sparse (miss #8 + STRUCTURE-BEFORE-DEPTH).** 0/12 on 13 catalogs, gold MIT
+  3/12 (coverage-gated) → queued as a calibrated depth-pass priority (entry #4), NOT a fabrication mandate.
+- **Diagnosed NOT-a-defect:** Penn `cip_code` 0/12 is a deploy-lag (#1143 mid-deploy, code correct); the 3
+  "{Region} Area Studies" name hits (USC East Asian, UW Scandinavian) are REAL degrees, not CIP rollups;
+  `backfill_program_preferences` IS called in the fresh UCLA/Penn migrations (matcher-pref compliant).
+
+**Rule change (1 of ≤3, bounded, evidence-backed, not a duplicate):** the PUBLIC non-resident-tuition scalar rule
+(above). No other rule warranted — after a full-fleet sweep, every OTHER live defect is a VIOLATION of an existing
+rule (cip_code → run-82 gate; master's tuition → per-tier rule; reviews → miss #8; photos/feeds → seed tier), so
+per the default-flipped doctrine they are queued + logged, not re-added (anti-churn). Exactly one genuinely new,
+now-evidenced gap-class existed; inventing filler rules to "not stop at one" would breach no-edit-without-NEW-
+evidence. Post-edit re-read confirms SKILL.md reads coherently (the new paragraph sits between the BU flat-rate
+tuition paragraph and the cip_code paragraph in the MATCH section; that section uses bold-lead paragraphs not
+numbered misses, so nothing renumbered; no invariant touched — it adds a matcher-core VALUE requirement, loosens
+nothing).
+
+**Flags (code/workflow, not grader-editable):** (1) build dedups on `slug` not the rendered `(program_name,
+degree_type)` + no name-uniqueness CI assertion (live-clean now, gate gap remains); (2) anti-stub gate is
+description-only, no name-realness scan; (3) `cip_code` serialized but no coverage gate + only 6/36 modules set
+it; (4) no enforced tuition VALUE/COVERAGE gate; (5) the run-82 stranded #1139 is now MERGED — remaining open
+repair PRs (#1081/#1064/#769/#515/#503/#499/#489) appear superseded, a human should close/confirm; (6) NEW — the
+CPEF budget feature is residency-BLIND (reads the single `program.tuition` scalar with no in/out-of-state branch
+on student residency) → the durable fix is residency-aware matching reading the breakdown by residency/country.
+
+**Backlog delta:** rewritten worst-first, full-fleet. HIGH = `cip_code` starvation (#1, ~28 catalogs) · NEW
+public resident-tuition scalar (#2, 11 catalogs) · master's-tier tuition residual (#3, smaller post-#1139).
+MEDIUM = reviews depth-pass (#4) · 6 flagship seeds (#5) · ~254 bulk stubs incl. 34 zero-photo (#6). CLEARED =
+the exact-duplicate-REAL-row class fleet-wide (43→0) + UCLA cip_code + NYU/UCLA tuition. CLEAN = MIT + the 6
+cip_code fillers + the name-realness-clean, tuition-value-copy-down-clean, exact-dup-clean fleet.
+
+**Invariants:** all intact; the SKILL.md edit ADDS a matcher-core VALUE requirement (no-fabrication preserved —
+both tuition rates are institution-PUBLISHED, the rule chooses between two verified numbers; verify-rendered-
+output, enrichment-only, merge-mandatory all untouched). **Health check:** the full `pytest`
+(`test_profile_standard.py` / `test_profile_enrichment.py`) needs a live Postgres the grader env lacks; DB-free
+check — imported `profile_standard/anti_stub.py` and ran all five metrics over the 40 live catalogs (compute
+cleanly; gold MIT scores 0 on every description metric). This grader PR changes only the three skill markdown
+files (SKILL.md + REPAIR_BACKLOG + CHANGELOG) — no code, no data, no migration — so backend CI is unaffected.
+
+---
+
 ## 2026-06-21 — Run 69 (FULL-FLEET sweep of all 300 live + all 40 catalogs · enricher CLEARED Harvard/NYU/UT-Austin LIVE · headline = TWO correct repairs merged-but-NOT-DEPLOYED · 1 rule change — A-MERGE-IS-NOT-A-DEPLOY)
 
 **Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`,**
