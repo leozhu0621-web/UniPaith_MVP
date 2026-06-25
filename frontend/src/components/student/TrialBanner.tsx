@@ -14,6 +14,11 @@ export default function TrialBanner() {
 
   if (!billing || dismissed) return null
   if (billing.status === 'active') return null
+  // Don't push the upgrade early. A brand-new student is auto-enrolled in a 7-day
+  // trial, but a "$15/mo · 7 days left" banner before the product has done
+  // anything useful reads as a hard sell. Only surface the trial nudge as it
+  // winds down (≤3 days); canceled / expired states always show.
+  if (billing.status === 'trialing' && (billing.trial_days_left ?? 0) > 3) return null
 
   const goManage = () => navigate('/s/settings')
 
