@@ -83,6 +83,19 @@ async def readiness_check(response: Response) -> dict:
         "distributed_ready": cache_stats["distributed_ready"],
     }
 
+    # AI provider — reported, NEVER gated (todo 4.1). A missing/empty Anthropic key
+    # degrades Uni chat to the rule-based fallback; surfacing it here lets ops alert
+    # on a silently-degraded chat, but gating readiness on it would deregister the
+    # whole task on a key rotation — worse than the graceful degradation it guards.
+    from unipaith.core.security import ai_provider_configured
+
+    checks["ai"] = {
+        "ok": ai_provider_configured(),
+        "provider": "anthropic",
+        "key_present": bool(settings.anthropic_api_key.strip()),
+        "mock_mode": settings.ai_mock_mode,
+    }
+
     ready = db_ok
     if not ready:
         response.status_code = 503

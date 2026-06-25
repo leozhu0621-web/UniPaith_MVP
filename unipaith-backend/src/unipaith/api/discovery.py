@@ -13,6 +13,7 @@ compat.
 from __future__ import annotations
 
 import json
+import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
@@ -40,6 +41,8 @@ from unipaith.schemas.discovery import (
 )
 from unipaith.services.discovery_service import DiscoveryService
 from unipaith.services.uni_agent_host import UniAgentHost
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/students/me/discovery", tags=["discovery"])
 
@@ -192,6 +195,17 @@ async def append_message_stream(
             except StopAsyncIteration:
                 first = None
             except Exception:
+                # The managed agent failed to set up (e.g. a missing/rotated AI key
+                # → auth failure). We fall back to the in-app orchestrator so the
+                # student never loses Uni — but log it loudly (todo 4.1) so the
+                # silent canned-swap leaves an alertable trace instead of vanishing.
+                logger.error(
+                    "Uni managed-agent setup failed for user=%s — falling back to the "
+                    "in-app orchestrator (chat is in limited mode). Check ANTHROPIC_API_KEY "
+                    "and platform availability.",
+                    user.id,
+                    exc_info=True,
+                )
                 async for frame in _orchestrator_stream():
                     yield frame
                 return

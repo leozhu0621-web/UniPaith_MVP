@@ -18,6 +18,11 @@ export default function ImportPage() {
   const refreshProfile = () => {
     // Everything an import can touch — so the Profile reflects it immediately.
     for (const key of [
+      // The Profile tabs (Overview / Academics / Tests …) read the profile blob
+      // under ['profile']; without this key, imported academics/test-scores stayed
+      // stale until a hard refresh (todo 5.4). ['student','profile'] is kept for
+      // any other consumer that uses it.
+      ['profile'],
       ['student', 'profile'],
       ['goals'],
       ['needs'],
