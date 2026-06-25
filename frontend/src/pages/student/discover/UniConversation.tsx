@@ -19,7 +19,7 @@ import { getLivingProfile } from '../../../api/livingProfile'
 import type { LivingProfile } from '../../../api/livingProfile'
 import { updateSession as updateChatSession } from '../../../api/chatSessions'
 import Button from '../../../components/ui/Button'
-import { useAuthStore } from '../../../stores/auth-store'
+import { getProfile } from '../../../api/students'
 import { showToast } from '../../../stores/toast-store'
 import type {
   AppendMessageResponse,
@@ -56,14 +56,6 @@ function InlineChatEnrichCard() {
     </div>
   )
 }
-
-// Counselor-style ways-in for a stuck student — gentle fallbacks, not the
-// primary interaction (Uni leads the conversation).
-const QUICK_REPLIES = [
-  "I'm not sure where to start",
-  'Could you give an example?',
-  'You ask me',
-] as const
 
 function UniBubble({
   message,
@@ -125,8 +117,15 @@ export default function UniConversation({
   chatSessionId?: string | null
 } = {}) {
   const qc = useQueryClient()
-  const user = useAuthStore(s => s.user)
-  const firstName = user?.email?.split('@')[0]
+  // Greet by the student's real first name (todo 3.1) — NEVER the email local-part.
+  // The shared ['profile'] cache is usually already warm (My Space / Profile); if
+  // the name is unknown the greeting falls back to name-less ("Hi —"), not a handle.
+  const { data: profile } = useQuery({
+    queryKey: ['profile'],
+    queryFn: getProfile,
+    staleTime: 300_000,
+  })
+  const firstName = (profile?.first_name || profile?.preferred_name || '').trim()
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const [draft, setDraft] = useState('')
   const [showUpload, setShowUpload] = useState(false)
@@ -146,6 +145,10 @@ export default function UniConversation({
   const [streaming, setStreaming] = useState(false)
   const [streamStudent, setStreamStudent] = useState<DiscoveryMessage | null>(null)
   const [streamText, setStreamText] = useState('')
+  // True when a streamed turn errored mid-flight (managed agent / platform
+  // hiccup) — the backend can't always stamp the degraded marker on that path,
+  // so we surface the "limited mode" banner locally too (todo 2.5).
+  const [streamDegraded, setStreamDegraded] = useState(false)
   // Proactive opener (Uni speaks first): fired once when the conversation loads
   // empty. `openerFailed` falls back to the static greeting if it can't stream.
   const openerFired = useRef(false)
@@ -223,6 +226,14 @@ export default function UniConversation({
   const llmChips = Array.isArray(lastSignals?.suggested_options)
     ? (lastSignals.suggested_options as string[]).filter(s => typeof s === 'string' && s.trim())
     : []
+  // "Limited mode" — Uni is answering from the canned / rule-based fallback rather
+  // than the live AI (todo 2.5). The backend stamps this on the assistant turn's
+  // signals (orchestrator degraded path); a mid-stream streaming failure flips the
+  // local flag. Either way the student is told, instead of degrading silently.
+  const limitedMode =
+    streamDegraded ||
+    lastSignals?._mode === 'rule_based' ||
+    lastSignals?._phase === 'A2_error'
   // Phase 2 affordance hint — render the options as multi-select or a 1–5
   // importance slider when the orchestrator asks for it; default single-choice.
   const sugInput = (lastSignals?.suggested_input ?? null) as
@@ -317,6 +328,7 @@ export default function UniConversation({
     let studentEchoed = false
     let finished = false
     setStreaming(true)
+    setStreamDegraded(false)
     setStreamText('')
     setStreamStudent({
       id: '__pending__',
@@ -353,7 +365,10 @@ export default function UniConversation({
           onAssistantMessage: msg => {
             if (msg?.content) setStreamText(msg.content)
           },
-          onError: m => showToast(m || 'Could not send message.', 'error'),
+          onError: m => {
+            setStreamDegraded(true)
+            showToast(m || 'Could not send message.', 'error')
+          },
           onDone: () => {
             void finish()
           },
@@ -369,6 +384,7 @@ export default function UniConversation({
       if (sid && !studentEchoed) {
         turnMut.mutate(text)
       } else if (sid) {
+        setStreamDegraded(true)
         await refreshAfterTurn(sid)
         showToast('Connection interrupted — your message was saved.', 'info')
       } else {
@@ -508,10 +524,12 @@ export default function UniConversation({
         aria-live="polite"
         aria-label="Conversation with Uni"
       >
-        {isEmpty && (!canStream || openerFailed) ? (
-          // Fallback greeting — shown only when the proactive opener can't stream
-          // (reduced motion / no ReadableStream) or it failed. Normally Uni's
-          // dynamic opener streams in instead (she speaks first).
+        {isEmpty && !streamText && (!canStream || openerFailed) ? (
+          // Fallback greeting — shown ONLY when the proactive opener can't stream
+          // (reduced motion / no ReadableStream) or it failed AND streamed nothing.
+          // The extra `!streamText` guard prevents a double-greeting (todo 2.2): a
+          // partially-streamed-then-failed opener keeps its partial text instead of
+          // ALSO rendering this static line. Normally Uni's dynamic opener streams in.
           <div className="flex gap-2.5 py-6">
             <UniOrb className="mt-0.5" />
             <div className="pt-0.5 text-sm leading-relaxed text-foreground max-w-[80%]">
@@ -599,7 +617,10 @@ export default function UniConversation({
       )}
       {!turnMut.isPending &&
         !streaming &&
-        (llmChips.length > 0 ? (
+        llmChips.length > 0 && (
+          // Reply chips come ONLY from Uni's own suggested options (todo 2.3) — no
+          // hard-coded "phone-menu" fallbacks. When the AI offers none, the row is
+          // simply absent and the student types or uses the inline enrich card.
           <AnswerChoices
             options={llmChips}
             onPick={send as (v: string | string[]) => void}
@@ -607,20 +628,7 @@ export default function UniConversation({
             lowLabel={sugInput?.low_label}
             highLabel={sugInput?.high_label}
           />
-        ) : (
-          <div className="mb-2 flex flex-wrap gap-1.5">
-            {QUICK_REPLIES.map(s => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => send(s)}
-                className="text-xs px-2.5 py-1 rounded-full border border-border text-muted-foreground hover:border-foreground/30 transition-colors"
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        ))}
+        )}
 
       {showUpload && (
         <div className="mb-2">
@@ -635,6 +643,16 @@ export default function UniConversation({
               setShowUpload(false)
             }}
           />
+        </div>
+      )}
+
+      {limitedMode && (
+        <div
+          role="status"
+          className="mb-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-muted-foreground"
+        >
+          Limited mode — Uni is replying from saved guidance for now. Your messages are
+          still saved, and full answers resume automatically.
         </div>
       )}
 
