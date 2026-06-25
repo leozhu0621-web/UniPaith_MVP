@@ -206,15 +206,17 @@ def test_matcher_core_cip_code_catalog_wide():
 
 
 def test_public_tuition_scalar_is_nonresident():
-    """REPAIR_BACKLOG #2: UW is public, so the matcher's flat ``program.tuition`` scalar must
-    carry the NON-RESIDENT sticker (the out-of-state + international pool is scored on it), while
-    ``cost_data.breakdown`` keeps both the resident and non-resident rates."""
-    # Bachelor's scalar is the non-resident undergraduate sticker (not the resident one).
+    """REPAIR_BACKLOG #2: UW is public, so the matcher's flat ``program.tuition`` scalar (set by
+    ``_tuition_for``) must carry the NON-RESIDENT sticker — the out-of-state + international pool
+    is scored on it. The editorial cost card stays on the coherent WA-resident basis
+    (``cost_data.tuition_usd`` == resident, matching the resident COA), with BOTH rates always in
+    ``cost_data.breakdown``."""
+    # Bachelor's matcher scalar is the non-resident undergraduate sticker (not the resident one).
     bachelors = [s for s in u.PROGRAMS if s["degree_type"] == "bachelors" and u._tuition_for(s)]
     assert bachelors, "expected on-campus bachelor's rows"
     assert all(u._tuition_for(s) == u._TUITION_UG_NONRES for s in bachelors)
     assert u._TUITION_UG_NONRES > u._TUITION_UG_RESIDENT
-    # On-campus master's/PhD scalar is the non-resident graduate Tier I sticker.
+    # On-campus master's/PhD matcher scalar is the non-resident graduate Tier I sticker.
     grad = [
         s
         for s in u.PROGRAMS
@@ -222,18 +224,22 @@ def test_public_tuition_scalar_is_nonresident():
     ]
     assert all(u._tuition_for(s) == u._TUITION_GRAD_NONRES for s in grad)
     assert u._TUITION_GRAD_NONRES > u._TUITION_GRAD_RESIDENT
-    # cost_data.breakdown preserves BOTH residency rates at every covered tier.
+    # cost_data shows the coherent resident basis; the breakdown preserves BOTH rates, and the
+    # resident headline never exceeds the resident COA (the P2 coherence guard).
     ug = u._undergrad_cost({"degree_type": "bachelors"})
+    assert ug["tuition_usd"] == u._TUITION_UG_RESIDENT
+    assert ug["tuition_usd"] <= ug["total_cost_of_attendance"]
     assert ug["breakdown"]["tuition_in_state"] == u._TUITION_UG_RESIDENT
     assert ug["breakdown"]["tuition_out_of_state"] == u._TUITION_UG_NONRES
-    assert ug["tuition_usd"] == u._TUITION_UG_NONRES
     gr = u._grad_cost({"degree_type": "masters"})
+    assert gr["tuition_usd"] == u._TUITION_GRAD_RESIDENT
     assert gr["breakdown"]["tuition_in_state"] == u._TUITION_GRAD_RESIDENT
     assert gr["breakdown"]["tuition_out_of_state"] == u._TUITION_GRAD_NONRES
-    # Professional rows expose their published non-resident rate with both in the breakdown.
+    # Professional rows: matcher scalar = non-resident; card shows resident; both in breakdown.
     law = next(s for s in u.PROGRAMS if s["slug"] == "uw-law-prof")
     assert u._tuition_for(law) == 58956
     law_cost = u._grad_cost(law)
+    assert law_cost["tuition_usd"] == 47073
     assert law_cost["breakdown"]["tuition_in_state"] == 47073
     assert law_cost["breakdown"]["tuition_out_of_state"] == 58956
 

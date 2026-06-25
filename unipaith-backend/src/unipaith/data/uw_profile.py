@@ -50,8 +50,11 @@ Matcher-core fields (2026-06-25 repair — REPAIR_BACKLOG #1 cip_code + #2 publi
 2. ``tuition`` — UW is PUBLIC, so the matcher's flat ``program.tuition`` scalar now carries the
    NON-RESIDENT (out-of-state) annual sticker per tier, because the CPEF budget breaker reads
    that scalar for EVERY student and the out-of-state + ALL-international pool (the flagship
-   majority) was being scored 2.5–3.5× too cheap on the resident rate. ``cost_data.breakdown``
-   keeps BOTH ``tuition_in_state`` and ``tuition_out_of_state`` (honest + sourced). Bachelor's
+   majority) was being scored 2.5–3.5× too cheap on the resident rate. The editorial
+   ``cost_data`` stays on the coherent WA-RESIDENT basis (``tuition_usd`` = resident, matching the
+   Scorecard resident COA / net price), with BOTH ``tuition_in_state`` and ``tuition_out_of_state``
+   always in ``cost_data.breakdown`` (honest + sourced) — only the matcher scalar uses non-resident.
+   Bachelor's
    carry the non-resident undergraduate sticker ($44,460; resident $13,406); master's and PhD
    carry the non-resident graduate Tier I sticker ($33,171; resident $19,011 — UW charges one
    flat graduate operating fee per residency), and a funded research PhD keeps the published
@@ -3119,9 +3122,9 @@ _CIP_BY_FIELD: dict[str, str] = {
     "Biomedical Regulatory Affairs": "51.2003",
     "Laboratory Medicine": "51.1005",
     "Genetic Counseling": "51.1509",
-    "Medicinal Chemistry": "51.2003",
+    "Medicinal Chemistry": "51.2004",
     "Pharmaceutics": "51.2003",
-    "Pharmacology": "51.2003",
+    "Pharmacology": "26.1001",
     "Public Health Genetics": "26.0801",
     "Genetic Epidemiology": "26.1309",
     "Epidemiology": "26.1309",
@@ -3142,10 +3145,10 @@ _CIP_BY_FIELD: dict[str, str] = {
     "Dentistry": "51.0401",
     "Oral Health Sciences": "51.0401",
     "Oral Medicine": "51.0401",
-    "Endodontics": "51.0403",
-    "Orthodontics": "51.0405",
-    "Periodontics": "51.0408",
-    "Prosthodontics": "51.0409",
+    "Endodontics": "51.0506",
+    "Orthodontics": "51.0508",
+    "Periodontics": "51.0510",
+    "Prosthodontics": "51.0511",
     # --- Psychology & cognitive (CIP 42.xx) ---
     "Psychology": "42.0101",
     "Applied Child and Adolescent Psychology: Prevention and Treatment": "42.2703",
@@ -3156,11 +3159,11 @@ _CIP_BY_FIELD: dict[str, str] = {
     "Political Science": "45.1001",
     "Sociology": "45.1101",
     "International Studies": "45.0901",
-    "China Studies": "05.0104",
+    "China Studies": "05.0123",
     "East Asia Studies": "05.0104",
-    "Japan Studies": "05.0111",
-    "Korea Studies": "05.0124",
-    "South Asian Studies": "05.0117",
+    "Japan Studies": "05.0127",
+    "Korea Studies": "05.0128",
+    "South Asian Studies": "05.0112",
     "Southeast Asian Studies": "05.0113",
     "Russia, East European and Central Asian Studies": "05.0110",
     "Near & Middle Eastern Studies": "05.0108",
@@ -3170,14 +3173,14 @@ _CIP_BY_FIELD: dict[str, str] = {
     "Social Welfare": "44.0701",
     "Social Work": "44.0701",
     "Marine Affairs": "03.0205",
-    "Law, Societies, and Justice": "22.0001",
+    "Law, Societies, and Justice": "22.0000",
     "Integrated Social Sciences": "45.0101",
     # --- Area, ethnic, gender & cultural studies (CIP 05.xx) ---
     "American Ethnic Studies": "05.0200",
     "American Indian Studies": "05.0202",
     "Feminist Studies": "05.0207",
     "Gender, Women, and Sexuality Studies": "05.0207",
-    "Scandinavian Area Studies": "05.0110",
+    "Scandinavian Area Studies": "05.0111",
     "Comparative Religion": "38.0201",
     "Comparative History of Ideas": "24.0103",
     "History and Philosophy of Science": "54.0108",
@@ -3186,20 +3189,20 @@ _CIP_BY_FIELD: dict[str, str] = {
     "Romance Linguistics": "16.0102",
     "Asian Languages & Literature": "16.0399",
     "Asian Languages and Cultures": "16.0399",
-    "South Asian Languages and Cultures": "16.0399",
-    "Middle Eastern Languages and Cultures": "16.1101",
-    "Near Eastern Languages & Civilization": "16.1101",
+    "South Asian Languages and Cultures": "16.0700",
+    "Middle Eastern Languages and Cultures": "16.1100",
+    "Near Eastern Languages & Civilization": "16.1100",
     "Chinese": "16.0301",
     "Japanese": "16.0302",
-    "Korean": "16.0399",
-    "Slavic Languages & Literatures": "16.0402",
+    "Korean": "16.0303",
+    "Slavic Languages & Literatures": "16.0400",
     "Eastern European Languages, Literature, and Culture": "16.0400",
     "Russian Language, Literature, and Culture": "16.0402",
-    "Scandinavian": "16.0599",
-    "Danish": "16.0599",
-    "Finnish": "16.0501",
-    "Norwegian": "16.0599",
-    "Swedish": "16.0599",
+    "Scandinavian": "16.0502",
+    "Danish": "16.0502",
+    "Finnish": "16.1502",
+    "Norwegian": "16.0502",
+    "Swedish": "16.0502",
     "French": "16.0901",
     "French Studies": "16.0901",
     "Italian": "16.0902",
@@ -3533,7 +3536,7 @@ def _undergrad_cost(spec: dict | None = None) -> dict:
     if spec is not None and spec.get("delivery_format") == "online":
         return _online_cost(spec)
     return {
-        "tuition_usd": _TUITION_UG_NONRES,
+        "tuition_usd": _TUITION_UG_RESIDENT,
         "total_cost_of_attendance": _UNDERGRAD_COA,
         "avg_net_price": _AVG_NET_PRICE,
         "breakdown": {
@@ -3544,10 +3547,11 @@ def _undergrad_cost(spec: dict | None = None) -> dict:
         "note": (
             "UW is public, so two undergraduate stickers apply: WA-resident annual tuition is "
             "$13,406 and non-resident is $44,460 (UW Office of Planning & Budgeting / Financial "
-            "Aid, 2025-26). The headline tuition shows the non-resident rate (the matcher's "
-            "budget signal for the out-of-state + international pool); both rates ship in the "
-            "breakdown. Total cost of attendance ($32,446) and average net price after grant aid "
-            "($14,091) are College Scorecard figures (UNITID 236948, 2023-24)."
+            "Aid, 2025-26); both rates ship in the breakdown. The cost card shows the WA-resident "
+            "basis, coherent with the College Scorecard total cost of attendance ($32,446) and "
+            "average net price after grant aid ($14,091) (UNITID 236948, 2023-24). The matcher's "
+            "budget signal (program.tuition) separately uses the non-resident rate — the "
+            "conservative default for the out-of-state + international pool."
         ),
         # Tuition and the Scorecard COA/net-price carry separate provenance + year.
         "tuition_source": _TUITION_FA_SRC,
@@ -3577,7 +3581,7 @@ def _grad_cost(spec: dict) -> dict:
                 "source_url": _website_for(spec),
             }
         return {
-            "tuition_usd": pr["nonresident"],
+            "tuition_usd": pr["resident"],
             "breakdown": {
                 "tuition_in_state": pr["resident"],
                 "tuition_out_of_state": pr["nonresident"],
@@ -3585,8 +3589,9 @@ def _grad_cost(spec: dict) -> dict:
             "funded": False,
             "note": (
                 f"Annual professional-program tuition ({pr['year']}): WA-resident "
-                f"${pr['resident']:,} and non-resident ${pr['nonresident']:,}. The headline shows "
-                "the non-resident rate (the matcher's budget signal); both ship in the breakdown."
+                f"${pr['resident']:,} and non-resident ${pr['nonresident']:,}; both ship in the "
+                "breakdown. The cost card shows the WA-resident rate; the matcher's budget signal "
+                "(program.tuition) separately uses the non-resident rate."
             ),
             "source": pr["source"],
             "source_url": pr["source_url"],
@@ -3594,7 +3599,7 @@ def _grad_cost(spec: dict) -> dict:
         }
     funded = spec["degree_type"] == "phd"
     return {
-        "tuition_usd": _TUITION_GRAD_NONRES,
+        "tuition_usd": _TUITION_GRAD_RESIDENT,
         "breakdown": {
             "tuition_in_state": _TUITION_GRAD_RESIDENT,
             "tuition_out_of_state": _TUITION_GRAD_NONRES,
@@ -3603,9 +3608,10 @@ def _grad_cost(spec: dict) -> dict:
         "note": (
             "UW is public and charges one flat graduate Tier I tuition across its state-supported "
             "master's and doctoral programs: WA-resident $19,011 and non-resident $33,171 (UW "
-            "Office of Planning & Budgeting, 2025-26). The headline shows the non-resident rate "
-            "(the matcher's budget signal for the out-of-state + international pool); both ship in "
-            "the breakdown. Fee-based programs pay a higher published rate."
+            "Office of Planning & Budgeting, 2025-26); both ship in the breakdown. The cost card "
+            "shows the WA-resident rate; the matcher's budget signal (program.tuition) separately "
+            "uses the non-resident rate for the out-of-state + international pool. Fee-based "
+            "programs pay a higher published rate."
             + (
                 " Most UW PhD students are funded through assistantships and fellowships that "
                 "cover tuition; the published sticker is shown as the matcher's budget input."

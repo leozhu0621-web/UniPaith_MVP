@@ -30,12 +30,12 @@ Create Date: 2026-06-25
 
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from alembic import op
 from unipaith.data import uw_profile
-from unipaith.models import Institution
+from unipaith.models import Institution, Program, ProgramPreference
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "uwcipscalar1"
@@ -51,6 +51,19 @@ def upgrade() -> None:
         select(Institution).where(Institution.name == uw_profile.INSTITUTION_NAME)
     )
     if inst is not None:
+        # Refresh DERIVED (non-claimed) program-preference rows so they re-derive against the
+        # newly-stamped cip_code: backfill only fills missing rows / empty keys, so existing rows
+        # left by the fleet `progprefbf1` backfill (derived while cip_code was null) would keep
+        # stale target-applicant signals. Delete the routine-owned derived rows first; claimed
+        # (first-party) rows are preserved — never overwrite first-party data.
+        prog_ids = select(Program.id).where(Program.institution_id == inst.id)
+        session.execute(
+            delete(ProgramPreference).where(
+                ProgramPreference.program_id.in_(prog_ids),
+                ProgramPreference.source != "claimed",
+            )
+        )
+        session.flush()
         backfill_program_preferences(session, institution_id=inst.id)
     session.flush()
 
