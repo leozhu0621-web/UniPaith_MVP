@@ -65,7 +65,7 @@ from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of California-Los Angeles"
-ENRICHED_AT = "2026-06-21"
+ENRICHED_AT = "2026-06-25"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -2310,7 +2310,6 @@ _CATALOG: list[tuple] = [
         "on_campus",
         24,
     ),
-    ("ucla-management-ms", "ANDERSON", "Management", "masters", "Management", "on_campus", 24),
     (
         "ucla-master-of-business-administration-ms",
         "ANDERSON",
@@ -4070,6 +4069,290 @@ _COST_BY_SLUG: dict[str, dict] = {
 }
 
 
+# Published professional / self-supporting MASTER'S tuition (REPAIR_BACKLOG #3 — the master's
+# tier shipped 48 nulls behind a 100% bachelor's tier, starving the matcher's grad budget-fit
+# signal). UCLA's academic master's share the systemwide graduate rate (_TUITION_GRAD, stamped
+# automatically); the rows here are the school-billed professional + self-supporting degrees, which
+# each PUBLISH their own (higher) rate. Each ``tuition_usd`` is the CA-resident ANNUAL figure (the
+# convention used by the undergrad / academic-grad / professional records above): where a school
+# publishes only a total program fee, it is divided by the program's real length and the published
+# total is preserved verbatim in the note. Verified per the school's own page; never the undergrad
+# sticker copied down, never guessed. The Film & Television M.F.A. stays omitted-with-reason — it
+# carries Professional Degree Supplemental Tuition over the academic base but UCLA publishes no
+# current PDST-inclusive annual total that renders to a fetchable figure (no-fabrication rule).
+#
+# (slug, annual_tuition_usd, year, note, source_label, source_url)
+_MASTER_COST_TABLE: list[tuple[str, int, str, str, str, str]] = [
+    # — Anderson School of Management (flat MBA/MS program fee; no resident/nonresident split) —
+    (
+        "ucla-master-of-business-administration-ms", 82_733, "2026-27",
+        "UCLA Anderson Full-Time MBA estimated program fees ($82,733/year; AY 2026-27 flat MBA "
+        "program fee, no resident/nonresident split).",
+        "UCLA Anderson — Full-Time MBA Financing",
+        "https://www.anderson.ucla.edu/degrees/full-time-mba/financing",
+    ),
+    (
+        "ucla-executive-master-of-business-administration-ms", 109_322, "2025-27",
+        "UCLA Anderson Executive MBA: $200,424 total program fee for the 22-month Class of 2027 "
+        "(≈$109,322/year; flat fee, no residency split).",
+        "UCLA Anderson — Executive MBA Financing",
+        "https://www.anderson.ucla.edu/degrees/executive-mba/financing",
+    ),
+    (
+        "ucla-fully-employed-master-of-business-administration-ms", 47_944, "2025-26",
+        "UCLA Anderson Fully Employed MBA single-academic-year fees ($47,944; 2025-26, at the "
+        "published $1,844 per-unit rate over an 82-unit degree).",
+        "UCLA Anderson — Fully Employed MBA Financing",
+        "https://www.anderson.ucla.edu/degrees/fully-employed-mba/financing",
+    ),
+    (
+        "ucla-global-executive-master-of-business-administration-for-asia-pacific-ms", 122_400,
+        "2026-27",
+        "UCLA-NUS Executive MBA (Global Executive MBA for Asia Pacific): USD $153,000 total program "
+        "fee for the 15-month Intake 22 (≈$122,400/year; includes the NUS and UCLA portions).",
+        "UCLA Anderson — UCLA-NUS Executive MBA Fees & Financing",
+        "https://www.anderson.ucla.edu/degrees/ucla-nus-executive-mba/fees-and-financing",
+    ),
+    (
+        "ucla-master-of-financial-engineering-ms", 77_476, "2025-26",
+        "UCLA Anderson Master of Financial Engineering: $96,845 total program fees for the 15-month "
+        "class entering Fall 2025 (≈$77,476/year; flat fee).",
+        "UCLA Anderson — Master of Financial Engineering Financing",
+        "https://www.anderson.ucla.edu/degrees/master-of-financial-engineering/financing",
+    ),
+    (
+        "ucla-business-analytics-ms", 72_061, "2025-26",
+        "UCLA Anderson Master of Science in Business Analytics: $90,076 total program fees for the "
+        "15-month program (≈$72,061/year; flat fee).",
+        "UCLA Anderson — MSBA Program Calendar and Fees",
+        "https://www.anderson.ucla.edu/degrees/master-of-science-in-business-analytics/"
+        "admit-central/program-calendar-and-fees",
+    ),
+    # — Jonathan and Karin Fielding School of Public Health (+ Geffen MS) —
+    # Standard on-campus MPH concentrations share one professional MPH fee (most recent figure the
+    # school publishes verbatim is its 2022-23 table; the live rate sits behind the Registrar app).
+    *[
+        (
+            slug, 25_323, "2022-23",
+            f"{label} — UCLA Fielding School of Public Health MPH professional-degree fee, "
+            "California resident ($25,323; 2022-23, the most recent rate the school publishes "
+            "verbatim; one MPH rate covers all on-campus concentrations).",
+            "UCLA Fielding School of Public Health — Tuition & Fees",
+            "https://ph.ucla.edu/admissions/cost-aid/tuition-fees",
+        )
+        for slug, label in [
+            ("ucla-master-of-public-health-ms", "Master of Public Health"),
+            ("ucla-biostatistics-mph-ms", "Biostatistics (M.P.H.)"),
+            ("ucla-community-health-sciences-mph-ms", "Community Health Sciences (M.P.H.)"),
+            ("ucla-environmental-health-sciences-mph-ms", "Environmental Health Sciences (M.P.H.)"),
+            ("ucla-epidemiology-mph-ms", "Epidemiology (M.P.H.)"),
+            ("ucla-health-policy-and-management-mph-ms", "Health Policy and Management (M.P.H.)"),
+        ]
+    ],
+    *[
+        (
+            slug, 29_942, "2025-26",
+            f"{label} — UCLA Fielding self-supporting MPH for Health Professionals (MPH|HP) annual "
+            "tuition ($29,942/year; 2025-26, per the UCLA Registrar self-supporting degree fee list).",
+            "UCLA Registrar — Self-Supporting Degree Fees",
+            "https://registrar.ucla.edu/fees-residence/self-supporting-degrees",
+        )
+        for slug, label in [
+            (
+                "ucla-community-health-health-promotion-and-education-ms",
+                "MPH in Community Health, Health Promotion and Education",
+            ),
+            ("ucla-health-management-ms", "MPH in Health Management"),
+            ("ucla-health-policy-ms", "MPH in Health Policy"),
+        ]
+    ],
+    (
+        "ucla-executive-master-of-public-health-ms", 36_000, "2025-26",
+        "UCLA Fielding Executive Master of Public Health (ExecHPM): $72,000 total for the two-year "
+        "program ($36,000/year for new students; self-supporting).",
+        "UCLA Executive MPH — Tuition & Financial Aid",
+        "https://www.exechpm.ucla.edu/tuition-financial-aid/",
+    ),
+    (
+        "ucla-master-of-healthcare-administration-ms", 31_350, "2025-26",
+        "UCLA Fielding online Master of Healthcare Administration: $950/unit over a 66-unit program "
+        "($62,700 total; ≈$31,350/year; self-supporting, 2025-26).",
+        "UCLA MHA — Tuition & Financial Aid",
+        "https://mha.ucla.edu/tuition-financial-aid/",
+    ),
+    (
+        "ucla-master-of-data-science-in-health-ms", 30_000, "2025-26",
+        "UCLA Master of Data Science in Health: $1,250/credit over a 48-unit program ($60,000 total; "
+        "≈$30,000/year; self-supporting, Fall-2025 entry).",
+        "UCLA MDSH — Admission Finance",
+        "https://mdsh.ucla.edu/admission/finance",
+    ),
+    (
+        "ucla-data-science-in-biomedicine-ms", 21_600, "2023-24",
+        "UCLA Master of Science in Data Science in Biomedicine (David Geffen School of Medicine): "
+        "$4,800/course over a nine-course program ($43,200 total; ≈$21,600/year; self-supporting, "
+        "2023-24 published rate).",
+        "UCLA MS Data Science in Biomedicine — Program Cost & Financial Aid",
+        "https://datasciencebiomedicine.ucla.edu/admissions/program-cost-financial-aid",
+    ),
+    # — Henry Samueli School of Engineering and Applied Science —
+    (
+        "ucla-master-of-engineering-ms", 52_920, "2025-26",
+        "UCLA Samueli Master of Engineering (on-campus, one-year): $52,920 total program tuition "
+        "plus quarterly campus fees.",
+        "UCLA MEng — FAQ (Tuition)",
+        "https://www.meng.ucla.edu/faq/",
+    ),
+    *[
+        (
+            slug, 19_800, "2025-26",
+            f"{label} — track of UCLA's online Master of Science in Engineering (MSOL): $4,400/course "
+            "over a nine-course (36-unit) program ($39,600 total; ≈$19,800/year; self-supporting, all "
+            "MSOL specializations share this rate).",
+            "UCLA MSOL — Program Cost & Financial Aid",
+            "https://www.msol.ucla.edu/program-cost-financial-aid-information/",
+        )
+        for slug, label in [
+            ("ucla-engineering-ms", "Master of Science in Engineering"),
+            ("ucla-engineering-aerospace-ms", "MS in Engineering – Aerospace"),
+            ("ucla-engineering-computer-networking-ms", "MS in Engineering – Computer Networking"),
+            ("ucla-engineering-electrical-ms", "MS in Engineering – Electrical"),
+            ("ucla-engineering-electronic-materials-ms", "MS in Engineering – Electronic Materials"),
+            ("ucla-engineering-integrated-circuits-ms", "MS in Engineering – Integrated Circuits"),
+            (
+                "ucla-engineering-manufacturing-and-design-ms",
+                "MS in Engineering – Manufacturing and Design",
+            ),
+            ("ucla-engineering-materials-science-ms", "MS in Engineering – Materials Science"),
+            ("ucla-engineering-mechanical-ms", "MS in Engineering – Mechanical"),
+            (
+                "ucla-engineering-signal-processing-and-communications-ms",
+                "MS in Engineering – Signal Processing and Communications",
+            ),
+            ("ucla-engineering-structural-materials-ms", "MS in Engineering – Structural Materials"),
+        ]
+    ],
+    # — School of Law —
+    (
+        "ucla-master-of-laws-ms", 76_772, "2025-26",
+        "UCLA School of Law Master of Laws (LL.M.): $76,772 tuition for the one-year program "
+        "(identical for domestic and international students; California residents are not eligible "
+        "for discounted tuition).",
+        "UCLA Law — LL.M. Tuition & Visa Information",
+        "https://law.ucla.edu/admissions/llm-admissions/tuition-visa-information",
+    ),
+    (
+        "ucla-master-of-legal-studies-ms", 33_475, "2025-26",
+        "UCLA School of Law online Master of Legal Studies (M.L.S.): $2,575/unit over a 26-unit "
+        "program ($66,950 total; ≈$33,475/year; self-supporting, 2025-26).",
+        "UCLA Law — Master of Legal Studies Tuition & Scholarships",
+        "https://law.ucla.edu/admissions/master-legal-studies/mls-tuition-and-scholarships",
+    ),
+    # — School of Education and Information Studies (academic state-supported master's) —
+    *[
+        (
+            slug, 21_115, "2024-25",
+            f"{label} — standard UCLA academic graduate tuition & fees, California resident "
+            "($21,115/year; 2024-25; SEIS publishes no self-supporting/PDST supplement for this "
+            "academic master's).",
+            "UCLA Graduate Programs — Tuition & Student Fees",
+            "https://grad.ucla.edu/funding/tuition/",
+        )
+        for slug, label in [
+            ("ucla-master-of-education-ms", "Master of Education (M.Ed.)"),
+            ("ucla-education-ms", "Master of Education in Education (M.Ed.)"),
+            (
+                "ucla-master-of-library-and-information-science-ms",
+                "Master of Library and Information Science (M.L.I.S.)",
+            ),
+        ]
+    ],
+    # — College of Letters and Science (self-supporting applied master's) —
+    (
+        "ucla-master-of-applied-chemical-sciences-ms", 39_744, "2025-26",
+        "UCLA Master of Applied Chemical Sciences (MACS): $39,744/year ($13,248/quarter), the same "
+        "for residents and non-residents; self-supporting.",
+        "UCLA MACS — Program",
+        "https://macsucla.com/macs-program",
+    ),
+    (
+        "ucla-master-of-applied-geospatial-information-systems-and-technologies-ms", 38_430, "2026-27",
+        "UCLA Master of Applied Geospatial Information Systems and Technologies (MAGIST): $1,030/unit "
+        "over a 36-unit, one-year program ($38,430 total tuition and fees; self-supporting, 2026-27).",
+        "UCLA MAGIST — Tuition and Financial Aid",
+        "https://magist.gis.ucla.edu/tuition-and-financial-aid/",
+    ),
+    (
+        "ucla-master-of-applied-statistics-and-data-science-ms", 27_038, "2025-26",
+        "UCLA Master of Applied Statistics and Data Science (MASDS): $1,229/unit over a 44-unit "
+        "program ($54,076 total; about $27,038/year over two years; self-supporting).",
+        "UCLA MASDS — FAQ (Cost)",
+        "https://master.stat.ucla.edu/faq/",
+    ),
+    (
+        "ucla-master-of-quantum-science-and-technology-ms", 53_400, "2025-26",
+        "UCLA Master of Quantum Science and Technology (MQST): $53,400 total program tuition for the "
+        "one-year (40-unit) program; self-supporting, 2025-26.",
+        "UCLA MQST — Program Cost",
+        "https://qst.ucla.edu/program-cost.html",
+    ),
+    (
+        "ucla-master-of-social-science-ms", 45_815, "2025-26",
+        "UCLA Master of Social Science (MaSS): $45,815 academic-year tuition (2025-26); "
+        "self-supporting.",
+        "UCLA MaSS — FAQ (Tuition)",
+        "https://mass.ss.ucla.edu/faq/",
+    ),
+    # — Meyer and Renee Luskin School of Public Affairs —
+    (
+        "ucla-master-of-public-policy-ms", 34_348, "2025-26",
+        "UCLA Luskin Master of Public Policy (MPP): $34,348 total mandatory tuition and fees, "
+        "California resident, 2025-26 (systemwide tuition $13,140 + Professional Degree Supplemental "
+        "Tuition $12,465 + campus fees, per the UCLA Registrar fee schedule).",
+        "UCLA Luskin — Public Policy Tuition & Financial Aid",
+        "https://luskin.ucla.edu/public-policy/tuition-and-financial-aid",
+    ),
+    (
+        "ucla-master-of-social-welfare-ms", 30_670, "2025-26",
+        "UCLA Luskin Master of Social Welfare (MSW): $30,670 total mandatory tuition and fees, "
+        "California resident, 2025-26 (per the UCLA Registrar fee schedule).",
+        "UCLA Registrar — Fees (Social Welfare MSW, Annual 2025-26)",
+        "https://registrar.ucla.edu/fees-residence",
+    ),
+    (
+        "ucla-master-of-urban-and-regional-planning-ms", 31_579, "2025-26",
+        "UCLA Luskin Master of Urban and Regional Planning (MURP): $31,579 total mandatory tuition "
+        "and fees, California resident, 2025-26 (per the UCLA Registrar fee schedule).",
+        "UCLA Registrar — Fees (Urban Planning MURP, Annual 2025-26)",
+        "https://registrar.ucla.edu/fees-residence",
+    ),
+    (
+        "ucla-master-of-urban-and-regional-planning-institut-detudes-de-paris-ms", 31_579, "2025-26",
+        "UCLA Luskin MURP / Sciences Po dual degree: Year 1 is billed at the standard UCLA MURP rate "
+        "($31,579, California resident, 2025-26); Year 2 is paid to Sciences Po plus a UCLA in-absentia "
+        "fee.",
+        "UCLA Luskin — MURP / Sciences Po Dual Degree",
+        "https://luskin.ucla.edu/urban-planning/murp-sciences-po",
+    ),
+    (
+        "ucla-master-of-real-estate-development-ms", 85_000, "2025-26",
+        "UCLA Luskin Master of Real Estate Development (MRED): $85,000 total required program fees for "
+        "the one-year, self-supporting program (2025-26; plus campus fees).",
+        "UCLA Luskin — MRED Tuition and Financing",
+        "https://luskin.ucla.edu/mred/tuition-and-financing",
+    ),
+]
+
+_COST_BY_SLUG.update(
+    {
+        slug: _annual_prof_cost(
+            tuition, note=note, source=source, source_url=source_url, year=year
+        )
+        for slug, tuition, year, note, source, source_url in _MASTER_COST_TABLE
+    }
+)
+
+
 def _prof_has_verified_tuition(spec: dict) -> bool:
     return spec.get("slug") in _COST_BY_SLUG
 
@@ -4568,13 +4851,15 @@ def _cost_for(spec: dict) -> tuple[int | None, dict]:
     funded $0 for doctoral students. Professional / self-supporting degrees carry distinct,
     higher schedules and are omitted-with-reason rather than guessed (no-fabrication rule).
     """
+    # A per-slug published rate (professional + self-supporting master's / professional degrees)
+    # is authoritative for any credential level — checked first so a school-billed master's gets
+    # its real published rate instead of falling through to the academic-rate or null branches.
+    cost_override = _COST_BY_SLUG.get(spec.get("slug", ""))
+    if cost_override is not None:
+        return cost_override["tuition_usd"], cost_override
     dt = spec["degree_type"]
     if dt == "bachelors":
         return _TUITION_UG_IN_STATE, _undergrad_cost()
-    if dt == "professional":
-        cost_override = _COST_BY_SLUG.get(spec.get("slug", ""))
-        if cost_override is not None:
-            return cost_override["tuition_usd"], cost_override
     if dt in ("phd", "doctoral"):
         # Only research Doctor of Philosophy degrees carry the standard funded tuition
         # remission. Professional / self-supporting doctorates encoded as "phd" — Ed.D.,

@@ -1,5 +1,5 @@
 """The UCLA profile conforms to the gold standard across its WHOLE tree — the
-institution, every one of its 13 real schools/colleges, and every one of its 373
+institution, every one of its 13 real schools/colleges, and every one of its 372
 programs — mirroring the MIT/Sloan/MBAn reference certification.
 
 Pure (no DB): builds each node's persisted snapshot from the ``ucla_profile`` module
@@ -127,18 +127,40 @@ def test_machine_artifacts_clean():
 
 
 def test_matcher_core_tuition_is_published_catalog_wide():
-    """REPAIR_BACKLOG #7: tuition is institution-published, so it is filled for every
-    knowable credential level — only professional/self-supporting degrees omit-with-reason."""
+    """REPAIR_BACKLOG #3 + #7: tuition is institution-published, so it is filled for every
+    knowable credential level — the undergrad sticker, the academic graduate rate, funded
+    research-doctoral $0, AND the school-billed professional / self-supporting master's at their
+    OWN published rates (not the undergrad sticker, never the academic rate copied down, never
+    guessed). Only a degree with no fetchable published figure omits-with-reason."""
     assert u._TUITION_UG_IN_STATE > 0
     assert u._TUITION_GRAD > 0
     have = [p for p in u.PROGRAMS if u._cost_for(p)[0] is not None]
-    # Undergrad sticker + academic graduate rate + funded research-doctoral $0 cover ~85% of
-    # the catalog; professional & self-supporting master's / doctorates (MBA, MFE, MPH, MEng,
-    # MFA, online MSOL, MQST, Ed.D., S.J.D., D.M.A., …) omit-with-reason rather than guess.
-    assert len(have) / len(u.PROGRAMS) >= 0.83
-    # A self-supporting online master's is omitted, never stamped with the academic rate.
+    # Bachelor's + academic + professional/self-supporting master's + funded PhD now cover
+    # essentially the whole catalog; only the M.F.A. (PDST-inclusive total unpublished) and a
+    # few professional doctorates (Ed.D., S.J.D., D.Env., D.M.A.) omit-with-reason.
+    assert len(have) / len(u.PROGRAMS) >= 0.97
+    # Every master's now carries a published tuition except the M.F.A. (no fetchable PDST total).
+    null_masters = [
+        p["slug"]
+        for p in u.PROGRAMS
+        if p["degree_type"] == "masters" and u._cost_for(p)[0] is None
+    ]
+    assert null_masters == ["ucla-film-and-television-mfa-ms"], null_masters
+    # A self-supporting online master's (MSOL) carries its REAL published rate, not the academic
+    # rate copied across — and not the undergrad sticker.
     msol = next(p for p in u.PROGRAMS if p["slug"] == "ucla-engineering-ms")
-    assert u._cost_for(msol)[0] is None
+    mtui, mcost = u._cost_for(msol)
+    assert mtui == 19_800 and "msol.ucla.edu" in mcost["source_url"]
+    assert mtui not in (u._TUITION_GRAD, u._TUITION_UG_IN_STATE)
+    # A professional master's (MBA) carries the school's own published program fee, sourced.
+    mba = next(p for p in u.PROGRAMS if p["slug"] == "ucla-master-of-business-administration-ms")
+    btui, bcost = u._cost_for(mba)
+    assert btui == 82_733 and "anderson.ucla.edu" in bcost["source_url"]
+    assert "cost_data.tuition_usd" not in u._program_standard(mba["slug"], mba)["omitted"]
+    # The M.F.A. is the lone omit-with-reason master's (PDST-inclusive annual total not published).
+    mfa = next(p for p in u.PROGRAMS if p["slug"] == "ucla-film-and-television-mfa-ms")
+    assert u._cost_for(mfa)[0] is None
+    assert "cost_data.tuition_usd" in u._program_standard(mfa["slug"], mfa)["omitted"]
     # A professional doctorate (Ed.D.) is omitted, never zeroed as funded.
     edd = next(p for p in u.PROGRAMS if p["slug"] == "ucla-doctor-of-education-phd")
     assert u._cost_for(edd)[0] is None
@@ -147,14 +169,11 @@ def test_matcher_core_tuition_is_published_catalog_wide():
         p for p in u.PROGRAMS if p["program_name"].startswith("Doctor of Philosophy")
     )
     assert u._cost_for(research_phd) == (0, u._phd_funded_cost())
-    # The funded-PhD $0 is a present value (budget-fit signal), not a null.
-    phd = next(p for p in u.PROGRAMS if p["degree_type"] == "phd")
-    tuition, cost = u._cost_for(phd)
-    assert tuition == 0 and cost["funded"] is True
-    # A professional master's is omitted-with-reason, never stamped with the academic rate.
-    mba = next(p for p in u.PROGRAMS if "Master of Business Administration" in p["program_name"])
-    assert u._cost_for(mba)[0] is None
-    assert "cost_data.tuition_usd" in u._program_standard(mba["slug"], mba)["omitted"]
+    # The fabricated "Master of Science in Management" (no such Anderson degree — Anderson awards
+    # only the MFE and MSBA as standalone master's) is dropped; the real Ph.D. in Management stays.
+    assert not any(p["slug"] == "ucla-management-ms" for p in u.PROGRAMS)
+    assert not any(p["program_name"] == "Master of Science in Management" for p in u.PROGRAMS)
+    assert any(p["slug"] == "ucla-management-phd" for p in u.PROGRAMS)
 
 
 def test_institution_is_gold_except_recorded_omission():
