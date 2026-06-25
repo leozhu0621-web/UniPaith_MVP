@@ -957,11 +957,15 @@ class DiscoveryService:
                 return
             program_rows = [program_row_from_orm(p) for p in programs]
             svc = MatchService(self.db)
-            # Spec 65 §3 — embed the catalog so cosine can fire, but only when
-            # matching will actually run (skip the empty-state path's wasted work).
+            # Use ONLY already-cached program embeddings — never embed the catalog
+            # inside this request. ensure_program_embeddings embeds every uncached
+            # program sequentially; at ~7k programs that is minutes of embedding
+            # calls that timed out the onboarding seed / matches recompute, so a
+            # fresh student got zero matches. The matcher drops cosine +
+            # renormalizes for un-embedded programs, so matches still compute fast.
             program_embeddings: dict = {}
             if await svc.can_match(student_id):
-                program_embeddings = await svc.ensure_program_embeddings(programs)
+                program_embeddings = svc.cached_program_embeddings(programs)
             rows = await svc.compute_matches_for_student(
                 student_id, program_rows=program_rows, program_embeddings=program_embeddings
             )
