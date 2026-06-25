@@ -191,6 +191,36 @@ the policy rather than fabricating a fake distinct number; Cornell by contrast w
 identical $71,266 on every professional degree, which cost far more) and was correctly repaired to distinct
 master's rates + funded-PhD omissions.
 
+**For a PUBLIC university the scalar `tuition` the matcher reads must be the NON-RESIDENT (out-of-state)
+published rate — shipping the in-state resident rate as the lone matcher scalar silently UNDER-fires the budget
+veto for the out-of-state + ALL international applicant pool (the majority at a flagship public), the
+tuition-VALUE analog of the copy-down but in the opposite direction (a value that is too LOW, not copied).** A
+public university publishes TWO undergraduate stickers — a resident (in-state) rate and a much higher
+non-resident (out-of-state) rate — so "the published tuition" is ambiguous in a way a private's single sticker is
+not. The matcher resolves the ambiguity for you: the CPEF budget feature reads the FLAT `program.tuition` scalar
+(`program_features.py` `tuition_usd_per_year` falls back to `program.tuition` → the `matching.py` budget BREAKER
+`p_tuition > s_budget` and the graded affordability `fit_range`), NOT the residency-aware net-price OUTPUT
+estimator (`net_price_service.py`, which separately prefers `tuition_out_of_state` for display) — so whatever
+single number sits in `tuition` IS the budget signal for EVERY student regardless of residency. Ship the resident
+rate and an out-of-state or international applicant whose real cost is 2.5–3.5× higher is scored as comfortably
+affordable: the over-budget veto never fires and the affordability fit over-scores, for the population that is the
+MAJORITY of applicants to a flagship public (every international applicant pays non-resident). So the tuition pass
+must, for a public institution, stamp the NON-RESIDENT sticker into the scalar `tuition` (the conservative,
+broadly-correct budget input for a national/international pool — and the same value the net-price OUTPUT feature
+and the Niche / College-Scorecard headline already treat as a public's canonical sticker), while ALWAYS
+preserving BOTH `tuition_in_state` and `tuition_out_of_state` in `cost_data.breakdown` (the enricher already does
+this — the breakdown is honest and sourced; only the exposed scalar is wrong). This TIGHTENS tuition VALUE-realness
+to the resident/non-resident axis; it loosens NO invariant — omit-never-guess is untouched (BOTH rates are
+institution-PUBLISHED, so this is a choice between two verified numbers, never a guess), and a public that
+genuinely publishes one undivided rate keeps it. The DURABLE fix is residency-aware budget matching (the CPEF
+feature reading `tuition_in_state` vs `tuition_out_of_state` from the breakdown by the student's residency /
+country) — that is CODE (flagged for a human); until it lands, the enricher's non-resident scalar is the
+matcher-correct default. Evidence: live API + matcher code this run — every one of the 11 public catalogs ships
+the RESIDENT rate as the scalar while its breakdown carries the higher out-of-state rate (UCLA `tuition` 15,202
+vs breakdown out-of-state 49,402 · UT-Austin 11,688 vs 44,908 · Michigan 17,864 vs 63,480 · UW-Seattle 13,406 ·
+Florida 6,381 · Berkeley 16,347 · UCSD 16,758 · Wisconsin 12,186 · UIUC 12,992 · Purdue 9,992 · Georgia Tech
+10,512), and `matching.py` reads that scalar for the budget breaker + affordability fit.
+
 **`cip_code` is a matcher-CORE column the enricher MUST STAMP on every program — it is now serialized on the
 public API, and a catalog-wide null is matcher STARVATION on the field/interest signal, not an honest omission
 (the live analog of the `tuition` gap above, surfaced only THIS run because the field just became measurable —
