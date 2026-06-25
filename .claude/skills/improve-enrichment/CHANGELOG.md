@@ -6808,3 +6808,91 @@ and ran `analyze` / `frame_stripped_shared_body`(abs150) / `template_slot_artifa
 metric), and AST-confirmed a single alembic head on `origin/main`. This grader PR changes only the two skill
 markdown files (REPAIR_BACKLOG + CHANGELOG; SKILL.md unchanged) — no code, no data, no migration — so backend
 CI is unaffected.
+
+---
+
+## 2026-06-25 — Run 82 (FULL-FLEET sweep of all 300 live + all 40 catalogs · enricher CLEARED the "Area Studies" CIP-rollup NAME class fleet-wide · headline = a NEW measurable matcher-core gap, `cip_code` starvation · 1 rule change — the `cip_code` COVERAGE gate)
+
+**Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`,**
+reusing `profile_standard/anti_stub.py` directly (paginated full program list of all 40 program-bearing catalogs
+= 7,291 programs; the other 260 are bare institution-level stubs). Per catalog I computed `analyze` (name-prefix /
+classification / verbatim-shared / shared-leading-body / cross-field), `machine_artifacts`,
+`template_slot_artifacts`, `scrape_debris`, `frame_stripped_shared_body(abs_chars=150)`, an exact-duplicate
+`(program_name, degree_type)` scan, a name-realness scan (federal CIP-title + "…and Related Sciences/Services" /
+", General/Other" / `(CIP NN.NN)` tells), and per-`degree_type` tuition coverage. Over program DETAILS
+(`GET /programs/{id}`, ~5/catalog) I probed `cip_code` and `external_reviews`. Over ALL 300 institutions I fetched
+campus-photo count + posts-feed count (threaded). The alembic graph (557 migrations) was AST-parsed direct, and
+the open-PR list + each module's `cip_code` assignment read via `git`/MCP.
+
+**Merged since run 81 (grader PR #1128):** the enricher cleared the run-81 worst tier — **#1129 + #1131
+UW-Madison** ("Area Studies" + "Engineering, General" CIP-rollup names → real degrees) and **#1127 U-Chicago**
+(dropped the "Area Studies" bucket) — plus **#1133 UCLA** (master's-tier tuition + dropped a fabricated MSM). The
+name-realness scan now returns **ZERO across all 40 catalogs** (no "Area Studies", no `(CIP NN.NN)`, no "…and
+Related Sciences/Services", no ", General/Other" anywhere) — the whole CIP-rollup-NAME class is CLEARED. The
+fleet is also 0 on `machine_artifacts` / `template_slot_artifacts` / `scrape_debris` and 0 possessive
+"Bachelor's in {field}" rows.
+
+**HEADLINE — a NEW measurable matcher-core gap: `cip_code` STARVATION (drives the 1 rule change).** Run 81
+flagged `cip_code` as "serialized as a key but None on every program" (unauditable). THIS run it is serialized
+AND carries real values on `GET /programs/{id}` — but populated 100%-in-sample on **only 4 of 34 mature catalogs
+(Caltech, Princeton, Notre Dame, Chicago)**, NULL on the other 30 incl. gold MIT and the two catalogs the prior
+grader certified "gold" (Brown, Vanderbilt). The repo confirms only **4 of 36 profile modules** assign
+`p.cip_code = spec.get("cip")` — the rest skip the line, though every module already holds the IPEDS CIP per row
+(it gates breadth). `cip_code` is the CIP join key to `ref_majors` + the field-66 vocabulary — the matcher's
+interest/field signal — so 30 catalogs score field-blind on it. This is the exact structure of the tuition-coverage
+finding: an institution-knowable matcher-core field shipped null fleet-wide, masked because the editorial page
+never surfaces it.
+
+**Findings (with live evidence):**
+- **NEW CLASS → 1 rule change: a `cip_code` COVERAGE gate.** Added under the matcher "Also enrich for the MATCH"
+  section, right after the tuition-coverage paragraphs (same class). The per-program MUST-carry list already NAMED
+  `cip_code`; the NEW content is its coverage-gate teeth: stamp `p.cip_code = spec.get("cip")` (the IPEDS CIP
+  already in hand — one assignment, no research, exactly as the 4 fillers do), a catalog-wide null beside peers
+  that fill it 100% is a structural FAILURE (not omission), a fresh enrichment / catalog is NOT matcher-complete
+  until ~100% covered, omit-with-reason only for a genuinely uncodeable program, and gold MIT (null) is the
+  DESCRIPTION 0-control NOT a `cip_code` reference. TIGHTENS the matcher-core requirement; loosens nothing
+  (verify-or-omit holds; value from the IPEDS row, never a guess). Retires run 81 FLAG #3's "unauditable" half.
+- **COMPLIANCE GAP (rule exists; queued not re-added): exact-duplicate REAL rows.** 43 rows / 22 catalogs (JHU 5,
+  UCSD 4, BU/NYU/UIUC/Emory/Purdue 3, …), incl. a NEW dup on the fresh-enriched Vanderbilt — proof new builds keep
+  re-introducing it. miss #2 (dedup-on-rendered-name, run 80) already mandates the fix → queued entry #3 + FLAG #1
+  (the durable lever is the build-union dedup + a name-uniqueness gate in CI, code, not another rule).
+- **COMPLIANCE GAP: master's / professional-tier tuition residual (miss / per-tier rule).** UCLA 98/146, NYU
+  194/232 (fix STRANDED in open PR #1139), USC/UW-Seattle/UT-Austin/Vanderbilt/Yale/BU/UCSD/Penn/Cornell/Harvard/
+  Brown smaller. Queued entry #2. PhD/cert nulls excluded (funded/per-credit → legitimate omit-with-reason).
+- **COMPLIANCE GAP: `external_reviews` sparse (miss #8 + STRUCTURE-BEFORE-DEPTH).** Structure is clean fleet-wide,
+  so the reviews depth pass now unblocks; sampled ≤2/5 most catalogs, 0/5 on 14 — but gold MIT itself 2/5
+  (coverage-gated), so queued as a calibrated depth-pass priority (entry #4), NOT a fabrication mandate.
+- **Diagnosed NOT-a-defect:** Brown's feed is HEALTHY now (650 posts; run-81 "dead feed" was ingest-timing);
+  Vanderbilt + Chicago feeds return multi-MB payloads (healthy, fetch truncates) — the only live dead feeds are
+  the 6 flagship seeds. The single alembic head (`uclamastertuition1`) means the deploy pipeline is unblocked.
+- **Enricher WINS verified LIVE:** the entire "Area Studies" CIP-rollup-NAME class cleared (UW-Madison + Chicago,
+  #1129/#1131/#1127) — name-realness 0 fleet-wide.
+
+**Rule change (1 of ≤3, bounded, evidence-backed, not a duplicate):** the `cip_code` coverage gate (above). No
+other rule warranted — after a full-fleet sweep, every OTHER live defect is a VIOLATION of an existing rule
+(exact-dup → miss #2; master's tuition → the per-tier rule; reviews → miss #8; photos/feeds → miss #7/#1/seed
+tier), so per the default-flipped doctrine they are queued + logged, not re-added (anti-churn). Adding filler
+rules to "not stop at one" would breach no-edit-without-NEW-evidence; exactly one genuinely new, now-measurable
+gap-class existed. Post-edit re-read confirms SKILL.md reads coherently (the new paragraph sits between the
+tuition block and the ProgramPreference step in the matcher section; no numbered miss renumbered; no invariant
+touched — it adds a matcher-core coverage requirement, loosens nothing).
+
+**Flags (code/workflow, not grader-editable):** (1) build dedups on `slug` not the rendered `(program_name,
+degree_type)` + no name-uniqueness CI assertion → the 43-row dup class (highest-leverage code fix); (2) anti-stub
+gate is description-only, no name-realness NAME scan (names clean now, gate gap remains); (3) `cip_code` now
+serialized (run-81 flag half-resolved) but no coverage gate + only 4/36 modules set it; (4) no enforced tuition
+VALUE/COVERAGE gate; (5) stranded open PR #1139 (NYU tuition — READY, landing it clears the NYU half of entry #2).
+
+**Backlog delta:** rewritten worst-first, full-fleet. HIGH = `cip_code` starvation (NEW #1, 30 catalogs) ·
+master's-tier tuition residual (#2, NYU fix in #1139) · exact-duplicate rows (#3, 43/22). MEDIUM = reviews
+depth-pass (#4) · 6 flagship seeds (#5) · ~254 bulk stubs incl. 33 zero-photo (#6). CLEARED = the "Area Studies"
+CIP-rollup-NAME class fleet-wide. CLEAN = MIT + the 4 `cip_code` fillers + the name-realness-clean,
+tuition-value-clean fleet.
+
+**Invariants:** all intact; the SKILL.md edit ADDS a matcher-core coverage requirement (no-fabrication preserved —
+fill from the IPEDS row or omit-with-reason; verify-rendered-output, enrichment-only, merge-mandatory all
+untouched). **Health check:** the full `pytest` suite needs a live Postgres the grader env lacks; DB-free check —
+imported `profile_standard/anti_stub.py` and ran all five metrics over the 40 live catalogs (compute cleanly,
+gold MIT scores 0 on every description metric), and AST-confirmed a single alembic head on `origin/main`. This
+grader PR changes only the three skill markdown files (SKILL.md + REPAIR_BACKLOG + CHANGELOG) — no code, no data,
+no migration — so backend CI is unaffected.

@@ -191,6 +191,31 @@ the policy rather than fabricating a fake distinct number; Cornell by contrast w
 identical $71,266 on every professional degree, which cost far more) and was correctly repaired to distinct
 master's rates + funded-PhD omissions.
 
+**`cip_code` is a matcher-CORE column the enricher MUST STAMP on every program — it is now serialized on the
+public API, and a catalog-wide null is matcher STARVATION on the field/interest signal, not an honest omission
+(the live analog of the `tuition` gap above, surfaced only THIS run because the field just became measurable —
+it retires the prior "cip_code unserialized, unauditable" flag).** `cip_code` is the CIP join key the matcher
+uses to resolve a program's field to `ref_majors` + the field-66 vocabulary — the interest/field signal that
+sits ALONGSIDE the dense `description_text` embedding — so a program shipped with `cip_code = null` is scored
+field-blind for every student (the per-program "MUST carry" list above already NAMES `cip_code`; this is its
+COVERAGE-gate teeth, exactly parallel to the per-tier tuition gate). It is the SAME knowable-yet-skipped class
+as `tuition`: the enricher ALREADY cross-references the IPEDS / College Scorecard CIP-per-row list to gate
+catalog breadth (miss #2), so the CIP for essentially every program is already in hand — stamping it is ONE
+assignment (`p.cip_code = spec.get("cip")`, precisely as the catalogs that DO carry it set it), never a guess.
+The editorial detail page does not surface `cip_code`, so a complete-looking page MASKS the gap and there is no
+enforced CI metric for it — so MEASURE `cip_code` coverage per catalog the way you measure tuition coverage: a
+whole catalog at 0% (or a fleet mostly at 0%) beside peers that fill it 100% is a structural FAILURE, and a
+fresh enrichment is NOT done — a catalog is NOT matcher-complete — until its `cip_code` coverage is ~100%
+(record `cip_code` in `_standard.omitted` with a reason ONLY for a genuinely uncodeable program, never a blank
+catalog-wide null). This TIGHTENS the matcher-core MUST-carry requirement above; it loosens nothing —
+verify-or-omit holds and the value comes from the IPEDS row, never a guess. **Gold MIT ships `cip_code` null
+too — MIT is the DESCRIPTION 0-control, NOT a `cip_code` reference; do not imitate its null, the four fillers
+are the model.** Evidence: live API this run — `cip_code` is serialized on `GET /programs/{id}` and populated
+(100% in-sample) on exactly 4 of 34 mature catalogs (Caltech, Princeton, Notre Dame, Chicago), while the other
+30 ship it null fleet-wide — INCLUDING gold MIT and the TWO catalogs the grader certified "gold" THIS cycle
+(Brown, Vanderbilt) — and the repo confirms only 4 of 36 profile modules assign `p.cip_code`, the rest skip
+the line.
+
 **NEW per-program step — derive the target applicant (`ProgramPreference`).** For
 every program, also write a **`program_preferences`** row (model `ProgramPreference`,
 table `program_preferences`, added in the AI-Structure build) so the **program →
