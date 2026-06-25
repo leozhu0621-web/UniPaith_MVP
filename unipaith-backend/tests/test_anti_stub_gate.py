@@ -29,6 +29,7 @@ from unipaith.profile_standard.anti_stub import (
 # Grow as scrape-built catalogs are researched per-program (UT-Austin still carries it).
 SCRAPE_DEBRIS_CLEAN = [
     "mit", "usc", "uiuc", "nyu", "columbia", "michigan", "cornell", "bu", "brown",
+    "vanderbilt",
 ]
 
 # Catalogs whose per-program descriptions have been verified gold-equal (every metric 0).
@@ -89,6 +90,11 @@ CERTIFIED_CLEAN = [
     #             5-photo verified gallery; published 2025-26 tuition per tier (brownprof1)
     "notre_dame",  # 113-program real catalog; conferred names; per-credential discipline
     #             defs; sibling-aware bodies (frame_abs150 23→0, ndpercrd1)
+    "vanderbilt",  # institution seed (5 stubs) → gold + verified 107-program catalog across
+    #             the eleven schools/colleges; conferred B.A./B.E./B.S./B.M. names, real
+    #             departments, field-specific per-program descriptions; Vanderbilt News +
+    #             LiveWhale feeds; 5-photo verified gallery; published 2025-26 tuition per tier
+    #             (vanderbiltprof1)
     # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
     # junk; re-added after stanfordprof11 regeneration matching Michigan/UW repair model.
 ]
@@ -160,7 +166,7 @@ def test_artifact_detector_bites_on_catalog_entry_junk():
 _FRAME_STRIPPED_CLEAN = [
     "mit", "rice", "uf", "usc", "uw_madison", "jhu", "uiuc", "uw", "harvard", "nyu",
     "ut_austin", "columbia", "michigan", "duke", "georgia_tech", "ucla", "berkeley",
-    "stanford",     "penn", "cornell", "notre_dame", "bu",
+    "stanford",     "penn", "cornell", "notre_dame", "bu", "vanderbilt",
 ]
 
 
@@ -189,7 +195,7 @@ def test_credential_siblings_have_no_frame_stripped_shared_body(name: str):
 # are NOT here yet on purpose).
 _ABS_FLOOR_CLEAN = [
     "nyu", "mit", "columbia", "michigan", "ucla", "jhu", "berkeley", "uf", "stanford",
-    "penn", "cornell", "ut_austin", "notre_dame", "bu",
+    "penn", "cornell", "ut_austin", "notre_dame", "bu", "vanderbilt",
 ]
 
 
