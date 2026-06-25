@@ -1340,6 +1340,19 @@ _peer_contaminated = [
 ]
 if _peer_contaminated:
     _catalog_errors.append(f"peer-contaminated descriptions: {_peer_contaminated[:5]}")
+# Matcher-core CIP coverage gate (REPAIR_BACKLOG #1): every program carries the verified
+# NCES CIP-2020 code that gated its breadth, so the matcher's field/interest signal is
+# never blind. A genuinely uncodeable interdisciplinary program would be omitted-with-
+# reason — there are none today. Family (NN.NN) or full detail (NN.NNNN) are both accepted;
+# the matcher reads the 2-digit family.
+_cip_missing = [p["slug"] for p in PROGRAMS if not p.get("cip")]
+if _cip_missing:
+    _catalog_errors.append(f"missing cip_code on {len(_cip_missing)} programs: {_cip_missing[:5]}")
+_cip_bad = sorted(
+    {p["cip"] for p in PROGRAMS if p.get("cip") and not re.fullmatch(r"\d{2}\.\d{2}(\d{2})?", p["cip"])}
+)
+if _cip_bad:
+    _catalog_errors.append(f"malformed cip_code values: {_cip_bad}")
 if _catalog_errors:
     raise RuntimeError(f"Columbia catalog quality gate failed: {_catalog_errors}")
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
@@ -2967,6 +2980,11 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.is_published = True
         p.catalog_source = "curated"
         p.delivery_format = spec.get("delivery_format", "on_campus")
+        # Matcher-core CIP join key (REPAIR_BACKLOG #1): the verified NCES CIP-2020
+        # code already carried in each spec to gate catalog breadth. The CPEF matcher
+        # reads its 2-digit family for the field/interest signal, so this is the
+        # field-blind→field-aware fix for the program → student match direction.
+        p.cip_code = spec.get("cip")
         # Every program gets a working feed: its school's verified RSS filtered by
         # program-naming keywords (CS uses the Data Science Institute feed).
         p.content_sources = _program_content(spec)
