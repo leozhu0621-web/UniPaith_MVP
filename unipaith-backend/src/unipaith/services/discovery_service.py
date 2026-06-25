@@ -1015,6 +1015,59 @@ class DiscoveryService:
                 out.append({"role": "assistant", "content": content})
         return out
 
+    async def recompute_completion_for_session(self, session_id: UUID) -> dict[str, float]:
+        """Recompute per-track discovery completion from the student's CURRENT
+        structured signals and write it onto the bound session's
+        ``completion_pct`` + ``completion_breakdown``.
+
+        This is the managed-agent counterpart to the in-app orchestrator's
+        inline completion write (``append_message`` step 4). The host path
+        persists typed goals/needs/identity (via ``save_signals`` or the host
+        extractor safety net) but never computed completion — so the
+        Profile/Goals/Needs counters read 0 (``_completion_for_student`` treats
+        a NULL breakdown as 0 on a 'discovery' session) and ``evaluate_handoff``
+        never fired, which is why matches never unlocked after a conversation.
+        Calling this after each persist makes the counters move and lets the
+        handoff gate open. On full completion it also emits the feature vector
+        (best-effort) so an explicit Explore/Refresh has matches to show.
+
+        Best-effort: any failure leaves the prior completion untouched.
+        """
+        from unipaith.ai.artifacts import snapshot_from_structured_tables
+        from unipaith.ai.validator import default_validator
+
+        session = await self.db.get(DiscoverySession, session_id)
+        if session is None:
+            return {"profile": 0.0, "goals": 0.0, "needs": 0.0}
+        try:
+            snapshot = await snapshot_from_structured_tables(self.db, session.student_id)
+            parts = [
+                default_validator.validate(layer="basic", snapshot=snapshot),
+                default_validator.validate_track(track="goals", snapshot=snapshot),
+                default_validator.validate_track(track="needs", snapshot=snapshot),
+            ]
+            avg = sum((p.completion_pct for p in parts), Decimal("0")) / Decimal(len(parts))
+            breakdown = {
+                "profile": float(parts[0].completion_pct),
+                "goals": float(parts[1].completion_pct),
+                "needs": float(parts[2].completion_pct),
+            }
+            session.completion_pct = avg
+            session.completion_breakdown = breakdown
+            await self.db.flush()
+            if all(p.layer_complete for p in parts):
+                # Bootstraps the feature vector so the explicit Explore/Refresh
+                # path (which never emits one on its own) can score matches.
+                await self._emit_features_for_completion(
+                    student_id=session.student_id, snapshot=snapshot
+                )
+            await self.db.commit()
+            return breakdown
+        except Exception:  # pragma: no cover — degraded path
+            await self.db.rollback()
+            logger.exception("recompute_completion_for_session failed for session=%s", session_id)
+            return {"profile": 0.0, "goals": 0.0, "needs": 0.0}
+
     async def _completion_for_student(self, student_id: UUID) -> dict[str, Decimal]:
         """Inner query — returns the per-track + identity completion dict
         keyed by student_id directly. Used both by the public API endpoint

@@ -960,6 +960,36 @@ class MatchService:
             select(StudentFeatureVector).where(StudentFeatureVector.student_id == student_id)
         )
 
+    async def ensure_feature_vector(self, student_id: UUID) -> bool:
+        """Emit + persist a feature vector from the structured tables when the
+        student has none yet — so a path that never completed the in-app
+        orchestrator (the managed agent, or an explicit Explore/Refresh) can
+        still bootstrap one. No-op when a vector already exists. Best-effort:
+        an emit/embed failure returns False rather than raising. Returns True
+        when a valid vector exists after the call.
+
+        The in-app orchestrator emits on layer completion; this is the
+        catch-all for every other entry point so the matcher is never starved
+        of a vector for a student who already has goals/needs on file.
+        """
+        if await self._student_feature_record(student_id) is not None:
+            return True
+        try:
+            from unipaith.ai.artifacts import snapshot_from_structured_tables
+            from unipaith.ai.feature_emitter import get_feature_emitter, persist_features
+
+            snapshot = await snapshot_from_structured_tables(self.db, student_id)
+            features = await get_feature_emitter().emit(
+                snapshot=snapshot, student_id=student_id, db=self.db
+            )
+            if features.is_valid():
+                await persist_features(db=self.db, student_id=student_id, features=features)
+                await self.db.commit()
+                return True
+        except Exception:  # pragma: no cover — degraded path, never breaks the caller
+            logger.exception("ensure_feature_vector: emit failed for student=%s", student_id)
+        return False
+
     async def _read_match(self, student_id: UUID, program_id: UUID) -> MatchRow | None:
         m = await self.db.scalar(
             select(MatchResult).where(

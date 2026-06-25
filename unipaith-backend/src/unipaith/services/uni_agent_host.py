@@ -121,6 +121,7 @@ class UniAgentHost:
         # ── Turn (never 5xx — graceful envelope on mid-stream failure) ──
         reply_parts: list[str] = []
         suggested_signals: dict | None = None
+        saved_via_tool = False
         try:
             stream = self.client.stream(sid)
             await self.client.send_user_message(sid, content)
@@ -142,6 +143,8 @@ class UniAgentHost:
                     result = await dispatch_tool(
                         self.db, user_id, event.name, event.input or {}, session_id=row.id
                     )
+                    if event.name == "save_signals":
+                        saved_via_tool = True
                     await self.client.send_tool_result(sid, event.id, result)
                     if event.name in SURFACED_TOOLS:
                         yield ("tool_use", {"tool": event.name, "result": result})
@@ -155,11 +158,51 @@ class UniAgentHost:
                     break
 
             text = "".join(reply_parts).strip() or "…"
+            # Host-side safety net: if the platform agent didn't persist signals
+            # itself this turn, run the in-app extractor on the student's message
+            # so goals/needs/identity + completion still land (matches unlock).
+            if (
+                settings.ai_uni_host_extractor_v1
+                and mirror_student
+                and not saved_via_tool
+                and content.strip()
+            ):
+                await self._safety_net_capture(user_id, content, row)
             await self._mirror(row, content, text, suggested_signals, mirror_student)
             yield ("assistant_message", {"content": text})
         except Exception as exc:  # mid-stream: close calmly, never 5xx
             yield ("error", {"message": str(exc)[:200]})
             yield ("assistant_message", {"content": _CALM})
+
+    async def _safety_net_capture(self, user_id: UUID, content: str, row: DiscoverySession) -> None:
+        """Extract + persist discovery signals from the student's turn when the
+        platform agent didn't (``ai_uni_host_extractor_v1``).
+
+        The managed agent persists signals only when IT elects to call
+        save_signals, which is not guaranteed — so a full conversation can leave
+        goals/needs/identity empty, the counters at 0, and matches locked. This
+        runs the same in-app A2 extractor on the student's message, persists
+        whatever it finds, and recomputes per-track completion. Best-effort: a
+        failure here must never break the turn."""
+        from unipaith.ai.artifacts import persist_extraction
+        from unipaith.ai.extractor import get_extractor
+
+        try:
+            extraction = await get_extractor().extract(
+                student_turn=content, student_id=row.student_id, db=self.db
+            )
+            if extraction.is_empty():
+                return
+            await persist_extraction(
+                db=self.db,
+                student_id=row.student_id,
+                session_id=row.id,
+                extraction=extraction,
+            )
+            await self.db.commit()
+            await DiscoveryService(self.db).recompute_completion_for_session(row.id)
+        except Exception:  # pragma: no cover — degraded path, never breaks the turn
+            await self.db.rollback()
 
     async def _mirror(
         self,
