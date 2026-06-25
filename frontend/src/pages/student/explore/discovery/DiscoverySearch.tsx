@@ -39,9 +39,13 @@ interface DiscoverySearchProps {
   /** Discover review 2026-06-14 #5 — k-anon peer-cohort count per program_id. */
   peerCohortByProgram?: Record<string, number>
   onPeersClick?: () => void
+  /** Show a default browse list when idle (no query/chips/filters) instead of a
+   *  bare search box — so the Programs tab isn't empty until you search (the
+   *  Universities tab already lists everything by default). */
+  browseWhenIdle?: boolean
 }
 
-export default function DiscoverySearch({ followedIds, onToggleFollow, nextEventByInstitution, onEventClick, peerCohortByProgram, onPeersClick }: DiscoverySearchProps = {}) {
+export default function DiscoverySearch({ followedIds, onToggleFollow, nextEventByInstitution, onEventClick, peerCohortByProgram, onPeersClick, browseWhenIdle = false }: DiscoverySearchProps = {}) {
   const [params, setParams] = useSearchParams()
   const navigate = useNavigate()
   const qc = useQueryClient()
@@ -61,6 +65,9 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
   // OR a raw typed query (the backend runs a chip-less full-text query, so a
   // generic phrase that yields no chips must still search, not silently stall).
   const active = chips.length > 0 || hasActiveFilters(filters) || urlQuery.trim().length > 0
+  // When `browseWhenIdle` is set (the Programs tab), render a default list even
+  // with no constraints — so the tab isn't a bare search box until you type.
+  const showResults = active || browseWhenIdle
 
   const writeUrl = (next: {
     q: string
@@ -134,7 +141,7 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
         page,
         page_size: PAGE_SIZE,
       }),
-    enabled: active,
+    enabled: showResults,
     placeholderData: prev => prev,
   })
 
@@ -304,7 +311,7 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
         </div>
       )}
 
-      {active ? (
+      {showResults ? (
         <>
           {searchQuery.isError ? (
             <div className="text-center py-16 bg-card rounded-xl border border-border">
