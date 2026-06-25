@@ -3583,6 +3583,214 @@ def _assign_descriptions(programs: list[dict]) -> None:
             )
 
 
+# == Matcher-core CIP-2020 codes (REPAIR_BACKLOG #1 — the CIP join key the CPEF matcher
+# uses to resolve a program's field to ref_majors + the field-66 vocabulary, the
+# interest/field signal alongside the description embedding). Keyed on the bare _CATALOG
+# field string (3rd element), lowercased so the grad/undergrad case variants collapse to
+# one key. Every code is the field's standard IPEDS CIP-2020 4-digit classification — never
+# a guess; a genuinely uncodeable field would be omitted-with-reason (none today: 207/207
+# fields covered). The matcher consumes the 2-digit family; the 4-digit is kept for
+# precision and parity with the Caltech/Princeton/Notre Dame/Chicago/UCLA/UW fillers.
+_CIP_BY_FIELD: dict[str, str] = {
+    # Architecture, Design & Planning (04 / 50 / 45)
+    "architectural studies": "04.0201",
+    "architecture": "04.0201",
+    "interior design": "50.0408",
+    "architectural engineering": "14.0401",
+    "landscape architecture": "04.0601",
+    "community and regional planning": "04.0301",
+    "urban design": "04.0401",
+    "urban studies": "45.1201",
+    "design": "50.0401",
+    # Business — McCombs (52 / 19 / 40)
+    "accounting": "52.0301",
+    "business administration": "52.0201",
+    "business analytics": "52.1301",
+    "finance": "52.0801",
+    "management": "52.0201",
+    "management information systems": "52.1201",
+    "information technology and management": "52.1201",
+    "information, risk, and operations management": "52.1301",
+    "marketing": "52.1401",
+    "international business": "52.1101",
+    "supply chain management": "52.0203",
+    "energy management": "52.0201",
+    "technology commercialization": "52.0701",
+    "human dimensions of organizations": "52.1003",
+    "human ecology": "19.0101",
+    "energy and earth resources": "40.0601",
+    # Engineering — Cockrell (14 / 15 / 30)
+    "aerospace engineering": "14.0201",
+    "biomedical engineering": "14.0501",
+    "chemical engineering": "14.0701",
+    "civil engineering": "14.0801",
+    "electrical and computer engineering": "14.1001",
+    "mechanical engineering": "14.1901",
+    "environmental engineering": "14.1401",
+    "computational engineering": "14.0101",
+    "geosystems engineering": "14.2501",
+    "petroleum and geosystems engineering": "14.2501",
+    "petroleum engineering": "14.2501",
+    "materials science and engineering": "14.1801",
+    "engineering mechanics": "14.1101",
+    "engineering management": "15.1501",
+    "operations research and industrial engineering": "14.3701",
+    "semiconductor science and engineering": "14.1001",
+    "computational science, engineering, and mathematics": "30.0801",
+    # Computing / Data / Information (11 / 30.70 / 27)
+    "computer science": "11.0701",
+    "computer science (online)": "11.0701",
+    "data science": "30.7001",
+    "statistics and data science": "30.7001",
+    "behavioral and social data science": "30.7001",
+    "statistics": "27.0501",
+    "artificial intelligence": "11.0102",
+    "informatics": "11.0104",
+    "information studies": "11.0401",
+    "information security and privacy": "11.1003",
+    # Natural Sciences (26 / 40 / 27 / 45.07 / 03 / 19 / 30.19 / 51)
+    "astronomy": "40.0201",
+    "biochemistry": "26.0202",
+    "biology": "26.0101",
+    "biological sciences": "26.0101",
+    "cell and molecular biology": "26.0406",
+    "microbiology": "26.0502",
+    "neuroscience": "26.1501",
+    "ecology, evolution, and behavior": "26.1301",
+    "plant biology": "26.0301",
+    "marine science": "26.1302",
+    "chemistry": "40.0501",
+    "physics": "40.0801",
+    "geosciences": "40.0601",
+    "geological sciences": "40.0601",
+    "general geology": "40.0601",
+    "geophysics": "40.0603",
+    "geographical sciences": "45.0701",
+    "geography": "45.0701",
+    "hydrology and water resources": "03.0205",
+    "climate system science": "40.0401",
+    "mathematics": "27.0101",
+    "nutrition": "19.0501",
+    "nutritional sciences": "30.1901",
+    "medical laboratory science": "51.1005",
+    # Health, Kinesiology, Nursing, Pharmacy, Medicine (51 / 31 / 30.19)
+    "kinesiology": "31.0501",
+    "exercise science": "31.0501",
+    "athletic training": "51.0913",
+    "applied movement science": "31.0501",
+    "physical culture and sports studies": "31.0599",
+    "sport management": "31.0504",
+    "health and society": "51.2201",
+    "public health": "51.2201",
+    "health promotion and behavioral science": "51.2207",
+    "health behavior and health education": "51.2207",
+    "nursing": "51.3801",
+    "audiology": "51.0202",
+    "speech, language, and hearing sciences": "51.0201",
+    "pharmacy": "51.2001",
+    "pharmaceutical sciences": "51.2010",
+    "medicine": "51.1201",
+    "translational science": "51.1401",
+    # Social Sciences & Area/Ethnic Studies (45 / 42 / 44 / 05 / 19)
+    "anthropology": "45.0201",
+    "economics": "45.0601",
+    "government": "45.1001",
+    "public policy": "44.0501",
+    "global policy studies": "44.0501",
+    "public affairs": "44.0401",
+    "public leadership": "44.0401",
+    "sociology": "45.1101",
+    "psychology": "42.0101",
+    "educational psychology": "42.2806",
+    "international relations and global studies": "45.0901",
+    "race, indigeneity, and migration": "05.0299",
+    "mexican american and latina/o studies": "05.0203",
+    "african and african diaspora studies": "05.0201",
+    "asian studies": "05.0103",
+    "asian cultures and languages": "16.0300",
+    "asian studies (asian cultures and languages)": "05.0103",
+    "latin american studies": "05.0107",
+    "middle eastern studies": "05.0108",
+    "middle eastern languages and cultures": "16.1199",
+    "russian, east european, and eurasian studies": "05.0110",
+    "european studies": "05.0132",
+    "jewish studies": "05.0114",
+    "american studies": "05.0102",
+    "women's and gender studies": "05.0207",
+    "women’s and gender studies": "05.0207",
+    "civics honors": "45.1001",
+    "sustainability studies": "30.3301",
+    "human development and family sciences": "19.0701",
+    "youth and community studies": "19.0701",
+    "textiles and apparel": "19.0901",
+    "ethnic studies": "05.0200",
+    # Humanities, Languages, Religion, History, Philosophy (16 / 23 / 24 / 38 / 54)
+    "english": "23.0101",
+    "english (creative writing)": "23.1302",
+    "writing": "23.1304",
+    "rhetoric and writing studies": "23.1304",
+    "rhetoric and writing": "23.1304",
+    "comparative literature": "16.0104",
+    "linguistics": "16.0102",
+    "classics": "16.1200",
+    "classical languages": "16.1200",
+    "classical studies": "16.1200",
+    "french studies": "16.0901",
+    "french and italian (french)": "16.0901",
+    "italian studies": "16.0902",
+    "french and italian (italian studies)": "16.0902",
+    "german": "16.0501",
+    "germanic studies": "16.0501",
+    "spanish": "16.0905",
+    "iberian and latin american languages and cultures": "16.0905",
+    "history": "54.0101",
+    "philosophy": "38.0101",
+    "religious studies": "38.0201",
+    "humanities": "24.0103",
+    "humanities, health, and medicine": "24.0103",
+    "plan ii honors program": "24.0101",
+    # Fine Arts, Music, Theatre, Media (50 / 09 / 13.13)
+    "art history": "50.0703",
+    "studio art": "50.0702",
+    "art education": "13.1302",
+    "music": "50.0901",
+    "music performance": "50.0903",
+    "music studies": "50.0901",
+    "composition": "50.0904",
+    "jazz": "50.0910",
+    "music (conducting)": "50.0906",
+    "music (music and human learning)": "13.1312",
+    "dance": "50.0301",
+    "acting": "50.0506",
+    "theatre education": "13.1324",
+    "theatre and dance": "50.0501",
+    "theatre and dance (theatre)": "50.0501",
+    "theatre and dance (dance)": "50.0301",
+    "arts and entertainment technologies": "50.0102",
+    "advertising": "09.0903",
+    "journalism": "09.0401",
+    "journalism and media": "09.0401",
+    "public relations": "09.0902",
+    "communication studies": "09.0101",
+    "communication and leadership": "09.0101",
+    "radio-television-film": "09.0701",
+    # Education (13)
+    "education": "13.0101",
+    "curriculum and instruction": "13.0301",
+    "educational leadership and policy": "13.0401",
+    "special education": "13.1001",
+    "science, technology, engineering, and mathematics education": "13.1206",
+    # Law / Social Work (22 / 44)
+    "law": "22.0101",
+    "social work": "44.0701",
+}
+
+
+def _cip_for(field: str) -> str | None:
+    """Standard IPEDS CIP-2020 code for a catalog field (case-insensitive), or None."""
+    return _CIP_BY_FIELD.get((field or "").strip().lower())
+
+
 def _build_catalog() -> list[dict]:
     out = []
     for slug, sk, name, dtype, _dept, fmt, dur in _CATALOG:
@@ -3598,6 +3806,8 @@ def _build_catalog() -> list[dict]:
             "department": SCHOOL_NAME[sk],
             "delivery_format": fmt,
             "duration_months": dur,
+            # Matcher-core CIP join key (REPAIR_BACKLOG #1).
+            "cip": _cip_for(name),
         }
         spec["description"] = _ut_description(spec)
         out.append(spec)
@@ -3642,6 +3852,17 @@ PROGRAMS: list[dict] = _build_catalog()
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 
 _assert_anti_stub_clean(PROGRAMS)
+
+# Matcher-core CIP coverage gate (REPAIR_BACKLOG #1): every program carries a real IPEDS
+# CIP-2020 code (a genuinely uncodeable field would be omitted-with-reason — none today).
+_cip_missing = [p["slug"] for p in PROGRAMS if not p.get("cip")]
+if _cip_missing:
+    raise ValueError(
+        f"UT Austin catalog missing cip_code on {len(_cip_missing)} rows: {_cip_missing[:8]}"
+    )
+_cip_bad = sorted({p["cip"] for p in PROGRAMS if not re.fullmatch(r"\d{2}\.\d{4}", p["cip"])})
+if _cip_bad:
+    raise ValueError(f"UT Austin catalog has malformed cip_code values: {_cip_bad}")
 
 _WEBSITE_OVERRIDE: dict[str, str] = {
     "ut-austin-business-administration-mba": "https://www.mccombs.utexas.edu/graduate/mba/full-time-mba/",
@@ -3691,9 +3912,11 @@ def _undergrad_cost() -> dict:
         "note": (
             "UT Austin's published academic-year cost of attendance is about $31,250 and the average "
             "net price after grant aid is about $19,857 (College Scorecard, UNITID 228778). In-state "
-            "students pay public tuition, and programs such as Texas Advance Commitment cover tuition "
-            "for many Texas families; out-of-state and international tuition is higher. See UT Austin "
-            "Texas One Stop for current figures."
+            "students pay public tuition ($11,688), and programs such as Texas Advance Commitment cover "
+            "tuition for many Texas families; out-of-state and international tuition is higher "
+            "($44,908). Both rates ship in the breakdown; the cost card shows the resident basis while "
+            "the matcher's budget signal (program.tuition) uses the non-resident rate for the "
+            "out-of-state + international pool. See UT Austin Texas One Stop for current figures."
         ),
         "source": _COST_SRC,
         "source_url": _COST_SRC_URL,
@@ -3766,21 +3989,76 @@ _ONLINE_MASTERS_TOTAL = {
     "ut-austin-artificial-intelligence-ms": 10000,
 }
 
-# Specialized McCombs professional master's whose published rate is a PREMIUM (materially
-# above the standard graduate per-credit rate) that is not separately verified here — the
-# generic graduate figure would understate them, so the annual ``tuition`` is honestly
-# OMITTED rather than guessed (the verified MBA is in ``_MASTERS_TUITION_OVERRIDE`` above).
+# Specialized McCombs master's that publish a single TOTAL program cost (these are
+# one-year, 3–4-semester full-time cohort programs, so the program total IS the
+# de-facto one-year cost). ``program.tuition`` is the matcher's budget scalar, so it
+# carries the NON-RESIDENT total (the conservative default for the out-of-state +
+# international pool, REPAIR_BACKLOG #2), while ``cost_data`` keeps the resident basis,
+# both rates in the breakdown, and the published total in ``total_program_tuition``.
+# Each figure is read from the program's own official McCombs tuition page (verified
+# 2026-06-25); MSTC publishes a single flat program fee with no residency split.
+_MASTERS_TOTAL_TUITION: dict[str, dict] = {
+    "ut-austin-accounting-mpa": {
+        "in_state": 43759,
+        "out_of_state": 70453,
+        "year": "2026-27",
+        "semesters": "four semesters (Summer–Summer), 43-credit-hour track",
+        "source": "Texas McCombs — Traditional MPA Tuition & Financial Aid",
+        "source_url": "https://www.mccombs.utexas.edu/graduate/specialized-masters/mpa/traditional/tuition-financial-aid/",
+    },
+    "ut-austin-business-analytics-ms": {
+        "in_state": 54000,
+        "out_of_state": 58000,
+        "year": "2025-26",
+        "semesters": "one academic year (summer, fall, spring)",
+        "source": "Texas McCombs — MS Business Analytics (on-campus) Tuition & Financial Aid",
+        "source_url": "https://www.mccombs.utexas.edu/graduate/specialized-masters/ms-business-analytics/ms-business-analytics-on-campus/admissions/tuition-financial-aid/",
+    },
+    "ut-austin-finance-ms": {
+        "in_state": 54000,
+        "out_of_state": 58000,
+        "year": "2025-26",
+        "semesters": "one academic year (summer, fall, spring)",
+        "source": "Texas McCombs — MS Finance Tuition & Financial Aid",
+        "source_url": "https://www.mccombs.utexas.edu/graduate/specialized-masters/ms-finance/admissions/tuition-financial-aid/",
+    },
+    "ut-austin-marketing-ms": {
+        "in_state": 54000,
+        "out_of_state": 58000,
+        "year": "2025-26",
+        "semesters": "one academic year (summer, fall, spring)",
+        "source": "Texas McCombs — MS Marketing Tuition & Financial Aid",
+        "source_url": "https://www.mccombs.utexas.edu/graduate/specialized-masters/ms-marketing/admissions/tuition-financial-aid/",
+    },
+    "ut-austin-information-technology-and-management-ms": {
+        "in_state": 54000,
+        "out_of_state": 58000,
+        "year": "2025-26",
+        "semesters": "one academic year (summer, fall, spring)",
+        "source": "Texas McCombs — MS Information Technology & Management Tuition & Financial Aid",
+        "source_url": "https://www.mccombs.utexas.edu/graduate/specialized-masters/ms-it-and-management/admissions/tuition-financial-aid/",
+    },
+    "ut-austin-technology-commercialization-ms": {
+        "in_state": 58500,
+        "out_of_state": 58500,
+        "year": "2025-26",
+        "semesters": "three semesters (one academic year)",
+        "flat": True,
+        "source": "Texas McCombs — MS Technology Commercialization Tuition & Financial Aid",
+        "source_url": "https://www.mccombs.utexas.edu/graduate/specialized-masters/ms-technology-commercialization/admissions/tuition-financial-aid/",
+    },
+}
+
+# Remaining specialized master's whose program-specific tuition could NOT be verified on
+# an official UT/McCombs page (the MS in Accounting and MS in Management are not separately
+# published; MS Energy Management is not currently admitting and publishes no current
+# tuition; IROM is a McCombs department whose degrees are the MSBA/MSITM above) — the annual
+# scalar is honestly OMITTED rather than guessed.
 _PREMIUM_MASTERS_OMIT = {
-    "ut-austin-accounting-mpa",
     "ut-austin-accounting-ms",
-    "ut-austin-business-analytics-ms",
     "ut-austin-energy-management-ms",
-    "ut-austin-finance-ms",
     "ut-austin-information-risk-and-operations-management-ms",
-    "ut-austin-information-technology-and-management-ms",
     "ut-austin-management-ms",
-    "ut-austin-marketing-ms",
-    "ut-austin-technology-commercialization-ms",
 }
 
 # Professional-program annual tuition — each school's published 2025-26 figure.
@@ -3798,7 +4076,29 @@ _PROFESSIONAL_TUITION: dict[str, dict] = {
         "source_url": "https://onestop.utexas.edu/managing-costs/cost-tuition-rates/tuition-rates/",
     },
 }
-# Professional doctorates with no separately-verified annual figure here → tuition omitted.
+# Professional doctorates that publish a single flat TOTAL program tuition (not an annual
+# rate, and not residency-split). The published total is recorded in
+# ``cost_data.total_program_tuition``; the ANNUAL scalar is omitted (the total spans
+# multiple semesters, so it is not a per-year figure the matcher should read).
+_PROFESSIONAL_TOTAL: dict[str, dict] = {
+    "ut-austin-nursing-dnp": {
+        "total": 30000,
+        "year": "2025-26",
+        "semesters": "45 credit hours over five semesters (post-MSN track)",
+        "source": "UT Austin School of Nursing — DNP Tuition & Funding",
+        "source_url": "https://nursing.utexas.edu/academics/graduate/dnp-post-msn/tuition-funding",
+        "note": (
+            "The post-MSN Doctor of Nursing Practice publishes a single flat program tuition "
+            "of $30,000 (45 credit hours over five semesters), the same regardless of "
+            "residency; UT publishes no standard annual figure for it, so the per-year "
+            "scalar is omitted and the verified program total is shown instead."
+        ),
+    },
+}
+
+# Professional doctorates with no separately-verified figure here (UT routes PharmD and AuD
+# to a tuition calculator / general graduate rates and publishes no program-specific
+# annual or total tuition) → tuition omitted. DNP is handled via _PROFESSIONAL_TOTAL above.
 _TUITION_OMIT_SLUGS = {
     "ut-austin-pharmacy-pharmd",
     "ut-austin-audiology-aud",
@@ -3822,7 +4122,9 @@ def _annual_tuition_cost(in_state: int, out_of_state: int, source: str, url: str
         "funded": False,
         "note": (
             "Annual tuition & fees (Texas resident); non-residents pay the out-of-state rate "
-            "shown in the breakdown. UT Austin bills tuition per semester."
+            "shown in the breakdown. UT Austin bills tuition per semester. The matcher's "
+            "budget signal (program.tuition) uses the non-resident rate for the out-of-state "
+            "+ international pool."
         ),
         "source": source,
         "source_url": url,
@@ -3830,14 +4132,53 @@ def _annual_tuition_cost(in_state: int, out_of_state: int, source: str, url: str
     }
 
 
+def _masters_total_cost(pr: dict) -> dict:
+    """``cost_data`` for a McCombs specialized master's that publishes a one-year program
+    TOTAL (resident basis on the card, both rates in the breakdown, total preserved)."""
+    flat = pr.get("flat")
+    note = (
+        f"Total program tuition ({pr['year']}) for this {pr['semesters']} full-time cohort "
+        "program, the de-facto one-year cost. "
+        + (
+            f"McCombs publishes a single flat program fee of ${pr['in_state']:,} with no "
+            "residency split."
+            if flat
+            else (
+                f"Texas residents ${pr['in_state']:,}, non-residents ${pr['out_of_state']:,}; "
+                "both ship in the breakdown."
+            )
+        )
+        + " The cost card shows the resident basis; the matcher's budget signal "
+        "(program.tuition) uses the non-resident total for the out-of-state + "
+        "international pool."
+    )
+    return {
+        "tuition_usd": pr["in_state"],
+        "total_program_tuition": pr["out_of_state"],
+        "breakdown": {
+            "tuition_in_state": pr["in_state"],
+            "tuition_out_of_state": pr["out_of_state"],
+        },
+        "funded": False,
+        "note": note,
+        "source": pr["source"],
+        "source_url": pr["source_url"],
+        "year": pr["year"],
+    }
+
+
 def _program_tuition(spec: dict) -> tuple[int | None, dict]:
     """Return ``(tuition_usd, cost_data)`` for a program from UT's published rates.
 
-    ``program.tuition`` is consumed as an ANNUAL figure, so a program only carries a
-    scalar when an annual rate is published/verified; premium specialized master's whose
-    rate is not separately verified, and the online programs that publish only a total,
-    omit the annual scalar (recorded in ``_standard.omitted``) rather than ship a wrong
-    or misleading "per year" number.
+    ``program.tuition`` is the matcher's budget scalar. UT Austin is PUBLIC, so it publishes
+    a resident and a (much higher) non-resident sticker for each tier; the matcher reads the
+    FLAT scalar for every student, so it carries the NON-RESIDENT rate (REPAIR_BACKLOG #2 —
+    the conservative default for the out-of-state + ALL-international pool), while
+    ``cost_data.breakdown`` always keeps BOTH rates and the cost card shows the resident
+    basis. A program only carries a scalar when a rate (or a one-year program total) is
+    published/verified; programs whose rate is not separately verified, and the multi-year
+    online / DNP programs that publish only a total, omit the annual scalar (recorded in
+    ``_standard.omitted``) rather than ship a wrong or misleading "per year" number.
     """
     dt = spec["degree_type"]
     slug = spec["slug"]
@@ -3848,17 +4189,30 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
             "tuition_in_state": _TUITION_UG_INSTATE,
             "tuition_out_of_state": _TUITION_UG_OOS,
         }
-        return _TUITION_UG_INSTATE, cost
+        return _TUITION_UG_OOS, cost
     if slug in _MASTERS_TUITION_OVERRIDE:
         pr = _MASTERS_TUITION_OVERRIDE[slug]
-        return pr["in_state"], _annual_tuition_cost(
+        return pr["out_of_state"], _annual_tuition_cost(
             pr["in_state"], pr["out_of_state"], pr["source"], pr["source_url"]
         )
+    if slug in _MASTERS_TOTAL_TUITION:
+        pr = _MASTERS_TOTAL_TUITION[slug]
+        return pr["out_of_state"], _masters_total_cost(pr)
     if dt == "professional" and slug in _PROFESSIONAL_TUITION:
         pr = _PROFESSIONAL_TUITION[slug]
-        return pr["in_state"], _annual_tuition_cost(
+        return pr["out_of_state"], _annual_tuition_cost(
             pr["in_state"], pr["out_of_state"], pr["source"], pr["source_url"]
         )
+    if slug in _PROFESSIONAL_TOTAL:  # DNP — flat program total, multi-semester → omit annual
+        pr = _PROFESSIONAL_TOTAL[slug]
+        return None, {
+            "total_program_tuition": pr["total"],
+            "funded": False,
+            "note": pr["note"],
+            "source": pr["source"],
+            "source_url": pr["source_url"],
+            "year": pr["year"],
+        }
     if slug in _ONLINE_MASTERS_TOTAL:  # publishes a TOTAL, not an annual rate → omit annual
         return None, {
             "total_program_tuition": _ONLINE_MASTERS_TOTAL[slug],
@@ -3877,19 +4231,25 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
         return None, _grad_cost_fallback(spec)
     if slug in _PREMIUM_MASTERS_OMIT:  # premium specialized master's — rate not verified
         return None, _grad_cost_fallback(spec)
+    _grad_scalar_clause = (
+        " The cost card shows the Texas-resident rate; the matcher's budget signal "
+        "(program.tuition) uses the non-resident rate ($22,954) — the conservative default "
+        "for the out-of-state + international pool."
+    )
     funded_note = (
         "Published graduate tuition rate that applies to doctoral study; most UT Austin "
         "doctoral students are funded through teaching/research assistantships or "
         "fellowships that cover tuition and provide a stipend. The annual figure estimates "
-        "a standard full-time graduate load at UT's published per-credit rate."
+        "a standard full-time graduate load at UT's published per-credit rate." + _grad_scalar_clause
         if dt == "phd"
         else (
             "UT Austin's published graduate tuition & fees for a standard full-time load "
             "(Texas resident); non-residents pay the out-of-state rate shown in the "
             "breakdown. The annual figure applies UT's published graduate per-credit rate."
+            + _grad_scalar_clause
         )
     )
-    return _TUITION_GRAD_INSTATE, {
+    return _TUITION_GRAD_OOS, {
         "tuition_usd": _TUITION_GRAD_INSTATE,
         "breakdown": {
             "tuition_in_state": _TUITION_GRAD_INSTATE,
@@ -4557,6 +4917,8 @@ def _requirements_for(spec: dict) -> dict:
 
 def _program_standard(slug: str, spec: dict) -> dict:
     omitted: list[str] = ["tracks"]
+    if not spec.get("cip"):  # matcher-core CIP join key (REPAIR_BACKLOG #1); none today
+        omitted.append("cip_code")
     if _tuition_omitted(slug):
         omitted.append("cost_data.tuition_usd")
     if slug not in _OUTCOMES_BY_SLUG:
@@ -4693,6 +5055,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         _kw = _PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(_KEYWORDS_BY_SCHOOL[spec["school"]])
         p.content_sources = _program_content(spec["school"], _kw)
         p.tuition, p.cost_data = _program_tuition(spec)
+        p.cip_code = spec.get("cip")  # matcher-core CIP join key (REPAIR_BACKLOG #1)
         p.application_requirements = _requirements_for(spec)
         outcomes = dict(_OUTCOMES_BY_SLUG.get(slug, {}))
         outcomes["_standard"] = _program_standard(slug, spec)
