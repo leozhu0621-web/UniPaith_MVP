@@ -153,6 +153,27 @@ def test_no_tuition_tier_is_entirely_null():
     assert v._TUITION_UG not in grad_rates, "graduate tuition must not copy the undergraduate sticker"
 
 
+def test_master_titled_programs_use_masters_degree_type():
+    """MBA/EMBA/LL.M./M.Div. must be degree_type 'masters' so search ('mba'/'master' ->
+    ['masters'] in search_service._DEGREE_MAP) and the matcher treat them as master's-level;
+    only doctoral professional degrees (JD/MD/DNP/DMin/AuD/EdD) stay 'professional'."""
+    by_slug = {p["slug"]: p for p in v.PROGRAMS}
+    for slug in ("vanderbilt-mba", "vanderbilt-executive-mba", "vanderbilt-master-of-laws", "vanderbilt-master-of-divinity"):
+        assert by_slug[slug]["degree_type"] == "masters", slug
+    for slug in ("vanderbilt-juris-doctor", "vanderbilt-doctor-of-medicine", "vanderbilt-doctor-nursing-practice"):
+        assert by_slug[slug]["degree_type"] == "professional", slug
+
+
+def test_online_programs_carry_online_delivery():
+    """The online M.S.-AI and executive Ed.D. must be delivery_format 'online'; the
+    modified-distance nursing degrees 'hybrid' — so discovery online/on-campus filters match."""
+    by_slug = {p["slug"]: p for p in v.PROGRAMS}
+    assert by_slug["vanderbilt-ms-artificial-intelligence"]["delivery_format"] == "online"
+    assert by_slug["vanderbilt-edd-leadership-learning-organizations"]["delivery_format"] == "online"
+    assert by_slug["vanderbilt-master-science-nursing"]["delivery_format"] == "hybrid"
+    assert by_slug["vanderbilt-african-american-diaspora-studies-ba"]["delivery_format"] == "on_campus"
+
+
 def test_reviews_are_gathered_for_flagship_programs():
     """Flagship professional programs carry gathered, cited external_reviews (MBAn shape)."""
     flagships = {

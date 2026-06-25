@@ -655,10 +655,10 @@ _CATALOG: list[tuple] = [
      "The Bachelor of Musical Arts pairs intensive performance or composition study with a second area of focus outside music, giving strong musicians a flexible interdisciplinary path."),
 
     # ── Owen Graduate School of Management (7) ──
-    ("Master of Business Administration", "professional", _OWEN,
+    ("Master of Business Administration", "masters", _OWEN,
      "Owen Graduate School of Management", 24, "vanderbilt-mba", ["MBA", "business"],
      "The two-year Owen M.B.A. is a 62-credit general-management program known for small cohorts, a structured leadership-development curriculum, and concentrations spanning finance, marketing, operations, and health care."),
-    ("Executive Master of Business Administration", "professional", _OWEN,
+    ("Executive Master of Business Administration", "masters", _OWEN,
      "Owen Graduate School of Management", 21, "vanderbilt-executive-mba", ["executive MBA"],
      "The Executive M.B.A. delivers Owen's general-management curriculum to working professionals in a weekend format, with cohorts of experienced managers and a focus on strategic leadership."),
     ("Master of Science in Finance", "masters", _OWEN,
@@ -681,7 +681,7 @@ _CATALOG: list[tuple] = [
     ("Juris Doctor", "professional", _LAW,
      "Vanderbilt Law School", 36, "vanderbilt-juris-doctor", ["law", "JD"],
      "The J.D. is Vanderbilt Law's three-year program known for a collaborative culture, strong appellate-advocacy and clerkship outcomes, and joint and certificate programs in law and business and law and economics."),
-    ("Master of Laws", "professional", _LAW,
+    ("Master of Laws", "masters", _LAW,
      "Vanderbilt Law School", 12, "vanderbilt-master-of-laws", ["LLM", "law"],
      "The one-year LL.M. gives lawyers trained outside the United States advanced study of the American legal system alongside J.D. students, with bar-exam preparation pathways."),
 
@@ -714,7 +714,7 @@ _CATALOG: list[tuple] = [
      "The Ph.D. in Nursing Science trains nurse-scientists to conduct research on health, illness, and care delivery, with funded study in research methods and a dissertation."),
 
     # ── Divinity School (3) ──
-    ("Master of Divinity", "professional", _DIV,
+    ("Master of Divinity", "masters", _DIV,
      "Vanderbilt Divinity School", 36, "vanderbilt-master-of-divinity", ["divinity", "ministry"],
      "The three-year, 72-hour M.Div. prepares people for ministry and religious leadership, combining biblical and theological study with practical ministry and a commitment to social justice."),
     ("Master of Theological Studies", "masters", _DIV,
@@ -812,6 +812,28 @@ _CATALOG: list[tuple] = [
 ]
 
 
+# Per-program delivery format (default on_campus). The M.S. in AI and the executive Ed.D.
+# are fully online; the School of Nursing's M.S.N. and D.N.P. use Vanderbilt's "modified
+# distance" model (online coursework + on-campus intensives + local clinical placements),
+# so they are hybrid. Discovery filters compare Program.delivery_format against these values.
+_ONLINE_SLUGS: set[str] = {
+    "vanderbilt-ms-artificial-intelligence",
+    "vanderbilt-edd-leadership-learning-organizations",
+}
+_HYBRID_SLUGS: set[str] = {
+    "vanderbilt-master-science-nursing",
+    "vanderbilt-doctor-nursing-practice",
+}
+
+
+def _delivery_for(slug: str) -> str:
+    if slug in _ONLINE_SLUGS:
+        return "online"
+    if slug in _HYBRID_SLUGS:
+        return "hybrid"
+    return "on_campus"
+
+
 def _build_catalog() -> list[dict]:
     out: list[dict] = []
     seen: set[str] = set()
@@ -831,7 +853,7 @@ def _build_catalog() -> list[dict]:
             "degree_type": dtype,
             "department": dept,
             "duration_months": dur,
-            "delivery_format": "online" if slug == "vanderbilt-ms-artificial-intelligence" else "on_campus",
+            "delivery_format": _delivery_for(slug),
             "keywords": list(kw),
             "description": desc,
         })
@@ -1354,7 +1376,14 @@ def apply(session: Session) -> bool:
     inst = session.scalar(select(Institution).where(Institution.name == INSTITUTION_NAME))
     if inst is None:
         return False
-    inst.ranking_data = {**(inst.ranking_data or {}), **RANKING_DATA}
+    ranking = {**(inst.ranking_data or {}), **RANKING_DATA}
+    # Drop the bulk seed's legacy FLAT ranking/report-card keys so the curated
+    # ``us_news_national`` (#17, 2026) wins on the browse card — the institutions browse API
+    # prefers a flat ``us_news_2025`` over ``us_news_national.rank``, so the stale seed rank
+    # (18) would otherwise render. Report-card stats live in ``school_outcomes``, not here.
+    for _legacy in ("us_news_2025", "acceptance_rate", "graduation_rate", "earnings_10yr_median"):
+        ranking.pop(_legacy, None)
+    inst.ranking_data = ranking
     school_outcomes = {**(inst.school_outcomes or {}), **SCHOOL_OUTCOMES}
     for _path in _OMITTED_INSTITUTION:
         if _path.startswith("school_outcomes."):
