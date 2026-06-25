@@ -281,6 +281,24 @@ SLUG_PROGRAM_NAMES: dict[str, str] = {
     "uw-madison-pharmacy-prof": "Doctor of Pharmacy",
     "uw-madison-psychology-bs": "Bachelor of Science in Psychology",
     "uw-madison-veterinary-medicine-prof": "Doctor of Veterinary Medicine",
+    # Federal CIP 05.01 "Area Studies" rollup resolved to UW-Madison's REAL published
+    # area-studies degrees (Institute for Regional and International Studies):
+    #  - BA  -> Latin American, Caribbean, and Iberian Studies (LACIS) BA
+    #  - cert-> African Studies Graduate/Professional Certificate
+    #  - MA  -> Latin American, Caribbean, and Iberian Studies (LACIS) MA
+    # Sources: guide.wisc.edu LACIS BA/MA + African Studies grad certificate.
+    "uw-madison-area-studies-bs": (
+        "Bachelor of Arts in Latin American, Caribbean, and Iberian Studies"
+    ),
+    "uw-madison-area-studies-cert": "Graduate Certificate in African Studies",
+    "uw-madison-area-studies-ms": (
+        "Master of Arts in Latin American, Caribbean, and Iberian Studies"
+    ),
+    # Federal CIP 14.01 "Engineering, General" rollup → UW-Madison's real College-wide
+    # Master of Engineering (Engineering, MEng). The certificate row is dropped (no single
+    # generic engineering graduate certificate; InterPro capstone certificates are named).
+    # Source: guide.wisc.edu/graduate/engineering-college-wide/engineering-meng/.
+    "uw-madison-engineering-general-ms": "Master of Engineering",
 }
 
 SLUG_DEPARTMENTS: dict[str, str] = {
@@ -296,6 +314,11 @@ SLUG_DEPARTMENTS: dict[str, str] = {
     "uw-madison-pharmacy-prof": "School of Pharmacy",
     "uw-madison-psychology-bs": "Department of Psychology",
     "uw-madison-veterinary-medicine-prof": "School of Veterinary Medicine",
+    # Real owning units for the resolved CIP 05.01 / 14.01 rollup rows (see SLUG_PROGRAM_NAMES).
+    "uw-madison-area-studies-bs": "Latin American, Caribbean, and Iberian Studies Program",
+    "uw-madison-area-studies-cert": "African Studies Program",
+    "uw-madison-area-studies-ms": "Latin American, Caribbean, and Iberian Studies Program",
+    "uw-madison-engineering-general-ms": "Interdisciplinary Professional Programs",
 }
 
 BA_FIELDS = frozenset({

@@ -475,6 +475,35 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
 }
 
 SLUG_DESCRIPTIONS: dict[str, str] = {
+    # CIP 05.01 "Area Studies" rollup → UW-Madison's REAL area-studies degrees. Each body is
+    # researched per-credential from guide.wisc.edu (LACIS BA/MA, African Studies certificate),
+    # so credential siblings share no contiguous field body.
+    "uw-madison-area-studies-bs": (
+        "The LACIS major spans Latin America, the Caribbean, Spain, and Portugal through "
+        "coursework in anthropology, history, geography, political science, and Spanish and "
+        "Portuguese, and requires advanced study of Spanish, Portuguese, or an indigenous "
+        "language such as Yucatec Maya or Quechua."
+    ),
+    "uw-madison-area-studies-cert": (
+        "The African Studies Program certificate requires 12 graduate credits drawn from at "
+        "least two disciplinary perspectives across the humanities, social sciences, and "
+        "natural sciences, pairing regional study of contemporary Africa with optional work "
+        "in an African language."
+    ),
+    "uw-madison-area-studies-ms": (
+        "Graduate study in LACIS builds an interdisciplinary foundation across roughly 40 "
+        "disciplines — from history and political science to literature and population health "
+        "— with a core faculty of more than 100 examining the Iberian peninsula and its former "
+        "colonies in the Americas."
+    ),
+    # CIP 14.01 "Engineering, General" rollup → UW-Madison's real College-wide Master of
+    # Engineering (Engineering, MEng), researched from guide.wisc.edu.
+    "uw-madison-engineering-general-ms": (
+        "The College of Engineering's Master of Engineering is a part-time, largely online "
+        "degree for working engineers, with named options including Engineering Management, "
+        "Engineering Data Analytics, Polymer Engineering, and Sustainable Systems Engineering "
+        "built around professional practice."
+    ),
     "uw-madison-biomedical-engineering-bs": (
         "Biomedical engineering integrates device design, tissue engineering, and UW Hospital clinical immersion through the College of Engineering and SMPH partnership."
     ),
