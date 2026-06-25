@@ -1348,6 +1348,9 @@ _ROLLUP_FULL_NAME: dict[tuple[str, str], str] = {
     ("Clinical, Counseling and Applied Psychology", "masters"): (
         "Master of Applied Positive Psychology"
     ),
+    # Penn confers the M.P.H., not a generic "M.S. in Public Health" — name the row by
+    # the real conferred degree so it matches the cited MPH tuition (Perelman MPH).
+    ("Public Health", "masters"): "Master of Public Health (MPH)",
 }
 
 # slug → metadata overrides for a resolved row whose real program differs from the
@@ -2086,6 +2089,7 @@ _WEBSITE_BY_SLUG: dict[str, str] = {
     "penn-clinical-counseling-and-applied-psychology-ms": (
         "https://www.lps.upenn.edu/degree-programs/mapp"
     ),
+    "penn-public-health-ms": "https://mph.med.upenn.edu/",
     "penn-business-administration-management-and-operations-phd": (
         "https://mgmt.wharton.upenn.edu/programs/phd/"
     ),
