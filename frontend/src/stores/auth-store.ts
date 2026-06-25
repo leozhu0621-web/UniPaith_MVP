@@ -5,27 +5,58 @@ import { clearSignalEdits } from '../pages/student/discover/noticed'
 const REFRESH_TOKEN_KEY = 'unipaith_refresh_token'
 
 function readRefreshToken(): string | null {
-  const tabToken = sessionStorage.getItem(REFRESH_TOKEN_KEY)
-  if (tabToken) return tabToken
-
-  // One-time migration path from legacy localStorage token.
-  const legacyToken = localStorage.getItem(REFRESH_TOKEN_KEY)
-  if (legacyToken) {
-    sessionStorage.setItem(REFRESH_TOKEN_KEY, legacyToken)
-    localStorage.removeItem(REFRESH_TOKEN_KEY)
-    return legacyToken
+  // Persist the refresh token in localStorage so a returning student stays signed
+  // in across browser restarts (todo 1.3 — "make people stay signed in"). The
+  // refresh token alone can't bleed identity: every session rehydrates the user
+  // from /auth/me, and login/logout call clearSignalEdits() to drop per-account
+  // cached edits. Migrate any legacy per-tab sessionStorage token forward.
+  const stored = localStorage.getItem(REFRESH_TOKEN_KEY)
+  if (stored) return stored
+  const legacyTab = sessionStorage.getItem(REFRESH_TOKEN_KEY)
+  if (legacyTab) {
+    localStorage.setItem(REFRESH_TOKEN_KEY, legacyTab)
+    sessionStorage.removeItem(REFRESH_TOKEN_KEY)
+    return legacyTab
   }
   return null
 }
 
 function persistRefreshToken(token: string | null) {
   if (token) {
-    sessionStorage.setItem(REFRESH_TOKEN_KEY, token)
+    localStorage.setItem(REFRESH_TOKEN_KEY, token)
   } else {
-    sessionStorage.removeItem(REFRESH_TOKEN_KEY)
+    localStorage.removeItem(REFRESH_TOKEN_KEY)
   }
-  // Keep legacy key cleared to avoid cross-tab role/session bleed.
-  localStorage.removeItem(REFRESH_TOKEN_KEY)
+  // Drop any legacy per-tab copy so the two stores can't diverge.
+  sessionStorage.removeItem(REFRESH_TOKEN_KEY)
+}
+
+// ── Proactive token renewal ───────────────────────────────────────────────
+// Cognito access tokens live ~1h; without a proactive renew the student would be
+// silently logged out after idle (the reactive 401 path only fires on the next
+// request, and the SSE chat path can miss it). Renew a couple of minutes before
+// expiry so the 1h TTL is invisible. The timer is cleared on logout.
+let refreshTimer: ReturnType<typeof setTimeout> | null = null
+const RENEW_LEAD_SEC = 120
+
+function clearRefreshTimer() {
+  if (refreshTimer) {
+    clearTimeout(refreshTimer)
+    refreshTimer = null
+  }
+}
+
+function scheduleProactiveRefresh(expiresInSec: number | undefined, refresh: () => Promise<unknown>) {
+  clearRefreshTimer()
+  const ttl =
+    typeof expiresInSec === 'number' && expiresInSec > RENEW_LEAD_SEC ? expiresInSec : 600
+  refreshTimer = setTimeout(
+    () => {
+      // On failure the reactive 401 interceptor is still the safety net.
+      void refresh().catch(() => {})
+    },
+    (ttl - RENEW_LEAD_SEC) * 1000,
+  )
 }
 
 interface User {
@@ -49,7 +80,7 @@ interface AuthState {
   isLoading: boolean
 
   login: (email: string, password: string) => Promise<void>
-  signup: (email: string, password: string, role: string) => Promise<void>
+  signup: (email: string, password: string, role: string, firstName?: string) => Promise<void>
   googleCallback: (code: string, redirectUri: string, role: string) => Promise<void>
   googleLogin: (idToken: string) => Promise<void>
   logout: () => void
@@ -110,10 +141,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       isAuthenticated: true,
     })
     persistRefreshToken(data.refresh_token ?? null)
+    scheduleProactiveRefresh(data.expires_in, () => get().refreshAccessToken())
   },
 
-  signup: async (email, password, role) => {
-    await apiClient.post('/auth/signup', { email, password, role })
+  signup: async (email, password, role, firstName) => {
+    await apiClient.post('/auth/signup', { email, password, role, first_name: firstName })
     await get().login(email, password)
   },
 
@@ -143,6 +175,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       isAuthenticated: true,
     })
     persistRefreshToken(data.refresh_token ?? null)
+    scheduleProactiveRefresh(data.expires_in, () => get().refreshAccessToken())
   },
 
   googleLogin: async (idToken) => {
@@ -167,9 +200,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       isAuthenticated: true,
     })
     persistRefreshToken(data.refresh_token ?? null)
+    scheduleProactiveRefresh(data.expires_in, () => get().refreshAccessToken())
   },
 
   logout: () => {
+    clearRefreshTimer()
     persistRefreshToken(null)
     // Drop any cached inline "Noticed" edits so the next user on this SPA session
     // can't inherit stale signal→row links.
@@ -182,6 +217,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (!rt) throw new Error('No refresh token')
     const { data } = await apiClient.post('/auth/refresh', { refresh_token: rt })
     set({ accessToken: data.access_token })
+    // Re-arm the proactive timer off the fresh token's lifetime.
+    scheduleProactiveRefresh(data.expires_in, () => get().refreshAccessToken())
     return data.access_token
   },
 

@@ -24,7 +24,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 @router.post("/signup", response_model=SignupResponse, status_code=status.HTTP_201_CREATED)
 async def signup(body: SignupRequest, db: AsyncSession = Depends(get_db)):
     svc = AuthService(db)
-    result = await svc.signup(body.email, body.password, body.role)
+    result = await svc.signup(body.email, body.password, body.role, first_name=body.first_name)
     return result
 
 

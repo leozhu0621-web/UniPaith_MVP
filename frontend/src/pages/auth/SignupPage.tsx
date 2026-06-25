@@ -9,6 +9,7 @@ import Button from '../../components/ui/Button'
 import GoogleSignInButton from '../../components/auth/GoogleSignInButton'
 
 const schema = z.object({
+  firstName: z.string().trim().min(1, 'Please enter your first name').max(100),
   email: z.string().email('Invalid email'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   confirmPassword: z.string(),
@@ -33,7 +34,7 @@ export default function SignupPage() {
     setError('')
     setLoading(true)
     try {
-      await signup(data.email, data.password, 'student')
+      await signup(data.email, data.password, 'student', data.firstName)
       navigate('/onboarding')
     } catch (err: any) {
       const raw = String(err?.message || '')
@@ -59,6 +60,13 @@ export default function SignupPage() {
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <Input
+          label="First name"
+          type="text"
+          autoComplete="given-name"
+          {...register('firstName')}
+          error={errors.firstName?.message}
+        />
         <Input
           label="Email"
           type="email"
