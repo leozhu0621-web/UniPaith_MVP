@@ -44,6 +44,15 @@ def upgrade() -> None:
         select(Institution).where(Institution.name == ucla_profile.INSTITUTION_NAME)
     )
     if inst is not None:
+        # Cover any program that still lacks a derived ProgramPreference row. We do NOT
+        # force-refresh the existing derived rows: the matcher reads the corrected field
+        # signal from Program.cip_code directly (4-digit → ref_majors, e.g. 45.02 =
+        # Anthropology). ProgramPreference.pref_fields would instead be re-derived through
+        # fields_offered_for_program's COARSE 2-digit CIP-family fallback (family 45 →
+        # "political_science" head), which on the 63 UCLA rows whose names don't
+        # canonicalize would REPLACE today's honest omission with a wrong field
+        # (Anthropology/Sociology/Geography → political_science) — an omit-never-guess
+        # regression. So leave the correctly-omitted pref_fields untouched.
         backfill_program_preferences(session, institution_id=inst.id)
     session.flush()
 
