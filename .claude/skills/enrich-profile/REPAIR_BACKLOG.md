@@ -5,214 +5,189 @@ other university (repair-first, SKILL.md §2). This is the ONLY file where speci
 schools appear. Severity: **critical** (fabricated / cross-contaminated / scraped-debris /
 near-duplicate / machine-broken template-slot grammar / wrong-program content shipped live,
 **OR the backend deploy pipeline itself blocked** so no repair can land) · **high** (residual
-fabricated NAMES on an otherwise-rich catalog, OR a matcher-core field STARVED — a whole
-master's / professional tier null, a catalog-wide 0%, or a correct repair stranded
-un-deployed in an unmerged PR) · **medium** (institution-level seed below gold, or dead feed
-on an otherwise-enriched node).
+fabricated NAMES on an otherwise-rich catalog, exact-duplicate REAL rows shipped fleet-wide,
+OR a matcher-core field STARVED — a whole master's / professional tier null, a catalog-wide
+0%, or a correct repair stranded un-deployed in an unmerged PR) · **medium** (institution-level
+seed below gold, or dead feed on an otherwise-enriched node).
 
 Evidence is from the live API (`api.unipaith.co/api/v1`), measured this run with
 `profile_standard/anti_stub.py` (the enforced CI gate's own functions): `analyze`,
 `template_slot_artifacts`, `scrape_debris`, `machine_artifacts`, and
 `frame_stripped_shared_body(..., abs_chars=150)` over the fully-paginated `/programs` list of every
-program-bearing catalog (≈8,400 programs, all 40 catalogs), plus per-`degree_type` tuition COVERAGE +
-value distribution, plus a campus-photo count on all 300 institutions, plus a name-realness scan
-(CIP-title tells: the federal "…and Related Sciences/Services" suffix AND any multi-clause field
-string equal to a federal CIP rollup title). Gold MIT (n=65) is the description 0-control — but NOT a
-tuition control (it ships null cert/PhD tiers + grad rows at its own undergrad sticker). The repo's
-alembic head set + the open-PR list (`gh`/MCP) were read direct.
+program-bearing catalog (7,141 programs across 40 catalogs), plus per-`degree_type` tuition COVERAGE,
+a campus-photo proxy (`image_url`) on all 300 institutions, an exact-duplicate `(program_name,
+degree_type)` scan per catalog, and a name-realness scan (federal CIP rollup TITLE match + the
+"…and Related Sciences/Services" / ", General/Other" / `(CIP NN.NN)` suffix tells). Gold MIT (n=65) is
+the description 0-control — but NOT a tuition control (it ships null cert/PhD tiers + grad rows at its
+own undergrad sticker). The repo's alembic head set + the open-PR list were read direct (`git` / MCP).
 
-_Last graded: 2026-06-22 (grader **run 79**). **FULL-FLEET sweep: all 300 LIVE institutions + all 40
-catalogs re-measured via the live API.** **1 rule change** — miss #2's cross-institution tell (b)
-rested on a FALSE premise the live fleet disproves (dozens of REAL degrees are shared verbatim across
-peers — "Materials Science and Engineering" ×11, "Electrical and Computer Engineering" ×8); replaced it
-with the DETERMINISTIC "field part equals a federal CIP rollup TITLE in the IPEDS table the enricher
-holds" check (cross-institution sharing demoted to a lookup HINT). **CLEARED since run 78:** Cornell
-"Physiology, Pathology and Related Sciences" name (#1093, live CLEAN); Harvard master's tuition
-(#1090 → 102/107 live); Georgia Tech master's tuition (#1091 → 55/55 live). **NEW worst tier =
-the DEPLOY PIPELINE is BLOCKED:** a live DUAL ALEMBIC HEAD on `main` (`penntuition1` + `gatechgradtuition1`,
-both children of `harvardcip2`, neither with a merge child) fails `test_alembic_has_single_head` and
-blocks every Deploy Backend `alembic upgrade head` — Penn's merged tuition (#1097) is stranded
-un-deployed (master's 8/64 live) and NOTHING new can deploy until a single merge migration lands
-(entry #1). Then a residual federal-CIP-ROLLUP NAME class on Cornell/Penn/Harvard (22 live rows;
-Harvard's 11 sit in unmerged PR #1096 — entries #2/#3), then master's/professional-tier tuition
-starvation with several repairs stranded in unmerged DRAFT PRs (entry #4), then the seeds. See
-CHANGELOG run 79._
+_Last graded: 2026-06-25 (grader **run 80**). **FULL-FLEET sweep: all 300 LIVE institutions + all 40
+catalogs re-measured via the live API.** **1 rule change** — promoted the slug-vs-rendered-name dedup
+gap into miss #2's ENFORCED list (the terse step-3 "dedupe by real name, not just slug" had no teeth and
+the live fleet ships 30 exact-duplicate rows across 15 catalogs because the build dedups on SLUG while a
+curated row and an IPEDS-derived row render the IDENTICAL name+degree). **🟢 CLEARED since run 79:** the
+CRITICAL run-79 entry #1 (DUAL ALEMBIC HEAD blocking ALL backend deploys) — `origin/main` is now a SINGLE
+head (`gatechproftuition1`); merges #1098 + #1106 collapsed the dual head and the stranded-PR wave landed
+(Penn/Cornell/Harvard CIP names #1104/#1102/#1096; tuition repairs for Columbia/Rice/Chicago/Emory/
+Dartmouth/Berkeley/Duke/UCLA/GT/Yale/Northwestern/Notre Dame). **NEW worst tier = the federal-CIP-rollup
+"Area Studies" NAME class** (fabrication) still live on Berkeley/UW-Madison/Chicago (8 rows, entry #1),
+then the fleet-wide exact-duplicate-row class (entry #2), then the residual master's-tier tuition
+starvation now concentrated on UCLA + NYU (entry #3), then the seeds. See CHANGELOG run 80._
 
-## Fleet at a glance (run 79, live `api.unipaith.co/api/v1`)
+## Fleet at a glance (run 80, live `api.unipaith.co/api/v1`)
 
 - **Fleet = 300 institutions LIVE.** **40 carry programs; 260 are bare institution-level stubs**
-  (0 programs, dead feed, **33 with ZERO campus photo + 54 at 1–3**). Seeding is **external**; the routine
-  ENRICHES + REPAIRS only.
-- **🔴 DEPLOY PIPELINE BLOCKED (new worst tier):** `main` has a live DUAL ALEMBIC HEAD —
-  `penntuition1` (#1097 Penn) and `gatechgradtuition1` (#1091 GT) BOTH declare `down_revision = "harvardcip2"`
-  and NEITHER has a child on `main`. `test_alembic_has_single_head` fails and Deploy Backend's
-  `alembic upgrade head` errors `Multiple head revisions`, so **every** merged backend change is stuck until
-  one merge migration lands. Penn #1097's tuition is merged but UN-DEPLOYED (Penn master's reads 8/64 live).
-  **Three** competing open PRs each try to unify the same two heads — #1098 (dedicated empty merge
-  `penngatechmrg1`), #1099 (Yale, via `down_revision=(gatechgradtuition1, penntuition1)`), #1100 (Northwestern,
-  `gatepennmerge1`) — so merging more than one re-creates the dual head (the §8-step-5 auto-merge cascade,
-  ACTIVE again after being DORMANT at run 78). Entry #1.
-- **🟢 STRUCTURE + DESCRIPTIONS clean fleet-wide (verified LIVE):** every mature catalog scores 0 on
-  `template_slot_artifacts` / `scrape_debris` / `machine_artifacts`; no duplicate / bare-abbreviation /
+  (0 programs, dead feed, **33 with ZERO campus photo** — unchanged from run 79). Seeding is **external**;
+  the routine ENRICHES + REPAIRS only.
+- **🟢 DEPLOY PIPELINE HEALTHY (run-79 CRITICAL block CLEARED):** `origin/main` is a SINGLE alembic head
+  (`gatechproftuition1`, confirmed direct from the migration graph — 548 revisions, 1 head). The run-79
+  dual head (`penntuition1` + `gatechgradtuition1`) was unified by merges #1098 / #1106, Deploy Backend's
+  `alembic upgrade head` is unblocked, and the whole stranded-PR wave from run 79 landed and deployed
+  (CIP-name + tuition repairs all LIVE). The §8-step-5 auto-merge dual-head race is DORMANT again.
+- **🔴 Federal-CIP-ROLLUP "Area Studies" NAME class still live (fabrication, 8 rows, NEW worst tier):**
+  **"Area Studies"** is a federal CIP series TITLE (CIP 05.01), not a conferred degree — no institution
+  awards a degree literally named "Area Studies" (the real degree is a specific area program: East Asian
+  Studies, Latin American Studies, …). It ships verbatim as `program_name` across credential levels on
+  **UC-Berkeley** (BA + MA + PhD "Area Studies", dept "Global Studies Program"), **UW-Madison** (BA +
+  Graduate Certificate + MS "Area Studies", dept "International Studies"), and **University of Chicago**
+  (BA + MA "Area Studies", dept literally "Area Studies" too — rollup echoed into department). This is the
+  exact miss-#2 class the Cornell/Penn/Harvard repairs cleared, left un-cleared on these three (miss #2
+  names "Area Studies" explicitly — a whole-class compliance gap). Entry #1.
+- **🔴 Exact-duplicate REAL program rows shipped fleet-wide (30 rows / 15 catalogs, NEW class):** the
+  catalog build dedups on `slug`, so a hand-curated `PROGRAMS` row and an IPEDS/CIP-derived row that
+  render the IDENTICAL `(program_name, degree_type)` (often identical department + description too) both
+  ship — the same real degree TWICE. Confirmed exact on 15 of the ~32 mature catalogs: USC · NYU (×2) ·
+  Yale · UIUC (×4) · Notre Dame (×2) · UW-Seattle (×4) · Columbia (×2) · Northwestern · Emory · Michigan
+  (×2) · JHU (×4) · Purdue (×2) · UF (×2) · Georgia Tech · Duke. Recurring fields are the cross-listed /
+  interdisciplinary ones a curated row and an IPEDS row both name — Computer Engineering, Political
+  Science, Nursing, Mechanical Engineering, Psychology. Real content, so the fix is DEDUPE (drop the
+  redundant row), not rename. Doubles the program for the student and double-weights it for the matcher;
+  invisible to the slug-dedup and to the per-module self-check. Entry #2 (the `verbatim_shared` /
+  `shared_leading_body` / `frame_abs150` counts on these catalogs are ARTIFACTS of the duplicate pair —
+  they clean to 0 once the dup is dropped). The miss-#2 tightening this run gives the rule teeth.
+- **🟢 STRUCTURE + DESCRIPTIONS otherwise clean fleet-wide (verified LIVE):** every mature catalog scores
+  0 on `template_slot_artifacts` / `scrape_debris` / `machine_artifacts`; no bare-abbreviation /
   "Programs"-dept / null-dept rows on any mature catalog (only the 8 five-program flagship seeds have null
-  dept). Only benign marginal `frame_abs150` (Yale/Duke/Northwestern/Chicago = 1) and MIT's known
-  `name_prefixed=1` ("Master in City Planning") — all assessed benign at runs 77–78, unchanged.
-- **🔴 Residual federal-CIP-ROLLUP NAME class on Cornell + Penn + Harvard (fabrication, 22 live rows):**
-  four federal CIP rollup TITLES no institution confers under that literal name still ship verbatim as
-  `program_name` — **CIP 52.02 "Business Administration, Management and Operations"**, **42.28 "Clinical,
-  Counseling and Applied Psychology"**, **26.02 "Biochemistry, Biophysics and Molecular Biology"**, **42.27
-  "Research and Experimental Psychology"**. Harvard 11 rows (incl. a FABRICATED "Bachelor of Arts in Business
-  Administration, Management and Operations" at HBS — a graduate-only school Harvard College awards no business
-  bachelor's from); Cornell 5; Penn 6 (incl. a fabricated "Bachelor of Arts in Research and Experimental
-  Psychology" — Penn awards a BA in Psychology). Harvard's whole-class clear is DONE in repo but stranded in
-  unmerged DRAFT PR #1096 (271→227); Cornell/Penn have NO open PR. The run-78 #1093/#1089/#1095 repairs cleared
-  only the "…and Related Sciences" suffix form and left these (the new tell-(b) rule closes the gap). Entries #2/#3.
-- **🟢 CLEARED since run 78 (do not re-queue):** Cornell "Physiology, Pathology and Related Sciences" name
-  (#1093 — live CLEAN on the name scan); **Harvard** master's tuition (#1090 — now 102/107, was 19/107);
-  **Georgia Tech** master's tuition (#1091 — now 55/55, was 2/55).
-- **🟢 VERIFIED NOT-A-DEFECT (false-positive avoided — do NOT re-queue / do NOT mangle):** the many
-  multi-clause names the naive cross-institution scan flags are VERIFIED REAL conferred degrees shared
-  verbatim across peers — "Materials Science and Engineering" (11 catalogs), "Electrical and Computer
-  Engineering" (8), "Astronomy and Astrophysics" (4), "Civil and Environmental Engineering" (4), "Ecology and
-  Evolutionary Biology" (5), "Slavic / Romance Languages and Literatures", "Computer Science and Engineering",
-  "Cinema and Media Studies" — NONE is a CIP rollup title; never resolve/mangle them (the new tell-(b) keys on
-  the CIP-title TABLE, not on sharing). Also still real: "Science, Technology, and Society" (MIT/Stanford/
-  Chicago), "Speech, Language, and Hearing Sciences", "Russian, East European, and Eurasian Studies",
-  "Molecular, Cellular, and Developmental Biology", "Theater, Dance, and Performance Studies". **Boston
-  University** Law tier at the flat $69,870 = BU's verified flat full-time rate (MD/DMD distinct); **Georgia
-  Tech** "Professional Master's in …" (PMASE) = GT's real conferred designation.
-- **🔴 master's / professional-tier 0–low% behind a 100% bachelor's tier (matcher-blind on grad budget):**
-  ~10 structurally-clean catalogs (entry #4). Several repairs are DONE but STRANDED in unmerged DRAFT PRs
-  (Yale #1099, Northwestern #1100, Rice #1064) or merged-but-deploy-blocked (Penn #1097, behind entry #1).
-- **🟡 PhD-tier null is LARGELY LEGITIMATE (funded research doctorates → omit-with-reason) — do NOT pressure
-  fabrication:** Columbia phd 0/44, Penn 0/46, Yale 0/66, Berkeley 0/64, UCLA 0/82, Harvard 0/25, etc. The
-  run-74 rule exempts funded PhDs; certificate-tier nulls are similarly often per-credit. Treat PhD/cert
-  nulls as notes, NOT repair priority, UNLESS the institution publishes a non-waived flat rate (UT-Austin PhD
-  86/86, JHU cert 84/84, UF cert 93/93, UW-Madison cert 129/129 prove some do).
+  dept). The only `verbatim_shared` / `frame_abs150` hits are the duplicate-row artifacts above + MIT's
+  known benign `name_prefixed=1` ("Master in City Planning").
+- **🔴 master's-tier tuition starvation now concentrated on UCLA + NYU (matcher-blind on grad budget):**
+  **UCLA** master's **97/145 (48 null)** and **NYU** master's **195/233 (38 null)** are the two large
+  residual gaps after the run-79→80 repair wave cleared Columbia/Rice/Chicago/Emory/Dartmouth/Berkeley/
+  Duke/GT/Northwestern/Notre Dame/Yale master's tiers. Smaller residuals: Yale master's 30/38 (8) + cert
+  0/3 · UCSD master's 53/60 (7) · Penn master's 56/63 (7) · Notre Dame master's 23/24 (1) · plus scattered
+  professional-tier nulls (NYU prof 3/6, Stanford prof 0/2, UT-Austin prof 2/5, Cornell prof 4/5, Columbia
+  prof 5/8). Entry #3.
+- **🟡 PhD-tier + certificate-tier null is LARGELY LEGITIMATE (funded research doctorates / per-credit
+  certificates → omit-with-reason) — do NOT pressure fabrication:** NYU phd 0/97, UIUC 0/91, BU 0/78,
+  UCLA 0/82, Michigan 1/148, Penn 0/46, Yale 0/65, Berkeley 0/64; certificate 0/N on Harvard/Stanford/BU/
+  Penn/Yale/CMU/MIT. Peers prove SOME publish a flat doctoral/cert rate (UW-Seattle phd 87/87, UT-Austin
+  86/86, USC 88/88, Cornell 70/70; UW-Madison cert 128/128, UF cert 93/93, JHU cert 85/85), so a tier null
+  beside a peer that fills it is a VERIFY trigger, not proof — but treat PhD/cert nulls as notes, NOT a
+  repair priority, and never the undergrad sticker copied down.
 
 ⚠️ **FLAG FOR HUMAN (code/workflow, out of grader scope — the grader edits only the 3 skill files):**
-1. **The auto-merge DUAL-HEAD race is ACTIVE and blocking ALL backend deploys (was DORMANT run 78).**
-   `penntuition1` + `gatechgradtuition1` are concurrent heads on `main`; Deploy Backend is down until ONE
-   merge migration lands. **Merge #1098 ALONE** (the minimal empty `penngatechmrg1` merge) to unblock, then
-   REBASE #1099 + #1100 onto the resulting single head and DROP their duplicate merges before landing (else a
-   third head). The durable fix is the long-standing one: a single-head assertion on the MERGE RESULT that
-   BLOCKS auto-merge of a second migration-bearing PR sharing a parent, + dedupe migration-bearing PRs, +
-   one enricher firing per window. App/CI-workflow code the grader does not edit.
-2. **A wave of correct repairs is STRANDED in unmerged DRAFT PRs (merge-mandatory failures).** #1096 (Harvard
-   whole-class CIP-title clear, 271→227), #1099 (Yale grad tuition), #1100 (Northwestern grad tuition), #1064
-   (Rice grad tuition) are all OPEN + draft=true and never merged. Draft PRs don't auto-merge, so the work
-   never ships (SKILL §9 merge-is-not-deploy / merge-mandatory). Mark ready + land (after the entry-#1
-   unblock); verify live, do NOT re-author the already-correct data.
-3. **The enforced anti-stub gate is DESCRIPTION-ONLY and never scans NAMES, so verbatim CIP-ROLLUP program
-   names ship live undetected** (`anti_stub.py` + `test_anti_stub_gate.py`): the gate scores 0 on the
-   Cornell/Penn/Harvard catalogs while 22 federal-CIP-title rows ship. The durable fix is a name-realness
-   metric — FAIL any `program_name`/`department` field equal to a federal CIP rollup/aggregation TITLE (the
-   IPEDS code→title table) OR carrying the "…and Related Sciences/Services" suffix / a literal `(CIP NN.NN)`
-   code, parametrized over `CERTIFIED_CLEAN`, with the verified-real-major carve-out. App/test code.
-4. **`cip_code` is serialized as a KEY on `/programs/{id}` but its VALUE is `None` on EVERY program incl.
-   gold MIT (re-confirmed run 79)**, so the matcher-side "flag empty `cip_code` via public API" channel is
-   UNUSABLE. The in-repo IPEDS catalogs carry a `cip` per row — expose it on the API or audit via DB/git.
-   (`tuition` IS serialized with real values — the tuition gaps are a real DATA gap.)
-5. **There is NO enforced gate on tuition VALUE or COVERAGE — `anti_stub` has no tuition metric.** Both are
-   invisible to CI. The durable fix is a `tuition_value_artifacts` metric + per-tier coverage in the profile
-   test — BUT it must NOT fail `grad==undergrad` unconditionally (false-flags BU's verified flat rate incl.
-   the Law JD): key the copy-down FAIL on a professional row at the flat sticker ONLY when that professional
-   SCHOOL publishes a distinct higher rate, with a per-institution published-rate reference. App/test code.
+1. **The catalog build dedups on `slug`, not on the rendered `(program_name, degree_type)`, and the
+   per-module self-check (`_catalog_errors`) never asserts name uniqueness — so a curated row + an
+   IPEDS-derived row that render the same name+degree ship as an exact duplicate, invisible to CI.** The
+   enforced anti-stub gate's `analyze().verbatim_shared` already detects the identical-description symptom
+   but is module-scoped (runs over a module's own `PROGRAMS` list at certification, not over the MERGED
+   live catalog), so a duplicate introduced by a SEPARATE migration evades it. Durable fix: dedup the build
+   UNION on `(program_name, degree_type)` (drop the redundant render, keep the richer row), and promote a
+   `(program_name, degree_type)`-uniqueness assertion into `test_anti_stub_gate.py` over the merged catalog.
+   App/test code.
+2. **The enforced anti-stub gate is DESCRIPTION-only and never scans NAMES, so verbatim CIP-ROLLUP program
+   names ("Area Studies") ship live undetected** (`anti_stub.py` + `test_anti_stub_gate.py`): the gate
+   scores 0 on Berkeley/UW-Madison/Chicago while 8 federal-CIP-title rows ship. Durable fix = a
+   name-realness metric: FAIL any `program_name` / `department` field equal to a federal CIP rollup TITLE
+   (the IPEDS code→title table) OR carrying the "…and Related Sciences/Services" suffix / a literal
+   `(CIP NN.NN)` code, parametrized over `CERTIFIED_CLEAN`, with the verified-real-major carve-out
+   (carried from run 79 — still unaddressed). App/test code.
+3. **`cip_code` is serialized as a KEY on `/programs/{id}` but its VALUE is `None` on EVERY program incl.
+   gold MIT (re-confirmed run 80)**, so the matcher-side "flag empty `cip_code` via public API" channel is
+   UNUSABLE. The in-repo IPEDS catalogs carry a `cip` per row (e.g. jhu_profile.py rows have `"cip"`) —
+   expose it on the API or audit via DB/git. (`tuition` IS serialized with real values — the tuition gaps
+   are a real DATA gap.) (carried from run 79 — still unaddressed.)
+4. **There is NO enforced gate on tuition VALUE or COVERAGE — `anti_stub` has no tuition metric.** Both are
+   invisible to CI. Durable fix = a `tuition_value_artifacts` metric + per-tier coverage in the profile
+   test — keying the copy-down FAIL on a professional row at the flat undergrad sticker ONLY when that
+   professional SCHOOL publishes a distinct higher rate (must NOT fail `grad==undergrad` unconditionally —
+   it false-flags BU's verified flat full-time rate incl. the Law JD). App/test code. (carried from run 79.)
 
 ---
 
-# CRITICAL — the deploy pipeline itself is blocked — clear FIRST (nothing else can land)
+# HIGH — federal-CIP-ROLLUP "Area Studies" NAME residual (fabrication axis) — clear FIRST
 
-## 1. `main` DUAL ALEMBIC HEAD — Deploy Backend blocked, Penn tuition stranded — severity: critical — first seen run 79 · 2026-06-22
-`main` carries two live alembic heads: **`penntuition1`** (#1097 Penn graduate tuition) and
-**`gatechgradtuition1`** (#1091 GT graduate tuition), BOTH `down_revision = "harvardcip2"`, NEITHER with a
-child on `main`. `test_alembic_has_single_head` fails and every Deploy Backend `alembic upgrade head` errors
-`Multiple head revisions present` — so **Penn #1097's tuition is merged but cannot deploy** (Penn master's
-reads 8/64 live, not the repaired figure) and NO further backend change can ship.
-**Fix (one PR, human/enricher — grader flags only):** merge **#1098 ALONE** — the minimal empty merge
-migration `penngatechmrg1` (`down_revision=(gatechgradtuition1, penntuition1)`, no DDL/data) — to collapse to
-a single head and unblock Deploy Backend. Do **NOT** also merge #1099 (Yale) or #1100 (Northwestern) before
-rebasing: each carries its OWN merge of the same two heads, so a second one re-creates the dual head (the
-auto-merge cascade). After #1098 lands and deploys green, rebase #1099/#1100/#1096/#1064 onto the new single
-head, drop their duplicate merge revisions, and land them. Re-confirm `alembic heads` → single + Penn master's
-tuition LIVE before clearing.
-
----
-
-# HIGH — federal-CIP-ROLLUP NAME residual (fabrication axis) — clear after the deploy unblock
-
-## 2. Harvard — federal CIP-rollup NAMES live, whole-class fix STRANDED in unmerged PR #1096 — severity: high — first seen run 79 · 2026-06-22
-Harvard ships **11** rows whose `program_name` is a verbatim federal CIP rollup title it does not confer:
-"Business Administration, Management and Operations" (CIP 52.02 — incl. a FABRICATED "Bachelor of Arts in
-Business Administration, Management and Operations" at HBS, a graduate-only school), "Clinical, Counseling
-and Applied Psychology" (42.28), "Biochemistry, Biophysics and Molecular Biology" (26.02), "Research and
-Experimental Psychology" (42.27), across BA/MA/PhD/certificate. PR **#1096** ("repair(harvard): whole-class
-CIP-title NAME clear + HBS de-fabrication") resolves the WHOLE class (271→227, re-scan = 0 flags) but is
-OPEN + draft=true and never merged (a merge-mandatory failure).
-**Fix:** after entry #1 unblocks deploys, mark #1096 ready, rebase onto the single head, land it, and VERIFY
-Harvard reads its real degrees LIVE with ZERO CIP-rollup names. Do **NOT** re-author the already-correct PR.
-
-## 3. Cornell · Penn — same federal CIP-rollup NAMES still live, NO open PR — severity: high — first seen run 79 · 2026-06-22
-The run-78 #1093 (Cornell) / #1089 (Penn) repairs cleared only the "…and Related Sciences" / Linguistics
-suffix forms and left the other federal CIP rollup titles live (a whole-class compliance gap — miss #2):
-- **Cornell (5 rows):** PhD + MA "Biochemistry, Biophysics and Molecular Biology" (Arts & Sciences); PhD
-  "Business Administration, Management and Operations" (Johnson); PhD + MA "Research and Experimental
-  Psychology".
-- **Penn (6 rows):** PhD "Business Administration, Management and Operations" (Wharton); MA + Graduate
-  Certificate "Clinical, Counseling and Applied Psychology" (SAS); PhD + MA + a FABRICATED "Bachelor of Arts
-  in Research and Experimental Psychology" (Penn awards a BA in **Psychology**).
-**Fix (per university, one PR each):** resolve each to the institution's real published degree + owning
-department per credential level (Johnson PhD = Management; Wharton PhD = the named doctoral field; "Research
-and Experimental Psychology" = Psychology; "Biochemistry, Biophysics and Molecular Biology" = the real BMB
-concentration), keeping the field-specific descriptions; THEN re-scan the WHOLE catalog with the miss-#2
-tells — including **field part equal to a federal CIP rollup TITLE** (the new tell (b)) — and get ZERO. Do
-NOT mangle the verified real shared majors (carve-out). Re-measure LIVE.
+## 1. UC-Berkeley · UW-Madison · U-Chicago — "Area Studies" CIP-rollup NAMES live — severity: high — first seen run 80 · 2026-06-25
+Three catalogs ship the federal CIP series TITLE **"Area Studies"** (CIP 05.01) verbatim as a degree name
+across credential levels — a degree no institution confers under that literal name (the real degree is a
+specific area program). Per-credential rows:
+- **UC-Berkeley (3):** BA + MA + PhD "Area Studies" (dept "Global Studies Program").
+- **UW-Madison (3):** BA + Graduate Certificate + MS "Area Studies" (dept "International Studies").
+- **U-Chicago (2):** BA + MA "Area Studies" (dept literally "Area Studies" — rollup echoed into department).
+**Fix (per university, one PR each):** resolve each "Area Studies" row to the institution's REAL published
+area-studies degree(s) + owning department (e.g. the named area programs the school actually awards), or
+drop the federal aggregation bucket if no single named degree exists; fix the Chicago `department` echo.
+THEN re-scan the WHOLE catalog with the miss-#2 tells (federal CIP rollup TITLE match + "…and Related
+Sciences/Services" / ", General/Other" / `(CIP NN.NN)`) and get ZERO. Do NOT mangle verified real
+multi-clause majors (carve-out). Re-measure LIVE.
 
 ---
 
-# HIGH — master's / professional-tier 0–low% behind a 100% bachelor's tier — matcher starvation
+# HIGH — fleet-wide exact-duplicate REAL program rows (data-integrity / matcher double-weight)
 
-## 4. The graduate-tier-null catalogs — per-credential matcher STARVATION the aggregate hides — severity: high — first seen run 74 · 2026-06-21
-Structurally + description clean catalogs whose bachelor's tier is 100% but whose MASTER'S and/or PROFESSIONAL
-tiers ship mostly/all null (matcher scores graduate budget-fit BLIND). These publish a per-program / per-credit
-rate and are rarely funded → unambiguous starvation. **PhD nulls EXCLUDED (largely funded → legitimate
-omit-with-reason; do not pressure fabrication).** Worst-first by null grad rows (live run 79):
-- **Penn** — master's 8/64 + prof 0/2 + cert 0/16 (ba 55/55). **Repair #1097 is MERGED but DEPLOY-BLOCKED by
-  entry #1 — verify live after the unblock; do NOT re-author.**
-- **Columbia** (agg 45%) master's 3/45 (42 null) + prof 2/8 (ba 70/70)
-- **Rice** (agg 47%) master's 1/29 (28 null) + prof 11/38 (27 null) (ba 61/61). **Repair STRANDED in unmerged
-  DRAFT PR #1064 — land it (after the entry-#1 unblock), do NOT re-author.**
-- **Yale** (agg 47%) master's 9/38 (29 null) + prof 0/2 + cert 0/3 (ba 80/80). **Repair STRANDED in unmerged
-  DRAFT PR #1099 — land it; note #1099 also carries a duplicate dual-head merge (rebase per entry #1).**
-- **Notre Dame** (agg 53%) master's 0/24 + prof 0/1 (ba 60/60)
-- **Northwestern** (agg 57%) master's 0/26 + prof 0/4 (ba 71/71). **Repair STRANDED in unmerged DRAFT PR
-  #1100 — land it; #1100 also carries a duplicate dual-head merge (rebase per entry #1).**
-- **Chicago** (agg 58%) master's 3/41 (38 null) + prof 2/2 (ba 48/48)
-- **Emory** (agg 70%) master's 0/5 + prof 0/2 (ba 32/32)
-- **Dartmouth** (agg 72%) master's 0/6 + prof 0/1 (ba 31/31)
-- **Duke** (agg 52%) prof 2/9 (7 null) (master's 21/38 ok-ish) (ba 56/56)
-- **Berkeley** (agg 63%) prof 0/20 (master's 71/74 good) (ba 75/75)
-- **UCLA** (agg 64%) prof 0/4 (master's 98/146) (ba 141/141); **Georgia Tech** prof 3/8 (master's 55/55 — newly cleared)
-**Fix (per university, one PR):** group coverage by `degree_type`; stamp the published per-program / per-credit
-rate for the null MASTER'S / PROFESSIONAL tier (these publish a rate, rarely funded). For a PhD or per-credit
-certificate, record `tuition` in `_standard.omitted` with a reason — never a silent blanket null, and never
-the undergrad sticker copied onto a professional school that bills its own higher rate (the run-76 copy-down
-tell; BU Law, which genuinely bills the university flat rate, is the verified exception). Re-measure LIVE per
-tier. **Land the stranded #1099/#1100/#1064 first — that work is done.**
+## 2. The exact-duplicate-row catalogs — 30 rows on 15 catalogs from slug-vs-render dedup — severity: high — first seen run 80 · 2026-06-25
+The build dedups on `slug`, so a hand-curated `PROGRAMS` row and an IPEDS/CIP-derived row that render the
+SAME `(program_name, degree_type)` both ship — the same real degree TWICE (identical name + degree +
+department + description). 15 mature catalogs, 30 extra rows (worst-first by dup count):
+- **UW-Seattle (4):** MS Geography · MS Industrial Engineering · MS Linguistics · MS Nursing.
+- **JHU (4):** BS Computer Engineering · Graduate Certificate Physics · MS Industrial Engineering · MS Mechanical Engineering.
+- **UIUC (4):** BA Global Studies · BA Political Science · PhD Sociology · MS Mechanical Engineering.
+- **NYU (2):** PhD German · MA Psychology. **Columbia (2):** BS Computer Engineering · JSD (Doctor of the Science of Law).
+- **Notre Dame (2):** BA Arabic · BS Computer Engineering. **Michigan (2):** BA Political Science · MS Nursing.
+- **Purdue (2):** BA Political Science · MS Economics. **UF (2):** BA Political Science · MS Nursing.
+- **Duke (1):** DNP. **USC (1):** PhD Classics. **Yale (1):** BA Political Science. **Northwestern (1):** PhD Psychology.
+- **Emory (1):** BS Psychology. **Georgia Tech (1):** BS Computer Engineering.
+**Fix (per catalog, one PR each — or a single fleet sweep):** dedup the build UNION on `(program_name,
+degree_type)` (keep the richer row, drop the redundant render); re-scan the MERGED live catalog for any
+`(program_name, degree_type)` appearing >1× and get ZERO. Real content — DEDUPE, never rename. The
+`shared_leading_body` / `frame_abs150` counts on these catalogs are artifacts of the duplicate pair and
+clear with it. (See FLAG #1 — the durable fix is a build-union dedup + a name-uniqueness gate.)
+
+---
+
+# HIGH — master's-tier tuition starvation (matcher-blind on grad budget)
+
+## 3. UCLA · NYU (+ small residuals) — master's-tier tuition null behind a 100% bachelor's tier — severity: high — first seen run 74 · 2026-06-21
+Structurally + description clean catalogs whose bachelor's tier is 100% but whose MASTER'S tier ships
+mostly null (matcher scores graduate budget-fit BLIND). These publish a per-program / per-credit rate and
+are rarely funded → unambiguous starvation. **PhD / certificate nulls EXCLUDED (largely funded / per-credit
+→ legitimate omit-with-reason; do not pressure fabrication).** Worst-first (live run 80):
+- **UCLA** — master's **97/145 (48 null)** (ba 139/139, prof 4/4). The largest residual master's gap.
+- **NYU** — master's **195/233 (38 null)** + prof 3/6 (ba 167/167).
+- **Yale** — master's 30/38 (8 null) + cert 0/3 (ba 81/81).
+- **UCSD** — master's 53/60 (7 null) (ba 71/71). **Penn** — master's 56/63 (7 null) (ba 54/54).
+- **Notre Dame** — master's 23/24 (1) (ba 62/62). Scattered professional nulls: Stanford prof 0/2 · UT-Austin
+  prof 2/5 · Cornell prof 4/5 · Columbia prof 5/8.
+**Fix (per university, one PR):** group coverage by `degree_type`; stamp the published per-program /
+per-credit rate for the null MASTER'S / PROFESSIONAL tier (these publish a rate, rarely funded). For a PhD
+or per-credit certificate, record `tuition` in `_standard.omitted` with a reason — never a silent blanket
+null, and never the undergrad sticker copied onto a professional school that bills its own higher rate (the
+run-76 copy-down tell; BU Law, which genuinely bills the university flat rate, is the verified exception).
+Re-measure LIVE per tier.
 
 ---
 
 # MEDIUM — flagship seeds · institution-level seeds (seeding is external)
 
-## 5. The flagship seeds (5 programs each) — EMPTY descriptions + null department + 0% tuition + DEAD FEED — severity: medium — first seen run 57 · 2026-06-18
+## 4. The flagship seeds (5 programs each) — EMPTY descriptions + null department + 0% tuition + DEAD FEED — severity: medium — first seen run 57 · 2026-06-18
 **Brown · Georgetown · UC-Davis · UC-Irvine · UNC-Chapel Hill · UVA · Vanderbilt · Washington U-St Louis** each
-ship 5 flagship rows with **null department**, **0% tuition**, and a **DEAD FEED** (posts=0). Several now carry
-**3 campus photos** (UC-Davis, UNC, Vanderbilt, WashU — still below the ≥4 gold gate); re-measure per
-institution. **Enrich (per university, one PR):** a full real-named catalog + per-credential researched
-descriptions + real departments + published tuition (per credential level) + a working feed + a ≥4-photo
-verified gallery, then deepen toward the full real catalog.
+ship 5 flagship rows with **null department**, **0% tuition**, and a **DEAD FEED** (posts=0), with bare
+abbreviation names (BA/BS/PhD). Several carry **3 campus photos** (UC-Davis, Vanderbilt — still below the
+≥4 gold gate); re-measure per institution. **Enrich (per university, one PR):** a full real-named catalog +
+per-credential researched descriptions + real departments + published tuition (per credential level) + a
+working feed + a ≥4-photo verified gallery, then deepen toward the full real catalog.
 
-## 6. The ~260 bulk institution-level seeds (0 programs) — severity: medium — first seen run 59/60
+## 5. The ~260 bulk institution-level seeds (0 programs) — severity: medium — first seen run 59/60
 Each entered at institution level with **0 programs, a dead feed**, and **33 with ZERO campus photos** (broken
 explore-card gradient header + detail hero — the acute sub-set to clear first): Air Force Institute of
 Technology · Arizona State (Campus Immersion) · Arizona State (Digital Immersion) · Azusa Pacific · Colorado
@@ -220,34 +195,26 @@ State-Fort Collins · James Madison · Keiser-Ft Lauderdale · Loyola Marymount 
 · Michigan Tech · Montclair State · Northcentral · Oakland · Oregon State · SUNY-ESF · Sacred Heart · Stephen F
 Austin State · Texas A&M-Commerce · Texas A&M-Corpus Christi · Thomas Jefferson · Universidad Ana G.
 Mendez-Gurabo · U Alabama-Birmingham · U Dayton · U Houston · U Kentucky · U Louisville · UMBC · U Missouri-St
-Louis · U Nebraska-Lincoln · U Oklahoma-Norman · U Utah · Virginia Commonwealth — **plus 54 more at 1–3
-photos**. **Enrich (per university, one PR):** a full real-named catalog + per-credential field-specific
-descriptions + real departments + published tuition · a working feed · a ≥4-photo verified gallery · reviews on
-coverable programs · `_standard`. Pick a 0-photo seed once the HIGH tier clears.
+Louis · U Nebraska-Lincoln · U Oklahoma-Norman · U Utah · Virginia Commonwealth — **plus more at 1–3 photos**.
+**Enrich (per university, one PR):** a full real-named catalog + per-credential field-specific descriptions +
+real departments + published tuition · a working feed · a ≥4-photo verified gallery · reviews on coverable
+programs · `_standard`. Pick a 0-photo seed once the HIGH tier clears.
 
 ---
 
-# CLEAN (structure + descriptions; no name/structure action) — verified LIVE run 79
+# CLEAN (structure + descriptions; no name/structure action) — verified LIVE run 80
 - **Gold (description 0-control):** MIT (n=65, 0 on every description metric; real "Science, Technology, and
-  Society" major; `name_prefixed=1` is the benign real "Master in City Planning"; tuition 69% — cert/PhD tiers
-  null + grad rows at its own undergrad sticker, MIT is NOT a tuition reference).
+  Society" major; `name_prefixed=1` is the benign real "Master in City Planning"; cert/PhD tiers null + grad
+  rows at its own undergrad sticker — MIT is NOT a tuition reference).
 - **Tuition-COMPLETE / near (every published tier filled; PhD/cert omit-with-reason where funded/per-credit):**
-  Princeton (43, 100%) · JHU (244, 98% incl. cert 84/84) · UW-Madison (348, 98% incl. cert 129/129) · USC
-  (511, 97% — PhD 88/88) · Cornell (233, 97% — but see NAME entry #3) · UW-Seattle (360, 96%) · UCSD (137,
-  93%) · UF (314, 92% incl. cert 93/93) · UT-Austin (338, 95% — PhD 86/86) · Purdue (172, 97%) · UIUC (419,
-  79%) · CMU (180, 78%).
-- **Structure + description clean, tuition mostly filled but some grad-tier gap (entry #4) or PhD funded-omit
-  (🟡):** NYU (502, 73%) · BU (402, 72% — verified flat-rate incl. Law; MD/DMD distinct) · Michigan (379,
-  61%) · Harvard (270, 61% — master's now 102/107; ALSO the CIP-rollup NAME residual, entry #2) · UCLA
-  (373, 64%) · Stanford (178, 66%) · Caltech (43, 63%) · Berkeley (233, 63%) · Emory (46, 70%) · Dartmouth
-  (43, 72%) · GT (143, 69%) · Notre Dame (113, 53%) · Northwestern (125, 57%) · Chicago (91, 58%) · Duke
-  (154, 52%) · Yale (189, 47%) · Rice (159, 47%) · Columbia (167, 45%) · Penn (183, 34% — master's stuck
-  8/64 behind the entry-#1 deploy block; ALSO the CIP-rollup NAME residual, entry #3). **"structure clean" ≠
-  "tuition done" — many carry a master's/professional gap (entry #4).**
-- **Heuristic over-counts to IGNORE (not defects):** benign marginal `frame_abs150=1` (Yale/Duke/Chicago/
-  Northwestern); MIT's `name_prefixed=1`; a verified flat full-time rate EQUAL to undergrad on the general AND
-  a genuinely-flat-rate professional school (BU $69,870 incl. Law JD); GT's real "Professional Master's in …"
-  (PMASE); real multi-clause MAJOR/department names shared across peers ("Materials Science and Engineering",
-  "Electrical and Computer Engineering", "Astronomy and Astrophysics", "Science, Technology, and Society",
-  "Molecular, Cellular, and Developmental Biology", "Speech, Language, and Hearing Sciences") — these are
-  real, NOT CIP rollups (the new tell-(b) keys on the CIP-title TABLE, not on cross-institution sharing).
+  Princeton (43, 100%) · JHU (cert 85/85) · UW-Madison (cert 128/128) · USC (phd 88/88) · UW-Seattle (phd
+  87/87) · UF (cert 93/93) · UT-Austin (phd 86/86) · Cornell (phd 70/70) · Berkeley (prof 20/20) · Rice
+  (prof 38/38) · Purdue · Dartmouth · Emory · Chicago (but see NAME entry #1) · Columbia · Notre Dame.
+- **Heuristic over-counts to IGNORE (not defects):** MIT's `name_prefixed=1`; a verified flat full-time rate
+  EQUAL to undergrad on the general AND a genuinely-flat-rate professional school (BU $69,870 incl. Law JD);
+  GT's real "Professional Master's in …" (PMASE); real multi-clause / dual-degree / slash MAJOR names
+  ("Materials Science and Engineering", "Electrical and Computer Engineering", "Latina/Latino Studies",
+  "Radio/Television/Film", "MD/PhD", "JD/MBA", "Zoology/Animal Biology") — these are real, NOT CIP rollups
+  (the name tell keys on the CIP-title TABLE + the federal suffix forms, NOT on a bare slash or
+  cross-institution sharing). The `verbatim_shared` / `shared_leading_body` / `frame_abs150` hits on the 15
+  duplicate-row catalogs are artifacts of the duplicate pair (entry #2), NOT a separate description-stub class.
