@@ -149,7 +149,6 @@ _FIELD_FOCUS: dict[str, str] = {
     "Apparel and Textiles": "material testing, sustainable textiles, and fiber science",
     "Applied Mathematics": "stochastic modeling and scientific computing",
     "Archeology": "field schools and classical museum collections",
-    "Area Studies": "language study with regional history and politics",
     "Arts Management": "nonprofit leadership, venue operations, and audience development",
     "Astronomy and Astrophysics": "Washburn Observatory and IceCube astrophysics research",
     "Atmospheric Science": "climate dynamics, synoptic meteorology, and weather modeling",
