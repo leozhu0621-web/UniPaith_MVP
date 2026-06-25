@@ -42,7 +42,11 @@ from unipaith.models.institution import Institution
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "uwmadenggen1"
-down_revision = ("chicagoareastudies1", "uwmadareastudies1")
+# Re-pointed onto uwmadchicagomerge1 (#1130) after that pure merge-only migration landed on
+# main and unified the chicagoareastudies1 + uwmadareastudies1 dual head first. This migration
+# is now a normal linear data migration on top of it (the "merge dual head" job below was done
+# by #1130), carrying only the "Engineering, General" -> Master of Engineering data fix.
+down_revision = "uwmadchicagomerge1"
 branch_labels = None
 depends_on = None
 
