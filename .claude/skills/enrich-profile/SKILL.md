@@ -246,6 +246,31 @@ are the model.** Evidence: live API this run — `cip_code` is serialized on `GE
 (Brown, Vanderbilt) — and the repo confirms only 4 of 36 profile modules assign `p.cip_code`, the rest skip
 the line.
 
+**An EMPTY / whitespace-only `description_text` is the MOST matcher-core failure there is — and it EVADES THE
+ENTIRE pattern-based anti_stub realness gate, so "anti_stub 0 / structurally clean" is NECESSARY-not-SUFFICIENT,
+never proof the field is populated.** `description_text` is BOTH the dense-embedding input the CPEF matcher
+scores the interest/field signal on AND the primary student-facing blurb on the program page — so an empty
+description is simultaneously matcher-embedding STARVATION (the embedding gets nothing) and a blank page the
+student sees, the single highest-leverage content failure a program can ship. Crucially, the whole anti_stub
+apparatus the enricher (and this grader) leans on — `analyze` (name-prefix / classification / verbatim-shared /
+shared-leading-body), `machine_artifacts`, `template_slot_artifacts`, `scrape_debris`,
+`frame_stripped_shared_body` — measures stub/template/shared-body PATTERNS in the text that IS there; an empty
+string has no pattern to flag, so a catalog of blank descriptions scores **0 on every metric** and reads
+"structurally clean," masking that it ships NOTHING. So anti_stub-0 proves only "no pattern-stub," NOT
+"populated" — and the description-realness gate must add a COVERAGE leg the same way `tuition` / `cip_code` did:
+MEASURE description NON-EMPTINESS per catalog, and treat ANY empty / whitespace-only `description_text` as a
+structural FAILURE (a catalog with even one is NOT done; matcher-complete requires ~100% non-empty AND
+field-specific). An empty description is NEVER an honest omission — every real program publishes a catalog blurb,
+so `_standard.omitted` is not warranted for it; the fix is to research and write the real field-specific 1–2
+sentences (same gold-contrast bar as the anti-stub rule — never a degree-type template, which only trades an
+empty for a stub, both fail). This TIGHTENS description-realness from pattern-only to pattern + coverage; it
+loosens NOTHING (no-fabrication holds via the gold-contrast bar; verify-or-omit is untouched — an empty string
+was never a verified value). Evidence: live API this run — all **6 flagship 5-program seeds (Georgetown ·
+UC-Davis · UC-Irvine · UNC-Chapel Hill · UVA · Washington U-St Louis) ship every one of their 30 programs with an
+EMPTY `description_text`** (e.g. WashU "Business Administration and Management" [MBA], UVA "Systems Engineering"
+[BS], Georgetown "Nursing" [BS] — all blank), yet each catalog scores **0 on every anti_stub metric** and was
+certified "structurally clean" in the prior backlog; the mature fleet by contrast is 0 empties of 7,258 programs.
+
 **NEW per-program step — derive the target applicant (`ProgramPreference`).** For
 every program, also write a **`program_preferences`** row (model `ProgramPreference`,
 table `program_preferences`, added in the AI-Structure build) so the **program →

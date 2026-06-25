@@ -30,7 +30,7 @@ chain advances and the deploy ships; ``dartmouth_profile.apply()`` is idempotent
 enrichment routine re-applies it next run.
 
 Revision ID: dartfinish1
-Revises: berkeleycip1
+Revises: cipmergeofmerges1
 Create Date: 2026-06-25
 """
 
@@ -45,7 +45,7 @@ from unipaith.models.institution import Institution, Program, ProgramPreference
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "dartfinish1"
-down_revision = "berkeleycip1"
+down_revision = "cipmergeofmerges1"
 branch_labels = None
 depends_on = None
 

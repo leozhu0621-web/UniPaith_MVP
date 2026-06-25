@@ -47,6 +47,7 @@ No fabricated review, quote, or figure ships.
 
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from sqlalchemy import select, text
@@ -863,6 +864,257 @@ def _build_catalog() -> list[dict]:
 PROGRAMS: list[dict] = _build_catalog()
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 
+
+# CIP-2020 (NCES) code per program — the matcher's CIP join key (REPAIR_BACKLOG #1).
+# Discipline-anchored to the field; the 2-digit family is the matcher's field signal
+# (services/match/field_canon._CIP_FAMILY_FIELD). Each code is VERIFIED to resolve to the
+# matching title in data/reference/ref_majors.jsonl (the cip_code crosswalk).
+_CIP_BY_SLUG: dict[str, str] = {
+    "vanderbilt-african-american-diaspora-studies-ba": "05.0201",
+    "vanderbilt-anthropology-ba": "45.0201",
+    "vanderbilt-architecture-built-environment-ba": "04.0801",
+    "vanderbilt-art-ba": "50.0702",
+    "vanderbilt-asian-american-diaspora-studies-ba": "05.0206",
+    "vanderbilt-asian-studies-ba": "05.0103",
+    "vanderbilt-biochemistry-chemical-biology-ba": "26.0202",
+    "vanderbilt-biological-sciences-ba": "26.0101",
+    "vanderbilt-chemistry-ba": "40.0501",
+    "vanderbilt-cinema-media-arts-ba": "50.0601",
+    "vanderbilt-classical-mediterranean-studies-ba": "30.2202",
+    "vanderbilt-climate-environmental-studies-ba": "03.0103",
+    "vanderbilt-communication-science-technology-ba": "09.0908",
+    "vanderbilt-communication-studies-ba": "09.0101",
+    "vanderbilt-culture-advocacy-leadership-ba": "30.9999",
+    "vanderbilt-earth-environmental-sciences-ba": "40.0601",
+    "vanderbilt-economics-ba": "45.0601",
+    "vanderbilt-economics-history-ba": "45.0101",
+    "vanderbilt-english-ba": "23.0101",
+    "vanderbilt-european-studies-ba": "05.0106",
+    "vanderbilt-french-ba": "16.0901",
+    "vanderbilt-gender-sexuality-studies-ba": "05.0299",
+    "vanderbilt-german-studies-ba": "05.0125",
+    "vanderbilt-history-ba": "54.0101",
+    "vanderbilt-history-of-art-ba": "50.0703",
+    "vanderbilt-integrative-biology-ba": "26.1310",
+    "vanderbilt-jewish-studies-ba": "38.0206",
+    "vanderbilt-latin-american-caribbean-latinx-studies-ba": "05.0134",
+    "vanderbilt-law-history-society-ba": "22.0000",
+    "vanderbilt-mathematics-ba": "27.0101",
+    "vanderbilt-medicine-health-society-ba": "51.3204",
+    "vanderbilt-molecular-cellular-biology-ba": "26.0406",
+    "vanderbilt-neuroscience-ba": "26.1501",
+    "vanderbilt-philosophy-ba": "38.0101",
+    "vanderbilt-physics-ba": "40.0801",
+    "vanderbilt-political-science-ba": "45.1001",
+    "vanderbilt-public-policy-studies-ba": "44.0501",
+    "vanderbilt-psychology-ba": "42.0101",
+    "vanderbilt-religious-studies-ba": "38.0201",
+    "vanderbilt-russian-studies-ba": "05.0110",
+    "vanderbilt-sociology-ba": "45.1101",
+    "vanderbilt-spanish-ba": "16.0905",
+    "vanderbilt-spanish-portuguese-ba": "16.0900",
+    "vanderbilt-theatre-ba": "50.0501",
+    "vanderbilt-biomedical-engineering-be": "14.0501",
+    "vanderbilt-chemical-engineering-be": "14.0701",
+    "vanderbilt-civil-engineering-be": "14.0801",
+    "vanderbilt-computer-engineering-be": "14.0901",
+    "vanderbilt-electrical-engineering-be": "14.1001",
+    "vanderbilt-mechanical-engineering-be": "14.1901",
+    "vanderbilt-computer-science-bs": "11.0701",
+    "vanderbilt-engineering-science-be": "14.1301",
+    "vanderbilt-human-organizational-development-bs": "44.0000",
+    "vanderbilt-child-development-bs": "19.0706",
+    "vanderbilt-child-studies-bs": "19.0701",
+    "vanderbilt-cognitive-studies-bs": "30.2501",
+    "vanderbilt-elementary-education-bs": "13.1202",
+    "vanderbilt-secondary-education-bs": "13.1205",
+    "vanderbilt-special-education-bs": "13.1001",
+    "vanderbilt-bachelor-of-music": "50.0901",
+    "vanderbilt-bachelor-of-musical-arts": "50.0901",
+    "vanderbilt-mba": "52.0201",
+    "vanderbilt-executive-mba": "52.0201",
+    "vanderbilt-ms-finance": "52.0801",
+    "vanderbilt-master-of-accountancy": "52.0301",
+    "vanderbilt-master-of-marketing": "52.1401",
+    "vanderbilt-master-of-management": "52.0201",
+    "vanderbilt-master-management-health-care": "51.0701",
+    "vanderbilt-juris-doctor": "22.0101",
+    "vanderbilt-master-of-laws": "22.0202",
+    "vanderbilt-doctor-of-medicine": "51.1201",
+    "vanderbilt-master-of-public-health": "51.2201",
+    "vanderbilt-ms-clinical-investigation": "51.1401",
+    "vanderbilt-doctor-of-audiology": "51.0202",
+    "vanderbilt-master-genetic-counseling": "51.1509",
+    "vanderbilt-master-science-nursing": "51.3801",
+    "vanderbilt-doctor-nursing-practice": "51.3818",
+    "vanderbilt-phd-nursing-science": "51.3808",
+    "vanderbilt-master-of-divinity": "39.0602",
+    "vanderbilt-master-theological-studies": "39.0601",
+    "vanderbilt-doctor-of-ministry": "39.0602",
+    "vanderbilt-ms-artificial-intelligence": "11.0102",
+    "vanderbilt-ms-biomedical-engineering": "14.0501",
+    "vanderbilt-ms-chemical-engineering": "14.0701",
+    "vanderbilt-ms-civil-environmental-engineering": "14.0801",
+    "vanderbilt-ms-electrical-engineering": "14.1001",
+    "vanderbilt-ms-mechanical-engineering": "14.1901",
+    "vanderbilt-ms-computer-science": "11.0701",
+    "vanderbilt-med-human-development-counseling": "13.1101",
+    "vanderbilt-med-special-education": "13.1001",
+    "vanderbilt-med-learning-diversity-urban-studies": "13.0410",
+    "vanderbilt-med-independent-school-leadership": "13.0401",
+    "vanderbilt-edd-leadership-learning-organizations": "52.0213",
+    "vanderbilt-phd-economics": "45.0601",
+    "vanderbilt-phd-english": "23.0101",
+    "vanderbilt-phd-history": "54.0101",
+    "vanderbilt-phd-philosophy": "38.0101",
+    "vanderbilt-phd-political-science": "45.1001",
+    "vanderbilt-phd-psychological-sciences": "42.0101",
+    "vanderbilt-phd-sociology": "45.1101",
+    "vanderbilt-phd-anthropology": "45.0201",
+    "vanderbilt-phd-religion": "38.0201",
+    "vanderbilt-phd-mathematics": "27.0101",
+    "vanderbilt-phd-physics": "40.0801",
+    "vanderbilt-phd-chemistry": "40.0501",
+    "vanderbilt-phd-biological-sciences": "26.0101",
+    "vanderbilt-phd-neuroscience": "26.1501",
+}
+
+# "Who it's for" — field+level-specific applicant fit per program (REPAIR_BACKLOG #4,
+# universal-depth gate). Gold-contrast: names background/goals/readiness, never a stub.
+_WHO_BY_SLUG: dict[str, str] = {
+    "vanderbilt-african-american-diaspora-studies-ba": "Students drawn to the history, literature, and politics of the African diaspora who want an interdisciplinary humanities and social-science foundation for careers in law, public policy, education, or graduate study.",
+    "vanderbilt-anthropology-ba": "Undergraduates curious about human cultures and the deep past who want fieldwork, ethnographic, and laboratory methods spanning cultural, archaeological, and biological anthropology.",
+    "vanderbilt-architecture-built-environment-ba": "Students interested in design and the history of the built environment who want a liberal-arts path into architecture, urban planning, or preservation rather than a professional B.Arch.",
+    "vanderbilt-art-ba": "Aspiring studio artists who want sustained practice across media alongside critique and contemporary art theory within a research university.",
+    "vanderbilt-asian-american-diaspora-studies-ba": "Students examining Asian American and diasporic communities through history, literature, and the social sciences, preparing for work in advocacy, education, law, or graduate research.",
+    "vanderbilt-asian-studies-ba": "Undergraduates combining an Asian language with regional history, religion, and politics, aiming for careers in international affairs, business, or area-studies scholarship.",
+    "vanderbilt-biochemistry-chemical-biology-ba": "Pre-medical and research-bound students who want rigorous laboratory training at the interface of chemistry and the molecular life sciences.",
+    "vanderbilt-biological-sciences-ba": "Students pursuing medicine, biotech, or biological research who want broad grounding from molecules to ecosystems with hands-on undergraduate research.",
+    "vanderbilt-chemistry-ba": "Future chemists, physicians, and materials or chemical-biology researchers who want a laboratory-intensive grounding in the core areas of chemistry.",
+    "vanderbilt-cinema-media-arts-ba": "Students who want to pair film and media history and theory with hands-on production, heading toward screen industries, criticism, or graduate study.",
+    "vanderbilt-classical-mediterranean-studies-ba": "Students drawn to the ancient Greek and Roman worlds — including Latin and Greek — who want a foundation for law, classics scholarship, archaeology, or the humanities.",
+    "vanderbilt-climate-environmental-studies-ba": "Students who want to understand climate and environmental challenges across the sciences, policy, and humanities, aiming for sustainability, policy, or environmental careers.",
+    "vanderbilt-communication-science-technology-ba": "Science- and technically-minded students who want to translate complex research for public audiences in journalism, public affairs, or science communication.",
+    "vanderbilt-communication-studies-ba": "Students interested in rhetoric, argument, and human communication who want skills for law, public affairs, media, or organizational leadership.",
+    "vanderbilt-culture-advocacy-leadership-ba": "Students who want to ground advocacy and leadership in humanities inquiry and community-engaged practice for careers in nonprofits, public service, or law.",
+    "vanderbilt-earth-environmental-sciences-ba": "Students fascinated by the earth, oceans, and climate system who want field- and lab-based training toward geoscience, environmental, or energy careers.",
+    "vanderbilt-economics-ba": "Analytically-minded students seeking rigorous micro, macro, and econometric training for careers in finance, consulting, policy, or graduate economics.",
+    "vanderbilt-economics-history-ba": "Students who want to read economic questions through historical evidence, combining quantitative and archival methods for law, policy, or graduate study.",
+    "vanderbilt-english-ba": "Strong readers and writers who want to study literature and critical theory — with a creative-writing track available — toward careers in law, publishing, education, or the humanities.",
+    "vanderbilt-european-studies-ba": "Students combining a European language with history, politics, and culture, preparing for international affairs, business, or graduate work on modern Europe.",
+    "vanderbilt-french-ba": "Students seeking advanced French proficiency alongside the literature and culture of France and the Francophone world for global careers or graduate study.",
+    "vanderbilt-gender-sexuality-studies-ba": "Students analyzing gender and sexuality across the humanities and social sciences, heading toward law, public health, advocacy, or graduate research.",
+    "vanderbilt-german-studies-ba": "Students who want German fluency with the literature, philosophy, and history of the German-speaking world for careers in international work or scholarship.",
+    "vanderbilt-history-ba": "Students who enjoy archival research and interpretation across eras and regions, building a foundation for law, public history, education, or graduate study.",
+    "vanderbilt-history-of-art-ba": "Students drawn to painting, architecture, and visual culture who want close looking and critical interpretation toward museums, conservation, or graduate study.",
+    "vanderbilt-integrative-biology-ba": "Students interested in whole organisms, physiology, ecology, and evolution who want an integrative alternative to molecular-focused biology.",
+    "vanderbilt-jewish-studies-ba": "Students exploring Jewish history, religion, languages, and literature in an interdisciplinary framework, toward humanities scholarship or professional study.",
+    "vanderbilt-latin-american-caribbean-latinx-studies-ba": "Students integrating Spanish or Portuguese with the histories and cultures of Latin America, the Caribbean, and U.S. Latinx communities for global or policy careers.",
+    "vanderbilt-law-history-society-ba": "Students who want to study law as a social and historical institution — a strong liberal-arts path toward law school, policy, or graduate study.",
+    "vanderbilt-mathematics-ba": "Students who enjoy proof-based rigor in analysis, algebra, and geometry, with applied tracks for those heading into computing, data, or the sciences.",
+    "vanderbilt-medicine-health-society-ba": "Pre-health and policy-minded students who want to study health and medicine as social and cultural phenomena across the social sciences and ethics.",
+    "vanderbilt-molecular-cellular-biology-ba": "Research- and medicine-bound students focused on the molecular machinery of cells who want laboratory work in molecular genetics and biochemistry.",
+    "vanderbilt-neuroscience-ba": "Students fascinated by the brain — from cells to cognition — who want undergraduate research through the Vanderbilt Brain Institute toward medicine or neuroscience.",
+    "vanderbilt-philosophy-ba": "Students who want rigorous training in logic, ethics, and the history of philosophy, with departmental strength in ethics and the philosophy of science.",
+    "vanderbilt-physics-ba": "Students seeking a strong physics foundation with research access in astrophysics, condensed matter, and high-energy physics, toward graduate study or technical careers.",
+    "vanderbilt-political-science-ba": "Students interested in politics, institutions, and international relations who want empirical, quantitatively-grounded methods for law, policy, or graduate study.",
+    "vanderbilt-public-policy-studies-ba": "Students who want to analyze and evaluate policy using economics, statistics, and politics, preparing for public service, advocacy, or policy graduate work.",
+    "vanderbilt-psychology-ba": "Students studying cognition, development, and behavior with experimental and statistical methods and laboratory research, toward health, research, or graduate study.",
+    "vanderbilt-religious-studies-ba": "Students examining religious traditions, texts, and practices through critical and comparative methods, toward humanities scholarship or professional study.",
+    "vanderbilt-russian-studies-ba": "Students pairing the Russian language with the literature, history, and politics of Russia and Eastern Europe for international or scholarly careers.",
+    "vanderbilt-sociology-ba": "Students interested in inequality, institutions, and social change who want both quantitative and qualitative research training for policy, law, or graduate study.",
+    "vanderbilt-spanish-ba": "Students seeking advanced Spanish proficiency with the literatures and cultures of Spain and Latin America for global careers or graduate study.",
+    "vanderbilt-spanish-portuguese-ba": "Students combining Spanish and Portuguese with Iberian, Latin American, and Lusophone cultures, preparing for international work or scholarship.",
+    "vanderbilt-theatre-ba": "Students who want integrated training in performance, directing, design, and dramatic literature through studio practice and main-stage production.",
+    "vanderbilt-biomedical-engineering-be": "Students who want to apply engineering to medicine — imaging, biomechanics, and devices — with ties to Vanderbilt University Medical Center, toward industry, research, or medicine.",
+    "vanderbilt-chemical-engineering-be": "Students who want to design processes in energy, materials, and biomolecular systems using thermodynamics, transport, and reaction engineering.",
+    "vanderbilt-civil-engineering-be": "Students drawn to infrastructure and the built environment who want design experience across structures, transportation, and water resources.",
+    "vanderbilt-computer-engineering-be": "Students at the hardware-software boundary who want to build digital systems, computer architecture, and embedded systems.",
+    "vanderbilt-electrical-engineering-be": "Students interested in circuits, signals, and electronics who want research exposure in nanoscale devices and radiation-effects engineering.",
+    "vanderbilt-mechanical-engineering-be": "Students who want a broad mechanical foundation — mechanics, thermodynamics, and design — with capstones in robotics, energy, and manufacturing.",
+    "vanderbilt-computer-science-bs": "Students seeking an ABET-accredited CS degree spanning algorithms, systems, and theory, with electives in AI, security, and human-computer interaction.",
+    "vanderbilt-engineering-science-be": "Students who want a flexible, interdisciplinary engineering degree combining fundamentals with a concentration such as nanoscience, materials, or engineering management.",
+    "vanderbilt-human-organizational-development-bs": "Students who want to study how people and organizations work and change, with a required practicum, heading toward business, human services, or graduate study.",
+    "vanderbilt-child-development-bs": "Students interested in how children grow cognitively, socially, and emotionally, grounded in developmental psychology and applied practice.",
+    "vanderbilt-child-studies-bs": "Students who want an interdisciplinary view of childhood across psychology, education, policy, and health for careers in human services and child advocacy.",
+    "vanderbilt-cognitive-studies-bs": "Students fascinated by learning, memory, and reasoning who want to work at the intersection of cognitive science, education, and neuroscience.",
+    "vanderbilt-elementary-education-bs": "Students preparing for elementary-school teacher licensure who want extensive supervised classroom practice alongside literacy and content methods.",
+    "vanderbilt-secondary-education-bs": "Students preparing to teach a subject in middle or high school, pairing a disciplinary major with pedagogy and student teaching.",
+    "vanderbilt-special-education-bs": "Students preparing to teach learners with disabilities through evidence-based instruction, drawing on the Vanderbilt Kennedy Center.",
+    "vanderbilt-bachelor-of-music": "Serious performers, composers, and jazz musicians who want conservatory-style applied study and ensembles within a research university.",
+    "vanderbilt-bachelor-of-musical-arts": "Strong musicians who want intensive performance or composition study paired with a second academic focus outside music.",
+    "vanderbilt-mba": "Early-to-mid-career professionals seeking a small-cohort, full-time M.B.A. with strong leadership development and concentrations across finance, marketing, operations, and health care.",
+    "vanderbilt-executive-mba": "Experienced working managers who want Owen's general-management curriculum in a weekend format while continuing to work.",
+    "vanderbilt-ms-finance": "Quantitatively-minded recent graduates targeting investment banking, asset management, or quantitative finance through a STEM-designated specialized master's.",
+    "vanderbilt-master-of-accountancy": "Accounting-focused graduates pursuing the CPA and roles in assurance or valuation, with a Big Four internship built in.",
+    "vanderbilt-master-of-marketing": "Recent graduates aiming for brand management, marketing analytics, and digital marketing roles through a focused ten-month program.",
+    "vanderbilt-master-of-management": "Vanderbilt undergraduates who have completed the Hoogland Undergraduate Business Program (Classes of 2023–2026) and want a broad business foundation before entering the workforce; enrollment is currently limited to that group.",
+    "vanderbilt-master-management-health-care": "Practicing physicians, nurses, and administrators who want management and health-economics training to lead health-care organizations.",
+    "vanderbilt-juris-doctor": "Aspiring lawyers who want a collaborative, nationally-ranked J.D. with strong clerkship and appellate-advocacy outcomes and joint programs in business and economics.",
+    "vanderbilt-master-of-laws": "Lawyers trained outside the United States who want one year of advanced study in the U.S. legal system, with bar-exam pathways.",
+    "vanderbilt-doctor-of-medicine": "Future physicians who want a competency-based curriculum with early clinical immersion and a required research project at a top NIH-funded medical center.",
+    "vanderbilt-master-of-public-health": "Clinicians and graduates pursuing public-health practice in epidemiology, global health, or health policy with strong biostatistics training.",
+    "vanderbilt-ms-clinical-investigation": "Physicians and scientists who want formal training in patient-oriented and translational research, including trial design and biostatistics.",
+    "vanderbilt-doctor-of-audiology": "Students pursuing clinical audiology careers who want coursework and supervised practice diagnosing and treating hearing and balance disorders.",
+    "vanderbilt-master-genetic-counseling": "Students preparing to become genetic counselors who want medical-genetics coursework with extensive supervised clinical rotations.",
+    "vanderbilt-master-science-nursing": "Registered nurses pursuing advanced-practice roles across specialties such as family, acute care, psychiatric-mental health, and nurse-midwifery via a modified-distance model.",
+    "vanderbilt-doctor-nursing-practice": "Advanced-practice nurses seeking the highest level of clinical practice and leadership, including a nurse-anesthesia track, through a practice doctorate.",
+    "vanderbilt-phd-nursing-science": "Nurses aiming to become funded nurse-scientists conducting research on health, illness, and care delivery toward academic and research careers.",
+    "vanderbilt-master-of-divinity": "People preparing for ministry and religious leadership who want theological study joined with practical ministry and a social-justice commitment.",
+    "vanderbilt-master-theological-studies": "Students seeking an academic theology degree, often as preparation for doctoral work or vocations beyond ordained ministry.",
+    "vanderbilt-doctor-of-ministry": "Experienced ministers who want an advanced professional degree integrating theological reflection with a focused project in ministry practice.",
+    "vanderbilt-ms-artificial-intelligence": "Working professionals who want a fully online, applied master's in AI built around eight-week modules blending live and self-paced learning.",
+    "vanderbilt-ms-biomedical-engineering": "Graduates pursuing research or industry careers in biomedical imaging, biomaterials, neural engineering, and medical devices, partnered with VUMC.",
+    "vanderbilt-ms-chemical-engineering": "Graduates seeking advanced research in reaction engineering, energy and catalysis, and biomolecular and nanostructured materials.",
+    "vanderbilt-ms-civil-environmental-engineering": "Graduates focused on structures and risk, environmental and water-resources engineering, and resilient infrastructure.",
+    "vanderbilt-ms-electrical-engineering": "Graduates pursuing research in nanoscale devices, radiation effects, signal processing, and control, with national-laboratory ties.",
+    "vanderbilt-ms-mechanical-engineering": "Graduates advancing research in medical robotics, dynamics and control, materials, and energy systems.",
+    "vanderbilt-ms-computer-science": "Computing graduates pursuing depth in machine learning, systems and security, software engineering, or cyber-physical systems, with thesis or project tracks.",
+    "vanderbilt-med-human-development-counseling": "Graduates preparing for licensure as professional or school counselors who want counseling theory with extensive supervised clinical practicum.",
+    "vanderbilt-med-special-education": "Educators and specialists serving learners with disabilities who want concentrations such as high-incidence, severe disabilities, or applied behavior analysis.",
+    "vanderbilt-med-learning-diversity-urban-studies": "Educators and community practitioners focused on teaching and learning in diverse and urban settings through coursework in equity and literacy.",
+    "vanderbilt-med-independent-school-leadership": "Aspiring leaders of independent and private schools who want organizational leadership, finance, and governance with a school-based residency.",
+    "vanderbilt-edd-leadership-learning-organizations": "Working professionals in education, business, or nonprofits who want an online, executive-style doctorate in leadership, learning, and data analytics.",
+    "vanderbilt-phd-economics": "Aspiring academic and research economists who want rigorous theory and econometrics with full funding toward dissertation research.",
+    "vanderbilt-phd-english": "Scholars pursuing dissertation research across literary history, theory, and criticism toward academic careers in literary studies.",
+    "vanderbilt-phd-history": "Aspiring historians who want archival research and historiographical training toward a dissertation and academic career.",
+    "vanderbilt-phd-philosophy": "Aspiring philosophers pursuing systematic and historical research with strengths in ethics, social-political philosophy, and philosophy of science.",
+    "vanderbilt-phd-political-science": "Researchers who want strong quantitative methods and formal theory toward dissertation research in American, comparative, or international politics.",
+    "vanderbilt-phd-psychological-sciences": "Aspiring research psychologists and neuroscientists who want funded laboratory training spanning cognition, neuroscience, development, and clinical science.",
+    "vanderbilt-phd-sociology": "Researchers studying inequality, social movements, and political and economic sociology with advanced quantitative and qualitative methods.",
+    "vanderbilt-phd-anthropology": "Aspiring anthropologists pursuing ethnographic or archaeological dissertation research, with strengths in the Americas and medical anthropology.",
+    "vanderbilt-phd-religion": "Scholars pursuing doctoral research across biblical studies, theology, ethics, and the historical and comparative study of religion.",
+    "vanderbilt-phd-mathematics": "Aspiring mathematicians pursuing funded dissertation research in areas including operator algebras, topology, and analysis.",
+    "vanderbilt-phd-physics": "Aspiring physicists seeking funded research in astrophysics, condensed-matter, high-energy, or biological physics with access to major facilities.",
+    "vanderbilt-phd-chemistry": "Aspiring chemists pursuing doctoral research across organic, inorganic, physical, and chemical biology, with strengths in synthesis and catalysis.",
+    "vanderbilt-phd-biological-sciences": "Aspiring life scientists pursuing funded dissertation research in genetics, developmental biology, cell biology, and evolution.",
+    "vanderbilt-phd-neuroscience": "Aspiring neuroscientists pursuing funded research from molecular and cellular to systems, cognitive, and computational neuroscience via the Vanderbilt Brain Institute.",
+}
+
+# Per-degree-type baseline fallback (used only if a slug ever lacks a per-slug entry;
+# today every program has a field-specific _WHO_BY_SLUG line). Mirrors the gold MIT pattern.
+_WHO_BY_TYPE: dict[str, str] = {
+    "bachelors": "Undergraduates seeking a rigorous, research-grounded liberal-arts or engineering education at Vanderbilt.",
+    "masters": "Students seeking advanced, specialized graduate training in their field.",
+    "professional": "Candidates pursuing an accredited professional credential and practice-ready training.",
+    "phd": "Researchers pursuing an academic or research career through a funded doctorate.",
+}
+
+# Matcher-core self-check: every catalog row must carry a valid CIP-2020 code and a
+# field-specific who_its_for (REPAIR_BACKLOG #1 + #4). Fail fast at import if a row is missed.
+_cip_missing = [p["slug"] for p in PROGRAMS if p["slug"] not in _CIP_BY_SLUG]
+if _cip_missing:
+    raise ValueError(f"Vanderbilt catalog missing cip_code on {len(_cip_missing)} rows: {_cip_missing[:8]}")
+_cip_bad = sorted({c for c in _CIP_BY_SLUG.values() if not re.fullmatch(r"\d{2}\.\d{4}", c)})
+if _cip_bad:
+    raise ValueError(f"Vanderbilt catalog has malformed cip_code values: {_cip_bad}")
+_who_missing = [
+    p["slug"] for p in PROGRAMS
+    if not (_WHO_BY_SLUG.get(p["slug"]) or _WHO_BY_TYPE.get(p["degree_type"]))
+]
+if _who_missing:
+    raise ValueError(f"Vanderbilt catalog missing who_its_for on {len(_who_missing)} rows: {_who_missing[:8]}")
+
 _TUITION_UG = 67934
 _UNDERGRAD_COA = 94274
 _UG_SRC = (
@@ -885,11 +1137,27 @@ _LAW_SRC = (
     "Vanderbilt Law School — J.D. Costs and Financial Aid",
     "https://law.vanderbilt.edu/jd-program/costs-financial-aid/",
 )
+_MM_SRC = (
+    "Vanderbilt Business — Master of Management",
+    "https://business.vanderbilt.edu/master-of-management/",
+)
+_MM_TUITION = 76700  # Owen Master of Management published program tuition (per the official page)
 
 _MD_ANNUAL = 70900
 _MBA_ANNUAL = 74500
 _JD_ANNUAL = 76440
 _LLM_ANNUAL = 76440  # LL.M. billed at the Law School per-year rate
+
+# Verified 2026-06-25 against official Vanderbilt Student Accounts pages.
+# Owen Graduate School of Management bills all of its graduate master's at one flat annual rate.
+_OWEN_FLAT = 74500  # $74,500.00/year for MBA, MSF, MAcc, Master of Marketing, EMBA/AMBA, MMHC (2025-26)
+# School of Medicine master's/professional programs FRONT-LOAD tuition (Year 1 > Year 2), so the
+# matcher's annual budget input is the average annual = published program-total ÷ program years.
+# Each note states the published per-year figures + the total so the derivation is transparent.
+_PEABODY_ONLINE_SRC = (
+    "Peabody College Online — Ed.D. Tuition and Financial Aid 2025-26",
+    "https://peabodyonline.vanderbilt.edu/edd-in-organizational-learning/tuition-and-financial-aid/",
+)
 
 # A standard full-time graduate academic year at Vanderbilt is 24 credit hours (12 per
 # semester). Vanderbilt bills its non-flat graduate tuition PER CREDIT HOUR, so the
@@ -906,24 +1174,17 @@ _PER_CREDIT_RATE: dict[str, int] = {
     _DIV: 1193,      # Divinity School per credit hour (2025-26)
 }
 
-# Programs whose published tuition is a distinct per-program / lockstep / online rate not
-# captured from a citable Vanderbilt page this session, or (M.S.-AI) a new online rate — the
-# tuition is honestly omitted-with-reason rather than guessed. None of these zeros out a whole
-# degree_type tier: the master's and professional tiers are filled by the derived per-credit
-# rows and the verified professional flats above.
+# Programs whose published tuition is a distinct per-program rate that is NOT published on a
+# citable Vanderbilt page (so a single verified annual figure is honestly omitted-with-reason
+# rather than guessed). Only TWO remain after the 2026-06-25 graduate-tuition pass: the 9-month
+# Master of Management is not itemized on the official Student Accounts grad/prof page, and the
+# fully online M.S. in Artificial Intelligence (launched June 2026) publishes no tuition figure
+# anywhere. Every other master's / professional program now carries a verified, cited rate, so
+# no degree_type tier is zeroed.
 _TUITION_OMIT_SLUGS: set[str] = {
-    "vanderbilt-executive-mba",              # Executive M.B.A. lockstep program total (not captured)
-    "vanderbilt-ms-finance",                 # Owen specialized-master's per-program rate (not captured)
-    "vanderbilt-master-of-accountancy",
-    "vanderbilt-master-of-marketing",
-    "vanderbilt-master-of-management",
-    "vanderbilt-master-management-health-care",
-    "vanderbilt-master-of-public-health",    # School of Medicine graduate-health rate (not captured)
-    "vanderbilt-ms-clinical-investigation",
-    "vanderbilt-master-genetic-counseling",
-    "vanderbilt-doctor-of-audiology",
-    "vanderbilt-edd-leadership-learning-organizations",  # online executive Ed.D. fixed rate (not captured)
-    "vanderbilt-ms-artificial-intelligence",             # new fully online M.S.-AI rate (not captured)
+    # New (June 2026) fully online M.S. in Artificial Intelligence — no official tuition figure
+    # is published yet (inaugural-cohort merit awards apply); omitted rather than guessed.
+    "vanderbilt-ms-artificial-intelligence",
 }
 
 
@@ -976,6 +1237,119 @@ _COST_BY_SLUG: dict[str, dict] = {
         ),
         source=_LAW_SRC[0],
         source_url=_LAW_SRC[1],
+    ),
+    # ── Owen specialized master's — flat $74,500/year (2025-26 Student Accounts grad/prof) ──
+    "vanderbilt-executive-mba": _annual_cost(
+        _OWEN_FLAT,
+        note=(
+            f"Owen Graduate School of Management Executive M.B.A. tuition: ${_OWEN_FLAT:,} per "
+            "year (2025-26 Student Accounts grad/prof rate, listed as EMBA/AMBA)."
+        ),
+        source=_GRAD_PROF_SRC[0],
+        source_url=_GRAD_PROF_SRC[1],
+    ),
+    # Master of Management — the official program page publishes a single program tuition
+    # ($76,700); this is the whole-program figure for the 9-month, one-academic-year program.
+    "vanderbilt-master-of-management": _annual_cost(
+        _MM_TUITION,
+        note=(
+            f"Owen Master of Management program tuition: ${_MM_TUITION:,} for 2026-27 (the only "
+            "rate published for this new program, on the official Master of Management page); the "
+            "program runs a single ~9-month academic year, and tuition is subject to change annually."
+        ),
+        source=_MM_SRC[0],
+        source_url=_MM_SRC[1],
+        year="2026-27",
+    ),
+    "vanderbilt-ms-finance": _annual_cost(
+        _OWEN_FLAT,
+        note=(
+            f"Owen M.S. Finance tuition: ${_OWEN_FLAT:,} per year (2025-26 Student Accounts "
+            "grad/prof rate for Owen master's, listed as MSF)."
+        ),
+        source=_GRAD_PROF_SRC[0],
+        source_url=_GRAD_PROF_SRC[1],
+    ),
+    "vanderbilt-master-of-accountancy": _annual_cost(
+        _OWEN_FLAT,
+        note=(
+            f"Owen Master of Accountancy tuition: ${_OWEN_FLAT:,} per year (2025-26 Student "
+            "Accounts grad/prof rate for Owen master's, listed as MAcc)."
+        ),
+        source=_GRAD_PROF_SRC[0],
+        source_url=_GRAD_PROF_SRC[1],
+    ),
+    "vanderbilt-master-of-marketing": _annual_cost(
+        _OWEN_FLAT,
+        note=(
+            f"Owen Master of Marketing tuition: ${_OWEN_FLAT:,} per year (2025-26 Student "
+            "Accounts grad/prof rate for Owen master's, listed as MMark)."
+        ),
+        source=_GRAD_PROF_SRC[0],
+        source_url=_GRAD_PROF_SRC[1],
+    ),
+    "vanderbilt-master-management-health-care": _annual_cost(
+        _OWEN_FLAT,
+        note=(
+            f"Owen Master of Management in Health Care (MMHC) tuition: ${_OWEN_FLAT:,} per year "
+            "(2025-26 Student Accounts grad/prof rate, listed as MMHC)."
+        ),
+        source=_GRAD_PROF_SRC[0],
+        source_url=_GRAD_PROF_SRC[1],
+    ),
+    # ── School of Medicine master's/professional — front-loaded; annual = program-total ÷ years ──
+    "vanderbilt-master-of-public-health": _annual_cost(
+        36116,  # (Year 1 $48,156 + Year 2 $24,076 = $72,232) ÷ 2 years
+        note=(
+            "School of Medicine M.P.H. tuition is front-loaded: Year 1 $48,156 and Year 2 "
+            "$24,076 (2025-26), a two-year program total of $72,232; the matcher's annual budget "
+            "input is the $36,116 average academic-year figure."
+        ),
+        source=_MED_SRC[0],
+        source_url=_MED_SRC[1],
+    ),
+    "vanderbilt-ms-clinical-investigation": _annual_cost(
+        35082,  # (Year 1 $46,776 + Year 2 $23,388 = $70,164) ÷ 2 years
+        note=(
+            "School of Medicine M.S. in Clinical Investigation tuition is front-loaded: Year 1 "
+            "$46,776 and Year 2 $23,388 (2025-26), a two-year program total of $70,164; the "
+            "matcher's annual budget input is the $35,082 average academic-year figure."
+        ),
+        source=_MED_SRC[0],
+        source_url=_MED_SRC[1],
+    ),
+    "vanderbilt-master-genetic-counseling": _annual_cost(
+        53526,  # (Year 1 $58,392 + Year 2 $48,660 = $107,052) ÷ 2 years
+        note=(
+            "School of Medicine Master of Genetic Counseling tuition is front-loaded: Year 1 "
+            "$58,392 and Year 2 $48,660 (2025-26 Student Accounts medical table), a two-year "
+            "program total of $107,052; the matcher's annual budget input is the $53,526 average "
+            "academic-year figure."
+        ),
+        source=_MED_SRC[0],
+        source_url=_MED_SRC[1],
+    ),
+    "vanderbilt-doctor-of-audiology": _annual_cost(
+        38952,  # (3 × $48,720 + Year 4 $9,648 = $155,808) ÷ 4 years
+        note=(
+            "Doctor of Audiology (Au.D.) tuition: $48,720 per year for Years 1-3 and $9,648 for "
+            "Year 4 (2025-26 Student Accounts medical table), a four-year program total of "
+            "$155,808; the matcher's annual budget input is the $38,952 average academic-year "
+            "figure."
+        ),
+        source=_MED_SRC[0],
+        source_url=_MED_SRC[1],
+    ),
+    # ── Peabody online Ed.D. — per-credit billing; annual = program total ÷ program years ──
+    "vanderbilt-edd-leadership-learning-organizations": _annual_cost(
+        43290,  # $2,405/credit × 54 credits = $129,870 program total ÷ 3 years
+        note=(
+            "Peabody online Ed.D. tuition is $2,405 per credit hour (2025-26); the 54-credit "
+            "program totals $129,870, billed across roughly three years, so the matcher's annual "
+            "budget input is the $43,290 average academic-year figure."
+        ),
+        source=_PEABODY_ONLINE_SRC[0],
+        source_url=_PEABODY_ONLINE_SRC[1],
     ),
 }
 
@@ -1331,6 +1705,99 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
         ],
         "disclaimer": "Aggregated and paraphrased from public third-party and official sources — not individual verbatim reviews.",
     },
+    "vanderbilt-master-science-nursing": {
+        "summary": (
+            "Vanderbilt University School of Nursing's M.S.N. is among the most decorated "
+            "advanced-practice programs in the country — the school states its master's program is "
+            "ranked the nation's #5 graduate nursing program — and student and third-party reviews "
+            "consistently praise the faculty mentorship, simulation lab, and cohort support, with the "
+            "school reporting that about 97% of graduates are employed in advanced practice after "
+            "graduation. The common cautions are cost and the largely-online delivery model: nursing "
+            "tuition is billed at roughly $2,057 per credit hour, so a full nurse-practitioner specialty "
+            "is a substantial investment, and most specialties use online coursework with brief "
+            "on-campus intensives and locally-arranged clinical placements rather than a traditional "
+            "in-person classroom."
+        ),
+        "themes": [
+            {"label": "Top-ranked master's program", "sentiment": "positive",
+             "detail": "Vanderbilt states its M.S.N. is ranked the nation's #5 graduate nursing program, with a deep menu of nurse-practitioner specialties."},
+            {"label": "Strong advanced-practice employment", "sentiment": "positive",
+             "detail": "The school reports roughly 97% of graduates employed in advanced practice nursing after graduation."},
+            {"label": "Simulation and clinical training", "sentiment": "positive",
+             "detail": "Hands-on learning anchored by a well-regarded simulation lab and supervised clinical hours across the specialties."},
+            {"label": "High per-credit cost", "sentiment": "caution",
+             "detail": "Nursing tuition is about $2,057 per credit hour (2025-26), so a full specialty is expensive relative to many M.S.N. programs."},
+            {"label": "Largely-online delivery", "sentiment": "mixed",
+             "detail": "Most specialties use online coursework with brief on-campus intensives and local clinical placements — convenient for working RNs but not a traditional on-campus experience; confirm placement logistics."},
+        ],
+        "sources": [
+            {"label": "Vanderbilt School of Nursing — MSN program (ranking + outcomes)", "url": "https://nursing.vanderbilt.edu/programs/msn/"},
+            {"label": "U.S. News — Vanderbilt Best Nursing Schools", "url": "https://www.usnews.com/best-graduate-schools/top-nursing-schools/vanderbilt-university-33271"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from public third-party and official sources — not individual verbatim reviews.",
+    },
+    "vanderbilt-master-of-marketing": {
+        "summary": (
+            "Vanderbilt Owen's Master of Marketing is a 10-month, STEM-certified program that "
+            "Poets&Quants frames as pairing consumer psychology with marketing analytics. Official "
+            "employment reports show solid but not elite outcomes: the program reports that 84% of "
+            "the Class of 2025 accepted an offer within six months of graduation, after the Class of "
+            "2024 (a record 71 students) hit 90% across 56 employers at an average base salary of "
+            "about $61,656. The honest cautions are modest salaries relative to finance- or "
+            "consulting-oriented master's, a placement process that leans on personal networks and "
+            "alumni referrals, and a Southern/regional concentration of where graduates land."
+        ),
+        "themes": [
+            {"label": "STEM-certified, analytics-forward", "sentiment": "positive",
+             "detail": "The program is STEM-certified and blends consumer psychology with marketing analytics, giving international graduates extended OPT and a differentiator (Poets&Quants)."},
+            {"label": "Solid placement rate", "sentiment": "positive",
+             "detail": "The program reports 84% of the Class of 2025 accepting an offer within six months (90% for the Class of 2024, hired across 56 employers)."},
+            {"label": "Modest salaries", "sentiment": "caution",
+             "detail": "Average base salary about $61,656 (Class of 2024) — lower than top finance- or consulting-oriented specialized master's."},
+            {"label": "Network-dependent recruiting", "sentiment": "mixed",
+             "detail": "Graduates report leaning on personal networks and alumni/faculty referrals for placement, so self-driven networking matters alongside on-campus recruiting."},
+            {"label": "Small, growing cohort", "sentiment": "positive",
+             "detail": "A record class of 71 in 2024 — small enough for one-on-one career coaching within Owen's tight community."},
+        ],
+        "sources": [
+            {"label": "Vanderbilt Business — Master of Marketing (Class of 2025 placement)", "url": "https://business.vanderbilt.edu/master-of-marketing/"},
+            {"label": "Poets&Quants — Vanderbilt Owen Master of Marketing profile", "url": "https://poetsandquants.com/specialized-master/vanderbilt-universitys-owen-graduate-school-of-management-master-of-marketing/"},
+            {"label": "Vanderbilt Business — Master of Marketing Class of 2024 employment outcomes", "url": "https://business.vanderbilt.edu/news/2025/03/03/vanderbilt-master-of-marketing-class-of-2024-exceptional-career-success-and-employment-outcomes/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from public third-party and official sources — not individual verbatim reviews.",
+    },
+    "vanderbilt-master-management-health-care": {
+        "summary": (
+            "Vanderbilt Owen's Master of Management in Health Care (MMHC) is a part-time graduate "
+            "management degree built for working clinicians and administrators, delivered through "
+            "Thursday-evening online core classes plus one in-person weekend per month over roughly a "
+            "year. Poets&Quants and Eduniversal profile it as a leading healthcare-management master's, "
+            "and its signature strength is a deliberately balanced cohort — roughly a third physicians, "
+            "a third nurses and other clinicians, and a third non-clinical administrators — that drives "
+            "cross-disciplinary peer learning and a real-world capstone strategy project. The honest "
+            "cautions: it is a small program admitting only a few dozen students a year, it expects "
+            "several years of prior work experience, and career outcomes are framed qualitatively "
+            "(salary growth, expanded responsibility, executive credibility) rather than with published "
+            "median-salary figures."
+        ),
+        "themes": [
+            {"label": "Built for working clinicians", "sentiment": "positive",
+             "detail": "Designed for practicing physicians, nurses, and administrators; Thursday-evening online core plus one in-person weekend per month over about a year lets students keep working."},
+            {"label": "Deliberately balanced cohort", "sentiment": "positive",
+             "detail": "Roughly a third physicians, a third nurses/other clinicians, and a third non-clinical administrators — a structured diversity that fuels cross-disciplinary learning."},
+            {"label": "Applied capstone", "sentiment": "positive",
+             "detail": "A team-based, real-world capstone strategy project anchors the curriculum; the school reports about 9 in 10 alumni would recommend the program."},
+            {"label": "Small cohort", "sentiment": "caution",
+             "detail": "The program admits only a few dozen students a year — a limited network and seat count relative to larger health-management programs."},
+            {"label": "Experience expected; qualitative outcomes", "sentiment": "mixed",
+             "detail": "Candidates are expected to bring several years of work experience, and outcomes are described as promotions and added responsibility rather than published placement or salary statistics."},
+        ],
+        "sources": [
+            {"label": "Poets&Quants — Vanderbilt Owen MMHC profile", "url": "https://poetsandquants.com/specialized-master/vanderbilt-universitys-owen-graduate-school-management-master-management-health-care/"},
+            {"label": "Vanderbilt Business — Master of Management in Health Care", "url": "https://business.vanderbilt.edu/master-of-management-in-healthcare/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from public third-party and official sources — not individual verbatim reviews.",
+    },
 }
 
 
@@ -1348,6 +1815,8 @@ def _program_standard(slug: str, spec: dict) -> dict:
     ]
     if spec["degree_type"] != "bachelors" and not _grad_has_verified_tuition(spec):
         omitted.append("cost_data.tuition_usd")
+    if slug not in _CIP_BY_SLUG:  # matcher-core CIP join key (REPAIR_BACKLOG #1); none today
+        omitted.append("cip_code")
     if slug not in _TRACKS_BY_SLUG:
         omitted.append("tracks")
     if slug not in _CLASS_PROFILE_BY_SLUG:
@@ -1559,7 +2028,8 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
         p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
-        p.who_its_for = None
+        p.cip_code = _CIP_BY_SLUG.get(slug)  # matcher-core CIP join key (REPAIR_BACKLOG #1)
+        p.who_its_for = _WHO_BY_SLUG.get(slug) or _WHO_BY_TYPE.get(spec["degree_type"])
         p.highlights = None
         p.application_deadline = (
             date(2027, 1, 1) if spec["degree_type"] == "bachelors" else None
