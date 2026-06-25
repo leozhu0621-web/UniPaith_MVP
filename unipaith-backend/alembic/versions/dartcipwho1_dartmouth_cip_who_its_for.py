@@ -25,12 +25,12 @@ Create Date: 2026-06-25
 
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from alembic import op
 from unipaith.data import dartmouth_profile
-from unipaith.models.institution import Institution
+from unipaith.models.institution import Institution, Program, ProgramPreference
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "dartcipwho1"
@@ -47,6 +47,23 @@ def upgrade() -> None:
         select(Institution).where(Institution.name == dartmouth_profile.INSTITUTION_NAME)
     )
     if inst is not None:
+        # backfill_program_preferences only INSERTS missing rows + fills EMPTY keys; it
+        # never recomputes pref_fields/pref_levels on the derived rows the fleet-wide
+        # progprefbf1 (and earlier Dartmouth) backfills created while cip_code was still
+        # NULL. So delete this institution's stale DERIVED rows first and re-derive them,
+        # so pref_fields (= fields_offered_for_program(cip_code=...)) reflects the
+        # now-populated CIP codes. Claimed / first-party rows are NEVER touched.
+        # (Mirrors berkeleycip1 / gatechcip1.)
+        prog_ids = session.scalars(
+            select(Program.id).where(Program.institution_id == inst.id)
+        ).all()
+        if prog_ids:
+            session.execute(
+                delete(ProgramPreference).where(
+                    ProgramPreference.program_id.in_(prog_ids),
+                    ProgramPreference.source == "derived",
+                )
+            )
         backfill_program_preferences(session, institution_id=inst.id)
     session.flush()
 
