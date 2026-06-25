@@ -21,12 +21,15 @@ sourced `external_reviews` on the Geisel M.D. alongside the Tuck MBA (REPAIR_BAC
 Every value is verified-or-omitted; nothing is padded.
 
 Graduate-tier tuition: stamps published 2026-27 master's/professional rates from each
-school's official tuition page — Thayer MEng $71,697 (3 terms) / MEM $95,596 (4 terms),
-Tuck MBA $87,536, Geisel M.D. $75,110, Dartmouth Institute on-campus MPH $82,232, Guarini
-full-time master's $95,596 (4 terms × $23,899), MALS full-time $66,917 — never the $66,123
-undergraduate sticker. PhD rows remain funded-omit-with-reason; the Geisel-based health
-master's (per-credit / part-time / online) and the new Master of Energy Transition are
-honestly omit-with-reason rather than estimated.
+school's official page — Thayer MEng $71,697 (3 terms) / MEM $95,596 (4 terms), Tuck MBA
+$87,536, Geisel M.D. $75,110, on-campus MPH $82,232, Chemistry MS $95,596, MALS $66,917,
+the Geisel-based health master's (Epidemiology / Health Data Science / Medical Informatics
+$68,508 · Healthcare Research $82,232 · Implementation Science $61,266), and the Master of
+Energy Transition $71,697 — never the $66,123 undergraduate sticker. Funded rows carry
+funded=True + tuition=None (the matcher reads them as funded, not sticker-pay): all PhDs,
+and — per the Guarini funding page — the Earth Sciences MS, Comparative Literature MA, and
+Sonic Practice MFA, which receive the same guaranteed tuition+stipend+insurance package as
+PhD students.
 """
 
 from __future__ import annotations
@@ -823,7 +826,7 @@ _CATALOG: list[tuple] = [
     # ── Guarini full-time research master's ──
     (
         "Chemistry", "Master of Science in Chemistry", "masters", _GUARINI,
-        "Department of Chemistry", 24, ["chemistry MS", "4+1"],
+        "Department of Chemistry", 12, ["chemistry MS", "4+1"],
         "The chemistry master's, available as a 4+1 pathway for Dartmouth undergraduates, "
         "extends coursework and independent laboratory research toward a thesis in the "
         "chemical sciences.",
@@ -851,21 +854,21 @@ _CATALOG: list[tuple] = [
     # ── Geisel-based health-sciences master's ──
     (
         "Epidemiology", "Master of Science in Epidemiology", "masters", _GEISEL,
-        "Department of Epidemiology", 24, ["epidemiology", "biostatistics"],
+        "Department of Epidemiology", 12, ["epidemiology", "biostatistics"],
         "The epidemiology master's trains students in study design, biostatistics, and "
         "causal inference to investigate the distribution and determinants of disease in "
         "populations.",
     ),
     (
         "Health Data Science", "Master of Science in Health Data Science", "masters", _GEISEL,
-        "Department of Biomedical Data Science", 24, ["health data science", "machine learning"],
+        "Department of Biomedical Data Science", 12, ["health data science", "machine learning"],
         "The health data science master's combines statistics, machine learning, and "
         "programming applied to electronic health records, genomic data, and "
         "population-health datasets.",
     ),
     (
         "Healthcare Research", "Master of Science in Healthcare Research", "masters", _GEISEL,
-        "The Dartmouth Institute for Health Policy & Clinical Practice", 12,
+        "The Dartmouth Institute for Health Policy & Clinical Practice", 11,
         ["healthcare research", "health services"],
         "Offered through The Dartmouth Institute, the healthcare research master's trains "
         "clinicians and scientists in health-services research methods, outcomes "
@@ -873,7 +876,7 @@ _CATALOG: list[tuple] = [
     ),
     (
         "Implementation Science", "Master of Science in Implementation Science", "masters", _GEISEL,
-        "The Dartmouth Institute for Health Policy & Clinical Practice", 24,
+        "The Dartmouth Institute for Health Policy & Clinical Practice", 9,
         ["implementation science", "improvement science"],
         "This online master's prepares health professionals to translate research into "
         "practice, covering implementation frameworks, program evaluation, and improvement "
@@ -881,7 +884,7 @@ _CATALOG: list[tuple] = [
     ),
     (
         "Medical Informatics", "Master of Science in Medical Informatics", "masters", _GEISEL,
-        "Department of Biomedical Data Science", 24, ["medical informatics", "informatics"],
+        "Department of Biomedical Data Science", 12, ["medical informatics", "informatics"],
         "The medical informatics master's studies the application of information systems and "
         "data standards to clinical care, including electronic health records, clinical "
         "decision support, and health-information exchange.",
@@ -1325,6 +1328,28 @@ _GEISEL_MD = 75110
 _MPH_ONCAMPUS = 82232
 _GUARINI_4TERM = 95596  # standard Guarini full-time (4 quarters)
 _MALS_FT_4TERM = 66917  # MALS full-time 4-quarter tuition (rounded from $66,917.20)
+_MET_TUITION = _THAYER_TERM * 3  # Master of Energy Transition — 9 months, 3 Guarini terms
+
+# Geisel / Dartmouth Health Sciences published 2026-27 master's tuition (health-sciences
+# tuition-fees page). These publish a per-program rate and are rarely funded, so they are
+# filled (matcher budget signal) rather than omitted.
+_HEALTH_MS_12MO = 68508  # MS Epidemiology / Health Data Science / Medical Informatics (12 mo)
+_HEALTH_RESEARCH_MS = 82232  # MS Healthcare Research (11 mo)
+_IMPL_SCI_FT = 61266  # MS Implementation Science, full-time (9 mo); part-time 30,633 (18 mo)
+
+# Guarini guaranteed funding (PhDs + the Earth Sciences MS, Comparative Literature MA, and
+# Sonic Practice MFA): full tuition coverage + health insurance + a 12-month stipend
+# ($49,862.40 for 2026-27). Those three master's are therefore funded-omit, NOT sticker-pay.
+_GUARINI_FUNDING_SRC = (
+    "Guarini School — Funding (PhD + funded master's packages) 2026-27",
+    "https://graduate.dartmouth.edu/financial-support/funding",
+)
+_GUARINI_STIPEND_2627 = 49862
+_FUNDED_MASTERS: set[str] = {
+    "dartmouth-earth-sciences-ms",
+    "dartmouth-comparative-literature-ms",
+    "dartmouth-sonic-practice-ms",
+}
 
 
 def _annual_grad_cost(
@@ -1423,30 +1448,61 @@ _COST_BY_SLUG: dict[str, dict] = {
         source=_GUARINI_TUITION_SRC[0],
         source_url=_GUARINI_TUITION_SRC[1],
     ),
-    "dartmouth-comparative-literature-ms": _annual_grad_cost(
-        _GUARINI_4TERM,
+    # Geisel / Dartmouth Health Sciences published per-program master's tuition.
+    "dartmouth-epidemiology-ms": _annual_grad_cost(
+        _HEALTH_MS_12MO,
         note=(
-            f"Guarini full-time graduate tuition: ${_THAYER_TERM:,} per quarter × four "
-            f"quarters (${_GUARINI_4TERM:,} annual full-time rate)."
+            f"Dartmouth Health Sciences published MS in Epidemiology tuition "
+            f"(${_HEALTH_MS_12MO:,} for the 12-month, four-term program)."
         ),
-        source=_GUARINI_TUITION_SRC[0],
-        source_url=_GUARINI_TUITION_SRC[1],
+        source=_MPH_TUITION_SRC[0],
+        source_url=_MPH_TUITION_SRC[1],
     ),
-    "dartmouth-earth-sciences-ms": _annual_grad_cost(
-        _GUARINI_4TERM,
+    "dartmouth-health-data-science-ms": _annual_grad_cost(
+        _HEALTH_MS_12MO,
         note=(
-            f"Guarini full-time graduate tuition: ${_THAYER_TERM:,} per quarter × four "
-            f"quarters (${_GUARINI_4TERM:,} annual full-time rate)."
+            f"Dartmouth Health Sciences published on-campus MS in Health Data Science "
+            f"tuition (${_HEALTH_MS_12MO:,} for the 12-month program; an online option is "
+            "also offered at a separate published rate)."
         ),
-        source=_GUARINI_TUITION_SRC[0],
-        source_url=_GUARINI_TUITION_SRC[1],
+        source=_MPH_TUITION_SRC[0],
+        source_url=_MPH_TUITION_SRC[1],
     ),
-    "dartmouth-sonic-practice-ms": _annual_grad_cost(
-        _GUARINI_4TERM,
+    "dartmouth-medical-informatics-ms": _annual_grad_cost(
+        _HEALTH_MS_12MO,
         note=(
-            f"Guarini full-time graduate tuition: ${_THAYER_TERM:,} per quarter × four "
-            f"quarters (${_GUARINI_4TERM:,} annual full-time rate; the MFA is a two-year "
-            "studio program billed at the standard Guarini full-time rate)."
+            f"Dartmouth Health Sciences published MS in Medical Informatics tuition "
+            f"(${_HEALTH_MS_12MO:,} for the 12-month, four-term program)."
+        ),
+        source=_MPH_TUITION_SRC[0],
+        source_url=_MPH_TUITION_SRC[1],
+    ),
+    "dartmouth-healthcare-research-ms": _annual_grad_cost(
+        _HEALTH_RESEARCH_MS,
+        note=(
+            f"Dartmouth Health Sciences / The Dartmouth Institute published MS in "
+            f"Healthcare Research tuition (${_HEALTH_RESEARCH_MS:,} for the 11-month program)."
+        ),
+        source=_MPH_TUITION_SRC[0],
+        source_url=_MPH_TUITION_SRC[1],
+    ),
+    "dartmouth-implementation-science-ms": _annual_grad_cost(
+        _IMPL_SCI_FT,
+        note=(
+            f"Dartmouth Health Sciences published MS in Implementation Science full-time "
+            f"tuition (${_IMPL_SCI_FT:,} for the 9-month program; a half-time 18-month option "
+            "is billed at $30,633)."
+        ),
+        source=_MPH_TUITION_SRC[0],
+        source_url=_MPH_TUITION_SRC[1],
+    ),
+    # Master of Energy Transition — 9-month, three-term Guarini program at the uniform
+    # Guarini per-quarter rate.
+    "dartmouth-energy-transition-ms": _annual_grad_cost(
+        _MET_TUITION,
+        note=(
+            f"Master of Energy Transition tuition: ${_THAYER_TERM:,} per quarter × three "
+            f"quarters (${_MET_TUITION:,} for the nine-month, three-term Guarini program)."
         ),
         source=_GUARINI_TUITION_SRC[0],
         source_url=_GUARINI_TUITION_SRC[1],
@@ -1874,11 +1930,28 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 "source_url": _COST_SRC[1],
                 "year": "2025-26",
             }
+        elif slug in _FUNDED_MASTERS:
+            # Guarini GUARANTEES these three master's (Earth Sciences MS, Comparative
+            # Literature MA, Sonic Practice MFA) the same package as PhDs — full tuition
+            # coverage + health insurance + a 12-month stipend — so they are funded, NOT
+            # sticker-pay. tuition=None keeps the matcher from scoring them as expensive
+            # (funding is a separate signal). Verified on the Guarini funding page.
+            p.tuition = None
+            p.cost_data = {
+                "funded": True,
+                "note": (
+                    "Guarini guarantees this master's the same funding package as PhD "
+                    f"students: full tuition coverage, health insurance, and a 12-month "
+                    f"stipend (${_GUARINI_STIPEND_2627:,} for 2026-27). Admitted students "
+                    "do not pay the tuition sticker."
+                ),
+                "source": _GUARINI_FUNDING_SRC[0],
+                "source_url": _GUARINI_FUNDING_SRC[1],
+            }
         else:
-            # Tuition honestly omitted-with-reason: PhDs are funded; the Geisel-based
-            # health master's bill per-credit / part-time / online; the new Master of
-            # Energy Transition publishes its own rate. Never the undergrad sticker copied
-            # down, never an estimate (SKILL omit-never-guess).
+            # PhDs are funded (tuition waived); a verified sticker is published on the
+            # school's tuition schedule. Never the undergrad sticker copied down, never an
+            # estimate (SKILL omit-never-guess).
             p.tuition = None
             school_src = _SCHOOL_WEBSITE.get(spec["school"], "https://graduate.dartmouth.edu/")
             p.cost_data = {
@@ -1890,10 +1963,8 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                     "published sticker."
                     if spec["degree_type"] == "phd"
                     else (
-                        "Tuition for this professional/health-sciences master's is "
-                        "published on the program's official cost page (per-credit, "
-                        "part-time, or program-specific); a verified per-program figure is "
-                        "omitted here rather than estimated."
+                        "Tuition for this program is published on its official cost page; "
+                        "a verified per-program figure is omitted here rather than estimated."
                     )
                 ),
                 "source": f"{spec['school']} — official program page",

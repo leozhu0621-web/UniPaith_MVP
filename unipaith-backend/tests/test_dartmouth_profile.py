@@ -14,16 +14,14 @@ from unipaith.profile_standard.anti_stub import (
     template_slot_artifacts,
 )
 
-# Master's whose published tuition is honestly omitted-with-reason (per-credit /
-# part-time / online health-sciences master's + the new Master of Energy Transition);
-# never the undergrad sticker, never an estimate (SKILL omit-never-guess).
+# Master's with no payable tuition figure: the three Guarini-FUNDED master's (Earth
+# Sciences MS, Comparative Literature MA, Sonic Practice MFA) receive the full PhD-style
+# funding package, so they carry funded=True + tuition=None rather than a sticker. Every
+# other master's (incl. the Geisel health master's + MET) carries its published rate.
 _TUITION_OMITTED_MASTERS = {
-    "dartmouth-epidemiology-ms",
-    "dartmouth-health-data-science-ms",
-    "dartmouth-healthcare-research-ms",
-    "dartmouth-implementation-science-ms",
-    "dartmouth-medical-informatics-ms",
-    "dartmouth-energy-transition-ms",
+    "dartmouth-earth-sciences-ms",
+    "dartmouth-comparative-literature-ms",
+    "dartmouth-sonic-practice-ms",
 }
 
 
