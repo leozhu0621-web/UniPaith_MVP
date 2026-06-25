@@ -20,6 +20,62 @@ async def test_signup_student(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_signup_persists_first_name(client: AsyncClient, db_session):
+    """todo 3.1 — a first name collected at signup lands on the student profile,
+    so Uni + My Space can greet by name instead of the email local-part."""
+    from sqlalchemy import select
+
+    from unipaith.models.student import StudentProfile
+    from unipaith.models.user import User
+
+    resp = await client.post(
+        "/api/v1/auth/signup",
+        json={
+            "email": "named@example.com",
+            "password": "StrongP@ss1",
+            "role": "student",
+            "first_name": "  Ada  ",
+        },
+    )
+    assert resp.status_code == 201
+    user = (
+        await db_session.execute(select(User).where(User.email == "named@example.com"))
+    ).scalar_one()
+    profile = (
+        await db_session.execute(select(StudentProfile).where(StudentProfile.user_id == user.id))
+    ).scalar_one()
+    assert profile.first_name == "Ada"  # trimmed
+
+
+@pytest.mark.asyncio
+async def test_signup_first_name_optional(client: AsyncClient, db_session):
+    """first_name stays optional at the API level (backward compatible). A blank
+    name is normalized to NULL so the greeting falls back to name-less, not ''."""
+    from sqlalchemy import select
+
+    from unipaith.models.student import StudentProfile
+    from unipaith.models.user import User
+
+    resp = await client.post(
+        "/api/v1/auth/signup",
+        json={
+            "email": "noname@example.com",
+            "password": "StrongP@ss1",
+            "role": "student",
+            "first_name": "   ",
+        },
+    )
+    assert resp.status_code == 201
+    user = (
+        await db_session.execute(select(User).where(User.email == "noname@example.com"))
+    ).scalar_one()
+    profile = (
+        await db_session.execute(select(StudentProfile).where(StudentProfile.user_id == user.id))
+    ).scalar_one()
+    assert profile.first_name is None
+
+
+@pytest.mark.asyncio
 async def test_signup_institution_admin(client: AsyncClient):
     resp = await client.post(
         "/api/v1/auth/signup",

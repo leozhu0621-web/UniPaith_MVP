@@ -11,6 +11,11 @@ class SignupRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8, max_length=128)
     role: Literal["student", "institution_admin"]
+    # Collected on the signup form so Uni + My Space can greet the student by
+    # name instead of their email local-part (todo 3.1). Optional + length-bounded:
+    # a blank/absent name simply leaves the profile name unset (greeting falls back
+    # to name-less), so the contract stays backward-compatible.
+    first_name: str | None = Field(default=None, max_length=100)
 
 
 class SignupResponse(BaseModel):

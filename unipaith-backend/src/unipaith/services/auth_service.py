@@ -49,11 +49,16 @@ class AuthService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def signup(self, email: str, password: str, role: str) -> dict[str, Any]:
+    async def signup(
+        self, email: str, password: str, role: str, first_name: str | None = None
+    ) -> dict[str, Any]:
         existing = await self.db.execute(select(User).where(User.email == email))
         if existing.scalar_one_or_none():
             raise ConflictException("Email already registered")
 
+        # Normalize the (optional) display name once: a blank/whitespace name is
+        # treated as absent so the greeting falls back to name-less, not "".
+        clean_first_name = (first_name or "").strip() or None
         cognito_sub = str(uuid.uuid4())
 
         if not settings.cognito_bypass:
@@ -65,7 +70,7 @@ class AuthService:
                     Password=password,
                     UserAttributes=[
                         {"Name": "email", "Value": email},
-                        {"Name": "name", "Value": email.split("@")[0]},
+                        {"Name": "name", "Value": clean_first_name or email.split("@")[0]},
                     ],
                 )
                 cognito_sub = resp["UserSub"]
@@ -86,7 +91,7 @@ class AuthService:
         await self.db.refresh(user)
 
         if role == "student":
-            profile = StudentProfile(user_id=user.id)
+            profile = StudentProfile(user_id=user.id, first_name=clean_first_name)
             self.db.add(profile)
             await self.db.flush()
         return {"user_id": user.id, "email": user.email, "role": user.role.value}

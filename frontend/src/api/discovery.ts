@@ -77,6 +77,35 @@ export interface DiscoveryStreamHandlers {
 }
 
 /**
+ * Authenticated fetch for the SSE endpoints. These bypass the axios interceptor
+ * (EventSource/ReadableStream can't go through axios), so the 401→refresh→retry
+ * that keeps the rest of the app signed in has to live here too (todo 1.3).
+ * Without it the token-sensitive Uni chat dropped to its fallback every time the
+ * 1h access token lapsed. Attaches the current token, and on a 401 refreshes once
+ * and retries before giving up.
+ */
+async function authedStreamFetch(url: string, init: RequestInit): Promise<Response> {
+  const withToken = (token: string | null): RequestInit => ({
+    ...init,
+    headers: {
+      ...(init.headers as Record<string, string> | undefined),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  })
+  let res = await fetch(url, withToken(useAuthStore.getState().accessToken))
+  if (res.status === 401) {
+    try {
+      const fresh = await useAuthStore.getState().refreshAccessToken()
+      res = await fetch(url, withToken(fresh))
+    } catch {
+      /* fall through — consumeDiscoveryStream throws on !res.ok and the caller
+         falls back to the non-streaming path. */
+    }
+  }
+  return res
+}
+
+/**
  * SSE streaming counterpart to `appendMessage` (Spec 77 §6). Consumes the
  * backend `/messages/stream` Server-Sent-Events endpoint via fetch + a
  * ReadableStream reader (EventSource can't POST). Invokes the handlers as
@@ -92,13 +121,11 @@ export async function streamDiscoveryMessage(
   handlers: DiscoveryStreamHandlers,
   signal?: AbortSignal,
 ): Promise<{ gotStudentEcho: boolean }> {
-  const token = useAuthStore.getState().accessToken
-  const res = await fetch(`${API_BASE}${BASE}/sessions/${sessionId}/messages/stream`, {
+  const res = await authedStreamFetch(`${API_BASE}${BASE}/sessions/${sessionId}/messages/stream`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Accept: 'text/event-stream',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(body),
     signal,
@@ -115,12 +142,10 @@ export async function streamDiscoveryOpener(
   handlers: DiscoveryStreamHandlers,
   signal?: AbortSignal,
 ): Promise<{ gotStudentEcho: boolean }> {
-  const token = useAuthStore.getState().accessToken
-  const res = await fetch(`${API_BASE}${BASE}/opener/stream`, {
+  const res = await authedStreamFetch(`${API_BASE}${BASE}/opener/stream`, {
     method: 'POST',
     headers: {
       Accept: 'text/event-stream',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     signal,
   })
