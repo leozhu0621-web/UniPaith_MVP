@@ -73,6 +73,14 @@ class UniAgentHost:
         first_name = (snap.get("profile") or {}).get("first_name")
         if first_name:
             lines.append(f"- First name: {first_name}")
+        onboarding = snap.get("onboarding") or {}
+        if onboarding.get("stage"):
+            lines.append(f"- Stage (from setup): {onboarding['stage']}")
+        interests = onboarding.get("interests") or []
+        if interests:
+            lines.append(
+                "- Interested in (from setup): " + "; ".join(str(i) for i in interests[:4])
+            )
         goals = [g.get("specific") for g in (snap.get("goals") or []) if g.get("specific")]
         if goals:
             lines.append("- Goals so far: " + "; ".join(goals[:4]))

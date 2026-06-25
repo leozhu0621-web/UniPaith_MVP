@@ -12,6 +12,12 @@ import type { WorkshopDomain, WorkshopFeedbackRun } from '../types'
 
 const BASE = '/students/me/workshops'
 
+// Workshop feedback runs two sequential LLM calls server-side (coach + judge), so
+// it routinely exceeds the 30s default client timeout on a cold/long essay and
+// surfaces as a "Network Error". Give these known-slow endpoints a longer
+// per-request budget; everything else keeps the snappy default.
+const WORKSHOP_TIMEOUT_MS = 90_000
+
 export interface EssayFeedbackBody {
   essay_text: string
   prompt_text?: string | null
@@ -52,17 +58,19 @@ export interface TestGuidanceBody {
 export const requestEssayFeedback = (
   body: EssayFeedbackBody,
 ): Promise<WorkshopFeedbackRun> =>
-  apiClient.post(`${BASE}/essay/feedback`, body).then(r => r.data)
+  apiClient.post(`${BASE}/essay/feedback`, body, { timeout: WORKSHOP_TIMEOUT_MS }).then(r => r.data)
 
 export const requestInterviewPractice = (
   body: InterviewPracticeBody,
 ): Promise<WorkshopFeedbackRun> =>
-  apiClient.post(`${BASE}/interview/practice`, body).then(r => r.data)
+  apiClient
+    .post(`${BASE}/interview/practice`, body, { timeout: WORKSHOP_TIMEOUT_MS })
+    .then(r => r.data)
 
 export const requestTestGuidance = (
   body: TestGuidanceBody,
 ): Promise<WorkshopFeedbackRun> =>
-  apiClient.post(`${BASE}/test/guidance`, body).then(r => r.data)
+  apiClient.post(`${BASE}/test/guidance`, body, { timeout: WORKSHOP_TIMEOUT_MS }).then(r => r.data)
 
 export const listWorkshopRuns = (
   domain?: WorkshopDomain,
