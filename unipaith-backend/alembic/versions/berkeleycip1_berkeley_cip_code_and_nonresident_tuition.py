@@ -43,29 +43,44 @@ depends_on = None
 def upgrade() -> None:
     bind = op.get_bind()
     session = Session(bind=bind)
-    berkeley_profile.apply(session)
-    inst = session.scalar(
-        select(Institution).where(Institution.name == berkeley_profile.INSTITUTION_NAME)
-    )
-    if inst is not None:
-        # backfill_program_preferences only INSERTS missing rows + fills EMPTY keys; it
-        # never recomputes pref_fields/pref_levels on the derived rows the fleet-wide
-        # progprefbf1 backfill created while cip_code was still NULL. So delete this
-        # institution's stale DERIVED rows first and re-derive them, so pref_fields
-        # (= fields_offered_for_program(cip_code=...)) reflects the now-populated CIP
-        # codes. Claimed / first-party rows are NEVER touched. (Mirrors gatechcip1.)
-        prog_ids = session.scalars(
-            select(Program.id).where(Program.institution_id == inst.id)
-        ).all()
-        if prog_ids:
-            session.execute(
-                delete(ProgramPreference).where(
-                    ProgramPreference.program_id.in_(prog_ids),
-                    ProgramPreference.source == "derived",
-                )
+    # Run the (idempotent) data re-apply inside a SAVEPOINT bounded by the
+    # lock_timeout set in env.py. If it can't get its locks quickly — because the
+    # already-running task's scheduler is writing these same tables during the
+    # rolling deploy — DON'T hang the container boot (that froze prod: the boot
+    # never finished migrating → ECS health-check timeout → rollback → no backend
+    # could ship). Skip the data re-apply, let the migration record as applied so
+    # the chain advances and the deploy ships; berkeley_profile.apply() is
+    # idempotent and the enrichment routine re-applies it on its next run.
+    try:
+        with session.begin_nested():
+            berkeley_profile.apply(session)
+            inst = session.scalar(
+                select(Institution).where(Institution.name == berkeley_profile.INSTITUTION_NAME)
             )
-        backfill_program_preferences(session, institution_id=inst.id)
-    session.flush()
+            if inst is not None:
+                # backfill_program_preferences only INSERTS missing rows + fills EMPTY
+                # keys; it never recomputes pref_fields/pref_levels on the derived rows
+                # the fleet-wide progprefbf1 backfill created while cip_code was still
+                # NULL. So delete this institution's stale DERIVED rows first and
+                # re-derive them, so pref_fields (= fields_offered_for_program(
+                # cip_code=...)) reflects the now-populated CIP codes. Claimed /
+                # first-party rows are NEVER touched. (Mirrors gatechcip1.)
+                prog_ids = session.scalars(
+                    select(Program.id).where(Program.institution_id == inst.id)
+                ).all()
+                if prog_ids:
+                    session.execute(
+                        delete(ProgramPreference).where(
+                            ProgramPreference.program_id.in_(prog_ids),
+                            ProgramPreference.source == "derived",
+                        )
+                    )
+                backfill_program_preferences(session, institution_id=inst.id)
+        session.flush()
+    except Exception as exc:  # noqa: BLE001 — never let a data re-apply freeze the deploy
+        # The savepoint already rolled back; the outer (alembic) transaction stays
+        # clean so this migration still records as applied.
+        print(f"  berkeleycip1: data re-apply skipped ({type(exc).__name__}: {str(exc)[:140]})")
 
 
 def downgrade() -> None:
