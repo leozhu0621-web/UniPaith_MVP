@@ -973,6 +973,11 @@ _EXPLICIT_CIP_BY_SLUG: dict[str, str] = {
     "berkeley-conservation-resource-studies-bs": "03.01",
     "berkeley-business-administration-bs": "52.02",
     "berkeley-architecture-bs": "04.02",
+    # Curated flagship undergraduate majors not present in the Scorecard FOS table —
+    # each carries its verified NCES CIP-2020 four-digit family (UNITID 110635).
+    "berkeley-data-science-bs": "30.70",  # Data Science (CDSS) — CIP 30.70 Data Science
+    "berkeley-legal-studies-bs": "22.00",  # Legal Studies (L&S) — CIP 22.00 Legal Studies, General
+    "berkeley-public-health-bs": "51.22",  # Public Health (SPH) — CIP 51.22 Public Health
 }
 for _p in PROGRAMS:
     if _p["slug"] in _EXPLICIT_CIP_BY_SLUG:
@@ -980,6 +985,20 @@ for _p in PROGRAMS:
 
 _EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
 _EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.get("cip")}
+
+# Matcher-core: every program must carry a verified CIP code (REPAIR_BACKLOG #1).
+# `cip_code` is the CIP join key the CPEF matcher uses to resolve a program's field
+# to ref_majors + the field-66 vocabulary (the interest/field signal alongside the
+# description_text embedding). Berkeley codes are NCES CIP-2020 four-digit (NN.NN)
+# families, cross-checked against the IPEDS/Scorecard program list for UNITID 110635.
+_cip_missing = [p["slug"] for p in PROGRAMS if not p.get("cip")]
+if _cip_missing:
+    raise ValueError(
+        f"Berkeley catalog missing cip_code on {len(_cip_missing)} rows: {_cip_missing[:8]}"
+    )
+_cip_bad = sorted({p["cip"] for p in PROGRAMS if not re.fullmatch(r"\d{2}\.\d{2,4}", p["cip"])})
+if _cip_bad:
+    raise ValueError(f"Berkeley catalog has malformed cip_code values: {_cip_bad}")
 
 
 def _delivery_format(raw: str) -> str:
@@ -3134,6 +3153,8 @@ def _program_standard(slug: str, spec: dict) -> dict:
     ]
     if spec["degree_type"] != "bachelors":
         omitted.append("cost_data.tuition_usd")
+    if not spec.get("cip"):
+        omitted.append("cip_code")
     if slug not in _TRACKS_BY_SLUG:
         omitted.append("tracks")
     if slug not in _CLASS_PROFILE_BY_SLUG:
@@ -3170,6 +3191,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.website_url = _WEBSITE_BY_SLUG.get(slug) or _SCHOOL_WEBSITE.get(spec["school"])
         p.school_id = school_by_name[spec["school"]].id
         p.department = spec.get("department")
+        p.cip_code = spec.get("cip")  # matcher-core CIP join key (REPAIR_BACKLOG #1)
         p.is_published = True
         p.catalog_source = "curated"
         p.delivery_format = spec.get("delivery_format", "in_person")
@@ -3183,7 +3205,12 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 p.tuition = cost_override.get("tuition_usd")
                 p.cost_data = dict(cost_override)
             else:
-                p.tuition = _TUITION_IN_STATE
+                # Berkeley is PUBLIC: the matcher's budget scalar (program.tuition) uses
+                # the NON-RESIDENT rate so the over-budget veto fires correctly for the
+                # out-of-state + international applicant majority (REPAIR_BACKLOG #2).
+                # The resident sticker stays in cost_data.tuition_usd; the breakdown
+                # carries both rates honestly.
+                p.tuition = _TUITION_OUT_OF_STATE
                 p.cost_data = {
                     "tuition_usd": _TUITION_IN_STATE,
                     "total_cost_of_attendance": _UNDERGRAD_COA,
@@ -3198,7 +3225,9 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                     "note": (
                         "In-state cost of attendance and net price; nonresidents pay an "
                         "additional nonresident supplemental tuition (out-of-state "
-                        "tuition shown in the breakdown)."
+                        "tuition shown in the breakdown). The matcher's budget signal "
+                        "(program.tuition) uses the non-resident rate for the out-of-state "
+                        "and international applicant majority."
                     ),
                     "source": "U.S. Dept. of Education College Scorecard (UNITID 110635)",
                     "source_url": "https://collegescorecard.ed.gov/school/?110635",
@@ -3239,7 +3268,9 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             spec["degree_type"] in ("masters", "certificate")
             and slug not in _PROFESSIONAL_MASTERS_SLUGS
         ):
-            p.tuition = _TUITION_GRAD
+            # PUBLIC: the matcher's budget scalar uses the non-resident graduate rate
+            # (REPAIR_BACKLOG #2); resident rate stays in cost_data.tuition_usd.
+            p.tuition = _TUITION_GRAD_OOS
             p.cost_data = {
                 "tuition_usd": _TUITION_GRAD,
                 "breakdown": {
@@ -3250,11 +3281,31 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 "note": (
                     "UC systemwide mandatory graduate tuition (California resident); "
                     "non-residents pay an additional nonresident supplemental tuition "
-                    "shown in the breakdown. Professional-degree programs may carry "
-                    "separate supplemental tuition."
+                    "shown in the breakdown. The matcher's budget signal (program.tuition) "
+                    "uses the non-resident rate for the out-of-state and international "
+                    "applicant majority. Professional-degree programs may carry separate "
+                    "supplemental tuition."
                 ),
                 "source": _GRAD_COST_SRC[0],
                 "source_url": _GRAD_COST_SRC[1],
+                "year": "2024-25",
+            }
+        elif slug in _PROFESSIONAL_MASTERS_SLUGS:
+            # CED professional master's (M.Arch / M.C.P. / M.L.A.) — billed on the CED
+            # professional schedule, same published rate as their -prof siblings
+            # (REPAIR_BACKLOG #3: these shipped tuition=null, matcher-blind on budget).
+            p.tuition = _TUITION_CED
+            p.cost_data = {
+                "tuition_usd": _TUITION_CED,
+                "funded": False,
+                "note": (
+                    f"College of Environmental Design professional master's academic-year "
+                    f"tuition and PDST (${_TUITION_CED:,}; California resident; fall + spring "
+                    "on the registrar CED professional schedule, excluding health insurance). "
+                    "Non-residents pay an additional nonresident supplemental tuition."
+                ),
+                "source": _FEE_SCHEDULE_SRC[0],
+                "source_url": _FEE_SCHEDULE_SRC[1],
                 "year": "2024-25",
             }
         else:
