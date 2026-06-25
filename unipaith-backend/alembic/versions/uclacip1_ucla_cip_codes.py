@@ -16,7 +16,7 @@ Idempotent: re-applies ``ucla_profile.apply()`` (which now assigns ``p.cip_code`
 and re-derives program-preference rows.
 
 Revision ID: uclacip1
-Revises: uclamastertuition1
+Revises: nyumastertuition1
 Create Date: 2026-06-25
 """
 
@@ -31,7 +31,7 @@ from unipaith.models.institution import Institution
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "uclacip1"
-down_revision = "uclamastertuition1"
+down_revision = "nyumastertuition1"
 branch_labels = None
 depends_on = None
 
