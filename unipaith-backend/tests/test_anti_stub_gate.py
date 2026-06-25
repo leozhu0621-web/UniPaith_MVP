@@ -27,7 +27,9 @@ from unipaith.profile_standard.anti_stub import (
 # Catalogs verified free of raw scraped-catalogue debris (course-code / requirements /
 # contact-address fragments) in description_text — REPAIR_BACKLOG CRITICAL #1 (USC, run 66).
 # Grow as scrape-built catalogs are researched per-program (UT-Austin still carries it).
-SCRAPE_DEBRIS_CLEAN = ["mit", "usc", "uiuc", "nyu", "columbia", "michigan", "cornell", "bu"]
+SCRAPE_DEBRIS_CLEAN = [
+    "mit", "usc", "uiuc", "nyu", "columbia", "michigan", "cornell", "bu", "brown",
+]
 
 # Catalogs whose per-program descriptions have been verified gold-equal (every metric 0).
 # Grow this list as catalogs are genuinely de-fabricated — never weaken the assertions.
@@ -81,6 +83,10 @@ CERTIFIED_CLEAN = [
     #             no rollup/possessive/stub rows (dartprof1)
     "emory",  # institution seed → gold + 46-program catalog; Trumba events feed;
     #             4-photo gallery; field-specific descriptions (emoryprof1)
+    "brown",  # institution seed (5 stubs) → gold + 57-program catalog across the seven
+    #             schools; Open-Curriculum A.B./Sc.B. conferred names, real departments,
+    #             field-specific per-program descriptions; Brown News + LiveWhale feeds;
+    #             5-photo verified gallery; published 2025-26 tuition per tier (brownprof1)
     "notre_dame",  # 113-program real catalog; conferred names; per-credential discipline
     #             defs; sibling-aware bodies (frame_abs150 23→0, ndpercrd1)
     # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
