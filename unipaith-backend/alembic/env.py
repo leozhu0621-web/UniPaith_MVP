@@ -134,6 +134,16 @@ def run_migrations_offline() -> None:
 def do_run_migrations(connection):  # noqa: ANN001
     context.configure(connection=connection, target_metadata=target_metadata)
     _install_idempotency_guards()
+    # Bound how long ANY migration waits for a lock. The enrichment routine ships
+    # heavy data migrations (e.g. the per-school `<school>_profile.apply()` repairs)
+    # that run at container boot; when they contend for a row/table lock held by the
+    # already-running task's scheduler they block the boot FOREVER → ECS health-check
+    # timeout → deploy rollback → no backend code can ship (this exact hang froze
+    # prod on `berkeleycip1`). lock_timeout affects only lock WAITS — a running
+    # statement is untouched — so it never kills a legitimately slow migration; a
+    # migration that hits it should catch the error and skip its idempotent data
+    # work so the chain still advances (see `berkeleycip1`).
+    connection.exec_driver_sql("SET lock_timeout = '30s'")
     with context.begin_transaction():
         context.run_migrations()
 
