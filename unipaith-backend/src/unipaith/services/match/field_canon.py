@@ -138,6 +138,39 @@ def canonical_field(text: str | None) -> str | None:
     return None
 
 
+# Onboarding-wizard interest track (frontend ``INTEREST_TRACKS`` value) → canonical
+# field token. The wizard's interest values (``cs_data_ai``, ``law_policy``, …) are
+# product groupings, NOT free-text majors, so ``canonical_field`` can't parse them —
+# this is their explicit bridge into the matcher's field vocabulary so a student who
+# only completed signup+onboarding (never Discovery) still gets a field signal + the
+# wrong-discipline veto (todo 1.1 / 3.2). CONSERVATIVE: only tracks that map cleanly
+# to a single canonical token are listed; a broad/ambiguous track (arts, performing
+# arts, humanities, education, journalism, languages, environment) is intentionally
+# OMITTED → no field token → the field signal stays permissive for it (never a
+# phantom veto). Keep the keys in lockstep with frontend ``onboarding/catalog.ts``.
+INTEREST_TRACK_FIELD: dict[str, str] = {
+    "cs_data_ai": "computer_science",
+    "comp_engineering_robotics": "computer_science",
+    "engineering": "engineering",
+    "business": "business",
+    "entrepreneurship_product": "business",
+    "health": "public_health",
+    "math_physics_chemistry_sciences": "mathematics",
+    "law_policy": "political_science",
+}
+
+
+def interest_track_to_field(track: str | None) -> str | None:
+    """Map an onboarding interest-track value to a canonical field token, or None.
+
+    Fail-soft: an unknown/ambiguous track returns None (the caller then emits no
+    field token, so it injects no phantom field signal), matching ``canonical_field``.
+    """
+    if not track:
+        return None
+    return INTEREST_TRACK_FIELD.get(str(track).strip().lower())
+
+
 def fields_offered_for_program(
     *, cip_code: str | None = None, program_name: str = "", field_of_study: str | None = None
 ) -> list[str]:

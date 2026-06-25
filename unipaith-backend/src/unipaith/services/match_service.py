@@ -737,7 +737,12 @@ class MatchService:
         no phantom signal. The visa key (`needs_visa_sponsorship`) feeds ONLY the
         student→program feasibility veto — never program→student selection.
         Fail-soft: any read error leaves the sparse vector as-is."""
-        from unipaith.models.student import AcademicRecord, StudentPreference, StudentVisaInfo
+        from unipaith.models.student import (
+            AcademicRecord,
+            StudentPreference,
+            StudentProfile,
+            StudentVisaInfo,
+        )
 
         try:
             academic = await self.db.scalar(
@@ -763,6 +768,29 @@ class MatchService:
                 canon = canonical_field(academic.field_of_study)
                 if canon:
                     sparse["field_of_study"] = canon
+
+        # todo 1.1 / 3.2 — a student onboarded through the signup wizard (never
+        # Discovery) has no AcademicRecord, so the s→p field signal AND the
+        # wrong-discipline veto would never fire. Fall back to the intended field
+        # she picked in onboarding (stored on StudentProfile.onboarding_state),
+        # mapped through the SAME canonical vocab as everything else. Gated +
+        # set-only-if-absent + fail-soft: an absent/ambiguous interest injects no
+        # field token (no phantom signal).
+        if "field_of_study" not in sparse:
+            try:
+                from unipaith.services.match.field_canon import interest_track_to_field
+
+                profile = await self.db.scalar(
+                    select(StudentProfile).where(StudentProfile.id == student_id)
+                )
+                answers = ((profile.onboarding_state or {}).get("answers") or {}) if profile else {}
+                for interest in answers.get("interests") or []:
+                    token = interest_track_to_field(interest)
+                    if token:
+                        sparse["field_of_study"] = token
+                        break
+            except Exception:
+                pass
 
         # AI Structure (Spec 3 §3) — typed-fit student constraints from the
         # StudentPreference row. Each fuels a dormant matcher signal:
