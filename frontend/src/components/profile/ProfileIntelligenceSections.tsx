@@ -30,10 +30,12 @@ function sectionTitle(key: string) {
   return SECTION_LABELS[key] ?? key.replace(/_/g, ' ')
 }
 
-function sourceLabel(finding: ProfileIntelligenceFinding) {
+function sourceLabel(finding: ProfileIntelligenceFinding): string | null {
   if (finding.source_type === 'fact') return 'Sourced fact'
   if (finding.source_type === 'institution_confirmed') return 'Institution confirmed'
-  return 'Inferred from evidence'
+  // 'inferred' provenance + the numeric confidence are internal enrichment
+  // signals — never surfaced to a reader as "Inferred from evidence · 76%".
+  return null
 }
 
 interface ProfileIntelligenceSectionsProps {
@@ -65,10 +67,7 @@ export default function ProfileIntelligenceSections({
               <article key={`${key}-${index}`} className="space-y-2">
                 <p className="text-sm leading-6 text-foreground">{finding.statement}</p>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                  <span>{sourceLabel(finding)}</span>
-                  {typeof finding.confidence === 'number' && (
-                    <span>{Math.round(finding.confidence * 100)}% confidence</span>
-                  )}
+                  {sourceLabel(finding) && <span>{sourceLabel(finding)}</span>}
                   {finding.evidence.slice(0, 3).map((evidence) => (
                     <a
                       key={`${evidence.label}-${evidence.url}`}

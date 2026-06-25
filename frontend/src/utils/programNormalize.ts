@@ -88,8 +88,18 @@ export function normalizeRequirements(
     note: m.note,
   })
   if (Array.isArray(raw)) return raw.filter(isObj).map(fromItem).filter(r => r.label)
-  if (isObj(raw) && Array.isArray(raw.materials))
-    return raw.materials.filter(isObj).map(fromItem).filter((r: any) => r.label)
+  if (isObj(raw)) {
+    // Canonical `materials[]`, plus common alternate list shapes a partially
+    // structured blob may carry — so real data isn't dropped to the blank
+    // "requirements not yet listed" copy just because the key isn't `materials`.
+    for (const key of ['materials', 'documents', 'required', 'items', 'requirements']) {
+      const list = (raw as Record<string, any>)[key]
+      if (Array.isArray(list)) {
+        const items = list.filter(isObj).map(fromItem).filter((r: any) => r.label)
+        if (items.length) return items
+      }
+    }
+  }
   return []
 }
 

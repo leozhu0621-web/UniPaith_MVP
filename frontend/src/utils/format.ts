@@ -14,6 +14,15 @@ export function formatDate(iso: string | null | undefined): string {
   return d ? format(d, 'MMM d, yyyy') : '—'
 }
 
+// Short, year-less date ("Jan 3"). Uses the SAME parseISO semantics as
+// formatDate so cards and detail pages never disagree by a day on a date-only
+// deadline. Empty/invalid → '' (callers gate their own fallback copy).
+export function formatDateShort(iso: string | null | undefined): string {
+  if (!iso) return ''
+  const d = valid(iso)
+  return d ? format(d, 'MMM d') : ''
+}
+
 export function formatDateTime(iso: string | null | undefined): string {
   if (!iso) return '—'
   const d = valid(iso)

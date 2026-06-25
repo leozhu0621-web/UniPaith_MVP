@@ -41,7 +41,7 @@ interface Props {
 }
 
 export default function ProgramCard({ program, saved, match, comparing, onSave, onCompare, onAskCounselor, onView, following, onToggleFollow, nextEvent, onEventClick, peerCount, onPeersClick, appStatus, viewHref }: Props) {
-  const abbrev = degreeAbbrev(program.degree_type)
+  const abbrev = degreeAbbrev(program.degree_type, program.program_name)
   const href = viewHref ?? `/s/programs/${program.id}`
   // Dual-score migration: prefer fitness_score, fall back to legacy match_score
   // (Phase E keeps match_score dual-written for one release — see CLAUDE.md).

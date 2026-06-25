@@ -38,10 +38,12 @@ beforeEach(() => {
 })
 
 describe('ScholarshipsBlock', () => {
-  it('shows the matched list with real verbatim amount + an apply link', async () => {
+  it('shows the matched list with a readable amount range + an apply link', async () => {
     renderBlock()
     expect(await screen.findByText('AACT Research Award')).toBeTruthy()
-    expect(screen.getByText('$1,000 $5,000')).toBeTruthy() // verbatim, unparsed
+    // A min/max range scraped with the separator dropped ("$1,000 $5,000") renders
+    // as a readable range — no new precision, just a separator.
+    expect(screen.getByText('$1,000 – $5,000')).toBeTruthy()
     const apply = screen.getByRole('link', { name: /apply \/ details/i })
     expect(apply.getAttribute('href')).toContain('scholarshipId=9999696')
     expect(apply.getAttribute('target')).toBe('_blank')
