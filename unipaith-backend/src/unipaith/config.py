@@ -208,7 +208,9 @@ class Settings(BaseSettings):
 
     # Spec 03 §5/§6 — provider abstraction. Default provider for all
     # agents unless a per-agent override is set in
-    # `ai_provider_per_agent`. Hot-swappable via env.
+    # `ai_provider_per_agent`. Hot-swappable via env. The Qwen-via-Together
+    # migration flips this to `opensource` (see the opensource_* block below)
+    # once OPENSOURCE_API_KEY is wired — env-only, no code change.
     ai_provider_default: str = "anthropic"
     # Per-agent overrides. JSON-encoded string in env, e.g.
     # AI_PROVIDER_PER_AGENT='{"match_rationale":"openai"}'. Empty by
@@ -266,6 +268,23 @@ class Settings(BaseSettings):
     qwen_model_batch: str = "qwen3-7b-instruct"
     qwen_embedding_model: str = "qwen3-embedding-8b"  # Matryoshka → embedding_dimension
     qwen_request_timeout_ms: int = 30000
+
+    # ── Open-weight provider — Qwen via Together AI (the migration target) ──
+    # The single LLM provider once OPENSOURCE_API_KEY is wired (see
+    # OPEN_MODEL_MIGRATION_PLAN.md). Registered + tested now; default stays
+    # `anthropic` (above) so CI + the live /goal/ml-core surface stay truthful
+    # until the deploy environment cuts over. The cutover is an env-only change —
+    # set OPENSOURCE_API_KEY, then AI_PROVIDER_DEFAULT=opensource and
+    # AI_PROVIDER_FAILOVER_CSV=opensource (→ rule_based net on failure). Reversible
+    # without a Claude key. Unlike `qwen` (the self-hosted vLLM ML-backend
+    # transport, pinned away from human-facing agents by ai/boundary.py),
+    # `opensource` is the founder-chosen home for every agent — there is no
+    # boundary pin against it.
+    opensource_api_key: str = ""
+    opensource_base_url: str = "https://api.together.xyz/v1"
+    opensource_flagship: str = "Qwen/Qwen3-235B-A22B-Instruct"
+    opensource_workhorse: str = "Qwen/Qwen3-30B-A3B-Instruct"
+    opensource_batch: str = "Qwen/Qwen3-8B"
 
     # Embedding (Voyage 3-large, paired with Anthropic for the LLM stack.
     # Note: the existing `student_features` table uses 1536-dim OpenAI vectors

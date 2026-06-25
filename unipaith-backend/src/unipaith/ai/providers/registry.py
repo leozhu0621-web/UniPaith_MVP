@@ -28,6 +28,7 @@ from unipaith.ai.boundary import enforce_policy
 from unipaith.ai.providers.anthropic_provider import AnthropicProvider
 from unipaith.ai.providers.base import AIProvider
 from unipaith.ai.providers.openai_provider import OpenAIProvider
+from unipaith.ai.providers.opensource_provider import OpenSourceProvider
 from unipaith.ai.providers.qwen_provider import QwenProvider
 from unipaith.config import settings
 
@@ -44,6 +45,11 @@ def _build_provider(name: str) -> AIProvider:
         return AnthropicProvider()
     if name == "openai":
         return OpenAIProvider()
+    if name == "opensource":
+        # The Qwen-via-Together transport — the migration target (single LLM
+        # provider once OPENSOURCE_API_KEY is wired). Lazily built; inert with no
+        # key (is_available returns False → caller runs the rule-based fallback).
+        return OpenSourceProvider()
     if name == "qwen":
         # Spec 63 — the Qwen ML backend transport. Registered + lazily built;
         # inert until `qwen_enabled` (see QwenProvider.is_available).
