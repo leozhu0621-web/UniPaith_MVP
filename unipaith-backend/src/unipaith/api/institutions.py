@@ -1714,14 +1714,14 @@ async def get_school_programs(
             "institution_name": inst.name,
             "institution_country": inst.country,
             "institution_city": inst.city,
-            "median_salary": (
-                _outcomes_int(prog, "median_salary")
-                or (inst.ranking_data or {}).get("earnings_10yr_median")
-            ),
-            "employment_rate": (
-                _outcomes_float(prog, "employment_rate")
-                or (inst.ranking_data or {}).get("graduation_rate")
-            ),
+            # Program-level outcomes ONLY — do NOT fall back to the institution's
+            # earnings_10yr_median / graduation_rate. The program search path
+            # already enforces this (it misleads students to show a school-wide
+            # "$219,550 across all graduates" as a single program's salary); this
+            # school-subunit list now matches that policy. Institution-wide figures
+            # remain available with their disclaimer on the detail page.
+            "median_salary": _outcomes_int(prog, "median_salary"),
+            "employment_rate": _outcomes_float(prog, "employment_rate"),
             "description_text": prog.description_text,
             "media_urls": prog.media_urls,
             "highlights": prog.highlights,

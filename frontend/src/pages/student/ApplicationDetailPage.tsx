@@ -273,6 +273,19 @@ export default function ApplicationDetailPage() {
   const runGuardrailScan = async () => {
     setScanning(true)
     try {
+      // Persist a locally-picked intent BEFORE the scan reads it from the server.
+      // Otherwise the fit-check still reports "set an application intent" even
+      // though the student just chose one — it only lived in local state until
+      // the separate "Save intent" button. Skip when the choice needs a rationale
+      // that hasn't been written yet (that save would be rejected).
+      const needsRationale = RATIONALE_REQUIRED.includes(intentReason)
+      if (intentReason && intentReason !== application.intent_picker && (!needsRationale || rationale)) {
+        try {
+          await intentMut.mutateAsync()
+        } catch {
+          /* surfaced by intentMut.onError; continue so the scan still runs */
+        }
+      }
       const result = await guardrailScan(appId!)
       setGuardrailResult(result)
       queryClient.invalidateQueries({ queryKey: ['application', appId] })
