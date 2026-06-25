@@ -187,6 +187,12 @@ SKIP_CATALOG_SLUGS: frozenset[str] = frozenset({
     "berkeley-multi-interdisciplinary-studies-other-bs",
     "berkeley-multi-interdisciplinary-studies-other-ms",
     "berkeley-multi-interdisciplinary-studies-other-phd",
+    # Federal CIP 05.01 "Area Studies" rollup PhD — Berkeley awards area studies at the
+    # doctoral level only as designated emphases on disciplinary Ph.D.s, never a standalone
+    # "Area Studies" doctorate, so this federal aggregation bucket has no single named
+    # degree to resolve to (the BA + MA rows ARE resolved, to American Studies / Asian
+    # Studies, in berkeley_profile). Sources: grad.berkeley.edu, asianstudies.berkeley.edu.
+    "berkeley-area-studies-phd",
     # Professional degrees modeled as explicit flagships.
     "berkeley-architecture-prof",
     "berkeley-psychology-general-bs",

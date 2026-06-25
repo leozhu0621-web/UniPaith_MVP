@@ -19,6 +19,9 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
     "Agricultural/Animal/Plant/Veterinary Science and Related Fields, Other": (
         "Interdisciplinary agricultural sciences bridging plant biology, animal science, and sustainable food systems across Rausser and campus agricultural field stations."
     ),
+    "American Studies": (
+        "Interdisciplinary study of U.S. history, identity, culture, politics, media, and the built environment, built on a humanities-and-social-science methods core and an individually designed concentration capped by a senior thesis in Berkeley's American Studies Program."
+    ),
     "Anthropology": (
         "Archaeological field schools, sociocultural ethnography, and biological anthropology with collections and research ties to the Phoebe A. Hearst Museum of Anthropology."
     ),
@@ -33,6 +36,9 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
     ),
     "Area Studies": (
         "Regional specializations — East Asia, Latin America, Middle East, and South Asia — combining language immersion with political and cultural scholarship in L&S."
+    ),
+    "Asian Studies": (
+        "Graduate study spanning Northeast, South, and Southeast Asia that pairs humanities and interpretive social-science coursework with Asian-language training through the Group in Asian Studies, housed in Berkeley's Department of East Asian Languages and Cultures."
     ),
     "Astronomy and Astrophysics": (
         "Observational and theoretical astrophysics with access to Lick Observatory, Keck partnerships, and the campus radio astronomy lab."
@@ -189,6 +195,9 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
     ),
     "History": (
         "Global and U.S. history from ancient to modern eras with strengths in intellectual, social, and environmental history in L&S."
+    ),
+    "Interdisciplinary Studies": (
+        "A research-driven liberal-arts major in which students design an individualized, cross-disciplinary course of study integrating at least three departments and complete an original senior thesis through Berkeley's Interdisciplinary Studies Field (ISF) program."
     ),
     "Information Science/Studies": (
         "Human-centered data science, information policy, and social impacts of computing in CDSS's Information School and MIDS program."

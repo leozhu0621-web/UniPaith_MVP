@@ -941,6 +941,11 @@ _EXPLICIT_DEPARTMENTS: dict[str, str] = {
     ),
     "berkeley-business-administration-bs": "Haas School of Business",
     "berkeley-architecture-bs": "Department of Architecture",
+    "berkeley-area-studies-bs": "American Studies Program",
+    "berkeley-area-studies-ms": "Group in Asian Studies",
+    "berkeley-liberal-arts-and-sciences-general-studies-and-humanities-bs": (
+        "Interdisciplinary Studies Field"
+    ),
 }
 for _p in PROGRAMS:
     if _p["slug"] in _EXPLICIT_DEPARTMENTS:
@@ -1114,6 +1119,20 @@ _EXPLICIT_FIELD_BY_SLUG: dict[str, str] = {
         "Business Administration, Management and Operations"
     ),
     "berkeley-architecture-bs": "Architecture",
+    # Federal CIP 05.01 "Area Studies" rollup resolved to Berkeley's real named degrees:
+    # the undergraduate interdisciplinary American Studies major and the graduate Group in
+    # Asian Studies M.A. (the PhD bucket is dropped — no standalone area-studies doctorate).
+    "berkeley-area-studies-bs": "American Studies",
+    "berkeley-area-studies-ms": "Asian Studies",
+    # Federal CIP 24.01 "Liberal Arts and Sciences, General Studies and Humanities"
+    # rollup → Berkeley's real Interdisciplinary Studies Field (ISF) major.
+    "berkeley-liberal-arts-and-sciences-general-studies-and-humanities-bs": (
+        "Interdisciplinary Studies"
+    ),
+    # CIP 30.20 → Berkeley's real "Global Studies" major (the degree name is "Global
+    # Studies"; the administering unit is the Global Studies Program — kept as department).
+    "berkeley-international-globalization-studies-bs": "International/Globalization Studies",
+    "berkeley-international-globalization-studies-ms": "International/Globalization Studies",
 }
 
 
@@ -1555,6 +1574,13 @@ _EXPLICIT_FULL_NAMES: dict[str, str] = {
     ),
     "berkeley-business-administration-bs": "Bachelor of Science in Business Administration",
     "berkeley-architecture-bs": "Bachelor of Arts in Architecture",
+    "berkeley-area-studies-bs": "Bachelor of Arts in American Studies",
+    "berkeley-area-studies-ms": "Master of Arts in Asian Studies",
+    "berkeley-liberal-arts-and-sciences-general-studies-and-humanities-bs": (
+        "Bachelor of Arts in Interdisciplinary Studies"
+    ),
+    "berkeley-international-globalization-studies-bs": "Bachelor of Arts in Global Studies",
+    "berkeley-international-globalization-studies-ms": "Master of Arts in Global Studies",
 }
 
 
