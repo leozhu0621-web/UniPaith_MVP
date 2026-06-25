@@ -29,6 +29,7 @@ from unipaith.ai.providers.anthropic_provider import AnthropicProvider
 from unipaith.ai.providers.base import AIProvider
 from unipaith.ai.providers.openai_provider import OpenAIProvider
 from unipaith.ai.providers.qwen_provider import QwenProvider
+from unipaith.ai.providers.together_provider import TogetherProvider
 from unipaith.config import settings
 
 logger = logging.getLogger(__name__)
@@ -48,6 +49,10 @@ def _build_provider(name: str) -> AIProvider:
         # Spec 63 — the Qwen ML backend transport. Registered + lazily built;
         # inert until `qwen_enabled` (see QwenProvider.is_available).
         return QwenProvider()
+    if name == "together":
+        # Qwen 3 via Together (managed) — the human-facing conversation provider
+        # (2026-06-25). Distinct from the self-hosted `qwen` ML backend.
+        return TogetherProvider()
     if name == "rule_based":
         # Sentinel — never actually instantiated. The AIClient short-
         # circuits to the per-agent rule-based path before reaching the

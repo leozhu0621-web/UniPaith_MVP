@@ -52,6 +52,7 @@ resource "aws_iam_role_policy" "ecs_execution_secrets" {
         aws_secretsmanager_secret.voyage_api_key.arn,
         aws_secretsmanager_secret.mcp_api_key.arn,
         aws_secretsmanager_secret.airtable_api_key.arn,
+        aws_secretsmanager_secret.together_api_key.arn,
       ]
     }]
   })
@@ -328,7 +329,7 @@ resource "aws_ecs_task_definition" "backend" {
       { name = "ANTHROPIC_DEFAULT_BATCH", value = "claude-haiku-4-5-20251001" },
       # Spec 03 §5/§6 — provider abstraction. anthropic is the default
       # for every agent. Per-agent overrides go in AI_PROVIDER_PER_AGENT_JSON.
-      { name = "AI_PROVIDER_DEFAULT", value = "anthropic" },
+      { name = "AI_PROVIDER_DEFAULT", value = "together" },
       # AI Structure — route the ML/extraction agents to the self-hosted Qwen
       # (qwen_vllm.tf). The Claude<->Qwen boundary (ai/boundary.py) keeps every
       # human-facing agent on Claude regardless; on a Qwen failure the failover
@@ -343,7 +344,13 @@ resource "aws_ecs_task_definition" "backend" {
       }) },
       # Spec 03 §9 — failover order. Try anthropic → openai → rule_based.
       # Per-attempt timeout for the LLM round trip.
-      { name = "AI_PROVIDER_FAILOVER_CSV", value = "anthropic,openai" },
+      { name = "AI_PROVIDER_FAILOVER_CSV", value = "together" },
+      # Together (Qwen 3, managed) — Uni's human-facing conversation provider.
+      # INSTANT ROLLBACK: set AI_PROVIDER_DEFAULT back to "anthropic" + re-apply.
+      { name = "TOGETHER_BASE_URL", value = "https://api.together.xyz/v1" },
+      { name = "TOGETHER_MODEL_FLAGSHIP", value = "Qwen/Qwen3-235B-A22B-Instruct-2507-FP8" },
+      { name = "TOGETHER_MODEL_WORKHORSE", value = "Qwen/Qwen3-235B-A22B-Instruct-2507-FP8" },
+      { name = "TOGETHER_MODEL_BATCH", value = "Qwen/Qwen3-30B-A3B" },
       { name = "AI_PROVIDER_FAILOVER_TIMEOUT_MS", value = "30000" },
       { name = "EMBEDDING_MODEL", value = "voyage-3-large" },
       { name = "CORS_ORIGINS", value = "[\"https://app.${var.domain_name}\"]" },
@@ -423,6 +430,12 @@ resource "aws_ecs_task_definition" "backend" {
       {
         name      = "UNIPAITH_MCP_API_KEY"
         valueFrom = aws_secretsmanager_secret.mcp_api_key.arn
+      },
+      # Together API key — Qwen 3 powers Uni's conversation. Real value set via
+      # `aws secretsmanager put-secret-value`; bootstrap is a placeholder.
+      {
+        name      = "TOGETHER_API_KEY"
+        valueFrom = aws_secretsmanager_secret.together_api_key.arn
       },
     ]
 

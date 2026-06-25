@@ -209,7 +209,7 @@ class Settings(BaseSettings):
     # Spec 03 §5/§6 — provider abstraction. Default provider for all
     # agents unless a per-agent override is set in
     # `ai_provider_per_agent`. Hot-swappable via env.
-    ai_provider_default: str = "anthropic"
+    ai_provider_default: str = "together"  # Qwen 3 via Together (2026-06-25: Uni on Qwen)
     # Per-agent overrides. JSON-encoded string in env, e.g.
     # AI_PROVIDER_PER_AGENT='{"match_rationale":"openai"}'. Empty by
     # default — every agent uses `ai_provider_default`.
@@ -219,7 +219,7 @@ class Settings(BaseSettings):
     # left-to-right; if all fail, the rule-based fallback runs. Each
     # attempt writes its own audit ledger row. Failover between LLM
     # providers is invisible to the end user.
-    ai_provider_failover_csv: str = "anthropic,openai"
+    ai_provider_failover_csv: str = "together"  # Qwen-only; rule_based net on failure
     ai_provider_failover_timeout_ms: int = 30000
 
     # ── Uni managed agent (platform.claude.com) ──
@@ -266,6 +266,16 @@ class Settings(BaseSettings):
     qwen_model_batch: str = "qwen3-7b-instruct"
     qwen_embedding_model: str = "qwen3-embedding-8b"  # Matryoshka → embedding_dimension
     qwen_request_timeout_ms: int = 30000
+
+    # ── Together (Qwen 3, managed) — the human-facing conversation provider ──
+    # 2026-06-25 product decision: Uni's conversation runs on Qwen via Together's
+    # managed OpenAI-compatible API. Distinct from the self-hosted `qwen` ML
+    # backend above. Confirm model IDs with scripts/verify_together_models.py.
+    together_api_key: str = ""
+    together_base_url: str = "https://api.together.xyz/v1"
+    together_model_flagship: str = "Qwen/Qwen3-235B-A22B-Instruct-2507-FP8"
+    together_model_workhorse: str = "Qwen/Qwen3-235B-A22B-Instruct-2507-FP8"
+    together_model_batch: str = "Qwen/Qwen3-30B-A3B"
 
     # Embedding (Voyage 3-large, paired with Anthropic for the LLM stack.
     # Note: the existing `student_features` table uses 1536-dim OpenAI vectors

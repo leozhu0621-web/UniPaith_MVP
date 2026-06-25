@@ -125,7 +125,7 @@ def test_human_facing_failover_chain_never_includes_qwen(monkeypatch):
     order = list_failover_order("orchestrator")
     names = [p.name for p in order]
     assert "qwen" not in names
-    assert names[0] == "anthropic"  # the pinned preferred leads the chain
+    assert names[0] == "together"  # the default preferred leads the chain
 
 
 # ── The Qwen provider is registered but inert by default ─────────────────────

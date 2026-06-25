@@ -249,20 +249,20 @@ MODEL_ROSTER: tuple[dict, ...] = (
     },
     {
         "task": "Advisor chatbot (61)",
-        "model": "Claude Sonnet / Haiku",
-        "provider": "anthropic",
+        "model": "Qwen 3 (via Together)",
+        "provider": "together",
         "faces_human": True,
     },
     {
         "task": "Rationale / feedback / strategy / summaries (45)",
-        "model": "Claude Sonnet / Opus",
-        "provider": "anthropic",
+        "model": "Qwen 3 (via Together)",
+        "provider": "together",
         "faces_human": True,
     },
     {
         "task": "Eval judge (62)",
-        "model": "Claude / ensemble",
-        "provider": "anthropic",
+        "model": "Qwen 3 (via Together)",
+        "provider": "together",
         "faces_human": True,
     },
 )

@@ -43,7 +43,7 @@ from unipaith.config import settings
 
 def test_provider_default_is_env_driven():
     """`AI_PROVIDER_DEFAULT=anthropic` is the configured default."""
-    assert settings.ai_provider_default == "anthropic"
+    assert settings.ai_provider_default == "together"
 
 
 def test_anthropic_provider_registered_under_name():
@@ -260,8 +260,8 @@ def test_failover_csv_parses_to_ordered_providers(monkeypatch):
     reset_registry()
     order = list_failover_order(agent="rationale")
     names = [p.name for p in order]
-    # First slot is the agent's preferred provider (default anthropic).
-    assert names[0] == "anthropic"
+    # First slot is the agent's preferred provider (default together).
+    assert names[0] == "together"
     # Failover provider only appears when it's actually available; in
     # CI with no OPENAI_API_KEY this is filtered out (correct per spec
     # so we don't burn a hop on a known no-op).

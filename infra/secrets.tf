@@ -116,3 +116,21 @@ resource "aws_secretsmanager_secret_version" "airtable_api_key" {
     ignore_changes = [secret_string]
   }
 }
+
+# --- Together API key (Qwen 3 — Uni's human-facing conversation) ---
+resource "aws_secretsmanager_secret" "together_api_key" {
+  name                    = "${var.project}/${var.environment}/together-api-key"
+  recovery_window_in_days = 7
+}
+
+resource "aws_secretsmanager_secret_version" "together_api_key" {
+  secret_id = aws_secretsmanager_secret.together_api_key.id
+  # Bootstrap with the var if provided, otherwise a placeholder so apply doesn't
+  # fail before the real Together key is set. Put the real value in via the AWS
+  # console / `aws secretsmanager put-secret-value`; ignore_changes keeps a later
+  # apply from clobbering it.
+  secret_string = coalesce(var.together_api_key, "REPLACE_ME_VIA_AWS_CONSOLE")
+  lifecycle {
+    ignore_changes = [secret_string]
+  }
+}

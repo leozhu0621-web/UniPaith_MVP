@@ -98,7 +98,7 @@ def test_audit_gate_and_routing_read_live():
     assert s["qwen_registered"] is True
     assert s["qwen_enabled"] is False
     assert s["qwen_available"] is False
-    assert s["default_provider"] == "anthropic"
+    assert s["default_provider"] == "together"
     routing = payload["provider_routing"]
     assert routing["qwen_models"]["workhorse"]
     assert routing["qwen_models"]["embedding"]
@@ -111,11 +111,11 @@ def test_model_roster_respects_the_boundary():
     # No human-facing roster row is served by Qwen; every Qwen row is non-human.
     for row in roster:
         if row["faces_human"]:
-            assert row["provider"] == "anthropic"
+            assert row["provider"] == "together"
         if row["provider"] == "qwen":
             assert row["faces_human"] is False
     assert payload["summary"]["roster_qwen_rows"] > 0
-    assert payload["summary"]["roster_claude_rows"] > 0
+    assert payload["summary"]["roster_together_rows"] > 0
 
 
 def test_l3_weights_and_embeddings_read_live():
@@ -136,7 +136,7 @@ async def test_build_ml_core_endpoint_is_public(client: AsyncClient):
     body = r.json()
     assert body["summary"]["human_facing_served_by_qwen"] == 0
     assert body["summary"]["human_facing_count"] == len(boundary.HUMAN_FACING)
-    assert body["the_rule"]["headline"] == "Qwen processes. Claude communicates."
+    assert body["the_rule"]["headline"] == "Uni runs on Qwen."
 
 
 async def test_overview_includes_ml_core_surface(client: AsyncClient):

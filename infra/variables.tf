@@ -113,3 +113,11 @@ variable "voyage_api_key" {
   sensitive   = true
   default     = ""
 }
+
+# --- Together (Qwen 3 — Uni's human-facing conversation, 2026-06-25) ---
+variable "together_api_key" {
+  description = "Together API key — Qwen 3 powers Uni (orchestrator + advisory agents) via the OpenAI-compatible endpoint."
+  type        = string
+  sensitive   = true
+  default     = ""
+}

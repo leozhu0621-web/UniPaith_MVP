@@ -91,8 +91,8 @@ async def readiness_check(response: Response) -> dict:
 
     checks["ai"] = {
         "ok": ai_provider_configured(),
-        "provider": "anthropic",
-        "key_present": bool(settings.anthropic_api_key.strip()),
+        "provider": settings.ai_provider_default,
+        "key_present": bool(settings.together_api_key.strip()),
         "mock_mode": settings.ai_mock_mode,
     }
 

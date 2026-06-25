@@ -39,24 +39,23 @@ Status = str  # "live" | "partial" | "planned"
 
 # ── §1 · The rule ────────────────────────────────────────────────────────────
 THE_RULE: dict = {
-    "headline": "Qwen processes. Claude communicates.",
+    "headline": "Uni runs on Qwen.",
     "statement": (
-        "The platform runs on two models with a hard, non-negotiable boundary. "
-        "Qwen — open-source, self-hosted, tuned — is the ML backend: it embeds, "
-        "extracts, scores and synthesizes the information presented on the "
-        "frontend, and never interacts with a human directly. Claude is the "
-        "human-facing agent — the advisor chatbot and every advisory surface — "
-        "pinned to Claude by policy, not decided per-task by an eval."
+        "Uni — the advisor chatbot and every advisory surface — runs on Qwen 3, "
+        "served through Together's managed API. Qwen also powers the ML backend: "
+        "it embeds, extracts, scores and synthesizes the information shown on the "
+        "frontend. One open model family, end to end."
     ),
     "seam": (
-        "Qwen computes; Claude communicates. A match card = Qwen numbers + Claude "
-        "rationale. A program page = Qwen-synthesized facts; ask the chatbot about "
-        "it → Claude, grounded by Qwen's RAG."
+        "Qwen computes and Qwen communicates. A match card = Qwen numbers + Qwen "
+        "rationale. A program page = Qwen-synthesized facts you can ask Uni about, "
+        "grounded by Qwen's RAG."
     ),
     "why_hard": (
-        "The conversation is the brand + trust surface, so it stays Claude as a "
-        "product decision — independent of whether a tuned Qwen could match it. "
-        "The highest-stakes surface carries zero Qwen-migration risk."
+        "Running the conversation on an open model we control gives us "
+        "customization and cost control. The self-hosted Qwen ML backend stays "
+        "strictly off the human-facing path; if the managed provider is briefly "
+        "unavailable, a rule-based safety net answers rather than failing."
     ),
 }
 
@@ -600,6 +599,7 @@ def build_ml_core(app_or_routes) -> dict:
     roster = [dict(r) for r in boundary.MODEL_ROSTER]
     qwen_roster_rows = sum(1 for r in roster if r["provider"] == "qwen")
     claude_roster_rows = sum(1 for r in roster if r["provider"] == "anthropic")
+    together_roster_rows = sum(1 for r in roster if r["provider"] == "together")
     # Roster invariant: no human-facing roster row is served by Qwen.
     roster_boundary_ok = all(not (r["faces_human"] and r["provider"] == "qwen") for r in roster)
 
@@ -632,6 +632,7 @@ def build_ml_core(app_or_routes) -> dict:
             "roster_row_count": len(roster),
             "roster_qwen_rows": qwen_roster_rows,
             "roster_claude_rows": claude_roster_rows,
+            "roster_together_rows": together_roster_rows,
             "roster_boundary_ok": roster_boundary_ok,
             "capability_count": len(CAPABILITIES),
             "capabilities_live": _cap("live"),

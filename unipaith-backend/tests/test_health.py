@@ -37,7 +37,7 @@ async def test_readiness_checks_database(client: AsyncClient):
     # todo 4.1 — the AI provider is reported (never gated). Tests run AI_MOCK_MODE,
     # so it's "ok" without a real key.
     assert checks["ai"]["ok"] is True
-    assert checks["ai"]["provider"] == "anthropic"
+    assert checks["ai"]["provider"] == "together"
     assert checks["ai"]["mock_mode"] is True
 
 
