@@ -35,23 +35,26 @@ interface Props {
 export default function DiscoverRail({ followedIds, onToggleFollow, onOpenTab, onManageFollowing }: Props) {
   const qc = useQueryClient()
   const navigate = useNavigate()
+  // retry once: a single transient blip otherwise LATCHES the permanent
+  // "Couldn't load · Retry" row (the three rail boxes the QA flagged) with no
+  // auto-recovery. One retry lets a momentary hiccup self-heal.
   const { data: feed, isError: feedError, refetch: refetchFeed } = useQuery({
     queryKey: ['connect-feed-rail'],
     queryFn: () => getConnectFeed('recent', undefined, { limit: 8 }),
     staleTime: 5 * 60 * 1000,
-    retry: false,
+    retry: 1,
   })
   const { data: eventsData, isError: eventsError, refetch: refetchEvents } = useQuery({
     queryKey: ['connect-events', 'upcoming'],
     queryFn: () => getConnectEvents('upcoming'),
     staleTime: 5 * 60 * 1000,
-    retry: false,
+    retry: 1,
   })
   const { data: deadlines, isError: deadlinesError, refetch: refetchDeadlines } = useQuery({
     queryKey: ['connect-deadline-radar'],
     queryFn: () => getConnectFeed('recent', undefined, { limit: 12, kinds: 'deadline' }),
     staleTime: 5 * 60 * 1000,
-    retry: false,
+    retry: 1,
   })
   const { data: matches = [] } = useQuery({ queryKey: ['matches'], queryFn: () => getMatches(), retry: 1, staleTime: 60_000 })
   const { data: saved } = useQuery({ queryKey: qk.savedPrograms(), queryFn: listSaved, retry: false })

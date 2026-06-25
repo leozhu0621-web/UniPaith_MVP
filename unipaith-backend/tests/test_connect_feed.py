@@ -80,6 +80,26 @@ async def test_feed_shows_posts_from_followed_only(
 
 
 @pytest.mark.asyncio
+async def test_feed_dedups_repeated_article(
+    student_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_student_user: User,
+    mock_institution_user: User,
+):
+    """Content ingest writes one post row per scope (institution + each school +
+    program sharing a feed), so the same article showed up 18-30× in a row. The
+    feed builder now collapses by content identity — one item per article."""
+    _, institution, program = await _seed(db_session, mock_student_user, mock_institution_user)
+    for _ in range(4):
+        await _publish_post(db_session, institution.id, title="CMU launches new AI center")
+    await student_client.post("/api/v1/students/me/saved", json={"program_id": str(program.id)})
+
+    feed = (await student_client.get("/api/v1/connect/feed")).json()
+    titles = [i["title"] for i in feed["items"] if i["kind"] == "post"]
+    assert titles.count("CMU launches new AI center") == 1, "repeated article collapsed to one item"
+
+
+@pytest.mark.asyncio
 async def test_mute_suppresses_posts(
     student_client: AsyncClient,
     db_session: AsyncSession,

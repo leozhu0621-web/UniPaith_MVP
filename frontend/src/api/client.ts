@@ -110,8 +110,16 @@ apiClient.interceptors.response.use(
       } catch (refreshErr) {
         isRefreshing = false
         onRefreshFailed(refreshErr)
-        store.getState().logout()
-        window.location.href = '/login'
+        // Only end the session when the refresh was genuinely REJECTED (invalid /
+        // expired refresh token → the backend maps every Cognito refresh failure
+        // to a 400). A transient network blip or 5xx on the refresh call must NOT
+        // dump the student to /login mid-session and lose their place — surface
+        // the original error and let the next request retry the refresh.
+        const rStatus = (refreshErr as { response?: { status?: number } })?.response?.status
+        if (rStatus === 400 || rStatus === 401) {
+          store.getState().logout()
+          window.location.href = '/login'
+        }
         return Promise.reject(error)
       }
     }

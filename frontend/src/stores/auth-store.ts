@@ -245,8 +245,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isAuthenticated: true,
         isLoading: false,
       })
-    } catch {
-      get().logout()
+    } catch (err) {
+      // Only end the session on a real auth failure (invalid/expired refresh
+      // token → 400/401). A transient network/5xx blip on boot must NOT log the
+      // student out and dump them at /login — keep the refresh token so the next
+      // request's interceptor can retry once the network recovers.
+      const status = (err as { response?: { status?: number } })?.response?.status
+      if (status === 400 || status === 401) {
+        get().logout()
+      }
       set({ isLoading: false })
     }
   },
