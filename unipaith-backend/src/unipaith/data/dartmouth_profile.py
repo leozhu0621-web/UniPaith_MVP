@@ -9,18 +9,24 @@ The institution-level federal seed already wrote admit_rate, avg_net_price,
 median_earnings_10yr, completion_rate_4yr_150pct, location, ownership, the campus-photo
 gallery and media_credit; ``apply`` shallow-merges the remaining required fields onto it.
 
-Scope note (resumption clause, SKILL §"Scope & resumption"): Dartmouth was a 5-stub
-institution seed. This pass takes the INSTITUTION fully to gold and replaces the stubs
-with a real, verified, field-specific catalog across all five degree-granting schools.
-The full Guarini graduate catalog (the remaining PhD/master's programs) and per-program
-review depth are IN-FLIGHT for the next run — recorded honestly, never padded.
+Scope note: Dartmouth was a 5-stub institution seed. Earlier passes took the INSTITUTION
+to gold and built the undergraduate + flagship graduate catalog. This pass (2026-06-25)
+FINISHES the in-flight deferral — the full Guarini graduate catalog (Math/Earth
+Sciences/EEES/MCB/QBS/Computational Science/Integrative Neuroscience/Health Policy PhDs +
+Chemistry MS, Comparative Literature MA, Earth Sciences MS, MFA in Sonic Practice, the five
+Geisel-based health-sciences master's, and the Master of Energy Transition) — and adds the
+matcher-core + universal-depth fields the prior passes left null: `cip_code` on EVERY
+program (REPAIR_BACKLOG #1), `who_its_for` on EVERY program (REPAIR_BACKLOG #4), and a
+sourced `external_reviews` on the Geisel M.D. alongside the Tuck MBA (REPAIR_BACKLOG #5).
+Every value is verified-or-omitted; nothing is padded.
 
-Graduate-tier tuition (2026-06-23, dartgradtuition1): stamps published 2026-27
-master's/professional rates from each school's official tuition page — Thayer MEng
-$71,697 (3 terms) / MEM $95,596 (4 terms), Tuck MBA $87,536, Geisel M.D. $75,110,
-Dartmouth Institute on-campus MPH $82,232, Guarini MS $95,596 (4 terms), MALS
-full-time $66,917 — never the $66,123 undergraduate sticker. PhD rows remain
-funded-omit-with-reason.
+Graduate-tier tuition: stamps published 2026-27 master's/professional rates from each
+school's official tuition page — Thayer MEng $71,697 (3 terms) / MEM $95,596 (4 terms),
+Tuck MBA $87,536, Geisel M.D. $75,110, Dartmouth Institute on-campus MPH $82,232, Guarini
+full-time master's $95,596 (4 terms × $23,899), MALS full-time $66,917 — never the $66,123
+undergraduate sticker. PhD rows remain funded-omit-with-reason; the Geisel-based health
+master's (per-credit / part-time / online) and the new Master of Energy Transition are
+honestly omit-with-reason rather than estimated.
 """
 
 from __future__ import annotations
@@ -36,7 +42,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Dartmouth College"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-20"
+ENRICHED_AT = "2026-06-25"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -749,6 +755,146 @@ _CATALOG: list[tuple] = [
         "graduate course of study across the humanities, sciences, and social sciences, "
         "with concentrations including cultural studies and creative writing.",
     ),
+    # ── Guarini doctoral programs (finishing the in-flight catalog) ──
+    (
+        "Mathematics", "Doctor of Philosophy in Mathematics", "phd", _GUARINI,
+        "Department of Mathematics", 60, ["mathematics PhD", "math research"],
+        "Dartmouth's mathematics PhD centers on original research in algebra, analysis, "
+        "geometry, topology, combinatorics, and applied and computational mathematics, with "
+        "small cohorts and individual faculty mentorship.",
+    ),
+    (
+        "Earth Sciences", "Doctor of Philosophy in Earth Sciences", "phd", _GUARINI,
+        "Department of Earth Sciences", 60, ["earth sciences PhD", "geoscience research"],
+        "The earth sciences PhD supports original research across geobiology, paleoclimate, "
+        "polar and glacial science, and tectonics, with extensive field and laboratory work.",
+    ),
+    (
+        "Ecology, Evolution, Environment and Society",
+        "Doctor of Philosophy in Ecology, Evolution, Environment and Society", "phd", _GUARINI,
+        "Ecology, Evolution, Environment and Society Program", 60,
+        ["EEES", "ecology", "evolution"],
+        "The Ecology, Evolution, Environment and Society program offers interdisciplinary "
+        "doctoral research connecting organismal and ecosystem biology, evolutionary "
+        "processes, and the human dimensions of environmental change.",
+    ),
+    (
+        "Molecular and Cellular Biology",
+        "Doctor of Philosophy in Molecular and Cellular Biology", "phd", _GUARINI,
+        "Molecular and Cellular Biology Program", 60, ["MCB", "molecular biology", "cell biology"],
+        "The Molecular and Cellular Biology program is an umbrella PhD whose students rotate "
+        "through laboratories in biochemistry, cancer biology, microbiology and immunology, "
+        "and molecular and systems biology before choosing a thesis area.",
+    ),
+    (
+        "Quantitative Biomedical Sciences",
+        "Doctor of Philosophy in Quantitative Biomedical Sciences", "phd", _GUARINI,
+        "Quantitative Biomedical Sciences Program", 60,
+        ["QBS", "biostatistics", "bioinformatics"],
+        "The Quantitative Biomedical Sciences PhD trains students in biostatistics, "
+        "bioinformatics, and computational biology to analyze genomic, clinical, and "
+        "epidemiologic data.",
+    ),
+    (
+        "Computational Science and Modeling",
+        "Doctor of Philosophy in Computational Science and Modeling", "phd", _GUARINI,
+        "Program in Computational Science", 60, ["computational science", "modeling"],
+        "This doctoral program builds expertise in numerical methods, high-performance "
+        "computing, and mathematical modeling applied to research problems across the "
+        "physical, biological, and social sciences.",
+    ),
+    (
+        "Integrative Neuroscience",
+        "Doctor of Philosophy in Integrative Neuroscience", "phd", _GUARINI,
+        "Integrative Neuroscience at Dartmouth", 60, ["neuroscience PhD", "integrative"],
+        "Integrative Neuroscience at Dartmouth is a cross-departmental PhD spanning "
+        "molecular, cellular, systems, cognitive, and behavioral neuroscience, with faculty "
+        "across the arts and sciences and the Geisel School of Medicine.",
+    ),
+    (
+        "Health Policy and Clinical Practice",
+        "Doctor of Philosophy in Health Policy and Clinical Practice", "phd", _GUARINI,
+        "The Dartmouth Institute for Health Policy & Clinical Practice", 60,
+        ["health policy PhD", "health services research"],
+        "Based at The Dartmouth Institute, this PhD trains researchers in health-services "
+        "research, health economics, and the rigorous evaluation of clinical practice and "
+        "health policy.",
+    ),
+    # ── Guarini full-time research master's ──
+    (
+        "Chemistry", "Master of Science in Chemistry", "masters", _GUARINI,
+        "Department of Chemistry", 24, ["chemistry MS", "4+1"],
+        "The chemistry master's, available as a 4+1 pathway for Dartmouth undergraduates, "
+        "extends coursework and independent laboratory research toward a thesis in the "
+        "chemical sciences.",
+    ),
+    (
+        "Comparative Literature", "Master of Arts in Comparative Literature", "masters", _GUARINI,
+        "Program in Comparative Literature", 24, ["comparative literature", "literary theory"],
+        "The comparative literature master's studies literary and cultural texts across "
+        "languages and national traditions, with training in literary theory and translation.",
+    ),
+    (
+        "Earth Sciences", "Master of Science in Earth Sciences", "masters", _GUARINI,
+        "Department of Earth Sciences", 24, ["earth sciences MS", "geoscience"],
+        "The earth sciences master's pairs advanced geoscience coursework with an "
+        "independent research project, often as preparation for doctoral study or geoscience "
+        "and environmental careers.",
+    ),
+    (
+        "Sonic Practice", "Master of Fine Arts in Sonic Practice", "masters", _GUARINI,
+        "Department of Music", 24, ["sonic practice", "sound art", "MFA"],
+        "The MFA in Sonic Practice is a studio-based terminal degree in sound art and "
+        "experimental music, integrating creative production, audio technology, and the "
+        "critical study of sound.",
+    ),
+    # ── Geisel-based health-sciences master's ──
+    (
+        "Epidemiology", "Master of Science in Epidemiology", "masters", _GEISEL,
+        "Department of Epidemiology", 24, ["epidemiology", "biostatistics"],
+        "The epidemiology master's trains students in study design, biostatistics, and "
+        "causal inference to investigate the distribution and determinants of disease in "
+        "populations.",
+    ),
+    (
+        "Health Data Science", "Master of Science in Health Data Science", "masters", _GEISEL,
+        "Department of Biomedical Data Science", 24, ["health data science", "machine learning"],
+        "The health data science master's combines statistics, machine learning, and "
+        "programming applied to electronic health records, genomic data, and "
+        "population-health datasets.",
+    ),
+    (
+        "Healthcare Research", "Master of Science in Healthcare Research", "masters", _GEISEL,
+        "The Dartmouth Institute for Health Policy & Clinical Practice", 12,
+        ["healthcare research", "health services"],
+        "Offered through The Dartmouth Institute, the healthcare research master's trains "
+        "clinicians and scientists in health-services research methods, outcomes "
+        "measurement, and health-system improvement.",
+    ),
+    (
+        "Implementation Science", "Master of Science in Implementation Science", "masters", _GEISEL,
+        "The Dartmouth Institute for Health Policy & Clinical Practice", 24,
+        ["implementation science", "improvement science"],
+        "This online master's prepares health professionals to translate research into "
+        "practice, covering implementation frameworks, program evaluation, and improvement "
+        "science.",
+    ),
+    (
+        "Medical Informatics", "Master of Science in Medical Informatics", "masters", _GEISEL,
+        "Department of Biomedical Data Science", 24, ["medical informatics", "informatics"],
+        "The medical informatics master's studies the application of information systems and "
+        "data standards to clinical care, including electronic health records, clinical "
+        "decision support, and health-information exchange.",
+    ),
+    # ── Professional master's (Guarini + Irving Institute) ──
+    (
+        "Energy Transition", "Master of Energy Transition", "masters", _GUARINI,
+        "Arthur L. Irving Institute for Energy & Society", 9, ["energy transition", "clean energy"],
+        "The Master of Energy Transition is a nine-month residential professional master's, "
+        "offered with the Arthur L. Irving Institute for Energy & Society, that integrates "
+        "energy science and technology, policy, economics, and business to prepare "
+        "clean-energy leaders.",
+    ),
 ]
 
 _SLUG_REPL = {"&": "and", " ": "-", "'": "", ".": "", ",": "", "(": "", ")": "", ":": ""}
@@ -759,6 +905,13 @@ def _slugify(text_value: str) -> str:
     for k, v in _SLUG_REPL.items():
         s = s.replace(k, v)
     return "-".join(p for p in s.split("-") if p)
+
+
+# Programs whose delivery is not the default residential `in_person`.
+_DELIVERY_BY_SLUG: dict[str, str] = {
+    "dartmouth-health-data-science-ms": "hybrid",  # on-campus & online (health-sciences page)
+    "dartmouth-implementation-science-ms": "online",  # online program (health-sciences page)
+}
 
 
 def _build_catalog() -> list[dict]:
@@ -777,7 +930,7 @@ def _build_catalog() -> list[dict]:
             "degree_type": dtype,
             "department": dept,
             "duration_months": dur,
-            "delivery_format": "in_person",
+            "delivery_format": _DELIVERY_BY_SLUG.get(slug, "in_person"),
             "keywords": list(kw),
             "description": desc,
         })
@@ -788,6 +941,350 @@ PROGRAMS: list[dict] = _build_catalog()
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 _SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 _FLAGSHIP = "dartmouth-business-administration-ms"
+
+# ── Matcher-core CIP family per program (REPAIR_BACKLOG #1) ─────────────────
+# The IPEDS/College-Scorecard CIP family (the same 2-digit.2-digit code used for the
+# breadth cross-check, UNITID 182670) resolved to each program's field — the join key the
+# CPEF matcher uses for the interest/field signal. Never a guess; one code per real field.
+_CIP_BY_SLUG: dict[str, str] = {
+    # ── School of Arts and Sciences (undergraduate A.B.) ──
+    "dartmouth-anthropology-ab": "45.02",
+    "dartmouth-art-history-ab": "50.07",
+    "dartmouth-biological-sciences-ab": "26.01",
+    "dartmouth-chemistry-ab": "40.05",
+    "dartmouth-classics-ab": "16.12",
+    "dartmouth-cognitive-science-ab": "30.25",
+    "dartmouth-computer-science-ab": "11.07",
+    "dartmouth-earth-sciences-ab": "40.06",
+    "dartmouth-economics-ab": "45.06",
+    "dartmouth-english-ab": "23.01",
+    "dartmouth-environmental-studies-ab": "03.01",
+    "dartmouth-film-and-media-studies-ab": "50.06",
+    "dartmouth-geography-ab": "45.07",
+    "dartmouth-government-ab": "45.10",
+    "dartmouth-history-ab": "54.01",
+    "dartmouth-mathematics-ab": "27.01",
+    "dartmouth-music-ab": "50.09",
+    "dartmouth-neuroscience-ab": "26.15",
+    "dartmouth-philosophy-ab": "38.01",
+    "dartmouth-physics-ab": "40.08",
+    "dartmouth-psychological-and-brain-sciences-ab": "42.27",
+    "dartmouth-quantitative-social-science-ab": "45.01",
+    "dartmouth-religion-ab": "38.02",
+    "dartmouth-sociology-ab": "45.11",
+    "dartmouth-spanish-ab": "16.09",
+    "dartmouth-studio-art-ab": "50.07",
+    "dartmouth-theater-ab": "50.05",
+    "dartmouth-linguistics-ab": "16.01",
+    "dartmouth-african-and-african-american-studies-ab": "05.02",
+    # ── Thayer School of Engineering ──
+    "dartmouth-engineering-sciences-ab": "14.01",
+    "dartmouth-engineering-ab": "14.01",
+    "dartmouth-engineering-management-ms": "15.15",
+    "dartmouth-engineering-graduate-ms": "14.01",
+    "dartmouth-engineering-doctorate-phd": "14.01",
+    # ── Tuck School of Business ──
+    "dartmouth-business-administration-ms": "52.02",
+    # ── Geisel School of Medicine ──
+    "dartmouth-medicine-prof": "51.12",
+    "dartmouth-public-health-ms": "51.22",
+    # ── Guarini School (existing) ──
+    "dartmouth-computer-science-phd": "11.07",
+    "dartmouth-computer-science-ms": "11.07",
+    "dartmouth-chemistry-phd": "40.05",
+    "dartmouth-physics-and-astronomy-phd": "40.08",
+    "dartmouth-psychological-and-brain-sciences-phd": "42.27",
+    "dartmouth-liberal-studies-ms": "24.01",
+    # ── Guarini School (this run) ──
+    "dartmouth-mathematics-phd": "27.01",
+    "dartmouth-earth-sciences-phd": "40.06",
+    "dartmouth-earth-sciences-ms": "40.06",
+    "dartmouth-ecology-evolution-environment-and-society-phd": "26.13",
+    "dartmouth-molecular-and-cellular-biology-phd": "26.04",
+    "dartmouth-quantitative-biomedical-sciences-phd": "26.11",
+    "dartmouth-computational-science-and-modeling-phd": "30.08",
+    "dartmouth-integrative-neuroscience-phd": "26.15",
+    "dartmouth-health-policy-and-clinical-practice-phd": "51.22",
+    "dartmouth-chemistry-ms": "40.05",
+    "dartmouth-comparative-literature-ms": "16.01",
+    "dartmouth-sonic-practice-ms": "50.09",
+    "dartmouth-epidemiology-ms": "26.13",
+    "dartmouth-health-data-science-ms": "30.70",
+    "dartmouth-healthcare-research-ms": "51.22",
+    "dartmouth-implementation-science-ms": "51.22",
+    "dartmouth-medical-informatics-ms": "51.27",
+    "dartmouth-energy-transition-ms": "03.02",
+}
+
+# ── "Who it's for" per program (REPAIR_BACKLOG #4, universal-depth field) ───
+# A field-specific 1–2 sentence statement of the applicant each program fits (background,
+# goals, readiness) — gold-contrast bar, never a "for students interested in {field}" stub.
+_WHO_BY_SLUG: dict[str, str] = {
+    "dartmouth-anthropology-ab": (
+        "Undergraduates curious about human cultures, evolution, and the archaeological "
+        "past who want hands-on field and lab research and a flexible path into public "
+        "health, law, museums, or graduate study."
+    ),
+    "dartmouth-art-history-ab": (
+        "Students drawn to visual culture and the history of art who want to learn directly "
+        "from museum objects at the Hood and pursue curation, conservation, the art world, "
+        "or graduate study."
+    ),
+    "dartmouth-biological-sciences-ab": (
+        "Aspiring biologists and pre-health students who want a broad foundation from "
+        "molecules to ecosystems with substantial laboratory and field research."
+    ),
+    "dartmouth-chemistry-ab": (
+        "Students headed toward chemistry, the health professions, or materials and energy "
+        "research who want rigorous core training and early access to faculty research labs."
+    ),
+    "dartmouth-classics-ab": (
+        "Students fascinated by the ancient Greek and Roman world who want to read original "
+        "languages and combine literature, history, and archaeology."
+    ),
+    "dartmouth-cognitive-science-ab": (
+        "Students who want to understand the mind across psychology, neuroscience, computer "
+        "science, linguistics, and philosophy and enjoy crossing disciplinary lines."
+    ),
+    "dartmouth-computer-science-ab": (
+        "Future software engineers, researchers, and founders who want strong fundamentals "
+        "in algorithms, systems, and machine learning with extensive undergraduate research."
+    ),
+    "dartmouth-earth-sciences-ab": (
+        "Students drawn to the planet — geology, oceans, and climate — who value fieldwork "
+        "and want paths into environmental, energy, or geoscience careers."
+    ),
+    "dartmouth-economics-ab": (
+        "Analytically minded students aiming for finance, consulting, policy, or graduate "
+        "economics who want rigorous theory plus econometrics."
+    ),
+    "dartmouth-english-ab": (
+        "Strong readers and writers who want to study literature deeply and develop their "
+        "own craft in fiction, poetry, or nonfiction."
+    ),
+    "dartmouth-environmental-studies-ab": (
+        "Students committed to sustainability who want to combine science, policy, and the "
+        "humanities to address real-world environmental problems."
+    ),
+    "dartmouth-film-and-media-studies-ab": (
+        "Students who want both to analyze moving-image culture and to make films, video, "
+        "and digital media."
+    ),
+    "dartmouth-geography-ab": (
+        "Students interested in how people, places, and environments interact who enjoy "
+        "fieldwork and geospatial analysis."
+    ),
+    "dartmouth-government-ab": (
+        "Students aiming for law, public service, policy, or political research who want "
+        "grounding in American and comparative politics, international relations, and theory."
+    ),
+    "dartmouth-history-ab": (
+        "Students who love archives, argument, and understanding the past across world "
+        "regions, with paths into law, public service, and graduate study."
+    ),
+    "dartmouth-mathematics-ab": (
+        "Students with a love of rigorous reasoning who want options in pure, applied, or "
+        "computational mathematics and quantitative careers."
+    ),
+    "dartmouth-music-ab": (
+        "Performers, composers, and scholars of music who want conservatory-style "
+        "opportunities within a liberal-arts setting."
+    ),
+    "dartmouth-neuroscience-ab": (
+        "Students fascinated by the brain and behavior — often pre-health or research-bound "
+        "— who want integrated biology, chemistry, and psychology with lab work."
+    ),
+    "dartmouth-philosophy-ab": (
+        "Students who enjoy rigorous argument about ethics, knowledge, and reality and want "
+        "sharp analytical and writing skills for law, policy, or academia."
+    ),
+    "dartmouth-physics-ab": (
+        "Students drawn to how the universe works, from quantum mechanics to astrophysics, "
+        "who want strong theory and research toward science or engineering careers."
+    ),
+    "dartmouth-psychological-and-brain-sciences-ab": (
+        "Students interested in mind, behavior, and the brain who want laboratory and "
+        "neuroimaging research with paths into health, research, or graduate study."
+    ),
+    "dartmouth-quantitative-social-science-ab": (
+        "Data-minded students who want to apply statistics and causal inference to questions "
+        "in politics, economics, and society."
+    ),
+    "dartmouth-religion-ab": (
+        "Students curious about the world's religious traditions and how belief shapes "
+        "culture, history, and politics."
+    ),
+    "dartmouth-sociology-ab": (
+        "Students interested in inequality, institutions, and social change who want both "
+        "social theory and quantitative and qualitative research methods."
+    ),
+    "dartmouth-spanish-ab": (
+        "Students who want advanced Spanish fluency and deep engagement with the literatures "
+        "and cultures of Spain and Latin America, often with study abroad."
+    ),
+    "dartmouth-studio-art-ab": (
+        "Students serious about making art who want studio-intensive training and critique "
+        "across drawing, painting, sculpture, photography, and digital media."
+    ),
+    "dartmouth-theater-ab": (
+        "Students passionate about performance and production who want hands-on training in "
+        "acting, directing, and design at the Hopkins Center."
+    ),
+    "dartmouth-linguistics-ab": (
+        "Students fascinated by how language works who want to study its structure and its "
+        "cognitive and computational dimensions."
+    ),
+    "dartmouth-african-and-african-american-studies-ab": (
+        "Students who want to study the histories, cultures, politics, and creative "
+        "expression of Africa and its diasporas across disciplines."
+    ),
+    "dartmouth-engineering-sciences-ab": (
+        "Undergraduates who want a broad, project-based engineering foundation with "
+        "liberal-arts breadth and the option to continue to the professional Bachelor of "
+        "Engineering."
+    ),
+    "dartmouth-engineering-ab": (
+        "Engineering-sciences students who want an ABET-accredited professional bachelor's "
+        "with a fifth year of design and engineering depth before industry or graduate study."
+    ),
+    "dartmouth-engineering-management-ms": (
+        "Early-career engineers and technical graduates who want to add management, finance, "
+        "and operations skills to move into product, operations, and leadership roles."
+    ),
+    "dartmouth-engineering-graduate-ms": (
+        "Engineering graduates seeking advanced technical depth and design experience as "
+        "preparation for industry practice or further research."
+    ),
+    "dartmouth-engineering-doctorate-phd": (
+        "Students pursuing original engineering research across biomedical, energy, "
+        "materials, and computational fields who want a flexible, interdisciplinary doctorate."
+    ),
+    "dartmouth-business-administration-ms": (
+        "Early-career professionals seeking a small, immersive, two-year general-management "
+        "MBA with strong consulting and finance placement and a close-knit residential "
+        "community."
+    ),
+    "dartmouth-medicine-prof": (
+        "Students committed to becoming physicians who value a small, collaborative class, "
+        "early clinical immersion, and a community- and primary-care–oriented curriculum."
+    ),
+    "dartmouth-public-health-ms": (
+        "Clinicians, scientists, and emerging health leaders who want rigorous training in "
+        "epidemiology, biostatistics, and health-system improvement at The Dartmouth "
+        "Institute."
+    ),
+    "dartmouth-computer-science-phd": (
+        "Students pursuing a research career in computing who want close mentorship in a "
+        "small doctoral program spanning systems, theory, machine learning, and security."
+    ),
+    "dartmouth-computer-science-ms": (
+        "Graduates seeking advanced computing coursework and research preparation before a "
+        "PhD or a technical industry role."
+    ),
+    "dartmouth-chemistry-phd": (
+        "Students committed to chemistry research who want immersive laboratory training "
+        "across synthetic, physical, biological, and materials chemistry."
+    ),
+    "dartmouth-physics-and-astronomy-phd": (
+        "Students pursuing doctoral research in astrophysics, space physics, or "
+        "condensed-matter and quantum physics."
+    ),
+    "dartmouth-psychological-and-brain-sciences-phd": (
+        "Students pursuing research careers in cognitive, systems, social, and affective "
+        "neuroscience using behavioral and neuroimaging methods."
+    ),
+    "dartmouth-liberal-studies-ms": (
+        "Curious adults and lifelong learners who want a flexible, interdisciplinary "
+        "graduate degree across the humanities, sciences, and social sciences, including "
+        "creative writing."
+    ),
+    "dartmouth-mathematics-phd": (
+        "Students pursuing doctoral research in pure, applied, or computational mathematics "
+        "who want small cohorts and close faculty mentorship."
+    ),
+    "dartmouth-earth-sciences-phd": (
+        "Students pursuing original geoscience research in areas such as paleoclimate, polar "
+        "science, geobiology, and tectonics."
+    ),
+    "dartmouth-earth-sciences-ms": (
+        "Graduates seeking advanced geoscience training and a research project as a bridge "
+        "to doctoral study or environmental and geoscience careers."
+    ),
+    "dartmouth-ecology-evolution-environment-and-society-phd": (
+        "Students who want interdisciplinary doctoral research spanning ecology, evolution, "
+        "environmental science, and the human dimensions of environmental change."
+    ),
+    "dartmouth-molecular-and-cellular-biology-phd": (
+        "Aspiring biomedical researchers who want an umbrella program with rotations across "
+        "biochemistry, cancer biology, microbiology and immunology, and molecular systems "
+        "biology."
+    ),
+    "dartmouth-quantitative-biomedical-sciences-phd": (
+        "Quantitatively strong students who want to apply biostatistics, bioinformatics, and "
+        "computational biology to biomedical and population-health research."
+    ),
+    "dartmouth-computational-science-and-modeling-phd": (
+        "Students from the sciences, engineering, or mathematics who want to build "
+        "computational and modeling expertise for research across disciplines."
+    ),
+    "dartmouth-integrative-neuroscience-phd": (
+        "Students pursuing doctoral neuroscience research who want to work across molecules, "
+        "systems, cognition, and behavior and across departments."
+    ),
+    "dartmouth-health-policy-and-clinical-practice-phd": (
+        "Clinicians and researchers who want doctoral training in health-services research, "
+        "health economics, and the evaluation of clinical practice and policy."
+    ),
+    "dartmouth-chemistry-ms": (
+        "Dartmouth undergraduates and other students who want advanced chemistry coursework "
+        "and thesis research, often via the 4+1 pathway or as preparation for doctoral study."
+    ),
+    "dartmouth-comparative-literature-ms": (
+        "Students who want to study literature across languages and cultures with grounding "
+        "in literary theory before doctoral work or careers in writing and the humanities."
+    ),
+    "dartmouth-sonic-practice-ms": (
+        "Sound artists, composers, and experimental musicians seeking a studio-based "
+        "terminal degree that blends creative practice, technology, and the critical study "
+        "of sound."
+    ),
+    "dartmouth-epidemiology-ms": (
+        "Clinicians and researchers who want rigorous training in study design, "
+        "biostatistics, and causal inference to investigate disease in populations."
+    ),
+    "dartmouth-health-data-science-ms": (
+        "Quantitatively minded clinicians and analysts who want to apply statistics, machine "
+        "learning, and programming to clinical, genomic, and population-health data."
+    ),
+    "dartmouth-healthcare-research-ms": (
+        "Practicing clinicians and researchers who want graduate training in health-services "
+        "research methods, outcomes measurement, and health-system improvement."
+    ),
+    "dartmouth-implementation-science-ms": (
+        "Working health professionals who want an online master's to learn how to translate "
+        "evidence into practice through implementation and improvement science."
+    ),
+    "dartmouth-medical-informatics-ms": (
+        "Clinicians and technologists who want to apply information systems and data "
+        "standards to clinical care, decision support, and health-information exchange."
+    ),
+    "dartmouth-energy-transition-ms": (
+        "Early-career professionals who want an interdisciplinary, residential master's "
+        "combining energy science, policy, economics, and business to lead the clean-energy "
+        "transition."
+    ),
+}
+
+# Fail fast at import if cip / who drift from the catalog (self-validating, SKILL §8.5).
+_missing_cip = [s for s in PROGRAM_SLUGS if s not in _CIP_BY_SLUG]
+_missing_who = [s for s in PROGRAM_SLUGS if s not in _WHO_BY_SLUG]
+_stray_cip = [s for s in _CIP_BY_SLUG if s not in _SPEC_BY_SLUG]
+_stray_who = [s for s in _WHO_BY_SLUG if s not in _SPEC_BY_SLUG]
+if _missing_cip or _missing_who or _stray_cip or _stray_who:
+    raise RuntimeError(
+        f"cip/who out of sync with catalog: missing_cip={_missing_cip} "
+        f"missing_who={_missing_who} stray_cip={_stray_cip} stray_who={_stray_who}"
+    )
 
 # ── Costs ──────────────────────────────────────────────────────────────────
 _TUITION_UG = 66123
@@ -915,6 +1412,45 @@ _COST_BY_SLUG: dict[str, dict] = {
         source=_GUARINI_TUITION_SRC[0],
         source_url=_GUARINI_TUITION_SRC[1],
     ),
+    # Guarini full-time on-campus research master's — the published uniform Guarini rate
+    # ($23,899/quarter × 4 quarters = $95,596). Verified on the Guarini tuition page.
+    "dartmouth-chemistry-ms": _annual_grad_cost(
+        _GUARINI_4TERM,
+        note=(
+            f"Guarini full-time graduate tuition: ${_THAYER_TERM:,} per quarter × four "
+            f"quarters (${_GUARINI_4TERM:,} annual full-time rate)."
+        ),
+        source=_GUARINI_TUITION_SRC[0],
+        source_url=_GUARINI_TUITION_SRC[1],
+    ),
+    "dartmouth-comparative-literature-ms": _annual_grad_cost(
+        _GUARINI_4TERM,
+        note=(
+            f"Guarini full-time graduate tuition: ${_THAYER_TERM:,} per quarter × four "
+            f"quarters (${_GUARINI_4TERM:,} annual full-time rate)."
+        ),
+        source=_GUARINI_TUITION_SRC[0],
+        source_url=_GUARINI_TUITION_SRC[1],
+    ),
+    "dartmouth-earth-sciences-ms": _annual_grad_cost(
+        _GUARINI_4TERM,
+        note=(
+            f"Guarini full-time graduate tuition: ${_THAYER_TERM:,} per quarter × four "
+            f"quarters (${_GUARINI_4TERM:,} annual full-time rate)."
+        ),
+        source=_GUARINI_TUITION_SRC[0],
+        source_url=_GUARINI_TUITION_SRC[1],
+    ),
+    "dartmouth-sonic-practice-ms": _annual_grad_cost(
+        _GUARINI_4TERM,
+        note=(
+            f"Guarini full-time graduate tuition: ${_THAYER_TERM:,} per quarter × four "
+            f"quarters (${_GUARINI_4TERM:,} annual full-time rate; the MFA is a two-year "
+            "studio program billed at the standard Guarini full-time rate)."
+        ),
+        source=_GUARINI_TUITION_SRC[0],
+        source_url=_GUARINI_TUITION_SRC[1],
+    ),
 }
 
 
@@ -995,6 +1531,17 @@ _TRACKS_BY_SLUG: dict[str, dict] = {
         "source": "Master of Arts in Liberal Studies — concentrations",
         "source_url": "https://graduate.dartmouth.edu/",
     },
+    "dartmouth-molecular-and-cellular-biology-phd": {
+        "tracks": [
+            "Biochemistry and Cell Biology",
+            "Cancer Biology",
+            "Microbiology and Immunology",
+            "Molecular and Systems Biology",
+            "Biological Sciences",
+        ],
+        "source": "Guarini — Molecular and Cellular Biology PhD specializations",
+        "source_url": "https://graduate.dartmouth.edu/academics/programs",
+    },
 }
 _CLASS_PROFILE_BY_SLUG: dict[str, dict] = {
     _FLAGSHIP: {
@@ -1070,6 +1617,72 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
         "disclaimer": (
             "Aggregated and paraphrased from public third-party sources — not individual "
             "verbatim reviews."
+        ),
+    },
+    "dartmouth-medicine-prof": {
+        "summary": (
+            "Coverage of the Geisel School of Medicine consistently highlights a small, "
+            "tightly knit class, early and longitudinal clinical exposure, and strengths in "
+            "primary care and community medicine; U.S. News places Geisel in the top tier "
+            "for primary care. Common cautions are the rural Hanover/Lebanon setting, a "
+            "smaller research-funding base than the largest academic medical centers, and "
+            "limited big-city clinical volume relative to urban schools."
+        ),
+        "themes": [
+            {
+                "label": "Small, collaborative class",
+                "sentiment": "positive",
+                "detail": (
+                    "About 92 students per entering class supports close faculty contact "
+                    "and a community the Princeton Review describes as collaborative rather "
+                    "than competitive."
+                ),
+            },
+            {
+                "label": "Early clinical immersion",
+                "sentiment": "positive",
+                "detail": (
+                    "An integrated curriculum (Foundations, Clinical Immersion, and "
+                    "Exploration phases) moves students into required clerkships across six "
+                    "disciplines early in the second year."
+                ),
+            },
+            {
+                "label": "Primary care & community focus",
+                "sentiment": "positive",
+                "detail": (
+                    "Geisel ranks in U.S. News's top tier for primary care, with strong "
+                    "community-service participation and population-health teaching."
+                ),
+            },
+            {
+                "label": "Rural location",
+                "sentiment": "mixed",
+                "detail": (
+                    "The Hanover/Lebanon setting offers community and access to Dartmouth "
+                    "Health but less big-city clinical volume than urban medical schools."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "U.S. News — Dartmouth (Geisel) Best Medical Schools",
+                "url": (
+                    "https://www.usnews.com/best-graduate-schools/top-medical-schools/"
+                    "dartmouth-college-04065"
+                ),
+            },
+            {
+                "label": "Student Doctor Network — Dartmouth Geisel School of Medicine",
+                "url": (
+                    "https://www.studentdoctor.net/schools-database/medical-school/detail/"
+                    "DMS/dartmouth-geisel-school-of-medicine"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources (U.S. News, "
+            "Student Doctor Network, Princeton Review) — not individual verbatim reviews."
         ),
     },
 }
@@ -1262,7 +1875,12 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 "year": "2025-26",
             }
         else:
+            # Tuition honestly omitted-with-reason: PhDs are funded; the Geisel-based
+            # health master's bill per-credit / part-time / online; the new Master of
+            # Energy Transition publishes its own rate. Never the undergrad sticker copied
+            # down, never an estimate (SKILL omit-never-guess).
             p.tuition = None
+            school_src = _SCHOOL_WEBSITE.get(spec["school"], "https://graduate.dartmouth.edu/")
             p.cost_data = {
                 "funded": spec["degree_type"] == "phd",
                 "note": (
@@ -1272,14 +1890,16 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                     "published sticker."
                     if spec["degree_type"] == "phd"
                     else (
-                        "Tuition for this graduate/professional program is published on "
-                        "the school's official tuition page; a verified per-program figure "
-                        "is not yet recorded here."
+                        "Tuition for this professional/health-sciences master's is "
+                        "published on the program's official cost page (per-credit, "
+                        "part-time, or program-specific); a verified per-program figure is "
+                        "omitted here rather than estimated."
                     )
                 ),
-                "source": _GUARINI_TUITION_SRC[0],
-                "source_url": _GUARINI_TUITION_SRC[1],
+                "source": f"{spec['school']} — official program page",
+                "source_url": school_src,
             }
+        p.cip_code = _CIP_BY_SLUG.get(slug)
         p.application_requirements = _requirements_for(spec)
         outcomes = dict(_OUTCOMES_INSTITUTION)
         outcomes["_standard"] = _program_standard(slug, spec)
@@ -1288,7 +1908,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
         p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
-        p.who_its_for = None
+        p.who_its_for = _WHO_BY_SLUG.get(slug)
         p.highlights = None
         p.application_deadline = (
             date(2027, 1, 3) if spec["degree_type"] == "bachelors" else None

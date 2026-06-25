@@ -29,7 +29,7 @@ from unipaith.profile_standard.anti_stub import (
 # Grow as scrape-built catalogs are researched per-program (UT-Austin still carries it).
 SCRAPE_DEBRIS_CLEAN = [
     "mit", "usc", "uiuc", "nyu", "columbia", "michigan", "cornell", "bu", "brown",
-    "vanderbilt",
+    "vanderbilt", "dartmouth",
 ]
 
 # Catalogs whose per-program descriptions have been verified gold-equal (every metric 0).
@@ -79,9 +79,9 @@ CERTIFIED_CLEAN = [
     "northwestern",  # per-credential description leads; suffix-diversifier removed
     #               (shared-leading-body = 0) (nwdefab1 — HIGH #6)
     "uf",  # 314-program real catalog; LiveWhale feeds; 16 colleges (ufprof1/2)
-    "dartmouth",  # institution seed → gold + real verified 43-program catalog across the
+    "dartmouth",  # gold: full 61-program catalog (Guarini grad catalog finished) across the
     #             five schools; field-specific researched descriptions, real departments,
-    #             no rollup/possessive/stub rows (dartprof1)
+    #             cip_code + who_its_for on every row, no rollup/possessive/stub rows
     "emory",  # institution seed → gold + 46-program catalog; Trumba events feed;
     #             4-photo gallery; field-specific descriptions (emoryprof1)
     "brown",  # institution seed (5 stubs) → gold + 57-program catalog across the seven
@@ -167,6 +167,7 @@ _FRAME_STRIPPED_CLEAN = [
     "mit", "rice", "uf", "usc", "uw_madison", "jhu", "uiuc", "uw", "harvard", "nyu",
     "ut_austin", "columbia", "michigan", "duke", "georgia_tech", "ucla", "berkeley",
     "stanford",     "penn", "cornell", "notre_dame", "bu", "vanderbilt", "ucsd",
+    "dartmouth",
 ]
 
 
@@ -195,7 +196,7 @@ def test_credential_siblings_have_no_frame_stripped_shared_body(name: str):
 # are NOT here yet on purpose).
 _ABS_FLOOR_CLEAN = [
     "nyu", "mit", "columbia", "michigan", "ucla", "jhu", "berkeley", "uf", "stanford",
-    "penn", "cornell", "ut_austin", "notre_dame", "bu", "vanderbilt", "ucsd",
+    "penn", "cornell", "ut_austin", "notre_dame", "bu", "vanderbilt", "ucsd", "dartmouth",
 ]
 
 
