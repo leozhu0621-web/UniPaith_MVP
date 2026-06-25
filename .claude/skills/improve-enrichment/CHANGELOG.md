@@ -6,6 +6,96 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-25 — Run 84 (FULL-FLEET sweep of all 300 live + all 40 catalogs · enricher CLEARED cip_code + public non-resident scalar on Georgia Tech/UT-Austin/UW-Seattle + UCSD cip · headline = a NEW universal-depth gap, `who_its_for` 0% on 29 catalogs · 1 rule change — the universal-depth gate)
+
+**Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`,**
+reusing `profile_standard/anti_stub.py` directly: paginated full program list of all 40 program-bearing catalogs
+(**7,330 programs**; the other 260 are bare institution-level stubs). Per catalog I computed `analyze`,
+`machine_artifacts`, `template_slot_artifacts`, `scrape_debris`, `frame_stripped_shared_body(abs_chars=150)`, an
+exact-duplicate `(program_name, degree_type)` scan (raw + degree-prefix-normalized), a name-realness scan
+(CIP-rollup TITLE + "…and Related Sciences/Services" / ", General/Other" / `(CIP NN.NN)` / bare-abbrev tells), and
+per-`degree_type` tuition coverage. Over program DETAILS (`GET /programs/{id}`) I probed `cip_code` (12/catalog),
+**`who_its_for` (10/catalog — the NEW universal-depth measure)**, and `external_reviews`. Over every public catalog
+I probed the bachelor `tuition` scalar vs `cost_data.breakdown` resident/non-resident. Over ALL 300 institutions I
+fetched campus-photo count + posts-feed count (threaded). The alembic graph was parsed direct (single head
+`utaustincip1` — pipeline HEALTHY), and the open-PR list + each module's `cip_code` assignment read via `git`/MCP.
+
+**Merged since run 83 (grader PR #1145):** the enricher cleared the run-83 worst tiers on four catalogs — **#1146
+UW-Seattle**, **#1147 Georgia Tech**, **#1148 UT-Austin** (each: `cip_code` 100% + public non-resident tuition
+scalar; UT-Austin also McCombs master's), and **#1144 UCSD** (`cip_code` 100% + graduate de-fabrication + MBA
+tuition). Verified LIVE: UT-Austin Anthropology now cip `45.0201`, `tuition` 44,908 (out-of-state); UCSD Dance cip
+`50.03`. **Berkeley #1149 is OPEN/in-flight** (cip + non-resident scalar — will clear its #1+#2 on merge).
+
+**HEADLINE — a NEW measurable universal-depth gap: `who_its_for` STARVATION (drives the 1 rule change).**
+`who_its_for` ("Who it's for") is a manifest program field. It is filled on **100% of EVERY sampled program of 11
+gold-complete catalogs (MIT, Princeton, Caltech, Harvard, Yale, Columbia, Cornell, Stanford, Chicago, Penn, UCLA)**
+yet **0% on 29 others** — including the FRESHLY matcher-core-repaired UT-Austin / UW-Seattle / Georgia Tech / UCSD —
+a stark **11-full / 29-empty / 0-partial** split, the unmistakable dimension-skip fingerprint (the enricher's
+cip/tuition repair passes ship without adding it). This is the exact structure of the cip_code finding: an
+institution-knowable, universally-fillable field shipped null fleet-wide, masked because the recent repairs touched
+only the matcher-core columns.
+
+**Findings (with live evidence):**
+- **NEW CLASS → 1 rule change: a `who_its_for` UNIVERSAL-depth gate.** Added as a new sub-bullet in the depth-pass
+  section (right after the miss-#8 reviews-resume bullet, before `delivery_format`). The NEW content: `who_its_for`
+  is NOT coverage-gated — unlike `external_reviews`/`class_profile`/`faculty_contacts`/`tracks` (a program may
+  genuinely lack those, and even gold MIT/Princeton are sparse on them — verified live: MIT tracks 2/12, class 0/12,
+  faculty 0/12), every program can state who it fits from its own published audience/fit material, so a
+  catalog-wide 0% is a depth FAILURE not an honest omission; fill it in the SAME pass as `cip_code`/tuition; same
+  gold-contrast bar (field-specific, never a "for students interested in {field}" stub); `_standard.omitted` only
+  for a genuinely audience-less program (effectively never). TIGHTENS the depth gate for ONE measurable universal
+  field; loosens nothing (no-fabrication via the gold-contrast bar, omit-with-reason preserved for the
+  coverage-gated fields). NOT a duplicate of miss #8 (reviews) — it is the explicit CONTRAST to it.
+- **COMPLIANCE GAP (rule exists run 82; queued not re-added): `cip_code` starvation.** ~22 mature catalogs still
+  null (only ~10 of 36 modules assign it). The enricher cleared 4 more this interval (GT/UT-Austin/UW/UCSD). Queued
+  entry #1 + FLAG #3 (the durable lever is a coverage metric in the profile test, code, not another rule).
+- **COMPLIANCE GAP (rule exists run 83): public resident-tuition scalar.** 8 publics still ship the in-state rate
+  (UCLA · UCSD · Michigan · Berkeley[#1149] · Florida · Wisconsin · Purdue · UIUC); GT/UT-Austin/UW cleared. NEW
+  nuance: **UIUC's breakdown has NO `tuition_out_of_state`**, so the run-83 "copy from breakdown" instruction can't
+  apply there — recorded in entry #2 (research the published non-resident sticker), NOT a separate rule (1-catalog
+  edge, the rule's spirit already mandates the non-resident value).
+- **COMPLIANCE GAP: master's / professional-tier tuition residual.** UW-Seattle -14, USC -12, Vanderbilt -10,
+  Yale -8, UT-Austin -7, Cornell/Penn -6, NYU/Harvard/UCSD -5, Brown -4, Berkeley -3. Queued entry #3. PhD/cert
+  nulls EXCLUDED (funded/per-credit → legitimate omit-with-reason).
+- **COMPLIANCE GAP: `external_reviews` sparse (miss #8 + STRUCTURE-BEFORE-DEPTH).** 0/12 on 10 catalogs, ≤4/12 on
+  the rest (gold MIT itself 5/12, coverage-gated) → calibrated depth-pass priority (entry #5), NOT fabrication.
+- **Diagnosed NOT-a-defect:** the degree-prefix-normalized duplicate scan flags BA-vs-BS / MS-vs-MEng pairs (e.g.
+  USC "Bachelor of Arts in Chemistry" + "Bachelor of Science in Chemistry") — REAL distinct credentials, not
+  duplicates; the authoritative RAW `(program_name, degree_type)` scan is 0 fleet-wide (run-82 #3 stays cleared).
+  Single alembic head → deploy pipeline unblocked. `field_provenance` null is a note (encouraged-not-gated).
+
+**Rule change (1 of ≤3, bounded, evidence-backed, not a duplicate):** the `who_its_for` universal-depth gate
+(above). No other rule warranted — after a full-fleet sweep, every OTHER live defect is a VIOLATION of an existing
+rule (cip_code → run-82 gate; public scalar → run-83 rule; master's tuition → per-tier rule; reviews → miss #8), so
+per the default-flipped doctrine they are queued + logged, not re-added (anti-churn). The UIUC missing-breakdown
+nuance is a 1-catalog edge folded into backlog entry #2, not a rule. Exactly one genuinely new, now-measurable
+universal-depth gap-class existed; inventing filler rules to "not stop at one" would breach
+no-edit-without-NEW-evidence. Post-edit re-read confirms SKILL.md reads coherently (the new bullet sits in the
+program-breadth depth-pass list between the reviews-resume bullet and `delivery_format`; no numbered miss
+renumbered; no invariant touched — it adds a depth requirement, loosens nothing).
+
+**Flags (code/workflow, not grader-editable):** carried (1) build-union dedup + name-uniqueness gate; (2)
+name-realness NAME scan; (3) `cip_code` coverage gate (~10/36 modules set it); (4) tuition VALUE/COVERAGE gate
+(+ a public-scalar sub-check would make entry #2 durable); (6) residency-aware budget matching. (5) updated:
+#1149 (Berkeley) is the live in-flight PR; #1081/#1064/#769/#515/#503/#499/#489/#439/#420/#403 appear superseded.
+
+**Backlog delta:** rewritten worst-first, full-fleet. HIGH = `cip_code` starvation (#1, 22 catalogs, was 28) ·
+public resident scalar (#2, 8 publics, was 11) · master's-tier tuition residual (#3). MEDIUM = NEW `who_its_for`
+0% (#4, 29 catalogs) · reviews depth-pass (#5) · 6 flagship seeds (#6) · ~254 bulk stubs incl. 33 zero-photo (#7).
+CLEARED/PROGRESS = cip on GT/UT-Austin/UW/UCSD, public scalar on GT/UT-Austin/UW. CLEAN = MIT + the 10 cip fillers
++ the 11 who_its_for fillers + name-realness / exact-dup / tuition-value-clean fleet.
+
+**Invariants:** all intact; the SKILL.md edit ADDS a universal-depth requirement (no-fabrication preserved via the
+gold-contrast bar; omit-with-reason preserved for coverage-gated fields; verify-rendered-output, enrichment-only,
+merge-mandatory all untouched). **Health check:** the DB-backed `test_profile_standard.py` /
+`test_profile_enrichment.py` need a live Postgres the grader env lacks; DB-free substantive check — imported
+`profile_standard/anti_stub.py` and ran all five metrics over all 40 live catalogs (compute cleanly; gold MIT
+scores 0 on every description metric), and parsed the alembic graph to a SINGLE head on `origin/main`. This grader
+PR changes only the three skill markdown files (SKILL.md + REPAIR_BACKLOG + CHANGELOG) — no code, no data, no
+migration — so backend CI is unaffected.
+
+---
+
 ## 2026-06-25 — Run 83 (FULL-FLEET sweep of all 300 live + all 40 catalogs · enricher CLEARED the run-82 exact-duplicate-row class fleet-wide + UCLA cip_code + NYU/UCLA tuition · headline = a NEW matcher-core gap, PUBLIC resident-tuition scalar mis-signal · 1 rule change)
 
 **Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`,**
