@@ -182,14 +182,60 @@ def test_matcher_core_tuition_is_published_catalog_wide():
 def test_no_undergrad_sticker_copydown():
     """A graduate/professional row carrying the undergraduate sticker is the BU/Cornell
     copy-down defect — the matcher would score the same budget for a funded PhD and a
-    professional degree. UW's graduate sticker is distinct from the undergrad one."""
-    ug = u._TUITION_UG_RESIDENT
-    copydown = [
-        spec["slug"]
-        for spec in u.PROGRAMS
-        if spec["degree_type"] != "bachelors" and u._tuition_for(spec) == ug
+    professional degree. UW's graduate sticker is distinct from the undergrad one. The
+    guard checks the exposed undergrad scalar (the non-resident sticker, REPAIR_BACKLOG #2)."""
+    for ug in (u._TUITION_UG_NONRES, u._TUITION_UG_RESIDENT):
+        copydown = [
+            spec["slug"]
+            for spec in u.PROGRAMS
+            if spec["degree_type"] != "bachelors" and u._tuition_for(spec) == ug
+        ]
+        assert not copydown, f"undergrad sticker copied onto graduate rows: {copydown[:8]}"
+
+
+def test_matcher_core_cip_code_catalog_wide():
+    """REPAIR_BACKLOG #1: cip_code is the CIP join key the CPEF matcher uses to resolve a
+    program's field to ref_majors + the field-66 vocabulary. A null leaves the catalog
+    field-blind. Every program must carry a valid CIP-2020 4-digit code."""
+    import re
+
+    missing = [spec["slug"] for spec in u.PROGRAMS if not spec.get("cip")]
+    assert not missing, f"programs missing cip_code: {missing[:8]}"
+    bad = sorted({p["cip"] for p in u.PROGRAMS if not re.fullmatch(r"\d{2}\.\d{4}", p["cip"])})
+    assert not bad, f"malformed cip_code values: {bad}"
+
+
+def test_public_tuition_scalar_is_nonresident():
+    """REPAIR_BACKLOG #2: UW is public, so the matcher's flat ``program.tuition`` scalar must
+    carry the NON-RESIDENT sticker (the out-of-state + international pool is scored on it), while
+    ``cost_data.breakdown`` keeps both the resident and non-resident rates."""
+    # Bachelor's scalar is the non-resident undergraduate sticker (not the resident one).
+    bachelors = [s for s in u.PROGRAMS if s["degree_type"] == "bachelors" and u._tuition_for(s)]
+    assert bachelors, "expected on-campus bachelor's rows"
+    assert all(u._tuition_for(s) == u._TUITION_UG_NONRES for s in bachelors)
+    assert u._TUITION_UG_NONRES > u._TUITION_UG_RESIDENT
+    # On-campus master's/PhD scalar is the non-resident graduate Tier I sticker.
+    grad = [
+        s
+        for s in u.PROGRAMS
+        if s["degree_type"] in {"masters", "phd"} and s.get("delivery_format") != "online"
     ]
-    assert not copydown, f"undergrad sticker copied onto graduate rows: {copydown[:8]}"
+    assert all(u._tuition_for(s) == u._TUITION_GRAD_NONRES for s in grad)
+    assert u._TUITION_GRAD_NONRES > u._TUITION_GRAD_RESIDENT
+    # cost_data.breakdown preserves BOTH residency rates at every covered tier.
+    ug = u._undergrad_cost({"degree_type": "bachelors"})
+    assert ug["breakdown"]["tuition_in_state"] == u._TUITION_UG_RESIDENT
+    assert ug["breakdown"]["tuition_out_of_state"] == u._TUITION_UG_NONRES
+    assert ug["tuition_usd"] == u._TUITION_UG_NONRES
+    gr = u._grad_cost({"degree_type": "masters"})
+    assert gr["breakdown"]["tuition_in_state"] == u._TUITION_GRAD_RESIDENT
+    assert gr["breakdown"]["tuition_out_of_state"] == u._TUITION_GRAD_NONRES
+    # Professional rows expose their published non-resident rate with both in the breakdown.
+    law = next(s for s in u.PROGRAMS if s["slug"] == "uw-law-prof")
+    assert u._tuition_for(law) == 58956
+    law_cost = u._grad_cost(law)
+    assert law_cost["breakdown"]["tuition_in_state"] == 47073
+    assert law_cost["breakdown"]["tuition_out_of_state"] == 58956
 
 
 def test_graduate_tiers_carry_published_tuition():
