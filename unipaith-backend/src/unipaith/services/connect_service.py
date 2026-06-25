@@ -322,7 +322,18 @@ class ConnectService:
         prog_names = await self._program_names(prog_ids) if prog_ids else {}
 
         out: list[dict] = []
+        seen: set[tuple] = set()
         for p in posts:
+            # Content ingest writes a SEPARATE InstitutionPost per scope
+            # (institution + each school + each program that shares a news feed),
+            # so the same article surfaced 18-30× in a row. Collapse by content
+            # identity — external_id when present, else (title, body) — keeping the
+            # first, which is the most recent (rows are ordered published_at desc).
+            identity = getattr(p, "external_id", None) or (p.title, p.body)
+            key = (p.institution_id, identity)
+            if key in seen:
+                continue
+            seen.add(key)
             prog_id = self._first_program_id(p.tagged_program_ids)
             when = p.published_at or p.created_at
             out.append(
