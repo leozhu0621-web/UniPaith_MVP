@@ -6,6 +6,104 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-25 — Run 85 (FULL-FLEET sweep of all 300 live + all 40 catalogs + the alembic graph on `origin/main` · 🔴 CRITICAL headline = the DEPLOY PIPELINE is BLOCKED: 8 concurrent alembic heads strand the merged Vanderbilt #1155 + Dartmouth #1159 repairs NOT-LIVE · 2nd find = ALL 6 flagship seeds ship EMPTY descriptions that the anti_stub gate cannot see · 1 rule change — the description-NON-EMPTINESS coverage gate)
+
+**Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`,**
+reusing `profile_standard/anti_stub.py` directly: paginated full program list of all 40 program-bearing catalogs
+(**7,288 programs**; the other 260 are bare institution-level stubs). Per catalog I computed `analyze`,
+`machine_artifacts`, `template_slot_artifacts`, `scrape_debris`, `frame_stripped_shared_body(abs_chars=150)`, an
+exact-duplicate `(program_name, degree_type)` scan, a name-realness scan (CIP-rollup TITLE + "…and Related
+Sciences/Services" / ", General/Other" / `(CIP NN.NN)` / bare-abbrev tells), per-`degree_type` tuition coverage,
+and a **NEW per-catalog description-NON-EMPTINESS scan** (the anti_stub gate flags stub PATTERNS, not ABSENCE). Over
+program DETAILS (`GET /programs/{id}`, 15/catalog · 5 for seeds) I probed `cip_code`, `who_its_for`,
+`external_reviews`. Over every public catalog I probed the bachelor `tuition` scalar vs `cost_data.breakdown`
+resident/non-resident. Over ALL 300 institutions I fetched campus-photo count + posts-feed count (threaded). **The
+alembic graph was AST-parsed over `origin/main` (569 revisions, robust to annotated `down_revision` forms) — it
+found EIGHT concurrent heads (deploy BLOCKED)**, and the merged-PR list was read via `git`.
+
+**🔴 CRITICAL HEADLINE — the deploy pipeline is BLOCKED (drives the #1 backlog entry; no new rule — covered).**
+`origin/main` carries **8 alembic leaf-heads** (`a32revwork1b2c`, `b31a1c2d3e4f`, `berkeleycip2`, `dartcipwho1`,
+`deepintel1`, `f1a9c0d2e3b4`, `n9p2q4r6s8t0`, `vandycip1`), so `alembic upgrade head` errors "Multiple head
+revisions are present" and no new migration applies in prod. **Live-verified consequence:** Vanderbilt PR #1155
+(`vandycip1`) and Dartmouth PR #1159 (`dartcipwho1`) both MERGED claiming cip_code + who_its_for fills, yet every
+sampled Vanderbilt + Dartmouth program reads `cip_code = null` AND `who_its_for` empty in production (re-checked on 4
+spread programs each) — the repairs are stranded merged-but-not-executed (the "stamped-not-run" failure Berkeley hit
+in #1156/#1157). This is the backlog's CRITICAL severity. The enrich-profile rulebook ALREADY mandates a single
+alembic head + a fixup merge when >1 + `test_alembic_has_single_head` + verify-live (SKILL.md ~L1630–L1665, L1795) →
+this is a COMPLIANCE GAP (queued #1, not re-added), and the deploy MECHANISM is FLAGGED for a human (the
+`test_alembic_has_single_head` gate passes per-PR but does not catch cross-PR squash-skew divergence on main; heavy
+per-program data migrations are stamped-not-run to avoid hanging container boot).
+
+**Findings (with live evidence):**
+- **NEW CLASS → 1 rule change: a description-NON-EMPTINESS coverage gate.** All **6 flagship 5-program seeds
+  (Georgetown · UC-Davis · UC-Irvine · UNC · UVA · WashU) ship every one of their 30 programs with an EMPTY
+  `description_text`** (WashU "Business Administration and Management" [MBA], UVA "Systems Engineering" [BS],
+  Georgetown "Nursing" [BS] — all blank) — yet each scores **0 on every anti_stub metric** and has been certified
+  "structurally clean." Discovered via the student's-eye pass. `description_text` is BOTH the matcher's dense-embedding
+  input AND the primary student-facing blurb, so an empty one is matcher starvation + a blank page — the most
+  matcher-core failure there is — and it EVADES the entire pattern-based gate (an empty string has no pattern to flag).
+  The new rule (added in the matcher "Also enrich for the MATCH" section, right after the `cip_code` coverage paragraph,
+  beside the tuition/cip coverage gates of the same class): measure description NON-EMPTINESS per catalog; ANY empty /
+  whitespace-only `description_text` is a structural FAILURE; "anti_stub 0 / structurally clean" is
+  necessary-NOT-sufficient. TIGHTENS description-realness from pattern-only to pattern + coverage; loosens nothing
+  (no-fabrication holds via the gold-contrast bar — the fix is a researched field-specific blurb, never a template,
+  which would only trade an empty for a stub). Mature fleet = 0 empties of 7,258 programs.
+- **COMPLIANCE GAP (rule exists; queued not re-added): the deploy block + stranded Vanderbilt/Dartmouth repairs.**
+  See the CRITICAL headline above → queued #1; mechanism = FLAG #1 + #2.
+- **COMPLIANCE GAP: `cip_code` starvation (~22 mature catalogs null; rule run 82).** Berkeley CLEARED (#1156, now LIVE
+  100%); Vanderbilt + Dartmouth WRITTEN but stranded by the deploy block. Queued #3.
+- **COMPLIANCE GAP: public resident-tuition scalar (7 publics in-state; rule run 83).** Berkeley CLEARED; UCLA · UCSD ·
+  Michigan · Florida · Wisconsin · Purdue · UIUC remain (UIUC has no oos in its breakdown → research). Queued #4.
+- **COMPLIANCE GAP: master's/professional-tier tuition residual (rule = per-tier coverage).** Berkeley master's CLEARED
+  (74/74); UW-Seattle 14 · USC 12 · Vanderbilt 10 · Yale 8 · UT-Austin 7 · BU 7 · … remain. Queued #5.
+- **COMPLIANCE GAP + a REGRESSION: `who_its_for` 0% on 29 catalogs (rule run 84).** Berkeley flipped 0%→100%, but
+  **UCLA REGRESSED 100%→0%** (run-84 backlog listed it complete; this run 0/15 sampled + 0/8 on a direct spread-check —
+  likely blanked by its `cip_code` follow-up #1142). Net 11-full / 29-empty / 0-partial. Queued #6 (+ investigate the
+  UCLA regression).
+- **Diagnosed NOT-a-defect:** seed `degree_type` is the raw `BA`/`BS`/`PhD`/`MBA` form, but the matcher's
+  `_program_target_level` (derive_preferences.py) explicitly handles BOTH full words and abbreviations (falls back to
+  `target_education_level`), so it is NOT matcher-breaking — a normalize-on-rebuild note, not a rule. Mature-fleet
+  structure / names / exact-dups / tuition-value-copy-down all 0 (gold-clean, verified LIVE).
+- **Enricher WINS verified LIVE:** Berkeley cip_code + who_its_for + non-resident tuition + master's tuition all 100%
+  live (#1156 re-apply), proving the per-module fix works once the pipeline actually runs it.
+
+**Rule change (1 of ≤3, bounded, evidence-backed, not a duplicate):** the description-non-emptiness coverage gate
+(above). No other rule warranted — after the full-fleet sweep, every OTHER live defect is a VIOLATION of an existing
+rule (deploy block → single-head + verify-live; cip → run-82 gate; public/master's tuition → run-83 + per-tier;
+who_its_for → run-84 gate; reviews → miss #8; photos/feeds → seed tier), so per the default-flipped doctrine they are
+queued + logged, not re-added (anti-churn). Adding filler rules to "not stop at one" would breach
+no-edit-without-NEW-evidence; exactly one genuinely new, now-measurable gap-class existed (an EMPTY description the
+pattern gate cannot see). Post-edit re-read confirms SKILL.md reads coherently (the new paragraph sits between the
+`cip_code` coverage paragraph and the ProgramPreference step in the matcher section — tuition → cip_code →
+description-emptiness → ProgramPreference, all matcher-core coverage gates; no numbered miss renumbered; no invariant
+touched — it adds a matcher-core coverage requirement and loosens nothing).
+
+**Flags (code/workflow, not grader-editable):** (1) **8 alembic heads block deploy + `test_alembic_has_single_head`
+passes per-PR but misses cross-PR squash-skew divergence on main → needs a fixup merge NOW + an on-main single-head
+gate (NEW, blocking)**; (2) **heavy per-program DATA migrations are stamped-not-run to avoid hanging container boot, so
+cip/who/tuition stamping merges but never executes — needs a real prod execution path (NEW)**; (3) build dedups on slug
+not the rendered name (carried); (4) anti-stub is description-PATTERN-only — no NAME scan AND blind to EMPTY descriptions
+→ add a non-empty `description_text` coverage assertion (carried + EXTENDED — the enforcement teeth for the new rule);
+(5) cip_code no coverage gate (carried); (6) no tuition value/coverage gate (carried); (7) residency-blind budget
+matching (carried); (8) older superseded open PRs to close (carried).
+
+**Backlog delta:** rewritten worst-first, full-fleet. CRITICAL = the deploy BLOCK + stranded repairs (NEW #1) · the
+EMPTY-description seeds (NEW axis, #2). HIGH = `cip_code` starvation (#3, ~22 catalogs) · public resident-tuition scalar
+(#4, 7 publics) · master's-tier tuition residual (#5). MEDIUM = `who_its_for` 0% + UCLA regression (#6) · reviews depth
+pass (#7) · ~254 bulk stubs incl. 33 zero-photo (#8). CLEARED since run 84 = Berkeley (cip + who + non-resident scalar +
+master's tuition, LIVE). CLEAN = the mature fleet on structure / names / exact-dups / tuition-value-copy-down /
+non-empty-descriptions.
+
+**Invariants:** all intact; the SKILL.md edit ADDS a matcher-core coverage requirement (no-fabrication preserved — fill
+the real field-specific blurb or it stays a failure; verify-rendered-output, enrichment-only, merge-mandatory all
+untouched). **Health check:** the full DB-backed `pytest` suite needs a live Postgres the grader env lacks; DB-free
+substantive check — imported `profile_standard/anti_stub.py` and ran all five metrics over the 40 live catalogs (they
+compute cleanly; gold MIT scores 0 on every description metric), and AST-confirmed the alembic head set on `origin/main`
+(8 heads — surfaced as the CRITICAL finding, NOT introduced by this PR). This grader PR changes only the three skill
+markdown files (SKILL.md + REPAIR_BACKLOG + CHANGELOG) — no code, no data, no migration — so backend CI is unaffected.
+
+---
+
 ## 2026-06-25 — Run 84 (FULL-FLEET sweep of all 300 live + all 40 catalogs · enricher CLEARED cip_code + public non-resident scalar on Georgia Tech/UT-Austin/UW-Seattle + UCSD cip · headline = a NEW universal-depth gap, `who_its_for` 0% on 29 catalogs · 1 rule change — the universal-depth gate)
 
 **Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`,**
