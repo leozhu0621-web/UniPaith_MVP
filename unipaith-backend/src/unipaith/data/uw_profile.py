@@ -43,23 +43,31 @@ ratio is kept). UW does not publish a single university-wide placement rate or a
 uniform top-employer-industries list across all colleges, so those two institution
 outcome fields are omitted (the Scorecard ten-year median earnings is kept).
 
-Published tuition (2026-06-22 repair — REPAIR_BACKLOG #4, catalog-wide 0% tuition):
-every program now carries UW's published 2025-26 WA-resident annual tuition as the
-matcher budget signal (the prior "see the program's tuition page" placeholder left the
-whole catalog matcher-blind on budget). Bachelor's carry the resident undergraduate
-sticker ($13,406); master's and PhD carry the resident graduate Tier I sticker
-($19,011) — UW charges one flat graduate operating fee per residency (cf. UT-Austin's
-flat resident-graduate rate), and a funded research PhD keeps the published sticker
-because funding is a separate matcher signal, not a $0 budget. The four bespoke
-professional schools carry their own published resident annual rates (Law $47,073,
-Medicine $57,968, Dentistry $59,226, Pharmacy $36,708) and the two graduate-schedule
-clinical doctorates their published resident annual rate (DNP $35,064, DPT $27,807).
-Two classes keep ``cost_data.tuition_usd`` omitted-with-reason rather than carrying a
-wrong value: the Doctor of Audiology (bills on UW's variable graduate-tier schedule, no
-single published annual resident figure) and the 15 fee-based / self-sustaining online
-programs (UW Professional & Continuing Education bills these at a program-specific
-per-credit rate distinct from the state-supported sticker, so they are omitted pending a
-program-specific figure rather than understated with the on-campus rate).
+Matcher-core fields (2026-06-25 repair — REPAIR_BACKLOG #1 cip_code + #2 public scalar):
+1. ``cip_code`` — every program now carries its NCES CIP-2020 4-digit code (``_CIP_BY_FIELD``),
+   the CIP join key the CPEF matcher uses to resolve a program's field to ref_majors + the
+   field-66 vocabulary; the prior null left the whole catalog field-blind for the matcher.
+2. ``tuition`` — UW is PUBLIC, so the matcher's flat ``program.tuition`` scalar now carries the
+   NON-RESIDENT (out-of-state) annual sticker per tier, because the CPEF budget breaker reads
+   that scalar for EVERY student and the out-of-state + ALL-international pool (the flagship
+   majority) was being scored 2.5–3.5× too cheap on the resident rate. The editorial
+   ``cost_data`` stays on the coherent WA-RESIDENT basis (``tuition_usd`` = resident, matching the
+   Scorecard resident COA / net price), with BOTH ``tuition_in_state`` and ``tuition_out_of_state``
+   always in ``cost_data.breakdown`` (honest + sourced) — only the matcher scalar uses non-resident.
+   Bachelor's
+   carry the non-resident undergraduate sticker ($44,460; resident $13,406); master's and PhD
+   carry the non-resident graduate Tier I sticker ($33,171; resident $19,011 — UW charges one
+   flat graduate operating fee per residency), and a funded research PhD keeps the published
+   sticker because funding is a separate matcher signal, not a $0 budget. The bespoke professional
+   schools carry their own published non-resident annual rates (Law $58,956, Medicine $102,319,
+   Dentistry $84,926, Pharmacy $51,582 [2026-27], DNP $50,037, DPT $43,461). Two classes keep
+   ``cost_data.tuition_usd`` omitted-with-reason rather than carrying a wrong value: the Doctor of
+   Audiology (bills on UW's variable graduate-tier schedule, no single published annual figure)
+   and the 15 fee-based / self-sustaining online programs (UW Professional & Continuing Education
+   bills these at a program-specific per-credit rate distinct from the state-supported sticker, so
+   they are omitted pending a program-specific figure rather than understated with the on-campus
+   rate). Tuition sources: UW OPB 2025-26 Seattle quarterly tuition & fees PDF + each professional
+   school's published cost page (resident figures verified against the prior repair).
 
     This repair (2026-06-20) replaces generic Wikipedia field definitions and credential-
     frame shared bodies with UW-specific field clauses (``uw_field_descriptions.py``),
@@ -90,7 +98,7 @@ from unipaith.profile_standard.anti_stub import field_of as _anti_stub_field
 from unipaith.profile_standard.anti_stub import frame_stripped_shared_body
 
 INSTITUTION_NAME = "University of Washington-Seattle Campus"
-ENRICHED_AT = "2026-06-20"
+ENRICHED_AT = "2026-06-25"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -3010,6 +3018,296 @@ def _field_key(program_name: str) -> str:
     return program_name
 
 
+# == Matcher-core CIP-2020 codes (REPAIR_BACKLOG #1 — the CIP join key the CPEF matcher
+# uses to resolve a program's field to ref_majors + the field-66 vocabulary) ==
+# Keyed by _normalize_field_label(_field_label(program_name)) for every program. Each value is
+# the standard NCES CIP-2020 4-digit family for that field of study (the IPEDS classification),
+# never a guessed fact about the program; a genuinely interdisciplinary field with no
+# single-discipline CIP is mapped to its closest CIP family (incl. 30.xx multi/interdisciplinary),
+# exactly as IPEDS itself codes such programs. Source: NCES IPEDS CIP-2020 code list.
+_CIP_BY_FIELD: dict[str, str] = {
+    # --- Engineering & technology (CIP 14.xx / 15.xx / 52.20) ---
+    "Aerospace Engineering": "14.0201",
+    "Aeronautics & Astronautics": "14.0201",
+    "Aeronautics and Astronautics": "14.0201",
+    "Applied Bioengineering": "14.0501",
+    "Bioengineering": "14.0501",
+    "Pharmaceutical Bioengineering": "14.0501",
+    "Chemical Engineering": "14.0701",
+    "Civil Engineering": "14.0801",
+    "Infrastructure Planning & Management": "14.0801",
+    "Computer Science & Engineering": "14.0901",
+    "Electrical and Computer Engineering": "14.1001",
+    "Engineering": "14.0101",
+    "Engineering in Leadership and Systems Innovation": "14.0101",
+    "Engineering in Multidisciplinary Engineering": "14.0101",
+    "Human Centered Design & Engineering": "14.0101",
+    "Industrial & Systems Engineering": "14.3501",
+    "Industrial Engineering": "14.3501",
+    "Materials Science & Engineering": "14.1801",
+    "Materials Science and Engineering": "14.1801",
+    "Mechanical Engineering": "14.1901",
+    "Molecular Engineering": "14.9999",
+    "Sustainable Bioresource Systems Engineering": "14.0301",
+    "Construction Management": "52.2001",
+    "Technology Innovation": "14.0101",
+    # --- Computing, data & information (CIP 11.xx / 30.70 / 25.01) ---
+    "Computer Science": "11.0701",
+    "Artificial Intelligence and Machine Learning for Engineering": "11.0102",
+    "Data Science": "30.7001",
+    "Human-Computer Interaction & Design": "11.0104",
+    "Biomedical & Health Informatics": "51.2706",
+    "Health Informatics & Health Information Management": "51.0706",
+    "Information Management": "11.0401",
+    "Information Science": "11.0401",
+    "Information Systems": "11.0401",
+    "Library & Information Science": "25.0101",
+    "Museology": "30.1401",
+    # --- Mathematics & statistics (CIP 27.xx / 30.70) ---
+    "Mathematics": "27.0101",
+    "Applied Mathematics": "27.0301",
+    "Applied and Computational Math Sciences": "27.0303",
+    "Computational Finance & Risk Management": "27.0305",
+    "Computational Finance and Risk Management": "27.0305",
+    "Statistics": "27.0501",
+    "Biostatistics": "26.1102",
+    "Biochemistry": "26.0202",
+    "Measurement & Statistics": "27.0501",
+    "Computational Linguistics": "30.4801",
+    # --- Physical sciences (CIP 40.xx / 03.xx) ---
+    "Physics": "40.0801",
+    "Astronomy": "40.0201",
+    "Atmospheric and Climate Science": "40.0401",
+    "Chemistry": "40.0501",
+    "Applied Chemical Science and Technology": "40.0501",
+    "Earth & Space Sciences": "40.0601",
+    "Earth and Space Sciences": "40.0601",
+    "Oceanography": "40.0607",
+    "Aquatic & Fishery Sciences": "03.0301",
+    "Aquatic Conservation and Ecology": "03.0301",
+    "Quantitative Ecology & Resource Management": "03.0104",
+    "Environmental Science and Terrestrial Resource Management": "03.0104",
+    "Environmental & Forest Sciences": "03.0501",
+    "Forest Resources": "03.0501",
+    "Environmental Studies": "03.0103",
+    "Environmental Design and Sustainability": "03.0104",
+    # --- Biological & life sciences (CIP 26.xx) ---
+    "Biology": "26.0101",
+    "Marine Biology": "26.1302",
+    "Microbiology": "26.0502",
+    "Immunology": "26.0507",
+    "Molecular & Cellular Biology": "26.0204",
+    "Genome Sciences": "26.0806",
+    "Molecular Medicine and Mechanisms of Disease": "26.0102",
+    "Neurobiology and Biophysics": "26.1501",
+    "Neuroscience": "26.1501",
+    "Pathobiology": "26.0910",
+    "Anatomic Pathology": "26.0910",
+    "Comparative Medicine": "26.0901",
+    "Nutritional Sciences": "30.1901",
+    "Public Health Nutrition": "30.1901",
+    "Food Systems, Nutrition, and Health": "30.1901",
+    # --- Health professions, medicine & public health (CIP 51.xx / 26.13) ---
+    "Audiology": "51.0202",
+    "Speech and Hearing Sciences": "51.0204",
+    "Speech-Language Pathology": "51.0203",
+    "Nursing": "51.3801",
+    "Nursing Practice": "51.3818",
+    "Occupational Therapy": "51.2306",
+    "Physical Therapy": "51.2308",
+    "Rehabilitation Medicine": "51.2300",
+    "Rehabilitation Science": "51.2314",
+    "Prosthetics & Orthotics": "51.2307",
+    "Bioethics": "51.3201",
+    "Biomedical Regulatory Affairs": "51.2003",
+    "Laboratory Medicine": "51.1005",
+    "Genetic Counseling": "51.1509",
+    "Medicinal Chemistry": "51.2004",
+    "Pharmaceutics": "51.2003",
+    "Pharmacology": "26.1001",
+    "Public Health Genetics": "26.0801",
+    "Genetic Epidemiology": "26.1309",
+    "Epidemiology": "26.1309",
+    "Environmental Health Sciences": "51.2202",
+    "Environmental Public Health": "51.2202",
+    "Public Health-Global Health": "51.2201",
+    "Global Health": "51.2201",
+    "Global Health: Global Health Metrics & Implementation Sciences": "51.2201",
+    "Health Metrics: Global Health Metrics & Implementation Sciences": "51.2201",
+    "Health Metrics Sciences": "51.2201",
+    "Health Administration": "51.0701",
+    "Health Services": "51.2201",
+    "Clinical Health Services": "51.2201",
+    "Health Systems and Population Health": "51.2201",
+    "Health Economics and Outcomes Research": "51.2211",
+    # --- Dentistry (CIP 51.04) ---
+    "Dental Surgery": "51.0401",
+    "Dentistry": "51.0401",
+    "Oral Health Sciences": "51.0401",
+    "Oral Medicine": "51.0401",
+    "Endodontics": "51.0506",
+    "Orthodontics": "51.0508",
+    "Periodontics": "51.0510",
+    "Prosthodontics": "51.0511",
+    # --- Psychology & cognitive (CIP 42.xx) ---
+    "Psychology": "42.0101",
+    "Applied Child and Adolescent Psychology: Prevention and Treatment": "42.2703",
+    # --- Social sciences & policy (CIP 45.xx / 44.xx) ---
+    "Anthropology": "45.0201",
+    "Economics": "45.0601",
+    "Geography": "45.0701",
+    "Political Science": "45.1001",
+    "Sociology": "45.1101",
+    "International Studies": "45.0901",
+    "China Studies": "05.0123",
+    "East Asia Studies": "05.0104",
+    "Japan Studies": "05.0127",
+    "Korea Studies": "05.0128",
+    "South Asian Studies": "05.0112",
+    "Southeast Asian Studies": "05.0113",
+    "Russia, East European and Central Asian Studies": "05.0110",
+    "Near & Middle Eastern Studies": "05.0108",
+    "Public Administration": "44.0401",
+    "Public Policy & Management": "44.0501",
+    "Public Service and Policy": "44.0501",
+    "Social Welfare": "44.0701",
+    "Social Work": "44.0701",
+    "Marine Affairs": "03.0205",
+    "Law, Societies, and Justice": "22.0000",
+    "Integrated Social Sciences": "45.0101",
+    # --- Area, ethnic, gender & cultural studies (CIP 05.xx) ---
+    "American Ethnic Studies": "05.0200",
+    "American Indian Studies": "05.0202",
+    "Feminist Studies": "05.0207",
+    "Gender, Women, and Sexuality Studies": "05.0207",
+    "Scandinavian Area Studies": "05.0111",
+    "Comparative Religion": "38.0201",
+    "Comparative History of Ideas": "24.0103",
+    "History and Philosophy of Science": "54.0108",
+    # --- Languages & literatures (CIP 16.xx / 23.xx) ---
+    "Linguistics": "16.0102",
+    "Romance Linguistics": "16.0102",
+    "Asian Languages & Literature": "16.0399",
+    "Asian Languages and Cultures": "16.0399",
+    "South Asian Languages and Cultures": "16.0700",
+    "Middle Eastern Languages and Cultures": "16.1100",
+    "Near Eastern Languages & Civilization": "16.1100",
+    "Chinese": "16.0301",
+    "Japanese": "16.0302",
+    "Korean": "16.0303",
+    "Slavic Languages & Literatures": "16.0400",
+    "Eastern European Languages, Literature, and Culture": "16.0400",
+    "Russian Language, Literature, and Culture": "16.0402",
+    "Scandinavian": "16.0502",
+    "Danish": "16.0502",
+    "Finnish": "16.1502",
+    "Norwegian": "16.0502",
+    "Swedish": "16.0502",
+    "French": "16.0901",
+    "French Studies": "16.0901",
+    "Italian": "16.0902",
+    "Italian Studies": "16.0902",
+    "Hispanic Studies": "16.0905",
+    "Spanish": "16.0905",
+    "German Studies": "16.0501",
+    "Classics": "16.1200",
+    "Classical Studies": "16.1200",
+    "Greek": "16.1200",
+    "Latin": "16.1200",
+    "Comparative Literature": "16.0104",
+    "English": "23.0101",
+    "Global Literary Studies": "16.0104",
+    # --- Arts, design, architecture, music, drama (CIP 50.xx / 04.xx) ---
+    "Art": "50.0701",
+    "Art History": "50.0703",
+    "Fine Arts": "50.0702",
+    "Visual Communication Design": "50.0409",
+    "Design": "50.0404",
+    "Industrial Design": "50.0404",
+    "Interaction Design": "50.0409",
+    "Architectural Design": "04.0201",
+    "Architecture": "04.0201",
+    "Architectural Studies": "04.0201",
+    "Landscape Architecture": "04.0601",
+    "Urban Design & Planning": "04.0301",
+    "Urban Planning": "04.0301",
+    "Built Environment": "04.0201",
+    "Community, Environment, and Planning": "04.0301",
+    "Real Estate": "52.1501",
+    "Dance": "50.0301",
+    "Drama": "50.0501",
+    "Cinema and Media Studies": "50.0601",
+    "Digital Arts & Experimental Media": "50.0102",
+    "Music": "50.0901",
+    "American Music": "50.0901",
+    "Composition": "50.0904",
+    "Music Theory": "50.0905",
+    "Musicology": "50.0905",
+    "Ethnomusicology": "50.0905",
+    "Jazz Studies": "50.0910",
+    "Music Education": "13.1312",
+    "Musical Arts": "50.0903",
+    "Guitar": "50.0903",
+    "Organ": "50.0903",
+    "Orchestral Instruments": "50.0903",
+    "Percussion": "50.0903",
+    "Piano": "50.0903",
+    "String Instruments": "50.0903",
+    "Voice": "50.0903",
+    # --- Humanities & communication (CIP 38.xx / 54.xx / 24.xx / 09.xx) ---
+    "Philosophy": "38.0101",
+    "History": "54.0101",
+    "Communication": "09.0100",
+    # --- Education (CIP 13.xx / 19.07) ---
+    "Education": "13.0101",
+    "Education Studies": "13.0101",
+    "Education, Communities and Organizations": "13.0101",
+    "Educational Foundations, Leadership & Policy": "13.0401",
+    "Educational Leadership & Policy Studies": "13.0401",
+    "Curriculum & Instruction": "13.0301",
+    "Learning Sciences & Human Development": "13.0601",
+    "Special Education": "13.1001",
+    "Master In Teaching": "13.0101",
+    "Early Care and Education": "13.1210",
+    "Early Care and Education (fee-based)": "13.1210",
+    "Early Childhood and Family Studies": "19.0706",
+    # --- Business & management (CIP 52.xx) ---
+    "Business Administration": "52.0201",
+    "Business Analytics": "52.1301",
+    "Accounting": "52.0301",
+    "Accounting for Business Professionals": "52.0301",
+    "Professional Accounting": "52.0301",
+    "Finance": "52.0801",
+    "Marketing": "52.1401",
+    "Entrepreneurship": "52.0701",
+    "Human Resources Management": "52.1001",
+    "Operations and Supply Chain Management": "52.0203",
+    "Supply Chain Management": "52.0203",
+    "Supply Chain Transportation & Logistics": "52.0209",
+    "Sustainable Transportation": "52.0209",
+    # --- Law (CIP 22.xx) ---
+    "Law": "22.0101",
+    "Laws": "22.0201",
+    "Jurisprudence": "22.0201",
+    "Laws In Taxation": "22.0203",
+    "Taxation": "52.1601",
+    # --- Professional labels (lowercase, from _FIELD_LABEL) ---
+    "business administration": "52.0201",
+    "law": "22.0101",
+    "medicine": "51.1201",
+    "pharmacy": "51.2001",
+    # --- Individualized / interdisciplinary (CIP 30.xx) ---
+    "Individual PhD": "30.9999",
+    "Individualized Studies": "30.9999",
+    "Concurrent": "30.9999",
+}
+
+
+def _cip_for(spec: dict) -> str | None:
+    """CIP-2020 code for a program, keyed by its normalized field label (omit if uncodeable)."""
+    return _CIP_BY_FIELD.get(_normalize_field_label(_field_label(spec["program_name"])))
+
+
 def _build_catalog() -> list[dict]:
     out = []
     for slug, sk, name, dtype, _dept, fmt, dur in _CATALOG:
@@ -3027,6 +3325,7 @@ def _build_catalog() -> list[dict]:
                 _field_label(pname) if dtype != "professional" else name
             ),
         }
+        spec["cip"] = _cip_for(spec)
         out.append(spec)
     _assign_descriptions(out)
     return out
@@ -3034,6 +3333,15 @@ def _build_catalog() -> list[dict]:
 
 PROGRAMS: list[dict] = _build_catalog()
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
+
+# Matcher-core coverage gate (REPAIR_BACKLOG #1): every program must carry a valid CIP-2020
+# code. A miss is a build error (resolve the field in _CIP_BY_FIELD), never a silent null.
+_cip_missing = [p["slug"] for p in PROGRAMS if not p.get("cip")]
+if _cip_missing:
+    raise ValueError(f"UW catalog missing cip_code on {len(_cip_missing)} rows: {_cip_missing[:5]}")
+_cip_bad = sorted({p["cip"] for p in PROGRAMS if not re.fullmatch(r"\d{2}\.\d{4}", p["cip"])})
+if _cip_bad:
+    raise ValueError(f"UW catalog has malformed cip_code values: {_cip_bad}")
 
 _TRACKS_BY_SLUG: dict[str, list[str]] = {
     "uw-education-phd": [
@@ -3114,64 +3422,87 @@ _COST_SRC_URL = (
 )
 
 
-# == Published tuition (2025-26 academic year, WA resident) ==
-# UW publishes an annual resident tuition per credential level (UW Office of Planning &
-# Budgeting tuition dashboards + UW Financial Aid student budgets). UW's own statement is
-# that only Dentistry, Law, Medicine, and Pharmacy carry bespoke professional rates; every
-# other graduate/professional program bills on the graduate tuition schedule. The matcher
-# reads ``tuition`` as the budget-fit signal, so each program carries UW's published WA-
-# resident annual sticker for its tier (resident is the fleet convention — cf. UF / UCLA /
-# UT-Austin). Funding is a SEPARATE signal, so a funded research PhD carries the published
-# resident graduate sticker (the matcher's budget input), not $0.
+# == Published tuition (2025-26 academic year) ==
+# UW is a PUBLIC university and publishes TWO annual stickers per credential level — a WA-
+# resident rate and a higher non-resident (out-of-state) rate (UW Office of Planning & Budgeting
+# tuition dashboards + UW Student Financial Aid budgets). The CPEF matcher reads the flat scalar
+# ``program.tuition`` for its budget breaker + affordability fit, NOT the residency-aware net-price
+# estimator (REPAIR_BACKLOG #2): the out-of-state + ALL-international applicant pool is the majority
+# at a flagship public, so the scalar must carry the NON-RESIDENT sticker or the over-budget veto
+# under-fires 2.5–3.5× for them. So ``_tuition_for`` (the scalar) returns the NON-RESIDENT rate per
+# tier, while ``cost_data.breakdown`` keeps BOTH ``tuition_in_state`` and ``tuition_out_of_state``
+# (honest + sourced). UW's own statement is that only Dentistry, Law, Medicine, Pharmacy, Nursing
+# and PT carry bespoke professional rates; every other graduate program bills the flat graduate
+# Tier I schedule. Funding is a SEPARATE signal, so a funded research PhD carries the published
+# non-resident graduate sticker (the matcher's budget input), not $0.
 _TUITION_UG_RESIDENT = 13406  # UW WA-resident undergraduate annual tuition, 2025-26
 _TUITION_UG_NONRES = 44460  # UW non-resident undergraduate annual tuition (admit.washington.edu)
-_TUITION_GRAD_RESIDENT = 19011  # UW WA-resident graduate Tier I annual tuition, 2025-26
+_TUITION_GRAD_RESIDENT = 19011  # UW WA-resident graduate Tier I annual, 2025-26 (OPB: $6,337/qtr×3)
+_TUITION_GRAD_NONRES = 33171  # UW non-resident graduate Tier I annual, 2025-26 (OPB: $11,057/qtr×3)
 _TUITION_FA_SRC = (
-    "UW Office of Planning & Budgeting / UW Student Financial Aid — student budgets (WA "
-    "resident, 2025-26)"
+    "UW Office of Planning & Budgeting — 2025-26 Seattle quarterly tuition & fees / UW Student "
+    "Financial Aid student budgets"
 )
 _TUITION_FA_URL = "https://www.washington.edu/financialaid/getting-started/student-budgets/"
+_TUITION_OPB_URL = (
+    "https://www.washington.edu/opb/tuition-fees/current-tuition-and-fees-dashboards/"
+    "quarterly-tuition-and-fees-pdf-files/"
+)
 
-# Bespoke per-program resident annual tuition (each program's own published cost page).
+# Bespoke per-program annual tuition — each program's own published cost page (resident +
+# non-resident). The matcher scalar uses the non-resident figure; both ship in the breakdown.
 _PROFESSIONAL_TUITION: dict[str, dict] = {
     "Juris Doctor": {
         "resident": 47073,
-        "source": "UW School of Law — Tuition & Fees (WA resident, 2025-26)",
+        "nonresident": 58956,
+        "year": "2025-26",
+        "source": "UW School of Law — Tuition & Fees (2025-26)",
         "source_url": "https://www.law.uw.edu/admissions/financing/tuition",
     },
     "Doctor of Medicine": {
         "resident": 57968,
-        "source": "UW School of Medicine — Cost of Attendance (WA resident, 2025-26)",
+        "nonresident": 102319,
+        "year": "2025-26",
+        "source": "UW School of Medicine — Cost of Attendance (MS1, 2025-26)",
         "source_url": "https://education.uwmedicine.org/student-affairs/financial-aid/cost-of-attendance/",
     },
     "Doctor of Dental Surgery": {
         "resident": 59226,
-        "source": "UW School of Dentistry — Projected Costs (WA resident, first year, 2025-26)",
+        "nonresident": 84926,
+        "year": "2025-26",
+        "source": "UW School of Dentistry — Projected Costs (first year, 2025-26)",
         "source_url": "https://dental.washington.edu/students/admissions/projected-costs/",
     },
     "Doctor of Pharmacy": {
-        "resident": 36708,
-        "source": "UW School of Pharmacy — Tuition & Financial Aid (WA resident, 2025-26)",
+        "resident": 37482,
+        "nonresident": 51582,
+        "year": "2026-27",
+        "source": "UW School of Pharmacy — Tuition & Financial Aid (2026-27)",
         "source_url": "https://sop.washington.edu/pharmd/admissions/tuition-and-financial-aid/",
     },
     "Doctor of Nursing Practice": {
         "resident": 35064,  # state tracks: $11,688/quarter × 3 quarters
-        "source": "UW School of Nursing — Costs (WA resident, state tracks, 2025-26)",
+        "nonresident": 50037,  # state tracks: $16,679/quarter × 3 quarters
+        "year": "2025-26",
+        "source": "UW School of Nursing — Costs (state tracks, 2025-26)",
         "source_url": "https://nursing.uw.edu/admissions/costs/",
     },
     "Doctor of Physical Therapy": {
         "resident": 27807,  # $9,269/quarter × 3 quarters
-        "source": "UW Rehabilitation Medicine — Doctor of Physical Therapy (WA resident, 2025-26)",
+        "nonresident": 43461,  # $14,487/quarter × 3 quarters
+        "year": "2025-26",
+        "source": "UW Rehabilitation Medicine — Doctor of Physical Therapy (2025-26)",
         "source_url": "https://rehab.washington.edu/education/degrees/doctor-of-physical-therapy",
     },
     # "Doctor of Audiology" is intentionally absent: it bills on UW's variable graduate-tier
-    # schedule and publishes no single verified annual resident figure, so its tuition is
+    # schedule and publishes no single verified annual figure, so its tuition is
     # omitted-with-reason rather than guessed.
 }
 
 
 def _tuition_for(spec: dict) -> int | None:
-    """Published WA-resident annual tuition for a program, or None when honestly omitted."""
+    """Matcher budget scalar: UW's published NON-RESIDENT annual tuition for the program's tier
+    (REPAIR_BACKLOG #2 — public scalar), or None when honestly omitted."""
     # Fee-based / self-sustaining online programs (UW Professional & Continuing Education)
     # bill a distinct per-credit rate, NOT the state-supported sticker — stamping the state
     # rate would understate them, so their tuition is omitted-with-reason pending a program-
@@ -3180,10 +3511,10 @@ def _tuition_for(spec: dict) -> int | None:
         return None
     if spec["degree_type"] == "professional":
         pr = _PROFESSIONAL_TUITION.get(spec["program_name"])
-        return pr["resident"] if pr else None
+        return pr["nonresident"] if pr else None
     if spec["degree_type"] == "bachelors":
-        return _TUITION_UG_RESIDENT
-    return _TUITION_GRAD_RESIDENT  # masters + phd: flat resident graduate Tier I sticker
+        return _TUITION_UG_NONRES
+    return _TUITION_GRAD_NONRES  # masters + phd: flat non-resident graduate Tier I sticker
 
 
 def _online_cost(spec: dict) -> dict:
@@ -3214,10 +3545,13 @@ def _undergrad_cost(spec: dict | None = None) -> dict:
         },
         "funded": False,
         "note": (
-            "WA-resident undergraduate annual tuition is $13,406 (UW Office of Planning & "
-            "Budgeting / Financial Aid, 2025-26). The total cost of attendance ($32,446) and "
-            "average net price after grant aid ($14,091) are College Scorecard figures "
-            "(UNITID 236948, 2023-24). Non-residents pay the out-of-state rate in the breakdown."
+            "UW is public, so two undergraduate stickers apply: WA-resident annual tuition is "
+            "$13,406 and non-resident is $44,460 (UW Office of Planning & Budgeting / Financial "
+            "Aid, 2025-26); both rates ship in the breakdown. The cost card shows the WA-resident "
+            "basis, coherent with the College Scorecard total cost of attendance ($32,446) and "
+            "average net price after grant aid ($14,091) (UNITID 236948, 2023-24). The matcher's "
+            "budget signal (program.tuition) separately uses the non-resident rate — the "
+            "conservative default for the out-of-state + international pool."
         ),
         # Tuition and the Scorecard COA/net-price carry separate provenance + year.
         "tuition_source": _TUITION_FA_SRC,
@@ -3248,22 +3582,35 @@ def _grad_cost(spec: dict) -> dict:
             }
         return {
             "tuition_usd": pr["resident"],
+            "breakdown": {
+                "tuition_in_state": pr["resident"],
+                "tuition_out_of_state": pr["nonresident"],
+            },
             "funded": False,
             "note": (
-                "Annual professional-program tuition (WA resident); non-residents pay a higher "
-                "published rate. See the program's tuition page for the current figure."
+                f"Annual professional-program tuition ({pr['year']}): WA-resident "
+                f"${pr['resident']:,} and non-resident ${pr['nonresident']:,}; both ship in the "
+                "breakdown. The cost card shows the WA-resident rate; the matcher's budget signal "
+                "(program.tuition) separately uses the non-resident rate."
             ),
             "source": pr["source"],
             "source_url": pr["source_url"],
-            "year": "2025-26",
+            "year": pr["year"],
         }
     funded = spec["degree_type"] == "phd"
     return {
         "tuition_usd": _TUITION_GRAD_RESIDENT,
+        "breakdown": {
+            "tuition_in_state": _TUITION_GRAD_RESIDENT,
+            "tuition_out_of_state": _TUITION_GRAD_NONRES,
+        },
         "funded": funded,
         "note": (
-            "UW charges one flat WA-resident graduate Tier I tuition ($19,011, 2025-26) across "
-            "its state-supported master's and doctoral programs; non-residents and fee-based "
+            "UW is public and charges one flat graduate Tier I tuition across its state-supported "
+            "master's and doctoral programs: WA-resident $19,011 and non-resident $33,171 (UW "
+            "Office of Planning & Budgeting, 2025-26); both ship in the breakdown. The cost card "
+            "shows the WA-resident rate; the matcher's budget signal (program.tuition) separately "
+            "uses the non-resident rate for the out-of-state + international pool. Fee-based "
             "programs pay a higher published rate."
             + (
                 " Most UW PhD students are funded through assistantships and fellowships that "
@@ -3273,7 +3620,7 @@ def _grad_cost(spec: dict) -> dict:
             )
         ),
         "source": _TUITION_FA_SRC,
-        "source_url": _TUITION_FA_URL,
+        "source_url": _TUITION_OPB_URL,
         "year": "2025-26",
     }
 
@@ -3879,6 +4226,8 @@ def _program_standard(slug: str, spec: dict) -> dict:
     omitted: list[str] = []
     if _tuition_for(spec) is None:
         omitted.append("cost_data.tuition_usd")
+    if not spec.get("cip"):
+        omitted.append("cip_code")
     if slug not in _TRACKS_BY_SLUG:
         omitted.append("tracks")
     if slug not in _OUTCOMES_BY_SLUG:
@@ -4012,6 +4361,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.is_published = True
         p.catalog_source = "curated"
         p.delivery_format = spec.get("delivery_format", "on_campus")
+        p.cip_code = spec.get("cip")  # matcher-core CIP join key (REPAIR_BACKLOG #1)
         _kw = _PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(_KEYWORDS_BY_SCHOOL[spec["school"]])
         p.content_sources = _program_content(spec["school"], _kw)
         p.tuition = _tuition_for(spec)
