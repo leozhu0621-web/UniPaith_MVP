@@ -15,8 +15,15 @@ omitted-with-reason for funded Ph.D./J.S.D. and per-credit-only DrPH rows.
 
 Idempotent: re-applies ``columbia_profile.apply()`` and re-derives program-preference rows.
 
+This revision ALSO unifies the concurrent dual head left on ``main`` by the two duplicate
+triple-head merges that auto-merged within minutes of each other (``cip3waymerge1`` from
+#1161 and ``berkvandydartmerge1`` from #1162, both reuniting berkeleycip2 + dartcipwho1 +
+vandycip1). Setting ``down_revision`` to both collapses them back to a single head while
+carrying the Columbia data — so this one migration both restores deploys and ships the
+matcher-core fix (no separate empty merge-of-merges needed).
+
 Revision ID: columbiacip1
-Revises: berkeleycip1
+Revises: cip3waymerge1, berkvandydartmerge1
 Create Date: 2026-06-25
 """
 
@@ -31,7 +38,7 @@ from unipaith.models.institution import Institution, Program, ProgramPreference
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "columbiacip1"
-down_revision = "berkeleycip1"
+down_revision = ("cip3waymerge1", "berkvandydartmerge1")
 branch_labels = None
 depends_on = None
 
