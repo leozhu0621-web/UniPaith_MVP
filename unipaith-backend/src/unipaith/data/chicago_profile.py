@@ -1166,7 +1166,6 @@ _CIP_TO_DEPARTMENT: dict[str, str] = {
     "Science, Technology and Society": "Science, Technology, and Society",
     "Nutrition Sciences": "Nutritional Science",
     "Sustainability Studies": "Environment, Geography, and Urbanization",
-    "Area Studies": "Area Studies",
     "Ethnic, Cultural Minority, Gender, and Group Studies": "Gender and Sexuality Studies",
     "Natural Resources Conservation and Research": "Environmental and Urban Studies",
     "Environmental/Natural Resources Management and Policy": "Environmental and Urban Studies",
@@ -1253,6 +1252,15 @@ _SKIP_CATALOG_SLUGS = frozenset({
     # Professional degrees already modeled as explicit flagship programs.
     "uchicago-law-prof",
     "uchicago-health-professions-cip-51-12-prof",
+    # Federal CIP 05.01 "Area Studies" is a series-level aggregation, NOT a degree
+    # UChicago confers under that literal name (enrich-profile miss #2 / REPAIR_BACKLOG
+    # #1). UChicago's actual area-studies majors are already in this catalog under their
+    # real published names + own CIP codes — East Asian Languages and Civilizations and
+    # Near Eastern Languages and Civilizations (16.x), Slavic / Romance / Germanic
+    # Languages and Literatures, International Relations (45.09) — so the generic 05.01
+    # bucket maps to no single named degree and is dropped rather than fabricated.
+    "uchicago-area-studies-bs",
+    "uchicago-area-studies-ms",
 })
 
 
