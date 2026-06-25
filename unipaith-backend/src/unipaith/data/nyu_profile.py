@@ -5781,6 +5781,25 @@ _GRAD_PER_CREDIT: dict[str, tuple[int, str, str, str]] = {
         2785, "2025-26", "NYU School of Professional Studies — Graduate Tuition and Financial Aid",
         "https://www.sps.nyu.edu/join/graduate-admissions/tuition-and-financial-aid.html",
     ),
+    # REPAIR_BACKLOG #3 — master's-tier tuition residual. NYU bills graduate tuition per credit
+    # by SCHOOL (the Bursar's per-point rate), so every program in these schools shares one rate;
+    # annualized at _FT_CREDITS_PER_YEAR (24 = NYU's 12-points/semester full-time standard).
+    # Each per-credit figure is the school's row in the NYU Bursar 2025-26 Tuition and Fee Rates.
+    _WAGNER: (
+        2491, "2025-26",
+        "NYU Bursar — 2025-26 Tuition and Fee Rates (Robert F. Wagner Graduate School per point)",
+        "https://www.nyu.edu/students/student-information-and-resources/bills-payments-and-refunds/tuition-and-fee-rates.html",
+    ),
+    _NURSING: (
+        2496, "2025-26",
+        "NYU Bursar — 2025-26 Tuition and Fee Rates (Rory Meyers College of Nursing per point)",
+        "https://bulletins.nyu.edu/graduate/nursing/cost-attendance/tuition-fees/",
+    ),
+    _GALLATIN: (
+        2333, "2025-26",
+        "NYU Bursar — 2025-26 Tuition and Fee Rates (Gallatin School of Individualized Study per point)",
+        "https://www.nyu.edu/students/student-information-and-resources/bills-payments-and-refunds/tuition-and-fee-rates.html",
+    ),
 }
 
 # Graduate FLAT full-time annual tuition by school (NYU bills a flat full-time rate, not per credit).
@@ -5790,6 +5809,23 @@ _GRAD_FLAT_BY_SCHOOL: dict[str, tuple[int, str, str, str]] = {
         82902, "2025-26",
         "NYU Tisch School of the Arts — Graduate Tuition and Fees (flat $41,451/semester, 12–18 credits)",
         "https://tisch.nyu.edu/admissions/graduate-admissions/graduate-tuition-and-fees.html",
+    ),
+    # College of Dentistry M.S. degrees (Biomaterials Science, Clinical Research) share one
+    # published full-time annual figure: $41,994 at 9 credits/semester (18 credits/year),
+    # 2025-26 (REPAIR_BACKLOG #3). The D.D.S. is billed separately by slug above.
+    _DENTISTRY: (
+        41994, "2025-26",
+        "NYU College of Dentistry — Cost of Attendance, M.S. tuition (9 credits/semester)",
+        "https://bulletins.nyu.edu/graduate/dentistry/cost-attendance/",
+    ),
+    # Silver M.S.W. is billed $1,718/credit, but the full-time pathway carries ~33 points/year
+    # (the 65-credit degree over two years), NOT NYU's generic 24, so the full-time-year tuition
+    # is $1,718 × 33 ≈ $56,694 — using the 24-credit standard understated it by ~$15k (Codex P2b).
+    _SILVER: (
+        56694, "2025-26",
+        "NYU Silver School of Social Work — M.S.W. ($1,718/credit × ~33 credits in a full-time "
+        "pathway year; the 65-credit degree over two years)",
+        "https://socialwork.nyu.edu/prospective-students/paying-for-your-education/msw/tuition-and-fees.html",
     ),
 }
 
@@ -5806,9 +5842,10 @@ _DENT_TUITION_SRC_URL = "https://bulletins.nyu.edu/graduate/dentistry/cost-atten
 # NYU does not publish as a single verified annual figure → tuition omitted-with-reason (never guessed).
 _GRAD_OMIT_REASON_BY_SCHOOL: dict[str, str] = {
     _STERN: (
-        "NYU Stern prices its M.B.A. and specialized M.S. programs at program-specific cohort/flat "
-        "rates that vary by program rather than a single per-credit school rate, so a verified annual "
-        "tuition figure is omitted here rather than guessed — see the program's NYU Stern cost page."
+        "This NYU Stern program publishes its tuition only after enrollment (the NYU Shanghai / "
+        "HKUST joint programs bill in USD via the NYU Bursar once registered) or has no single "
+        "published program-cost figure, so a verified tuition figure is omitted here rather than "
+        "guessed — see the program's NYU Stern cost page."
     ),
     _WAGNER: (
         "NYU Wagner bills tuition per credit at program-specific rates that are not published as one "
@@ -5828,13 +5865,136 @@ _GRAD_OMIT_REASON_BY_SCHOOL: dict[str, str] = {
         "annual figure is omitted here rather than guessed — see the Gallatin tuition page."
     ),
     _MED: (
-        "These Grossman research master's degrees are billed on the school's own schedule and are "
-        "frequently funded; NYU does not publish one verified annual tuition figure for them, so "
-        "tuition is omitted rather than guessed."
+        "These Grossman science master's degrees are billed per credit, but NYU publishes no fixed "
+        "tuition dollar figure for them on any first-party page (the M.S. in Clinical Investigation "
+        "notes unspecified NIH tuition discounts; the M.S. in Genome and Health Analysis states it "
+        "offers no scholarships), so tuition is omitted-with-reason rather than guessed."
     ),
     _DENTISTRY: (
         "These advanced dental-science master's degrees are billed at program-specific rates rather "
         "than a single published annual figure, so tuition is omitted here rather than guessed."
+    ),
+}
+
+
+# NYU Stern bills its M.B.A. and specialized M.S. programs at PROGRAM-SPECIFIC cohort / flat /
+# per-credit rates (not one school per-point rate), so each is keyed by slug to its own published
+# figure (REPAIR_BACKLOG #3, verified first-party 2026-06-25 against stern.nyu.edu cost pages +
+# the NYU Bursar 2025-26 schedule). "annual" = the program's published nine-month/full-time-year
+# tuition; "total" = the program's single published total-program cost (used for the executive /
+# focused / cohort programs NYU prices as one figure). Never the undergrad sticker, never guessed.
+_STERN_PROG = "https://www.stern.nyu.edu/programs-admissions"
+_STERN_COST_BY_SLUG: dict[str, tuple[int, str, str, str, str]] = {
+    # slug: (tuition_usd, basis_note, source_label, source_url, year)
+    "nyu-general-management-mba": (
+        89524,
+        "NYU Stern Full-Time Two-Year M.B.A. tuition is $89,524 for the nine-month academic year "
+        "(billed as a flat $44,762/semester).",
+        "NYU Stern — Full-Time MBA Tuition & Cost of Attendance",
+        f"{_STERN_PROG}/full-time-mba/financial-aid/tuition-cost-attendance",
+        "2025-26",
+    ),
+    "nyu-general-management-executives-mba": (
+        130200,
+        "NYU Stern Executive M.B.A. (New York) tuition is ~$130,200 per year, annualized from the "
+        "published $238,700 total over the 22-month program (the matcher's tuition field is "
+        "per-year, not the program total).",
+        "NYU Stern — Executive MBA Program Costs",
+        f"{_STERN_PROG}/executive-mba-nyc/financing-mba/program-costs",
+        "2026-27 cohort",
+    ),
+    "nyu-technology-entrepreneurship-mba": (
+        122565,
+        "NYU Stern Andre Koo Technology & Entrepreneurship M.B.A. (one-year) tuition totals "
+        "$122,565 across the program's three terms ($40,855 summer + $81,710 fall/spring).",
+        "NYU Stern — Tech MBA Cost of Attendance",
+        "https://www.stern.nyu.edu/portal-partners/financial-aid/cost-attendance/focused-mba/tech-mba",
+        "2025-26",
+    ),
+    "nyu-luxury-retail-mba": (
+        122565,
+        "NYU Stern Fashion & Luxury M.B.A. (one-year) tuition totals $122,565 across the program's "
+        "three terms ($40,855 summer + $81,710 fall/spring).",
+        "NYU Stern — Fashion & Luxury MBA Cost of Attendance",
+        "https://www.stern.nyu.edu/portal-partners/financial-aid/cost-attendance/focused-mba/fashion-luxury-mba",
+        "2025-26",
+    ),
+    "nyu-stern-nyu-abu-dhabi-mba": (
+        77778,
+        "NYU Stern Executive M.B.A. at NYU Abu Dhabi tuition is ~$77,778 per year, annualized from "
+        "the published $87,500 total for the 27-credit program at NYU's 24-credit full-time year.",
+        "NYU Abu Dhabi — Executive MBA Tuition",
+        "https://stern.nyuad.nyu.edu/programs-admissions/executive-mba-program/tuition-and-scholarships/tuition/",
+        "2026-27",
+    ),
+    "nyu-global-executive-mba": (
+        156060,
+        "NYU Stern TRIUM Global Executive M.B.A. (with LSE and HEC Paris) tuition is ~$156,060 per "
+        "year, annualized from the published $208,080 program fee (Class of 2028) over the 16-month "
+        "program.",
+        "NYU Bulletins — Global Executive MBA (TRIUM)",
+        "https://bulletins.nyu.edu/graduate/business/programs/global-executive-mba/",
+        "2026-28 cohort",
+    ),
+    "nyu-accounting-ms": (
+        66362,
+        "NYU Stern M.S. in Accounting tuition is $66,362 for the nine-month academic year (billed "
+        "as a flat $33,181/semester).",
+        "NYU Stern — MS in Accounting Financial Aid",
+        f"{_STERN_PROG}/masters-programs/ms-accounting/financial-aid",
+        "2025-26",
+    ),
+    "nyu-business-analytics-ai-ms": (
+        95900,
+        "NYU Stern M.S. in Business Analytics and AI total program cost is $95,900 (tuition, course "
+        "materials, and some meals/events).",
+        "NYU Stern — MS in Business Analytics and AI Program Cost",
+        f"{_STERN_PROG}/ms-business-analytics-ai/admissions/program-cost-and-financial-aid",
+        "2027 cohort",
+    ),
+    "nyu-fintech-ms": (
+        70240,
+        "NYU Stern M.S. in Fintech tuition is ~$70,240 per year, annualized from the published "
+        "$87,800 total across the program's four terms (~15 months).",
+        "NYU Stern — MS in Fintech Cost of Attendance",
+        "https://www.stern.nyu.edu/portal-partners/financial-aid/cost-attendance/cost-attendance-ms-fintech-students",
+        "2025-26",
+    ),
+    "nyu-management-ms": (
+        46332,
+        "NYU Stern M.S. in Management (online MiM) tuition is ~$46,332 per year, annualized from the "
+        "published $77,220 total over five semesters (fall 2025 – spring 2027, ~20 months).",
+        "NYU Stern — Online MS in Management Tuition & Fees",
+        f"{_STERN_PROG}/masters-programs/online-ms-management/financial-aid-tuition/tuition-fees",
+        "2025-27 cohort",
+    ),
+    # NYU Shanghai Stern 36-credit M.S. programs, billed at the Stern $2,076/credit M.S. rate
+    # (the published $74,736 36-credit total ÷ 36 = $2,076); $49,824/yr at NYU's 24-credit
+    # full-time year — same basis as MS Quantitative Finance (Codex P2a; verified first-party).
+    "nyu-data-analytics-business-computing-ms": (
+        49824,
+        "NYU Shanghai Stern M.S. in Data Analytics and Business Computing is a 36-credit program "
+        "(published total $74,736 = $2,076/credit); $49,824 at NYU's 24-credit full-time year.",
+        "NYU Shanghai Stern — MS in Data Analytics and Business Computing (Tuition)",
+        "https://stern.shanghai.nyu.edu/en/admissions/ms-data-analytics-and-business-computing",
+        "2026-27",
+    ),
+    "nyu-marketing-retail-science-ms": (
+        49824,
+        "NYU Shanghai Stern M.S. in Marketing and Retail Science is a 36-credit program billed at "
+        "the Stern $2,076/credit M.S. rate ($74,736 total); $49,824 at NYU's 24-credit full-time "
+        "year (12-month track; a 20-month track is also offered).",
+        "NYU Shanghai Stern — MS in Marketing and Retail Science",
+        "https://stern.shanghai.nyu.edu/en/admissions/ms-marketing-and-retail-science",
+        "2026-27",
+    ),
+    "nyu-quantitative-finance-ms": (
+        49824,
+        "NYU Stern M.S. in Quantitative Finance is billed $2,076 per credit; $49,824 at a full-time "
+        "load of 24 credits/year (the 36-credit program totals about $74,736).",
+        "NYU Bursar 2025-26 schedule + NYU Bulletins — MS in Quantitative Finance",
+        "https://bulletins.nyu.edu/graduate/business/programs/quantitative-finance-ms/",
+        "2025-26",
     ),
 }
 
@@ -5935,6 +6095,12 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
             source="NYU graduate funding (school fellowship/assistantship policy)",
             source_url=spec["website"], year="2025-26", funded=True,
         )
+
+    # NYU Stern programs are priced per program (cohort / flat / per-credit), keyed by slug.
+    stern_cost = _STERN_COST_BY_SLUG.get(slug)
+    if stern_cost is not None:
+        tuition, note, src, url, year = stern_cost
+        return tuition, _cost(tuition, note, source=src, source_url=url, year=year)
 
     # Master's by school.
     if school == _LAW:  # LL.M. / specialized law master's — per-credit, full-time = 24 credits/year.
