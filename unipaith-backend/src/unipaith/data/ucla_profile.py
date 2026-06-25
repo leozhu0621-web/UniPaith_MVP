@@ -2345,7 +2345,7 @@ _CATALOG: list[tuple] = [
         "masters",
         "Master of Legal Studies",
         "on_campus",
-        24,
+        12,
     ),
     (
         "ucla-doctor-of-juridical-science-phd",
@@ -2389,7 +2389,7 @@ _CATALOG: list[tuple] = [
         "Data Science in Biomedicine",
         "masters",
         "Data Science in Biomedicine",
-        "on_campus",
+        "online",
         24,
     ),
     (
@@ -2620,7 +2620,7 @@ _CATALOG: list[tuple] = [
         "Master of Healthcare Administration",
         "masters",
         "Master of Healthcare Administration",
-        "on_campus",
+        "online",
         24,
     ),
     (
@@ -4242,9 +4242,10 @@ _MASTER_COST_TABLE: list[tuple[str, int, str, str, str, str]] = [
         "https://law.ucla.edu/admissions/llm-admissions/tuition-visa-information",
     ),
     (
-        "ucla-master-of-legal-studies-ms", 33_475, "2025-26",
-        "UCLA School of Law online Master of Legal Studies (M.L.S.): $2,575/unit over a 26-unit "
-        "program ($66,950 total; ≈$33,475/year; self-supporting, 2025-26).",
+        "ucla-master-of-legal-studies-ms", 66_950, "2025-26",
+        "UCLA School of Law Master of Legal Studies (M.L.S.): $2,575/unit over a 26-unit program "
+        "($66,950); full-time students complete the program in two semesters (one year), so the "
+        "full $66,950 is the annual tuition; self-supporting, 2025-26.",
         "UCLA Law — Master of Legal Studies Tuition & Scholarships",
         "https://law.ucla.edu/admissions/master-legal-studies/mls-tuition-and-scholarships",
     ),
