@@ -275,3 +275,22 @@ def test_no_peer_contaminated_descriptions():
         if any(sig in (prog.get("description") or "") for sig in p._PEER_SIGNATURES)
     )
     assert peer == 0, f"{peer} programs still carry peer-institution contamination"
+
+
+def test_every_program_carries_a_matcher_core_cip_code():
+    """Matcher-core CIP coverage gate (REPAIR_BACKLOG #1): every program carries a verified
+    NCES CIP-2020 code (family NN.NN or detail NN.NNNN) — the CIP join key the CPEF matcher
+    reads (2-digit family) for the field/interest signal. A catalog-wide null is matcher
+    starvation, not an honest omission; there are no genuinely uncodeable programs today."""
+    import re
+
+    missing = [spec["slug"] for spec in p.PROGRAMS if not spec.get("cip")]
+    assert not missing, f"{len(missing)} programs missing cip_code: {missing[:8]}"
+    bad = sorted(
+        {
+            spec["cip"]
+            for spec in p.PROGRAMS
+            if not re.fullmatch(r"\d{2}\.\d{2}(\d{2})?", spec["cip"])
+        }
+    )
+    assert not bad, f"malformed cip_code values: {bad}"
