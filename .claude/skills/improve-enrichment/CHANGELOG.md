@@ -6720,3 +6720,91 @@ imported `profile_standard/anti_stub.py` and ran `analyze` / `frame_stripped_sha
 cleanly; gold MIT scores 0 on every description metric), and AST-parsed the repo's alembic graph on
 `origin/main` (confirmed a single head). This grader PR changes only the three skill markdown files (no code,
 no data, no migration), so backend CI is unaffected.
+
+---
+
+## 2026-06-25 — Run 81 (FULL-FLEET sweep of all 300 live + all 40 catalogs · enricher CLEARED Berkeley "Area Studies" + enriched Brown & Vanderbilt to gold · headline = the fleet is gold-clean on every rule-governed dimension, so 0 rule changes · the 2 live defect classes are COMPLIANCE GAPS to existing rules)
+
+**Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`,**
+reusing `profile_standard/anti_stub.py` directly (paginated full program list of all 40 program-bearing
+catalogs = **7,294 programs**; the other 260 are bare institution-level stubs). Per catalog I computed
+`analyze` (name-prefix / classification / double-period / verbatim-shared / shared-leading-body / cross-field),
+`machine_artifacts`, `scrape_debris`, `template_slot_artifacts`, `frame_stripped_shared_body(abs150)`, an
+exact-duplicate `(program_name, degree_type)` scan, a name-realness scan (federal CIP rollup-TITLE + the
+"…and Related Sciences/Services" / ", General/Other" / `(CIP NN.NN)` suffix tells), a possessive-form
+"Bachelor's in {field}" scan, per-`degree_type` tuition COVERAGE, and a professional/grad tuition copy-down
+scan (vs the undergrad sticker); for every institution I counted campus photos (`image_url`) and fetched the
+posts feed on every mature catalog. Where the metric and the live data could disagree I went DIRECT — read
+sibling program descriptions (Brown/Vanderbilt/Berkeley student's-eye pass), read each fresh module's
+`content_sources` + `backfill_program_preferences` on `origin/main`, and AST-checked the alembic graph
+(single head `berkvandmerge1`).
+
+**Merged since run 80 (grader PR #1118):** the enricher cleared the run-80 worst tier and two flagship seeds,
+all DEPLOYED + verified LIVE — **#1123 UC-Berkeley** "Area Studies" CIP-rollup names → real area programs
+(Global Studies, Near Eastern Studies, South & Southeast Asian Studies, Ethnic Studies, …; the live BA/MA/PhD
+"Area Studies" rows are GONE) · **#1117 Brown** flagship-seed → 57-program gold catalog · **#1121 Vanderbilt**
+flagship-seed → 103-program gold catalog (both: real conferred-degree names + real departments + field-specific
+descriptions + per-tier tuition + 5-photo galleries). Dual heads unified by #1125 (`berkvandmerge1`).
+
+**HEADLINE — after a FULL-FLEET sweep the fleet is gold-clean on every dimension a rule governs, so 0 rule
+changes (the rails: clean fleet → change nothing, log "no new gaps"; anti-churn; no-edit-without-NEW-evidence).**
+Every mature catalog scores **0** on `template_slot_artifacts` / `scrape_debris` / `machine_artifacts`; **0**
+possessive-form rows fleet-wide; no bare-abbreviation / "Programs"-dept / null-dept rows on any mature catalog
+(only the 6 remaining 5-program flagship seeds have null dept); no NEW tuition copy-down; the fresh + repaired
+catalogs verified gold by a direct student's-eye read. The TWO live defect classes both map to rules that
+ALREADY exist — they are COMPLIANCE GAPS (queued + logged), not new gap-classes (re-adding the rule would
+bloat the skill and change nothing).
+
+**Findings (with live evidence):**
+- **COMPLIANCE GAP (rule exists; queued not re-added) — federal-CIP-rollup "Area Studies" NAMES still LIVE on
+  UW-Madison (3: BA + Grad Cert + MS, dept "International Studies") + U-Chicago (2: BA + MA, dept literally "Area
+  Studies").** "Area Studies" is the CIP 05.01 series TITLE, a degree no institution confers — exactly the
+  miss-#2 class the Berkeley/Cornell/Penn/Harvard repairs cleared (miss #2 names "Area Studies" explicitly). The
+  Berkeley clear this cycle proves the repair recipe; UW-Madison + Chicago are the residual. Queued BACKLOG #1
+  (worst tier — fabrication ranks first by the no-fabrication invariant). Durable enforcement = FLAG #2 (a
+  name-realness CI metric; the gate is still description-only).
+- **COMPLIANCE GAP (rule exists; queued not re-added) — exact-duplicate REAL rows are now the dominant defect
+  by VOLUME: 43 rows / 24 of ~32 mature catalogs** (run-80 measured 30/15; this run's full scan finds the class
+  is essentially the DEFAULT state of every curated+IPEDS-built catalog). Worst: UIUC 5 · UW-Seattle 4 · GT 3 ·
+  Purdue 3 · UW-Madison 3 · then 2 each on NYU/UF/Harvard/Yale/Penn/Columbia · 1 each on 13 more. The build
+  dedups on `slug`, so a curated row and an IPEDS-derived row that render the IDENTICAL `(program_name,
+  degree_type)` both ship (same degree twice — doubles it for the student, double-weights it for the matcher).
+  The miss-#2 dedup-on-rendered-name RULE (added run 80) already mandates the fix; the class persists because
+  the durable enforcement is a build-union dedup + a name-uniqueness GATE, NOT a rule (FLAG #1, now the
+  highest-leverage code fix). Queued BACKLOG #2. The `verbatim_shared` / `frame_abs150` hits on these 24
+  catalogs are ARTIFACTS of the duplicate pair (clean to 0 once the dup is dropped), NOT a description-stub class.
+- **DIAGNOSED NOT-A-DEFECT — dead feeds on the two FRESH enrichments are ingest-TIMING, not data.** Brown +
+  Vanderbilt read posts=0, but BOTH modules DO set `content_sources` (real `news_rss` + `events_feed` ICS,
+  confirmed direct in `brown_profile.py` / `vanderbilt_profile.py`), so the daily ingest simply has not run for
+  these <1-day-old catalogs (older enrichments populated: Dartmouth 31, Notre Dame 13, Emory 1525). Per step 3
+  (confirm data-vs-render, don't guess) this is NOT a miss-#1 violation — queued only as a medium WATCH to
+  re-check next run. Matcher-side `backfill_program_preferences` IS called in both fresh migrations (compliant).
+- **TUITION — the run-80 master's-tier STARVATION is resolved to a partial residual.** The run-79→80 repair wave
+  cleared whole-tier nulls; UCLA master's now 98/146 (67%) and NYU 194/232 (84%) are the two largest residual
+  partial gaps (not whole-tier-null → demoted to BACKLOG #3, high/medium). PhD/cert nulls remain largely
+  legitimate (funded / per-credit → omit-with-reason; peers that fill are VERIFY triggers, not proof). Tuition
+  VALUE is clean: BU's 15 professional rows at the $69,870 flat rate are the VERIFIED flat-full-time exception
+  (prof tier carries 3 distinct values incl. distinct MD/DMD/SSW), and NYU's single combined B.A./D.D.S. at the
+  undergrad sticker is a genuine combined degree — no new copy-down.
+- **SEEDS (seeding is external).** Flagship seeds down to 6 (Brown + Vanderbilt cleared): Georgetown · UC-Davis ·
+  UC-Irvine · UNC-Chapel Hill · UVA · Wash U-St Louis. ~254 bulk institution stubs (0 programs), 33 with ZERO
+  campus photo (unchanged). Queued BACKLOG #4/#5.
+
+**Rule changes: NONE.** No NEW gap-class survived the full-fleet sweep — the two live defect classes are
+compliance gaps to miss #2 (and the timing finding is not a defect). Per the safety rails this is the correct
+"clean fleet → change nothing, log it" outcome; inventing a duplicate rule to look busy is explicitly forbidden.
+Self-review: re-read `enrich-profile/SKILL.md` is unchanged this run (misses still numbered sequentially, all
+invariants intact). The leverage now sits in CODE (FLAG #1 build-union dedup + name-uniqueness gate; FLAG #2
+name-realness metric) and in the enricher clearing the queued repairs — not in another rule.
+
+**Backlog delta:** #1 (run 80) UC-Berkeley "Area Studies" → CLEARED; entry #1 now UW-Madison + Chicago only.
+#4 flagship seeds: Brown + Vanderbilt → CLEARED (6 remain). Exact-duplicate entry re-measured 30/15 → 43/24
+(full-scan precision, same class). Master's-tuition entry demoted from whole-tier starvation to partial residual.
+
+**Enricher health check:** the DB-backed `test_profile_standard.py` / `test_profile_enrichment.py` could not
+run here (no Postgres in this grader env). Substantive DB-free check: imported `profile_standard/anti_stub.py`
+and ran `analyze` / `frame_stripped_shared_body`(abs150) / `template_slot_artifacts` / `scrape_debris` /
+`machine_artifacts` over all 40 live catalogs (they compute cleanly; gold MIT scores 0 on every description
+metric), and AST-confirmed a single alembic head on `origin/main`. This grader PR changes only the two skill
+markdown files (REPAIR_BACKLOG + CHANGELOG; SKILL.md unchanged) — no code, no data, no migration — so backend
+CI is unaffected.
