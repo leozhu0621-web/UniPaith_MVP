@@ -6,6 +6,98 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-26 — Run 88 (FULL-FLEET sweep of all 300 live + all 40 catalogs · all 3 run-87 CRITICAL entries CLEARED LIVE · 0 rule changes — no new gap-class survived the sweep)
+
+**Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`.**
+A direct full-fleet crawl: all 300 institutions fetched (campus-photo gallery length + posts-feed count, threaded);
+all 40 program-bearing catalogs fully paginated (7,639 programs) and run through a per-catalog
+description-NON-EMPTINESS scan, an exact-duplicate `(program_name, degree_type)` scan, a name-realness scan
+(CIP-rollup TITLE / "…and Related Sciences/Services" / ", General/Other" / `(CIP NN.NN)` / possessive
+"Bachelor's in" / bare-abbreviation / federal comma-and tells), a per-`degree_type` tuition COVERAGE measure, and a
+grad==undergrad tuition-VALUE copy-down scan; 12 program DETAILS/catalog (`GET /programs/{id}`) probed for
+`cip_code` / `who_its_for` / `external_reviews` coverage and the public-vs-private bachelor `tuition`-scalar-vs-
+`cost_data.breakdown` resident/non-resident axis. The merged-PR list, the `who_its_for = None` hard-null grep, and
+the fresh-migration `backfill_program_preferences` / `content_sources` calls were read via `git` over `origin/main`.
+
+**Merged since run 87 (grader PR #1177):** the enricher CLEARED all three run-87 CRITICAL entries —
+**#1178 UC-Davis** (empty-desc seed → 151-program gold catalog), **#1179 UC-Irvine** (→ 160), and **#1181 UCLA**
+(per-program `who_its_for` 0%→100% + non-resident tuition scalar). The run-87 **UNC strand** (#1176, 89-program
+catalog that served 5 empty seeds because the self-skipping migration didn't apply at boot) is **now LIVE & GOLD**
+— no re-apply PR was needed; `unc_profile.apply()` ran on a later redeploy, VALIDATING the run-87 "non-deterministic
+skip" diagnosis (the byte-identical WashU/UVA pattern had landed first-try). Many app-side `fix(uni)`/`fix(chat)`
+commits also merged (out of grader scope).
+
+**Findings (with live evidence) — every residual defect is a COMPLIANCE GAP to an existing rule:**
+- **🟢 NO CRITICAL DEFECTS.** 0 empty/whitespace `description_text` across all 7,639 programs (UNC/UC-Davis/UC-Irvine
+  resolved); 0 exact-duplicate `(program_name, degree_type)` rows on all 40 catalogs; name-realness scan returns
+  ZERO CIP-rollup TITLE / `(CIP NN.NN)` / "…and Related Sciences/Services" / ", General/Other" / possessive
+  "Bachelor's in" / bare-abbreviation names — every multi-clause "comma-and" hit is a VERIFIED real interdisciplinary
+  major (MIT "Science, Technology, and Society"; "Speech, Language, and Hearing Sciences"; Yale "Ethics, Politics, and
+  Economics"; "Molecular, Cell, and Developmental Biology") = the documented run-77 false-positive, not a defect.
+  Deploy pipeline healthy (single head, migrations applying in prod).
+- **🟢 TUITION-VALUE copy-down CLEAN — the run-87 false-positive carve-out held.** The grad==undergrad scan flagged
+  BU (154 grad rows at $69,870) and USC (189 grad rows at $73,260), but BOTH carry their PROFESSIONAL tier at DISTINCT
+  higher rates (prof@undergrad-sticker = 0 on both) — the run-87 discriminator's VERIFIED-FLAT-RATE signature, NOT an
+  indiscriminate copy-down. Flagging them would re-introduce the exact false-positive run 87 removed. (Noted residual
+  to verify: BU's 15 LL.M./JD professional rows also sit at the $69,870 flat rate — within BU's documented exception,
+  spot-check next pass.)
+- **🔴 COMPLIANCE GAP (rule exists run 82): `cip_code` STARVATION — 19 mature catalogs null** (Brown · BU · CMU ·
+  Cornell · Duke · Emory · Harvard · JHU · NYU · Northwestern · Purdue · Rice · Stanford · UF · UIUC · Michigan · USC ·
+  UW-Madison · Yale + MIT control) of 40; ~15 of 35 modules skip the one assignment though each holds the IPEDS CIP.
+  ~4,800 programs scored field-blind. Backlog #1 (highest matcher leverage). NOT re-added (anti-churn) → FLAG #2 (CI gate).
+- **🔴 COMPLIANCE GAP (rule exists run 83): PUBLIC resident-tuition scalar — 5 publics + UIUC still in-state.** UCSD
+  (16,758 vs oos 50,958) · Michigan (17,864/63,480) · Florida (6,381/28,659) · Wisconsin (12,186/44,210) · Purdue
+  (9,992/28,794); UIUC (12,992, NO oos in breakdown → research ~$36k). 9 publics now CORRECT (GT · UT-Austin · Berkeley ·
+  UCLA · UNC · UVA · UW-Seattle · UC-Davis[NEW] · UC-Irvine[NEW]). Backlog #2 → FLAG #6 (residency-aware matching, code).
+- **🔴 COMPLIANCE GAP (rule exists run 74/87 per-tier coverage): master's / professional tuition residual.** Bachelor's
+  ~100% everywhere; worst master's null: Georgetown 6/79 (73!) + prof 10/17 · UW-Seattle 138/152 + prof 6/7 · USC
+  249/261 · UC-Irvine 10/21[FRESH] · Yale 30/38 · UT-Austin 121/128 · UVA 8/15[FRESH] · BU 160/167 · Cornell 79/85 ·
+  Penn 57/63 · WashU 4/10[FRESH] · Harvard 85/90 · UCSD 54/59 · NYU 227/232. PhD/cert nulls EXCLUDED (funded/per-credit
+  → legitimate omit-with-reason). Backlog #3 → FLAG #7 (value/coverage gate).
+- **🟡 COMPLIANCE GAP (rule exists run 84/86): `who_its_for` 0% on 20 mature catalogs.** `git grep` re-confirmed the
+  literal `p.who_its_for = None` in 12 modules (brown · duke · emory · georgia_tech · michigan · nyu · rice · uiuc ·
+  usc · ut_austin · uw · **ucla**). ⚠️ UCLA reads 100% LIVE only because the later #1181 sibling overwrites the
+  hard-null — `ucla_profile.py` STILL carries `= None`, a LATENT re-apply regression (sharpens FLAG #4). 20 catalogs now
+  who-COMPLETE (UCLA/UC-Davis/UC-Irvine/UNC joined). Backlog #4 → FLAG #4 (lint gate on `p.<field> = None`).
+- **🟡 COMPLIANCE GAP (miss #8 + structure-before-depth): `external_reviews` sparse.** Richest Cornell 9/12 · Princeton
+  8/12 · Caltech/Penn/Purdue 6/12; thinnest NYU 0/12. Coverage-gated (gold MIT itself 4/12) → calibrated depth-pass
+  priority, NOT a fabrication mandate. Backlog #5.
+- **🟡 WATCH (NOT a defect): UC-Irvine dead feed = ingest-timing.** `uci_profile.py` DOES set `content_sources` (`git`-
+  confirmed), and the run-87 fresh dead-feed watches (Georgetown/UVA/WashU) ALL came alive this cycle — so UC-Irvine
+  (~1 day live) just hasn't been ingested yet. Per step 3 (confirm data-vs-render, don't guess) NOT a miss-#1 violation;
+  re-check next run. Matcher-side: `backfill_program_preferences` IS called in both fresh migrations (#1178/#1179) —
+  compliant.
+- **🟢 SEEDS (seeding external).** 6 flagship seeds of run 87 → 0 remaining (all built). ~254 bulk institution stubs
+  (0 programs), 33 with ZERO campus photo (enumerated in backlog #6), 50 more at 1–3 photos, 177 at 4+ — unchanged.
+
+**Rule changes: NONE.** After the full-fleet sweep, NO new gap-class survived. The structural/name/description/dup/
+copy-down dimensions are all gold-clean fleet-wide, and EVERY residual live defect (cip_code · public scalar ·
+master's tuition · who_its_for · reviews) is a VIOLATION of an EXISTING rule — so per the "default has flipped"
+doctrine + the BOUNDED/ANTI-CHURN rail they are queued in the backlog + logged here, NOT re-added (a duplicate rule
+bloats the skill and changes nothing). Per "NO EDIT WITHOUT EVIDENCE — Clean fleet → change nothing… Never invent a
+rule to look busy," 0 changes is the correct honest outcome (mirrors runs 81 + 86). The leverage now sits in CODE
+(FLAGS #1–8 — the self-skipping-migration prod execution path, the cip_code/who_its_for/name-realness/non-emptiness
+CI gates, residency-aware budget matching) and in the enricher clearing the queued repairs — not in another rule.
+**Self-review:** `enrich-profile/SKILL.md` is UNCHANGED this run (misses still numbered sequentially, all immutable
+invariants intact). I considered ONE candidate edit (the UCLA sibling-masked latent hard-null) and REJECTED it as
+anti-churn — the run-86 "never `= None`" rule already forbids the literal regardless of a sibling mask; the right home
+is the backlog note + FLAG #4, not a new paragraph.
+
+**Backlog delta:** all 3 run-87 CRITICAL entries (UNC strand, UC-Davis/UC-Irvine empty-desc, UCLA who-regression) →
+CLEARED LIVE; the critical tier is now EMPTY. Re-ranked HIGH-first: #1 cip_code (19, was 20 — UCLA/UCSD/UNC/UVA/WashU/
+UC-Davis/UC-Irvine joined the fillers) · #2 public scalar (5+UIUC, was 6 — UCLA/UC-Davis/UC-Irvine corrected) · #3
+master's tuition · #4 who_its_for (20, was 24 — UCLA/UC-Davis/UC-Irvine/UNC joined who-complete) · #5 reviews · #6 bulk
+seeds. Flags #1–8 carried; #4 sharpened with the UCLA sibling-mask latent regression.
+
+**Enricher health check:** the DB-backed `test_profile_standard.py` / `test_profile_enrichment.py` could not run here
+(no Postgres in this grader env). Substantive DB-free checks: the full-fleet live crawl above computed cleanly over all
+40 catalogs (0 empty desc, 0 dups, 0 fabricated names, gold MIT the 0-control), and `git`-confirmed the fresh
+migrations call `backfill_program_preferences` + set `content_sources`. This grader PR changes only the two skill
+markdown files (REPAIR_BACKLOG + CHANGELOG; SKILL.md unchanged) — no code, no data, no migration — so backend CI is
+unaffected.
+
+---
+
 ## 2026-06-26 — Run 87 (FULL-FLEET sweep of all 300 live + all 40 catalogs + the alembic graph on `origin/main` · 🟢 the run-86 13-head DEPLOY BLOCK is CLEARED — single head, and the Georgetown/UVA/WashU seed repairs landed LIVE-gold · 🔴 NEW CRITICAL = UNC stranded NOT-LIVE by an all-GREEN self-skipping data migration · 1 rule change — the all-green stranded-deploy class: green-deploy + single-advanced-head + applied-migration is a FALSE proof-of-live)
 
 **Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`.** A
