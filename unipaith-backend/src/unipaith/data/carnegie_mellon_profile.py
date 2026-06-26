@@ -39,6 +39,7 @@ from datetime import date
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.carnegie_mellon_cip_who import CIP6_BY_SLUG, WHO_BY_SLUG
 from unipaith.data.carnegie_mellon_reviews_depth import DEPTH_REVIEWS
 from unipaith.data.cmu_field_descriptions import SLUG_DESCRIPTIONS
 from unipaith.data.profile_catalog_utils import validate_catalog
@@ -1910,6 +1911,24 @@ if _catalog_errors:
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 _SPEC_BY_SLUG = {p["slug"]: p for p in PROGRAMS}
 
+# Matcher-core gate (REPAIR_BACKLOG #1 / #4a): every program MUST carry a verified
+# ``cip_code`` and a program-DISTINCT ``who_its_for`` (never a degree-type template).
+# Fail the build if either is missing or if ``who_its_for`` collapses below ~0.9
+# distinct/total (the type-gaming tell).
+_cip_missing = [s for s in PROGRAM_SLUGS if s not in CIP6_BY_SLUG]
+_who_missing = [s for s in PROGRAM_SLUGS if s not in WHO_BY_SLUG]
+if _cip_missing:
+    raise RuntimeError(f"CMU cip_code missing on {len(_cip_missing)} rows: {_cip_missing[:5]}")
+if _who_missing:
+    raise RuntimeError(f"CMU who_its_for missing on {len(_who_missing)} rows: {_who_missing[:5]}")
+_who_values = [WHO_BY_SLUG[s] for s in PROGRAM_SLUGS]
+_who_ratio = len(set(_who_values)) / len(_who_values)
+if _who_ratio < 0.9:
+    raise RuntimeError(
+        f"CMU who_its_for type-gamed: distinct/total {_who_ratio:.2f} < 0.9 "
+        "(field-specific statements required, not a degree-type template)"
+    )
+
 
 def _requirements_for(spec: dict) -> dict:
     if spec["slug"] == _FLAGSHIP:
@@ -2386,6 +2405,8 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.is_published = True
         p.catalog_source = "curated"
         p.delivery_format = spec["delivery_format"]
+        p.cip_code = CIP6_BY_SLUG.get(slug)
+        p.who_its_for = WHO_BY_SLUG.get(slug)
         tuition, cost = _program_tuition(spec)
         p.tuition = tuition
         p.cost_data = cost
