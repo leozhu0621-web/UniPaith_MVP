@@ -185,7 +185,11 @@ export default function UniConversation({
   // chat session so a later reload resumes this exact thread. Binding is
   // best-effort — a failure never blocks the turn.
   const createThread = async (): Promise<string> => {
-    const created = await startUnifiedSession()
+    // Each bound chat session gets its OWN fresh discovery thread, so sessions are
+    // independent conversations instead of all sharing one "unified" thread. The
+    // student's goals/needs/identity profile still aggregates globally (per
+    // student_id), so matching/recommendations are unaffected.
+    const created = await startUnifiedSession(boundToChat)
     qc.invalidateQueries({ queryKey: ['discovery', 'sessions', 'unified'] })
     if (boundToChat && chatSessionId) {
       try {

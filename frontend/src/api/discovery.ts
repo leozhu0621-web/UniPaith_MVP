@@ -32,8 +32,12 @@ export const startSession = (
   apiClient.post(`${BASE}/sessions`, { track, layer }).then(r => r.data)
 
 // Redesign: one track-less Uni conversation (no Profile/Goals/Needs pick).
-export const startUnifiedSession = (): Promise<DiscoverySession> =>
-  apiClient.post(`${BASE}/sessions/unified`).then(r => r.data)
+// `fresh` forces a brand-new discovery thread (chat-tab sessions are independent);
+// omit it for the single shared track-less conversation (Discover page).
+export const startUnifiedSession = (fresh = false): Promise<DiscoverySession> =>
+  apiClient
+    .post(`${BASE}/sessions/unified${fresh ? '?fresh=true' : ''}`)
+    .then(r => r.data)
 
 export const listSessions = (params?: {
   track?: DiscoveryTrack

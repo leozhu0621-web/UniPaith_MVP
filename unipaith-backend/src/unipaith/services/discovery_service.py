@@ -103,25 +103,30 @@ class DiscoveryService:
         await self.db.refresh(session)
         return session
 
-    async def start_unified_session(self, user_id: UUID) -> DiscoverySession:
-        """Start (or resume) the unified, track-less Uni conversation. There is
-        only ever one active unified session per student, so reuse an existing
-        active `discovery` session when present; otherwise create one. The
-        extractor is content-based, so a single conversation populates
-        goals / needs / identity by what the student says — no track to pick."""
+    async def start_unified_session(
+        self, user_id: UUID, *, fresh: bool = False
+    ) -> DiscoverySession:
+        """Start (or resume) the unified, track-less Uni conversation. Normally
+        there is only ever one active unified session per student, so we reuse the
+        most recent active `discovery` session when present. When ``fresh`` is True
+        we always create a NEW thread instead — the chat tab gives each session its
+        own independent conversation. Either way the extractor is content-based and
+        writes goals / needs / identity to the student's GLOBAL profile (keyed by
+        student_id), so separate threads never fragment matching."""
         student_id = await self._profile_id_for_user(user_id)
-        existing = await self.db.execute(
-            select(DiscoverySession)
-            .where(
-                DiscoverySession.student_id == student_id,
-                DiscoverySession.track == "discovery",
-                DiscoverySession.status == "active",
+        if not fresh:
+            existing = await self.db.execute(
+                select(DiscoverySession)
+                .where(
+                    DiscoverySession.student_id == student_id,
+                    DiscoverySession.track == "discovery",
+                    DiscoverySession.status == "active",
+                )
+                .order_by(DiscoverySession.started_at.desc())
             )
-            .order_by(DiscoverySession.started_at.desc())
-        )
-        session = existing.scalars().first()
-        if session is not None:
-            return session
+            session = existing.scalars().first()
+            if session is not None:
+                return session
         return await self.start_session(user_id, track="discovery", layer=None)
 
     async def list_sessions(

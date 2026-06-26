@@ -71,12 +71,14 @@ async def start_session(
     status_code=status.HTTP_201_CREATED,
 )
 async def start_unified_session(
+    fresh: bool = False,
     user: User = Depends(require_student),
     db: AsyncSession = Depends(get_db),
 ):
     """Start the unified, track-less Uni conversation (one session covers
-    self/goals/needs by content). The student never picks a track."""
-    session = await _svc(db).start_unified_session(user.id)
+    self/goals/needs by content). The student never picks a track. ``fresh=true``
+    forces a brand-new thread, so the chat tab keeps each session independent."""
+    session = await _svc(db).start_unified_session(user.id, fresh=fresh)
     return DiscoverySessionResponse.model_validate(session)
 
 
