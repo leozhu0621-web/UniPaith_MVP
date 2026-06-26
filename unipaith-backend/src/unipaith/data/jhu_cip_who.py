@@ -10,9 +10,15 @@ catalog (244 real, field-specific, structurally-clean programs) shipped both fie
   per program (``spec["cip"]``); this module upgrades each to its verified NCES CIP-2020
   6-digit code so the live value matches the gold-standard fillers (Rice / UIUC /
   UW-Madison), keyed by the 4-digit family already in the catalog. The 2-digit family is
-  preserved in every case (the 6-digit shares the family's first two digits), so the
-  matcher signal is identical; no code is invented — each is the published NCES code for
-  that field, and the family is the one College Scorecard already assigned.
+  preserved in every case (the 6-digit shares the family's first two digits) — including
+  the exact-title codes the repo's ref_majors carries (Learning Sciences 13.0607,
+  Engineering Design 15.1502, Rehabilitation Science 51.2314) — with ONE documented
+  exception: Data Science maps to its dedicated 30.7001 ("Data Science, General") rather
+  than the family-11 11.0802 ("Data Modeling/Warehousing"), because the exact ref_majors
+  title matters and the field/soft signals survive (name-alias + description-keyword
+  fallback). So the matcher field signal is identical; no code is
+  invented — each is the published NCES code for that field, and the family is the one
+  College Scorecard already assigned.
 
 * ``who_its_for`` — a UNIVERSAL depth field: a field-specific, program-DISTINCT statement
   of the applicant each program fits. Built ``WHO_BY_FIELD[field]`` (the subject + the
@@ -46,13 +52,13 @@ CIP6_BY_CIP4: dict[str, str] = {
     "11.01": "11.0101",  # Computer and Information Sciences -> Computer and Information Sciences, General
     "11.04": "11.0401",  # Information Science -> Information Science/Studies
     "11.07": "11.0701",  # Computer Science -> Computer Science
-    "11.08": "30.7001",  # Data Science -> Data Science, General (NCES dedicated code; Scorecard aggregates it under 11.08; name-aliased so the field signal is preserved)
+    "11.08": "30.7001",  # Data Science -> Data Science, General (NCES dedicated code; the only family exception — Scorecard aggregates Data Science under 11.08, but the exact-title code is in family 30; name "data science" aliases in field_canon AND description-keyword soft-feature fallback covers the unmapped family, so the field/soft signals hold while the ref_majors title is correct)
     "11.09": "11.0901",  # Computer Networks -> Computer Systems Networking and Telecommunications
     "11.10": "11.1099",  # Information Systems -> Computer/Information Technology Services Administration and Management, Other
     "13.01": "13.0101",  # Education Studies -> Education, General
     "13.04": "13.0401",  # Educational Leadership -> Educational Leadership and Administration, General
     "13.05": "13.0501",  # Instructional Design -> Educational/Instructional Technology
-    "13.06": "13.0601",  # Learning Sciences -> Educational Evaluation and Research
+    "13.06": "13.0607",  # Learning Sciences -> Learning Sciences
     "13.10": "13.1001",  # Special Education -> Special Education and Teaching, General
     "13.11": "13.1101",  # Counseling -> Counselor Education/School Counseling and Guidance Services
     "13.12": "13.1206",  # Teacher Education -> Teacher Education, Multiple Levels
@@ -73,7 +79,7 @@ CIP6_BY_CIP4: dict[str, str] = {
     "14.27": "14.2701",  # Systems Engineering -> Systems Engineering
     "14.35": "14.3501",  # Industrial Engineering -> Industrial Engineering
     "14.42": "14.4201",  # Robotics -> Mechatronics, Robotics, and Automation Engineering
-    "15.15": "15.1501",  # Engineering Design -> Engineering/Industrial Management
+    "15.15": "15.1502",  # Engineering Design -> Engineering Design
     "15.16": "15.1601",  # Nanotechnology -> Nanotechnology
     "15.17": "15.1701",  # Energy Systems -> Energy Systems Technology/Technician
     "16.05": "16.0501",  # German -> German Language and Literature
@@ -92,7 +98,7 @@ CIP6_BY_CIP4: dict[str, str] = {
     "26.10": "26.1001",  # Pharmacology -> Pharmacology
     "26.11": "26.1103",  # Bioinformatics -> Bioinformatics
     "26.12": "26.1201",  # Biotechnology -> Biotechnology
-    "26.13": "26.1301",  # Ecology and Evolution -> Ecology
+    "26.13": "26.1310",  # Ecology and Evolution -> Ecology and Evolutionary Biology
     "26.15": "26.1501",  # Neuroscience -> Neuroscience
     "26.99": "26.9999",  # Biological Sciences -> Biological and Biomedical Sciences, Other
     "27.01": "27.0101",  # Mathematics -> Mathematics, General
@@ -138,7 +144,7 @@ CIP6_BY_CIP4: dict[str, str] = {
     "51.12": "51.1201",  # Medicine -> Medicine
     "51.15": "51.1508",  # Mental Health Counseling -> Mental Health Counseling/Counselor
     "51.22": "51.2201",  # Public Health -> Public Health, General
-    "51.23": "51.2310",  # Rehabilitation Sciences -> Vocational Rehabilitation Counseling/Counselor
+    "51.23": "51.2314",  # Rehabilitation Sciences -> Rehabilitation Science
     "51.27": "51.2703",  # Medical Illustration -> Medical Illustration/Medical Illustrator
     "51.32": "51.3204",  # Medical Humanities -> Clinical Research Coordinator
     "51.38": "51.3801",  # Nursing -> Registered Nursing/Registered Nurse

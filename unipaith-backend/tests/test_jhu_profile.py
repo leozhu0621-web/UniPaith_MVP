@@ -127,9 +127,7 @@ def test_catalog_has_no_padding_stubs():
     names = [spec["program_name"] for spec in j.PROGRAMS]
     assert len(names) == len(set(names)), "duplicate program_name values"
     classif = sum(
-        1
-        for prog in j.PROGRAMS
-        if j._CLASSIFICATION_STUB_RE.match(prog.get("description") or "")
+        1 for prog in j.PROGRAMS if j._CLASSIFICATION_STUB_RE.match(prog.get("description") or "")
     )
     assert classif == 0, f"{classif} programs still carry classification-only descriptions"
     name_prefix = sum(
@@ -148,8 +146,7 @@ def test_catalog_is_anti_stub_clean():
     assert report.is_clean, f"anti-stub not clean: {report.summary()}"
     shared = frame_stripped_shared_body(j.PROGRAMS)
     assert not shared, (
-        f"credential siblings share a frame-stripped body on "
-        f"{len(shared)} field(s): {shared[:8]}"
+        f"credential siblings share a frame-stripped body on {len(shared)} field(s): {shared[:8]}"
     )
 
 
@@ -168,10 +165,10 @@ def test_matcher_core_cip_code_complete_and_well_formed():
     import re
 
     ref = {_json.loads(line)["cip_code"] for line in open("data/reference/ref_majors.jsonl")}
-    # Scorecard 4-digit families whose NCES dedicated 6-digit code lives in a
-    # different family (the Scorecard aggregate is broader than the real code).
-    # The program is name-aliased in field_canon, so the field signal is preserved.
-    family_exceptions = {"11.08"}  # Data Science -> 30.7001 (Data Science, General)
+    # Data Science's exact NCES code (30.7001) lives outside the Scorecard 4-digit
+    # family (11.08); it is name-aliased + description-keyword-covered, so the field
+    # signal holds while the ref_majors title stays correct.
+    family_exceptions = {"11.08"}
     missing = [s for s, c in j.CIP6_BY_SLUG.items() if not c]
     assert not missing, f"programs missing cip_code: {missing[:8]}"
     for spec in j.PROGRAMS:
