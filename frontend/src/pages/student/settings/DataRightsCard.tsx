@@ -30,7 +30,6 @@ const LEVERS: { key: string; label: string; help: string }[] = [
   { key: 'consent_outreach', label: 'Outreach', help: 'Let institutions I engage with send me messages and campaigns.' },
   { key: 'consent_research', label: 'Analytics', help: 'Include my de-identified, aggregated activity in cross-cohort insights.' },
   { key: 'consent_training', label: 'Model training', help: 'Include my data in any future UniPaith model-training corpus.' },
-  { key: 'consent_peer_connect', label: 'Peer connections', help: 'Let other applicants find you by shared programs. Only what you choose to share is visible — never scores or financials.' },
 ]
 
 const DEFAULTS: Record<string, boolean> = {
@@ -38,7 +37,6 @@ const DEFAULTS: Record<string, boolean> = {
   consent_outreach: false,
   consent_research: false,
   consent_training: false,
-  consent_peer_connect: false,
 }
 
 function buildCommonApp(p: any): { mapped: Record<string, any>; unmapped: string[] } {

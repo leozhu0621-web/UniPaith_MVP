@@ -106,7 +106,6 @@ export default function DocumentsTab() {
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="neutral">{DOCUMENT_TYPES.find(d => d.value === doc.document_type)?.label ?? doc.document_type}</Badge>
-                {doc.verification_status === 'verified' && <Badge variant="success">verified</Badge>}
                 <Button
                   size="sm"
                   variant="ghost"
