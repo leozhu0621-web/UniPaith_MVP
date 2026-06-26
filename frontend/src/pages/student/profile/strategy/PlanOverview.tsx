@@ -154,10 +154,13 @@ export default function PlanOverview() {
   const prefsSet = preferencesAreSet(preferences)
 
   const matchCount = matchList.length
-  const fits = matchList
-    .filter(m => m.fitness_score != null && m.fitness_score !== '')
-    .map(m => Math.round(toUnit(m.fitness_score) * 100))
-  const topFit = fits.length > 0 ? Math.max(...fits) : null
+  // Simple fit signal: how many matches the server marked a "Fit" (range-based),
+  // falling back to the legacy fitness_score for cached / institution payloads.
+  const fitCount = matchList.filter(
+    m =>
+      m.fit_label ||
+      (m.fitness_score != null && m.fitness_score !== '' && toUnit(m.fitness_score) >= 0.45),
+  ).length
 
   // Strategy node summary.
   const hasStrategy = Boolean(strategy)
@@ -237,7 +240,7 @@ export default function PlanOverview() {
             icon={Sparkles}
             label="Matches"
             value={matchCount > 0 ? `${matchCount}` : 'None yet'}
-            sub={topFit != null ? `top ${topFit}% fit` : undefined}
+            sub={fitCount > 0 ? `${fitCount} strong ${fitCount === 1 ? 'fit' : 'fits'}` : undefined}
             onClick={() => navigate('/s/explore')}
           />
         </div>

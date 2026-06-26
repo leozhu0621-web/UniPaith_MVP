@@ -1376,6 +1376,9 @@ def _enrich_match_for_student(
     resp.band_label = band_for_acceptance(
         fitness=fitness, acceptance_rate=acceptance_rate, weight_ranking=weight_ranking
     )
+    # Simple range-based "Fit" readout (§14: never the raw number): a program
+    # whose computed fit clears the threshold is shown as a fit.
+    resp.fit_label = "Fit" if fitness >= 0.45 else None
     if bands_enabled:
         resp.probability_bands = estimate_probability_bands(
             acceptance_rate=acceptance_rate,

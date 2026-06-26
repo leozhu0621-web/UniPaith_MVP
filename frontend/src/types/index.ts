@@ -3086,6 +3086,8 @@ export interface MatchResultDual {
   acceptance_rate?: number | null
   // Spec 09 §6 / §4A — derived on the server and carried on every match.
   band_label?: MatchBand | null
+  // Simple range-based "Fit" readout (server-computed; not the raw number).
+  fit_label?: string | null
   probability_bands?: ProbabilityBands | null
 }
 

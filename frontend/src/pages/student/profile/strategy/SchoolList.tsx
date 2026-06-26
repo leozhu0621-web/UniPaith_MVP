@@ -54,7 +54,9 @@ function WordTag({
 }
 
 function SchoolRow({ match }: { match: MatchResultDual }) {
-  const fit = fitWord(match.fitness_score)
+  // Prefer the server's simple range-based fit_label; fall back to the legacy
+  // fitness_score word for institution/cached payloads that still carry it.
+  const fit = match.fit_label ?? fitWord(match.fitness_score)
   const odds = oddsWord(match.band_label)
   // The same plain-language counselor read Discover shows (#969). It encodes fit
   // vs odds in prose; fall back to any stored rationale when no band is served.
@@ -68,7 +70,11 @@ function SchoolRow({ match }: { match: MatchResultDual }) {
         <div className="min-w-0 text-sm font-medium text-foreground">{matchName(match)}</div>
         {(fit || odds) && (
           <div className="flex shrink-0 items-center gap-1.5">
-            {fit && <WordTag label="Fit" word={fit} tone="fit" />}
+            {fit && (
+              <span className="rounded-full bg-secondary/10 px-2 py-0.5 text-xs font-medium text-secondary">
+                {fit}
+              </span>
+            )}
             {odds && <WordTag label="Odds" word={odds} tone="odds" />}
           </div>
         )}

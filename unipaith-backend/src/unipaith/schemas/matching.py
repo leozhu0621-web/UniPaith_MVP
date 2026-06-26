@@ -99,6 +99,11 @@ class StudentMatchResponse(BaseModel):
     # Spec 09 §6 — reach / target / safer banding (the student's fit readout).
     band_label: str | None = None
 
+    # Simple, range-based student-safe "Fit" readout (NOT the raw number): "Fit"
+    # when the computed fitness clears the threshold, else None. Lets the strategy
+    # surfaces show a Fit signal without exposing the omitted fitness_score.
+    fit_label: str | None = None
+
     # Spec 09 §4A — probability bands (admit / scholarship / waitlist + drivers).
     probability_bands: dict | None = None
 
