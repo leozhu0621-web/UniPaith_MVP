@@ -12,8 +12,11 @@ catalog (244 real, field-specific, structurally-clean programs) shipped both fie
   UW-Madison), keyed by the 4-digit family already in the catalog. The 2-digit family is
   preserved in every case (the 6-digit shares the family's first two digits) — including
   the exact-title codes the repo's ref_majors carries (Learning Sciences 13.0607,
-  Engineering Design 15.1502, Rehabilitation Science 51.2314) — so the
-  matcher signal is identical (the 2-digit family is preserved in every case); no code is
+  Engineering Design 15.1502, Rehabilitation Science 51.2314) — with ONE documented
+  exception: Data Science maps to its dedicated 30.7001 ("Data Science, General") rather
+  than the family-11 11.0802 ("Data Modeling/Warehousing"), because the exact ref_majors
+  title matters and the field/soft signals survive (name-alias + description-keyword
+  fallback). So the matcher field signal is identical; no code is
   invented — each is the published NCES code for that field, and the family is the one
   College Scorecard already assigned.
 
@@ -49,7 +52,7 @@ CIP6_BY_CIP4: dict[str, str] = {
     "11.01": "11.0101",  # Computer and Information Sciences -> Computer and Information Sciences, General
     "11.04": "11.0401",  # Information Science -> Information Science/Studies
     "11.07": "11.0701",  # Computer Science -> Computer Science
-    "11.08": "11.0802",  # Data Science -> Data Modeling/Warehousing and Database Administration (stays in family 11 so the program_featurizer family-11 soft features + computer_science field fallback are preserved; name "data science" also aliases in field_canon)
+    "11.08": "30.7001",  # Data Science -> Data Science, General (NCES dedicated code; the only family exception — Scorecard aggregates Data Science under 11.08, but the exact-title code is in family 30; name "data science" aliases in field_canon AND description-keyword soft-feature fallback covers the unmapped family, so the field/soft signals hold while the ref_majors title is correct)
     "11.09": "11.0901",  # Computer Networks -> Computer Systems Networking and Telecommunications
     "11.10": "11.1099",  # Information Systems -> Computer/Information Technology Services Administration and Management, Other
     "13.01": "13.0101",  # Education Studies -> Education, General

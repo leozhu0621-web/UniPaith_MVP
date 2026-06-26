@@ -50,24 +50,23 @@ def upgrade() -> None:
         select(Institution).where(Institution.name == jhu_profile.INSTITUTION_NAME)
     )
     if inst is not None:
-        unclaimed_ids = session.scalars(
-            select(Program.id).where(
-                Program.institution_id == inst.id,
-                Program.is_claimed.is_(False),
-            )
+        all_ids = session.scalars(
+            select(Program.id).where(Program.institution_id == inst.id)
         ).all()
-        if unclaimed_ids:
+        if all_ids:
+            # Drop every stale ``source="derived"`` row (regardless of claim status — a
+            # claimed program can still carry a derived row if the school never edited
+            # its preferences), but NEVER touch a first-party ``source="claimed"`` row.
+            # backfill re-derives only the unclaimed ones; a claimed-but-derived program
+            # is left with no row (neutral) rather than a row built on the old CIP.
             session.execute(
                 delete(ProgramPreference).where(
-                    ProgramPreference.program_id.in_(unclaimed_ids),
+                    ProgramPreference.program_id.in_(all_ids),
                     ProgramPreference.source == "derived",
                 )
             )
             session.flush()
         backfill_program_preferences(session, institution_id=inst.id)
-        all_ids = session.scalars(
-            select(Program.id).where(Program.institution_id == inst.id)
-        ).all()
         if all_ids:
             session.execute(
                 MatchResult.__table__.update()

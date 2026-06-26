@@ -165,6 +165,10 @@ def test_matcher_core_cip_code_complete_and_well_formed():
     import re
 
     ref = {_json.loads(line)["cip_code"] for line in open("data/reference/ref_majors.jsonl")}
+    # Data Science's exact NCES code (30.7001) lives outside the Scorecard 4-digit
+    # family (11.08); it is name-aliased + description-keyword-covered, so the field
+    # signal holds while the ref_majors title stays correct.
+    family_exceptions = {"11.08"}
     missing = [s for s, c in j.CIP6_BY_SLUG.items() if not c]
     assert not missing, f"programs missing cip_code: {missing[:8]}"
     for spec in j.PROGRAMS:
@@ -172,9 +176,10 @@ def test_matcher_core_cip_code_complete_and_well_formed():
         cip6 = j.CIP6_BY_SLUG[slug]
         assert re.match(r"^\d{2}\.\d{4}$", cip6), f"{slug}: cip6 not 6-digit: {cip6!r}"
         assert cip6 in ref, f"{slug}: cip6 {cip6} absent from ref_majors vocabulary"
-        assert cip6[:2] == (spec.get("cip") or "")[:2], (
-            f"{slug}: cip6 family {cip6[:2]} != Scorecard family {spec.get('cip')}"
-        )
+        if spec.get("cip") not in family_exceptions:
+            assert cip6[:2] == (spec.get("cip") or "")[:2], (
+                f"{slug}: cip6 family {cip6[:2]} != Scorecard family {spec.get('cip')}"
+            )
 
 
 def test_who_its_for_complete_and_program_distinct():
