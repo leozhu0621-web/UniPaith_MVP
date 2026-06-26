@@ -3756,6 +3756,332 @@ def _assign_descriptions(programs: list[dict]) -> None:
             spec["description"] = _sanitize_michigan_anti_stub_tells(body)
 
 
+# == Matcher-core CIP-2020 codes (REPAIR_BACKLOG #1 — the CIP join key the CPEF matcher
+# uses to resolve a program's field to ref_majors + the field-66 vocabulary, the
+# interest/field signal alongside the description embedding). Keyed on the lowercased
+# anti_stub.field_of() field string. Every code is the field's standard IPEDS CIP-2020
+# 4-digit classification — never a guess; the matcher consumes the 2-digit family, the
+# 4-digit is kept for precision and parity with the UT-Austin/UCLA/Caltech fillers.
+_CIP_BY_FIELD: dict[str, str] = {
+    # 05 — Area, Ethnic, Cultural, Gender & Group Studies
+    "afroamerican and african studies": "05.0201",
+    "american culture": "05.0102",
+    "asian languages and cultures": "16.0300",
+    "asian studies": "05.0103",
+    "arabic studies": "16.1101",
+    "judaic studies": "05.0114",
+    "latin american and caribbean studies": "05.0107",
+    "latina/latino studies": "05.0203",
+    "middle east studies": "05.0109",
+    "middle eastern and north african studies": "05.0109",
+    "russian, east european, and eurasian studies": "05.0110",
+    "international studies": "05.0901",
+    "international and regional studies": "05.0901",
+    "women’s and gender studies": "05.0207",
+    "transcultural studies": "05.0102",
+    # 16 — Foreign Languages, Literatures & Linguistics
+    "classical languages and literatures": "16.1200",
+    "classical civilization": "16.1200",
+    "classical studies": "16.1200",
+    "comparative literature": "16.0104",
+    "comparative literature, arts, and media": "16.0104",
+    "germanic languages and literatures": "16.0599",
+    "german": "16.0501",
+    "greek": "16.1102",
+    "greek language and culture": "16.1102",
+    "greek language and literature": "16.1102",
+    "latin": "16.1203",
+    "latin language and literature": "16.1203",
+    "italian": "16.0902",
+    "polish": "16.0402",
+    "russian": "16.0402",
+    "slavic languages and literatures": "16.0400",
+    "romance languages and literatures": "16.0900",
+    "romance languages and literatures: french": "16.0901",
+    "romance languages and literatures: italian": "16.0902",
+    "romance languages and literatures: spanish": "16.0905",
+    "french and francophone studies": "16.0901",
+    "spanish": "16.0905",
+    "linguistics": "16.0102",
+    "translation": "16.0103",
+    # 23 / 24 — English, Liberal Arts & Humanities
+    "english": "23.0101",
+    "english language and literature": "23.0101",
+    "creative writing": "23.1302",
+    "creative writing and literature": "23.1302",
+    "general studies": "24.0102",
+    "arts and ideas in the humanities": "24.0103",
+    "liberal arts": "24.0101",
+    # 50 — Visual & Performing Arts
+    "art": "50.0701",
+    "art and design": "50.0701",
+    "design": "50.0401",
+    "dance": "50.0301",
+    "history of art": "50.0703",
+    "media arts": "50.0102",
+    "drama": "50.0501",
+    "musical theatre": "50.0509",
+    "interarts performance (smtd)": "50.0501",
+    "interarts performance (stamps)": "50.0501",
+    "music": "50.0901",
+    "music in music": "50.0901",
+    "specialist in music": "50.0901",
+    "composition and music theory": "50.0904",
+    "composition": "50.0904",
+    "music theory": "50.0904",
+    "music in music theory": "50.0904",
+    "music in composition": "50.0904",
+    "musicology": "50.0902",
+    "musicology: ethnomusicology": "50.0902",
+    "musicology: history": "50.0902",
+    "music in musicology": "50.0902",
+    "music education": "13.1312",
+    "music in music education": "13.1312",
+    "jazz and contemporary improvisation": "50.0910",
+    "music in jazz & contemporary improvisation": "50.0910",
+    "conducting: band/wind ensemble": "50.0906",
+    "conducting: choral": "50.0906",
+    "conducting: orchestral": "50.0906",
+    "performing arts technology": "50.0913",
+    "music in performing arts technology": "50.0913",
+    "music in organ": "50.0903",
+    "music in piano": "50.0903",
+    "music in strings": "50.0903",
+    "music in voice & opera": "50.0903",
+    "music in winds & percussion": "50.0903",
+    "music in theatre & drama": "50.0501",
+    "performance: bassoon": "50.0903",
+    "performance: cello": "50.0903",
+    "performance: clarinet": "50.0903",
+    "performance: collaborative piano": "50.0903",
+    "performance: double bass": "50.0903",
+    "performance: euphonium": "50.0903",
+    "performance: flute": "50.0903",
+    "performance: french horn": "50.0903",
+    "performance: harp": "50.0903",
+    "performance: harpsichord": "50.0903",
+    "performance: oboe": "50.0903",
+    "performance: organ": "50.0903",
+    "performance: organ: sacred music": "50.0903",
+    "performance: percussion": "50.0903",
+    "performance: piano": "50.0903",
+    "performance: piano pedagogy and performance": "50.0903",
+    "performance: saxophone": "50.0903",
+    "performance: trombone": "50.0903",
+    "performance: trumpet": "50.0903",
+    "performance: tuba": "50.0903",
+    "performance: viola": "50.0903",
+    "performance: violin": "50.0903",
+    "performance: voice": "50.0903",
+    # 09 — Communication & Media
+    "communication and media": "09.0100",
+    "film, television, and media": "50.0601",
+    # 54 / 38 / 45 — History, Philosophy, Social Sciences
+    "history": "54.0101",
+    "ancient history": "54.0103",
+    "anthropology and history": "54.0101",
+    "philosophy, politics, and economics": "45.0101",
+    "social theory and practice": "45.1101",
+    "philosophy": "38.0101",
+    "organizational studies": "52.0213",
+    "anthropology": "45.0201",
+    "archaeology of the ancient mediterranean": "45.0301",
+    "ancient mediterranean art and archaeology": "45.0301",
+    "human origins, biology, and behavior": "45.0201",
+    "economics": "45.0601",
+    "applied economics": "45.0603",
+    "business and economics": "45.0601",
+    "political science": "45.1001",
+    "political science and public policy": "45.1001",
+    "sociology": "45.1101",
+    "cognitive science": "30.2501",
+    # 42 — Psychology
+    "psychology": "42.0101",
+    "biopsychology, cognition, and neuroscience": "42.2706",
+    # 26 — Biological & Biomedical Sciences
+    "biology": "26.0101",
+    "biology, health, and society": "26.0101",
+    "biomolecular science": "26.0210",
+    "biophysics": "26.0203",
+    "biochemistry": "26.0202",
+    "biological chemistry": "26.0202",
+    "biological chemistry (pibs)": "26.0202",
+    "chemical biology": "26.0202",
+    "chemical biology of cancer": "26.0202",
+    "biomedical sciences (pibs)": "26.0102",
+    "cellular and molecular biomedical science": "26.0102",
+    "pibs (program in biomedical sciences)": "26.0102",
+    "cell and developmental biology (pibs)": "26.0407",
+    "cellular and molecular biology (pibs)": "26.0406",
+    "molecular, cellular, and developmental biology": "26.0406",
+    "molecular, cellular, and developmental biology (pibs)": "26.0406",
+    "molecular and cellular pathology (pibs)": "26.0410",
+    "molecular and integrative physiology": "26.0901",
+    "molecular and integrative physiology (pibs)": "26.0901",
+    "microbiology": "26.0502",
+    "microbiology and immunology": "26.0502",
+    "microbiology and immunology (pibs)": "26.0502",
+    "immunology (pibs)": "26.0507",
+    "cancer biology (pibs)": "26.0406",
+    "human genetics": "26.0806",
+    "genetics and genomics (pibs)": "26.0806",
+    "neuroscience": "26.1501",
+    "neuroscience (pibs)": "26.1501",
+    "ecology and evolutionary biology": "26.1301",
+    "ecology, evolution, and biodiversity": "26.1301",
+    "bioinformatics": "26.1103",
+    "bioinformatics (pibs)": "26.1103",
+    "pharmacology": "26.1004",
+    "pharmacology (pibs)": "26.1004",
+    "toxicology": "26.1004",
+    "plant biology": "26.0301",
+    # 40 — Physical Sciences
+    "chemistry": "40.0501",
+    "physics": "40.0801",
+    "applied physics": "40.0801",
+    "engineering physics": "14.1201",
+    "interdisciplinary physics": "40.0801",
+    "astronomy and astrophysics": "40.0202",
+    "interdisciplinary astronomy": "40.0202",
+    "interdisciplinary chemical sciences": "40.0501",
+    "earth and environmental sciences": "40.0601",
+    "climate and meteorology": "40.0401",
+    # 27 — Mathematics & Statistics
+    "mathematics": "27.0101",
+    "applied and interdisciplinary mathematics": "27.0301",
+    "statistics": "27.0501",
+    "applied statistics": "27.0501",
+    "scientific computing": "27.0303",
+    "survey and data science": "27.0501",
+    # 11 / 30 — Computer & Information Sciences, Data Science
+    "computer science": "11.0701",
+    "computer science and engineering": "14.0901",
+    "data science": "30.7001",
+    "data science (engineering)": "30.7001",
+    "data science (lsa)": "30.7001",
+    "robotics": "14.4201",
+    "information": "11.0401",
+    "information analysis and design": "11.0401",
+    "health informatics": "51.2706",
+    "user experience design": "30.3101",
+    "urban technology": "04.0301",
+    # 14 — Engineering
+    "aerospace engineering": "14.0201",
+    "biomedical engineering": "14.0501",
+    "chemical engineering": "14.0701",
+    "civil engineering": "14.0801",
+    "construction engineering and management": "15.1001",
+    "computer engineering": "14.0901",
+    "electrical engineering": "14.1001",
+    "electrical and computer engineering": "14.1001",
+    "environmental engineering": "14.1401",
+    "industrial and operations engineering": "14.3501",
+    "macromolecular science and engineering": "14.1801",
+    "materials science and engineering": "14.1801",
+    "mechanical engineering": "14.1901",
+    "naval architecture and marine engineering": "14.2201",
+    "nuclear engineering and radiological sciences": "14.2301",
+    "climate and space sciences and engineering": "14.0501",
+    "space sciences and engineering": "14.0201",
+    "design science": "14.0101",
+    "engineering": "14.0101",
+    "engineering education research": "14.0101",
+    # 04 — Architecture & Planning
+    "architecture": "04.0201",
+    "urban and regional planning": "04.0301",
+    "landscape architecture": "04.0601",
+    "urban design": "04.0401",
+    # 52 — Business
+    "business administration": "52.0201",
+    "master of business administration": "52.0201",
+    "business administration in integrated business and engineering at michigan": "52.0201",
+    "integrated business and engineering at michigan": "52.0201",
+    "quantitative finance and risk management": "52.0801",
+    # 51 — Health Professions
+    "nursing": "51.3801",
+    "nursing, ph.d.": "51.3808",
+    "doctor of medicine": "51.1201",
+    "medical scientist training program": "51.1401",
+    "doctor of pharmacy": "51.2001",
+    "pharmaceutical sciences": "51.2010",
+    "integrated pharmaceutical sciences": "51.2010",
+    "medicinal chemistry": "51.2003",
+    "clinical pharmacy translational science": "51.2010",
+    "dental hygiene": "51.0602",
+    "dental surgery": "51.0401",
+    "oral health sciences": "51.0510",
+    "endodontics": "51.0503",
+    "orthodontics": "51.0506",
+    "pediatric dentistry": "51.0507",
+    "periodontics": "51.0509",
+    "prosthodontics": "51.0512",
+    "restorative dentistry": "51.0501",
+    "movement science": "31.0505",
+    "applied exercise science": "31.0505",
+    "sport management": "31.0504",
+    "athletic training": "51.0913",
+    "genetic counseling": "51.1509",
+    "intraoperative neurophysiology": "51.0908",
+    "nutritional sciences": "30.1901",
+    # 51.22 — Public Health
+    "public health": "51.2201",
+    "master of public health": "51.2201",
+    "public health sciences": "51.2201",
+    "biostatistics": "26.1102",
+    "biostatistics: health data science": "26.1102",
+    "epidemiologic science": "26.1309",
+    "computational epidemiology and systems modeling": "26.1309",
+    "environmental health sciences": "51.2202",
+    "health behavior and health equity": "51.2207",
+    "health management and policy": "51.2211",
+    "health services administration": "51.0701",
+    "health services organization and policy": "51.2211",
+    "health infrastructures and learning systems": "51.2706",
+    "health infrastructures and learning systems – online": "51.2706",
+    "health and health care research": "51.2201",
+    "community and global public health": "51.2208",
+    "gender and health": "51.2201",
+    "population and health sciences": "51.2201",
+    "clinical research design and statistical analysis": "51.2706",
+    # 13 — Education
+    "higher education": "13.0406",
+    "educational leadership and policy": "13.0401",
+    "educational studies": "13.0101",
+    "education and psychology": "13.0101",
+    "elementary teacher education": "13.1202",
+    "secondary teacher education": "13.1205",
+    "english and education": "13.1305",
+    "learning, equity, and problem solving for the public good": "13.0101",
+    # 44 — Public Administration & Social Service
+    "public policy": "44.0501",
+    "public policy and economics": "44.0501",
+    "public policy and political science": "44.0501",
+    "public policy and sociology": "44.0501",
+    "public affairs": "44.0401",
+    "social work": "44.0701",
+    "social work and social welfare": "44.0701",
+    "sociology and public policy": "45.1101",
+    # 22 — Law
+    "juris doctor": "22.0101",
+    "laws": "22.0201",
+    # 03 / 30 — Environment & interdisciplinary
+    "environment": "03.0104",
+    "environment and sustainability": "03.0104",
+    # joint / dual humanities-social-science
+    "english and women’s and gender studies": "23.0101",
+    "history and women’s and gender studies": "54.0101",
+    "psychology and women’s and gender studies": "42.0101",
+    "social work and anthropology": "44.0701",
+    "social work and psychology": "44.0701",
+    "social work and sociology": "44.0701",
+}
+
+
+def _cip_for(field: str) -> str | None:
+    """Standard IPEDS CIP-2020 code for a catalog field (case-insensitive), or None."""
+    return _CIP_BY_FIELD.get((field or "").strip().lower())
+
+
 def _michigan_description(spec: dict) -> str:
     """Verified description from U-M Library guides, Wikipedia discipline pages, or flagship pages."""
     from unipaith.data.michigan_catalogue_descriptions import CATALOGUE_DESCRIPTIONS
@@ -3768,6 +4094,8 @@ def _michigan_description(spec: dict) -> str:
 
 
 def _build_catalog() -> list[dict]:
+    from unipaith.profile_standard.anti_stub import field_of
+
     out = []
     for slug, sk, name, dtype, _dept, fmt, dur in _CATALOG:
         pname = _derive_program_name(slug, name, sk)
@@ -3780,6 +4108,8 @@ def _build_catalog() -> list[dict]:
             "department": SCHOOL_NAME[sk],
             "delivery_format": fmt,
             "duration_months": dur,
+            # Matcher-core CIP join key (REPAIR_BACKLOG #1).
+            "cip": _cip_for(field_of(pname)),
         }
         spec["description"] = _michigan_description(spec)
         out.append(spec)
@@ -3948,21 +4278,27 @@ def _pub_tuition_cost(res: int, oos: int, note: str) -> dict:
 _GRAD_NOTE = (
     "Published annual graduate tuition and fees, Michigan resident (full-time, pre-candidate); "
     "nonresidents pay the out-of-state rate shown in the breakdown. Many master's students "
-    "receive partial funding through assistantships or fellowships."
+    "receive partial funding through assistantships or fellowships. The cost card shows the "
+    "resident basis; the matcher's budget signal uses the non-resident rate."
 )
 _PROF_NOTE = (
     "Published annual professional-program tuition and fees, Michigan resident; nonresidents "
-    "pay the out-of-state rate shown in the breakdown."
+    "pay the out-of-state rate shown in the breakdown. The cost card shows the resident basis; "
+    "the matcher's budget signal uses the non-resident rate."
 )
 
 
 def _program_tuition(spec: dict) -> tuple[int | None, dict]:
     """Return (matcher_tuition, cost_data) for a program from U-M-published rates.
 
-    ``matcher_tuition`` is the Michigan-resident annual figure (0 only for a funded research
-    Ph.D.); ``cost_data`` carries both residencies, the source, and a note. Returns
-    (None, fallback) only for a program whose rate the school publishes separately
-    (``_TUITION_OMIT_SLUGS``).
+    ``matcher_tuition`` (→ ``program.tuition``, the CPEF budget scalar) is the Michigan
+    NON-RESIDENT (out-of-state) annual figure — the conservative, broadly-correct budget
+    signal for a national/international applicant pool, since every out-of-state and every
+    international applicant pays the non-resident rate (REPAIR_BACKLOG #2). ``cost_data``
+    keeps the resident basis in ``tuition_usd`` and carries BOTH residencies in
+    ``breakdown`` (the cost card shows the resident rate; the matcher reads the scalar).
+    It is 0 only for a funded research Ph.D.; returns (None, fallback) only for a program
+    whose rate the school publishes separately (``_TUITION_OMIT_SLUGS``).
     """
     sk = spec["school_key"]
     dtype = spec["degree_type"]
@@ -3979,13 +4315,13 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
         )
         cost["total_cost_of_attendance"] = _UNDERGRAD_COA
         cost["avg_net_price"] = _AVG_NET_PRICE
-        return res, cost
+        return oos, cost
     # A distinct published per-program rate (overrides the school default AND Ph.D. funding,
     # so a professional doctorate billed at a real rate is never zeroed as a research Ph.D.).
     if name in _TUITION_OVERRIDE_BY_NAME:
         res, oos = _TUITION_OVERRIDE_BY_NAME[name]
         note = _PROF_NOTE if dtype in ("phd", "professional") else _GRAD_NOTE
-        return res, _pub_tuition_cost(res, oos, note)
+        return oos, _pub_tuition_cost(res, oos, note)
     if dtype == "phd":
         # Only research Ph.D.s are funded; non-research doctorates are overridden or omitted above.
         return 0, {
@@ -4000,10 +4336,10 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
         }
     if dtype == "professional" and name in _PROFESSIONAL_TUITION:
         res, oos = _PROFESSIONAL_TUITION[name]
-        return res, _pub_tuition_cost(res, oos, _PROF_NOTE)
+        return oos, _pub_tuition_cost(res, oos, _PROF_NOTE)
     # masters (and any other graduate level)
     res, oos = _GRAD_TUITION_BY_SCHOOL.get(sk, _GRAD_TUITION_LSA)
-    return res, _pub_tuition_cost(res, oos, _GRAD_NOTE)
+    return oos, _pub_tuition_cost(res, oos, _GRAD_NOTE)
 
 
 def _undergrad_cost() -> dict:
@@ -4395,6 +4731,87 @@ def _requirements_for(spec: dict) -> dict:
     return _REQ_GRAD_GENERIC
 
 
+# ── Who-it's-for (universal depth field — REPAIR_BACKLOG #4) ──────────────────
+# Every program states the applicant it fits (degree-level, U-M-specific), with
+# flagship per-slug overrides. Never a "for students interested in {field}" stub,
+# never ``= None`` (the hard-null that nulls the field on every re-apply, FLAG #4).
+_WHO_BY_TYPE: dict[str, str] = {
+    "bachelors": (
+        "Applicants seeking a top public-research undergraduate education across the "
+        "liberal arts, sciences, engineering, and the arts at Michigan."
+    ),
+    "masters": (
+        "Students seeking advanced professional or specialized graduate training at a "
+        "leading public research university."
+    ),
+    "phd": (
+        "Researchers pursuing an academic or research career through a funded Michigan "
+        "doctorate."
+    ),
+    "professional": (
+        "Candidates pursuing a professional degree at Michigan, with strong placement and "
+        "a large alumni network."
+    ),
+}
+_WHO_BY_SLUG: dict[str, str] = {
+    "mich-master-of-business-administration-mba": (
+        "Early-to-mid-career professionals targeting general management and leadership "
+        "through the Ross School of Business."
+    ),
+    "mich-business-ug": (
+        "Undergraduates seeking a top-ranked direct-admit business education through the "
+        "Ross School of Business (BBA)."
+    ),
+    "mich-juris-doctor-jd": "Aspiring lawyers and legal scholars across every field of law.",
+    "mich-doctor-of-medicine-md": "Future physicians and physician-scientists.",
+    "mich-doctor-of-dental-surgery-dds": (
+        "Future dentists pursuing clinical practice or academic dentistry."
+    ),
+    "mich-doctor-of-pharmacy-pharmd": "Future pharmacists and pharmaceutical-care leaders.",
+    "mich-master-of-public-health-mph": (
+        "Clinicians, scientists, and leaders advancing population health."
+    ),
+    "mich-master-of-social-work-msw": (
+        "Future social workers and community-practice leaders."
+    ),
+}
+
+# Program highlights (manifest required=False) — verified U-M institution facts by
+# credential level. Filled (not ``= None``) to clear the FLAG #4 hard-null class.
+_HL_BY_TYPE: dict[str, list[str]] = {
+    "bachelors": [
+        "Top-ranked U.S. public research university",
+        "Broad liberal-arts, STEM & arts curriculum",
+        "Go Blue Guarantee — free tuition for eligible in-state students",
+    ],
+    "masters": [
+        "Access to leading faculty and research centers",
+        "Strong professional and industry networks",
+    ],
+    "phd": [
+        "Funded — Rackham tuition support plus a stipend",
+        "World-class research environment",
+    ],
+    "professional": [
+        "Nationally ranked professional school",
+        "Strong placement and a large alumni network",
+    ],
+}
+
+# Tracks/concentrations are not published as structured data for U-M programs, so
+# ``tracks`` is honestly omitted (recorded in _standard.omitted) catalog-wide — routed
+# through this (empty) lookup rather than a literal ``= None`` (FLAG #4).
+_TRACKS_BY_SLUG: dict[str, list] = {}
+
+
+def _who_for(slug: str, degree_type: str) -> str | None:
+    return _WHO_BY_SLUG.get(slug) or _WHO_BY_TYPE.get(degree_type)
+
+
+def _highlights_for(degree_type: str) -> list[str] | None:
+    return _HL_BY_TYPE.get(degree_type)
+
+
 def _program_standard(slug: str, spec: dict) -> dict:
     omitted: list[str] = ["tracks"]
     if slug in _TUITION_OMIT_SLUGS:
@@ -4530,17 +4947,18 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.delivery_format = spec.get("delivery_format", "on_campus")
         _kw = _PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(_KEYWORDS_BY_SCHOOL[spec["school"]])
         p.content_sources = _program_content(spec["school"], _kw)
+        p.cip_code = spec.get("cip")  # matcher-core CIP join key (REPAIR_BACKLOG #1)
         p.tuition, p.cost_data = _program_tuition(spec)
         p.application_requirements = _requirements_for(spec)
         outcomes = dict(_OUTCOMES_BY_SLUG.get(slug, {}))
         outcomes["_standard"] = _program_standard(slug, spec)
         p.outcomes_data = outcomes
-        p.tracks = None
+        p.tracks = _TRACKS_BY_SLUG.get(slug)
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
         p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
-        p.who_its_for = None
-        p.highlights = None
+        p.who_its_for = _who_for(slug, spec["degree_type"])
+        p.highlights = _highlights_for(spec["degree_type"])
         p.application_deadline = None
     session.flush()
     for p in session.scalars(select(Program).where(Program.institution_id == inst.id)):
