@@ -156,7 +156,11 @@ class StudentSnapshot:
         return any(c.facet == "self_awareness" and c.evidence for c in self.identity_claims)
 
     def confirmed_identity_claims(self) -> int:
-        return sum(1 for c in self.identity_claims if c.user_confirmed)
+        # `user_confirmed` was never wired into the extraction pipeline (same gap
+        # as goals' confirmation), so this was always 0 and the IDENTITY layer
+        # could never complete. Treat an evidence-backed claim as confirmed — it
+        # was extracted from something the student actually said.
+        return sum(1 for c in self.identity_claims if c.user_confirmed or c.evidence)
 
     # GOALS helpers ─────────────────────────────────────────────────────
     def goals_by_category(self) -> dict[str, list[GoalEntry]]:

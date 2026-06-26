@@ -798,6 +798,34 @@ class MatchService:
                 canon = canonical_field(academic.field_of_study)
                 if canon:
                     sparse["field_of_study"] = canon
+            # Education level → the s→p eligibility veto (matching.rule_pass).
+            # Recover it from the current AcademicRecord.degree_type (the column
+            # the basic-layer persist writes education_level onto). Without it
+            # the eligibility gate no-ops, so a high-schooler matches doctoral
+            # programs. _education_compat is a proper eligibility relation (a
+            # bachelor's student stays eligible for masters/doctoral), so this
+            # never wrongly excludes. Gated + set-only-if-absent + fail-soft: an
+            # unmapped degree_type injects no level and stays permissive.
+            degree_type_to_level = {
+                "high_school": "high_school",
+                "highschool": "high_school",
+                "associate": "high_school",
+                "associates": "high_school",
+                "bachelors": "bachelors",
+                "bachelor": "bachelors",
+                "bachelor's": "bachelors",
+                "masters": "masters",
+                "master": "masters",
+                "master's": "masters",
+                "doctoral": "masters",
+                "doctorate": "masters",
+                "phd": "masters",
+                "professional": "masters",
+            }
+            if academic.degree_type and "education_level" not in sparse:
+                _lvl = degree_type_to_level.get(academic.degree_type.strip().lower())
+                if _lvl:
+                    sparse["education_level"] = _lvl
 
         # todo 1.1 / 3.2 — a student onboarded through the signup wizard (never
         # Discovery) has no AcademicRecord, so the s→p field signal AND the

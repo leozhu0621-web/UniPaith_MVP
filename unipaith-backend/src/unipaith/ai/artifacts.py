@@ -86,6 +86,17 @@ _SEVERITY_INT_TO_ENUM = {
     1: "nice_to_have",
 }
 
+# Inverse of _SEVERITY_INT_TO_ENUM — rebuild the matcher's int severity (1-5)
+# from the StudentNeed.severity string band when reconstructing a snapshot from
+# the structured tables. Without this the needs term flattens every need to the
+# emitter's 0.5 default, so a life-or-death must_have and a nice_to_have rank
+# identically.
+_SEVERITY_ENUM_TO_INT = {
+    "must_have": 5,
+    "strong_preference": 3,
+    "nice_to_have": 1,
+}
+
 
 def _severity_to_enum(value: Any) -> str:
     """Normalize extractor's int severity to the DB's string enum.
@@ -578,12 +589,14 @@ async def snapshot_from_structured_tables(db: AsyncSession, student_id: UUID) ->
     for n in need_rows:
         # NeedEntry.signal is the controlled-vocab TAG (model.need_type); the
         # free description is model.signal; the verbatim quote is model.source_quote.
-        # severity is a model string band (must_have/...) ≠ NeedEntry's int → leave None.
+        # severity is a model string band (must_have/...) → map back to the int
+        # (1-5) the matcher's needs term weights by, so urgency isn't flattened.
         snap.needs.append(
             NeedEntry(
                 maslow_level=n.maslow_level or "",
                 signal=n.need_type or "",
                 free_text=n.signal or "",
+                severity=_SEVERITY_ENUM_TO_INT.get(n.severity) if n.severity else None,
                 evidence=n.source_quote or "",
             )
         )

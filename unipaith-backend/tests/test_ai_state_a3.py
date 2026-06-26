@@ -118,4 +118,6 @@ def test_snapshot_identity_helpers_match_state() -> None:
     )
     assert snap.identity_value_or_belief_count() == 2
     assert snap.has_self_awareness_moment() is True
-    assert snap.confirmed_identity_claims() == 1
+    # Evidence-backed claims count as confirmed (user_confirmed was never wired
+    # into extraction), so all three evidence-bearing claims here count.
+    assert snap.confirmed_identity_claims() == 3
