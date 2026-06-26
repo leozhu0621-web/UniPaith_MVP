@@ -87,6 +87,7 @@ from datetime import date
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.cornell_cip_who import compose_who
 from unipaith.data.cornell_field_descriptions import FIELD_DESCRIPTIONS, SLUG_DESCRIPTIONS
 from unipaith.data.cornell_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.data.cornell_reviews_depth import DEPTH_REVIEWS
@@ -1636,6 +1637,19 @@ _CRED_PREFIXES = (
     "Professional program in ",
 )
 
+# Cornell's published conferred designation for a breadth (IPEDS) professional row,
+# replacing the generic "{DegreeType} program in {field}" placeholder (REPAIR_BACKLOG
+# #5a). Each verified against the school's catalog:
+#   Music — the Field of Music confers the D.M.A. in composition and performance
+#     practice, "a professional degree" (courses.cornell.edu/programs/music-dma/).
+#   Veterinary Medicine — the College of Veterinary Medicine confers the D.V.M.; this
+#     name matches the curated cornell-dvm flagship, so the redundant IPEDS row is
+#     dropped by _dedupe_conferred_name_collisions.
+_PROFESSIONAL_CONFERRED: dict[str, str] = {
+    "Music": "Doctor of Musical Arts (D.M.A.)",
+    "Veterinary Medicine": "Doctor of Veterinary Medicine (D.V.M.)",
+}
+
 _POSSESSIVE_NAME_RE = re.compile(r"^(Bachelor's|Master's|Doctorate) in ")
 _ROLLUP_NAME_RE = re.compile(
     r", General\b|, Other\b|, and Linguistics\b|, Pharmaceutical Sciences, and "
@@ -1710,6 +1724,14 @@ def _conferred_program_name(field_name: str, degree_type: str, school: str) -> s
         return f"Doctor of Philosophy in {field_name}"
     if degree_type == "certificate":
         return f"Graduate Certificate in {field_name}"
+    if degree_type == "professional":
+        # Cornell's published conferred designation for a breadth professional row,
+        # never the "{DegreeType} program in {field}" placeholder (REPAIR_BACKLOG #5a).
+        # Veterinary Medicine resolves to the same name as the curated cornell-dvm row,
+        # so _dedupe_conferred_name_collisions drops the redundant IPEDS row.
+        conferred = _PROFESSIONAL_CONFERRED.get(field_name)
+        if conferred:
+            return conferred
     return disambiguate_program_name(field_name, degree_type)
 
 
@@ -2370,23 +2392,144 @@ _WHO_GRAD_BASELINE = (
 )
 _HL_GRAD_BASELINE = ["Top-ranked Cornell graduate degree", "World-class faculty", "Ivy League"]
 
+# Field-specific, program-DISTINCT "Who it's for" for the curated flagship rows whose
+# program_name carries no extractable field (custom designations). The breadth (IPEDS)
+# rows are covered by compose_who(field, degree_type) below; these overrides win first.
+# (REPAIR_BACKLOG #4b — replaces the type-gamed _WHO_BASELINE / _WHO_GRAD_BASELINE.)
 _WHO_BY_SLUG = {
     "cornell-computer-science-bs": (
         "Technically strong students who want a rigorous computer science education — "
         "as the B.S. (Engineering) or B.A. (Arts and Sciences) — in Cornell's Bowers "
         "College of Computing and Information Science."
     ),
+    "cornell-computer-science-ms": (
+        "Computer-science graduates and professionals who want advanced graduate "
+        "coursework in algorithms, systems, AI, and theory before research or senior "
+        "engineering roles."
+    ),
+    "cornell-information-science-bs": (
+        "Students drawn to how data, technology, and people intersect — computing paired "
+        "with the social and design dimensions of information systems."
+    ),
+    "cornell-information-science-ms": (
+        "Graduates who want advanced training at the intersection of computing, data, and "
+        "human-centered information systems before applied or research roles."
+    ),
+    "cornell-electrical-computer-eng-bs": (
+        "Students drawn to circuits, signals, power, and the hardware and embedded systems "
+        "behind modern electronics, seeking a broad undergraduate engineering foundation."
+    ),
+    "cornell-electrical-computer-eng-ms": (
+        "Electrical and computer engineers who want advanced graduate coursework in "
+        "devices, signals, and computing systems aimed at senior technical roles."
+    ),
+    "cornell-mechanical-eng-bs": (
+        "Students drawn to mechanical systems, thermodynamics, and design across energy, "
+        "robotics, and manufacturing, seeking a broad undergraduate engineering foundation."
+    ),
+    "cornell-operations-research-ms": (
+        "Quantitatively strong students who want to optimize complex systems and decisions "
+        "with stochastic models, optimization, and data before analytics or operations roles."
+    ),
+    "cornell-systems-eng-ms": (
+        "Engineers who want to design and integrate complex systems end-to-end, balancing "
+        "requirements, modeling, and risk across industries."
+    ),
+    "cornell-meng-ms": (
+        "Engineering graduates who want a course-based, one-year professional master's that "
+        "builds applied depth and design judgment for industry practice."
+    ),
+    "cornell-economics-bs": (
+        "Students who want to understand how people, markets, and institutions allocate "
+        "scarce resources, with rigorous quantitative training in economics."
+    ),
+    "cornell-political-science-bs": (
+        "Students drawn to government, politics, and how power and institutions shape "
+        "collective life, studying political science in Arts and Sciences."
+    ),
+    "cornell-mathematics-bs": (
+        "Students who love mathematical reasoning, proof, and abstraction across pure and "
+        "applied areas, seeking a broad undergraduate foundation."
+    ),
+    "cornell-biology-bs": (
+        "Students fascinated by living systems, from molecules and cells to organisms and "
+        "ecosystems, who want a broad undergraduate grounding in the biological sciences."
+    ),
+    "cornell-biomedical-sciences-bs": (
+        "Students drawn to human and animal physiology, disease mechanisms, and the science "
+        "behind medicine, seeking a pre-health or research-oriented undergraduate foundation."
+    ),
+    "cornell-applied-economics-bs": (
+        "Students who want to apply economics and management to food, agriculture, business, "
+        "and policy through the Dyson School's applied, business-oriented curriculum."
+    ),
+    "cornell-mba": (
+        "Early- and mid-career professionals seeking a STEM-designated, immersion-based "
+        "Two-Year MBA at Cornell Johnson with strong finance and consulting placement."
+    ),
+    "cornell-business-administration-ms": (
+        "Specialized-master's candidates who want advanced, focused business graduate "
+        "training at Cornell Johnson before management or analytical roles."
+    ),
+    "cornell-hotel-administration-bs": (
+        "Students preparing to lead the global hospitality industry, blending business "
+        "fundamentals with service operations at the Nolan School of Hotel Administration."
+    ),
+    "cornell-ilr-bs": (
+        "Students drawn to work, employment, and the policy and economics of the workplace, "
+        "studying industrial and labor relations across business, law, and the social sciences."
+    ),
+    "cornell-ilr-ms": (
+        "Professionals and graduates focused on human resources, labor relations, and "
+        "workplace policy who want advanced graduate training before senior HR or policy roles."
+    ),
+    "cornell-human-development-bs": (
+        "Students who want to understand how people develop across the lifespan, blending "
+        "psychology, biology, and social context in human development."
+    ),
+    "cornell-mpa-ms": (
+        "Aspiring public-service leaders who want a professional, analytically rigorous "
+        "master's in public administration and policy at the Brooks School."
+    ),
     "cornell-legal-studies-ms-online": (
         "Working professionals who need legal frameworks and reasoning without practicing "
         "law, studying fully online through Cornell Law School."
+    ),
+    "cornell-engineering-management-meng-online": (
+        "Working engineers who want to add management, systems, and leadership depth through "
+        "a flexible hybrid professional master's without leaving their careers."
     ),
     "cornell-emba-americas": (
         "Experienced working professionals seeking a Cornell MBA in a hybrid weekend "
         "format with synchronous online instruction."
     ),
-    "cornell-mba": (
-        "Early- and mid-career professionals seeking a STEM-designated, immersion-based "
-        "Two-Year MBA at Cornell Johnson with strong finance and consulting placement."
+    "cornell-emha-online": (
+        "Mid-career health-care professionals who want an executive master's in health "
+        "administration in a hybrid format while continuing to work."
+    ),
+    "cornell-empa-online": (
+        "Experienced public-sector and nonprofit professionals seeking an executive master's "
+        "in public administration in a hybrid format while continuing to work."
+    ),
+    "cornell-jd": (
+        "Students preparing to practice law, drawn to Cornell Law School's small, "
+        "collaborative community and its emphasis on lawyering in the best sense."
+    ),
+    "cornell-dvm": (
+        "Students preparing for careers as veterinarians, drawn to one of the nation's top "
+        "colleges of veterinary medicine and its clinical and biomedical training."
+    ),
+    "cornell-march": (
+        "Students preparing for licensure and practice in architecture through a "
+        "professional, studio-intensive Master of Architecture in the AAP college."
+    ),
+    "cornell-md": (
+        "Students preparing to become physicians and physician-scientists at Weill Cornell "
+        "Medicine in New York City."
+    ),
+    "cornell-music-prof": (
+        "Composers and performers pursuing a doctoral-level professional degree in "
+        "composition or performance practice in Cornell's Field of Music."
     ),
 }
 _HL_BY_SLUG = {
@@ -2411,6 +2554,41 @@ _HL_BY_SLUG = {
         "STEM-designated",
     ],
 }
+
+# ── Universal program-DISTINCT "Who it's for" (REPAIR_BACKLOG #4b, miss #8) ──
+# Flagship overrides win first; breadth rows compose a field-specific lead +
+# credential tail (cornell_cip_who.compose_who), so a field's credential siblings
+# read differently. Built once over the finalized catalog and gated: fail loudly if
+# any row is uncovered or distinctness collapses (the type-gaming tell).
+_WHO_FINAL: dict[str, str] = {}
+_who_uncovered: list[str] = []
+for _p in PROGRAMS:
+    _slug = _p["slug"]
+    _who = _WHO_BY_SLUG.get(_slug) or compose_who(
+        _field_from_program_name(_p["program_name"]), _p["degree_type"]
+    )
+    if not _who:
+        _who_uncovered.append(_slug)
+    else:
+        _WHO_FINAL[_slug] = _who
+if _who_uncovered:
+    _miss = sorted(
+        {
+            _field_from_program_name(p["program_name"]) or p["program_name"]
+            for p in PROGRAMS
+            if p["slug"] in _who_uncovered
+        }
+    )
+    raise RuntimeError(
+        f"Cornell who_its_for uncovered on {len(_who_uncovered)} rows; "
+        f"WHO_BY_FIELD / _WHO_BY_SLUG lacks: {_miss[:12]}"
+    )
+_who_ratio = len(set(_WHO_FINAL.values())) / len(_WHO_FINAL)
+if _who_ratio < 0.9:
+    raise RuntimeError(
+        f"Cornell who_its_for type-gamed: distinct/total {_who_ratio:.2f} < 0.9 "
+        "(field-specific statements required, not a degree-type template)"
+    )
 
 # ── Curriculum / research areas, where published (the flagship) ────────────
 # Cornell CS publishes 16 official research areas; quoted from the department's official
@@ -4022,11 +4200,16 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             outcomes = dict(_OUTCOMES_INSTITUTION)
         outcomes["_standard"] = _program_standard(slug, spec)
         p.outcomes_data = outcomes
+        # Matcher-core CIP join key (REPAIR_BACKLOG #1): the verified College
+        # Scorecard / IPEDS CIP already used for the breadth cross-check. The matcher
+        # reads the 2-digit family (field_canon.fields_offered_for_program), so the
+        # 4-digit code is matcher-equivalent to a 6-digit one — no code is invented.
+        p.cip_code = spec.get("cip")
+        # Field-specific, program-DISTINCT "Who it's for" (REPAIR_BACKLOG #4b).
+        p.who_its_for = _WHO_FINAL[slug]
         if spec["degree_type"] == "bachelors":
-            p.who_its_for = _WHO_BY_SLUG.get(slug) or _WHO_BASELINE
             p.highlights = _HL_BY_SLUG.get(slug) or _HL_BASELINE
         else:
-            p.who_its_for = _WHO_BY_SLUG.get(slug) or _WHO_GRAD_BASELINE
             p.highlights = _HL_BY_SLUG.get(slug) or _HL_GRAD_BASELINE
         # Always assign so a stale value on a pre-existing row is cleared (tracks is
         # recorded as omitted where unverified, and match_service reads program.tracks).
