@@ -9,26 +9,10 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
-import DualRing from '../pages/student/match/DualRing'
 import ProbabilityBands from '../pages/student/match/ProbabilityBands'
 import BandBadge from '../components/ui/BandBadge'
 import * as matching from '../api/matching'
 import type { ProbabilityBands as Bands } from '../types'
-
-describe('DualRing', () => {
-  it('renders both the fitness and confidence scores', () => {
-    render(<DualRing fitness={0.82} confidence={0.74} />)
-    expect(screen.getByText('Fitness · 82%')).toBeInTheDocument()
-    expect(screen.getByText('Confidence · 74%')).toBeInTheDocument()
-  })
-
-  it('exposes both scores to assistive tech even in compact mode', () => {
-    render(<DualRing fitness={0.5} confidence={0.3} compact onClick={() => {}} />)
-    expect(
-      screen.getByLabelText(/fitness 50%, confidence 30%/i),
-    ).toBeInTheDocument()
-  })
-})
 
 describe('BandBadge', () => {
   it('maps reach / target / safer to their labels', () => {

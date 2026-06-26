@@ -17,8 +17,6 @@ import { getHandoffVerdict } from '../../../api/discovery'
 import { getMatches } from '../../../api/matching'
 import Button from '../../../components/ui/Button'
 import type { HandoffVerdict, MatchResultDual } from '../../../types'
-import DualRing from '../match/DualRing'
-import { ringFromMatch } from '../match/ringFill'
 
 interface Props {
   /** Pass an already-fetched verdict to skip the query (used in the thread). */
@@ -103,23 +101,8 @@ export default function FirstLookCard({ verdict: verdictProp, variant = 'auto', 
               ]
                 .filter(Boolean)
                 .join(' · ')
-              // The student match payload carries no raw score (backend-only
-              // contract — StudentMatchResponse omits fitness/confidence), so
-              // Number(m.fitness_score) was NaN and the ring drew empty. Derive
-              // the ring from the band and hide the precise numeral, exactly
-              // like MatchCard does.
-              const fitRing = ringFromMatch(m.fitness_score, m.band_label)
-              const confRing = ringFromMatch(m.confidence_score, m.band_label)
               return (
                 <div key={m.program_id} className="flex items-center gap-3 px-3 py-2.5">
-                  <DualRing
-                    fitness={fitRing.value}
-                    confidence={confRing.value}
-                    size={38}
-                    compact
-                    bandLabel={m.band_label ?? undefined}
-                    hideNumeral={fitRing.fromBand}
-                  />
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-medium text-foreground truncate">
                       {m.program_name}

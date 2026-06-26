@@ -1,13 +1,11 @@
 /**
  * Spec 09 §4 — Match-result card.
  *
- * The canonical display card (Spec 02 §5) in a match context: DualRing
- * (outer fitness / inner confidence, Spec 09 §10), reach/target/safer band
- * badge (§6), a "Why this match" trigger that opens the AI Rationale Popover
- * (§4 / Spec 02 §6), and expandable probability bands (§4A).
- *
- * Brand (§10 / Spec 76): gold appears ONLY on the DualRing fitness ring; the
- * card body is cobalt + neutral, using semantic tokens (dark-mode safe).
+ * The canonical display card (Spec 02 §5) in a match context: a reach/target/
+ * safer band badge (§6), the one-line counselor storyline, a "Why this match"
+ * trigger that opens the AI Rationale Popover (§4 / Spec 02 §6), and expandable
+ * probability bands (§4A). The fitness/confidence score rings were dropped to
+ * keep the card simple — the band + storyline carry the read now.
  * Save / Add to compare / Open on every card (§7).
  */
 import { useState } from 'react'
@@ -27,12 +25,10 @@ import { DEGREE_LABELS } from '../../../utils/constants'
 import { formatCurrency } from '../../../utils/format'
 import BandBadge from '../../../components/ui/BandBadge'
 import type { MatchResultDual } from '../../../types'
-import DualRing from './DualRing'
 import { matchStoryline } from './matchStoryline'
 import ProbabilityBands from './ProbabilityBands'
 import RationalePopover from './RationalePopover'
 import { cardLinkClick } from '../explore/shared/cardLink'
-import { ringFromMatch } from './ringFill'
 import AppStatusPill, { type AppStatus } from '../explore/cards/AppStatusPill'
 
 interface MatchCardProps {
@@ -72,15 +68,9 @@ export default function MatchCard({
   const href = `/s/programs/${match.program_id}`
 
   const degree = match.degree_type ? DEGREE_LABELS[match.degree_type] ?? match.degree_type : null
-  const fitRing = ringFromMatch(match.fitness_score, match.band_label)
-  const confRing = ringFromMatch(match.confidence_score, match.band_label)
-  const fitness = fitRing.value
-  const confidence = confRing.value
-  // Hide the precise numeral when the ring is band-derived (no raw score served).
-  const hideNumeral = fitRing.fromBand
-  // Strategy→matches storytelling: a one-line counselor read of this band, framed
-  // as fit-for-you + admission odds (turns the two rings into plain language).
-  const storyline = matchStoryline(match.band_label, fitness, !hideNumeral)
+  // Strategy→matches storytelling: a one-line counselor read of this band
+  // (band-only — the fitness/confidence score rings were dropped to keep it simple).
+  const storyline = matchStoryline(match.band_label, 0, false)
   const acceptPct =
     match.acceptance_rate != null ? Math.round(match.acceptance_rate * 100) : null
   // Without an explicit reason on the list payload, derive the right "not
@@ -91,7 +81,6 @@ export default function MatchCard({
     <div className="bg-card rounded-xl border border-border elev-subtle flex flex-col overflow-hidden hover-lift hover:elev-raised">
       {/* ── Header ── */}
       <div className="p-4 flex items-start gap-3">
-        <DualRing fitness={fitness} confidence={confidence} size={72} compact bandLabel={match.band_label ?? undefined} hideNumeral={hideNumeral} onClick={() => setRationaleOpen(true)} />
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <Link to={href} onClick={cardLinkClick(onView)} className="min-w-0 text-left">

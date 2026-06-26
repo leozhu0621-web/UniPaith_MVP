@@ -9,8 +9,6 @@ import {
 } from 'lucide-react'
 import BandBadge from '../../../../components/ui/BandBadge'
 import type { Band } from '../../../../components/ui/BandBadge'
-import DualRing from '../../match/DualRing'
-import { ringFromMatch } from '../../match/ringFill'
 import AppStatusPill, { type AppStatus } from './AppStatusPill'
 import { cardLinkClick, CARD_LINK_OVERLAY } from '../shared/cardLink'
 import { degreeAbbrev, formatDuration, formatFormat, deadlineInfo } from './programFormat'
@@ -43,21 +41,10 @@ interface Props {
 export default function ProgramCard({ program, saved, match, comparing, onSave, onCompare, onAskCounselor, onView, following, onToggleFollow, nextEvent, onEventClick, peerCount, onPeersClick, appStatus, viewHref }: Props) {
   const abbrev = degreeAbbrev(program.degree_type, program.program_name)
   const href = viewHref ?? `/s/programs/${program.id}`
-  // Dual-score migration: prefer fitness_score, fall back to legacy match_score
-  // (Phase E keeps match_score dual-written for one release — see CLAUDE.md).
-  const extMatch = match as (MatchResult & { fitness_score?: number | null; confidence_score?: number | null; band_label?: string | null }) | undefined
-  const fitnessRaw = extMatch?.fitness_score ?? match?.match_score
-  const confidenceRaw = extMatch?.confidence_score
+  // Band label drives the BandBadge below; the fitness/confidence score rings
+  // were dropped to keep the cards simple.
+  const extMatch = match as (MatchResult & { band_label?: string | null }) | undefined
   const bandLabel = extMatch?.band_label as Band | undefined
-  // Mirror MatchCard (AI-Structure-3 §14): use a raw score if served, else map
-  // the band to a representative ring fill and hide the precise numeral — so the
-  // program card and the match card never disagree on what's knowable.
-  const fitRing = ringFromMatch(fitnessRaw, bandLabel)
-  const confRing = ringFromMatch(confidenceRaw, bandLabel)
-  const fitness = fitRing.value
-  const confidence = confRing.value
-  const hideNumeral = fitRing.fromBand
-  const hasRing = fitnessRaw != null || !!bandLabel
 
   const duration = formatDuration(program.duration_months)
   const format = formatFormat(program.delivery_format)
@@ -122,10 +109,10 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
           </div>
         </div>
 
-        {/* Band / match-ring / event row — only when there's something to show.
-            The degree is already conveyed by the monogram tile and the full
-            program name, so no separate degree chip here. */}
-        {(hasRing || nextEvent || (peerCount != null && peerCount > 0) || appStatus) && (
+        {/* Band / event row — only when there's something to show. The degree is
+            already conveyed by the monogram tile and the full program name, so no
+            separate degree chip here. */}
+        {(bandLabel || nextEvent || (peerCount != null && peerCount > 0) || appStatus) && (
           <div className="flex items-center gap-1.5 mt-3 flex-wrap">
             <AppStatusPill status={appStatus} />
             {bandLabel && <BandBadge band={bandLabel} />}
@@ -149,18 +136,6 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
                 <Users size={10} />
                 {peerCount} open to connect
               </button>
-            )}
-            {hasRing && (
-              <span className="ml-auto">
-                <DualRing
-                  fitness={fitness}
-                  confidence={confidence}
-                  size={40}
-                  compact
-                  bandLabel={bandLabel}
-                  hideNumeral={hideNumeral}
-                />
-              </span>
             )}
           </div>
         )}
