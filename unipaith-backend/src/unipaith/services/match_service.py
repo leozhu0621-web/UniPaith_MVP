@@ -900,6 +900,18 @@ class MatchService:
                 sparse["wants_online"] = bool(pref.wants_online)
             if pref.wants_career_support is not None and "wants_career_support" not in sparse:
                 sparse["wants_career_support"] = bool(pref.wants_career_support)
+            # Budget → the matcher's affordability veto + graded fit. budget_max is
+            # an annual-USD figure (the lt_20k/20k_40k/40k_60k/60k_plus bands),
+            # matching the program's tuition_usd_per_year. needs_aid (from
+            # funding_requirement) makes the hard veto SKIP aid-seeking students, so
+            # a low budget never wrongly excludes someone who'd qualify for aid.
+            # Gated + set-only-if-absent.
+            if pref.budget_max is not None and "budget_max_usd_per_year" not in sparse:
+                sparse["budget_max_usd_per_year"] = int(pref.budget_max)
+            if "needs_aid" not in sparse and pref.funding_requirement:
+                from unipaith.services.net_price_service import _NEEDS_AID_FUNDING
+
+                sparse["needs_aid"] = pref.funding_requirement.strip().lower() in _NEEDS_AID_FUNDING
             # degree-level TARGET → the s→p "degree_level" graded fit. Previously a
             # dead signal: matching.py reads `degree_level_target` but no code path
             # wrote it. Canonicalize via the SAME degree→{bachelors/masters/doctoral/

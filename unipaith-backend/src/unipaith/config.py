@@ -333,7 +333,10 @@ class Settings(BaseSettings):
     #   "block" — raise CostCapExceededError, fail the call
     ai_per_student_weekly_cost_cap_usd: float = 0.50
     ai_cost_cap_window_days: int = 7
-    ai_cost_cap_enforcement: str = "warn"
+    # Removed: no per-student AI cost limits. "off" short-circuits the gate, so
+    # CostCapExceededError is never raised and no cost_cap_warning is attached.
+    # The mode mechanism is kept for tests / future use, but defaults off.
+    ai_cost_cap_enforcement: str = "off"
 
     # Discovery v2 — Phase A2 LLM pipeline. When False (default), the
     # discovery service returns the Phase-A stub assistant reply. When True,
