@@ -54,12 +54,14 @@ from datetime import date
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.duke_cip6 import CIP6_BY_SLUG
 from unipaith.data.duke_field_descriptions import (
     FIELD_ALIASES,
     FIELD_DESCRIPTIONS,
     SLUG_DESCRIPTIONS,
 )
 from unipaith.data.duke_reviews_depth import DEPTH_REVIEWS
+from unipaith.data.duke_who import WHO_BY_SLUG
 from unipaith.data.profile_catalog_utils import (
     disambiguate_program_name,
     validate_catalog,
@@ -1888,6 +1890,26 @@ for _p in PROGRAMS:
     if _p["delivery_format"] == "on_campus":
         _p["delivery_format"] = "in_person"
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
+
+# Matcher-core coverage gates (REPAIR_BACKLOG #1 + #4): every program carries a real NCES
+# CIP-2020 6-digit code (the field-66 join key the CPEF matcher reads) and a universal,
+# program-DISTINCT ``who_its_for`` (never a degree-type template). Fail the build if either
+# is missing or if ``who_its_for`` collapses below ~0.9 distinct/total (the type-gaming
+# guard — gold field-specific catalogs are ~1.0).
+_cip_missing = [s for s in PROGRAM_SLUGS if s not in CIP6_BY_SLUG]
+if _cip_missing:
+    raise RuntimeError(f"Duke cip_code missing on {len(_cip_missing)} rows: {_cip_missing[:5]}")
+_who_missing = [s for s in PROGRAM_SLUGS if s not in WHO_BY_SLUG]
+if _who_missing:
+    raise RuntimeError(f"Duke who_its_for missing on {len(_who_missing)} rows: {_who_missing[:5]}")
+_who_vals = [WHO_BY_SLUG[s] for s in PROGRAM_SLUGS]
+_who_ratio = len(set(_who_vals)) / max(len(_who_vals), 1)
+if _who_ratio < 0.9:
+    raise RuntimeError(
+        f"Duke who_its_for type-gamed: distinct/total {_who_ratio:.2f} < 0.9 "
+        "(must be program-distinct)"
+    )
+
 _SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 _FULL_NAME_BY_SLUG: dict[str, str] = {p["slug"]: p["program_name"] for p in PROGRAMS}
 _WEBSITE_BY_SLUG: dict[str, str] = {p["slug"]: p["website"] for p in PROGRAMS if p.get("website")}
@@ -3008,7 +3030,9 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
         p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
-        p.who_its_for = None
+        # Matcher-core field signal + universal program-distinct depth (REPAIR_BACKLOG #1/#4).
+        p.cip_code = CIP6_BY_SLUG.get(slug)
+        p.who_its_for = WHO_BY_SLUG.get(slug)
         p.highlights = None
         p.application_deadline = date(2027, 1, 5) if spec["degree_type"] == "bachelors" else None
         if slug == _FLAGSHIP:
