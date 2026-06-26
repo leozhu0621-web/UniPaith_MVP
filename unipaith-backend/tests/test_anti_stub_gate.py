@@ -29,7 +29,7 @@ from unipaith.profile_standard.anti_stub import (
 # Grow as scrape-built catalogs are researched per-program (UT-Austin still carries it).
 SCRAPE_DEBRIS_CLEAN = [
     "mit", "usc", "uiuc", "nyu", "columbia", "michigan", "cornell", "bu", "brown",
-    "vanderbilt", "dartmouth", "georgetown",
+    "vanderbilt", "dartmouth", "georgetown", "washu",
 ]
 
 # Catalogs whose per-program descriptions have been verified gold-equal (every metric 0).
@@ -90,6 +90,11 @@ CERTIFIED_CLEAN = [
     #             5-photo verified gallery; published 2025-26 tuition per tier (brownprof1)
     "notre_dame",  # 113-program real catalog; conferred names; per-credential discipline
     #             defs; sibling-aware bodies (frame_abs150 23→0, ndpercrd1)
+    "washu",  # institution seed (5 EMPTY-description stubs) → gold + 58-program catalog across
+    #             the eight schools; field-specific researched descriptions, real depts,
+    #             cip_code + who_its_for on every row, WashU "The Source" + Brown/Medicine
+    #             feeds, 4-photo verified gallery, published tuition per tier, sourced
+    #             reviews on MBA/MSW/JD/MD (washuprof1)
     "vanderbilt",  # institution seed (5 stubs) → gold + verified 107-program catalog across
     #             the eleven schools/colleges; conferred B.A./B.E./B.S./B.M. names, real
     #             departments, field-specific per-program descriptions; Vanderbilt News +
@@ -175,7 +180,7 @@ _FRAME_STRIPPED_CLEAN = [
     "mit", "rice", "uf", "usc", "uw_madison", "jhu", "uiuc", "uw", "harvard", "nyu",
     "ut_austin", "columbia", "michigan", "duke", "georgia_tech", "ucla", "berkeley",
     "stanford",     "penn", "cornell", "notre_dame", "bu", "vanderbilt", "ucsd",
-    "dartmouth", "georgetown",
+    "dartmouth", "georgetown", "washu",
 ]
 
 
@@ -205,7 +210,7 @@ def test_credential_siblings_have_no_frame_stripped_shared_body(name: str):
 _ABS_FLOOR_CLEAN = [
     "nyu", "mit", "columbia", "michigan", "ucla", "jhu", "berkeley", "uf", "stanford",
     "penn", "cornell", "ut_austin", "notre_dame", "bu", "vanderbilt", "ucsd", "dartmouth",
-    "georgetown",
+    "georgetown", "washu",
 ]
 
 
