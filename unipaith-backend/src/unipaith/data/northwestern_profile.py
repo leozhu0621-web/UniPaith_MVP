@@ -82,6 +82,16 @@ contaminated helper modules (northwestern_field_descriptions / northwestern_cata
 northwestern_ipeds_catalog) are no longer imported. Catalog is de-padded to Northwestern's
 real published programs (REPAIR BACKLOG #1 cross-institution contamination + #6
 frame+tail-share); gold MIT = 0% on every anti-stub metric.
+
+Matcher-core enrichment (2026-06-26, nwcipwho1): stamps the verified IPEDS CIP family
+``cip_code`` on every program (the CPEF field-signal join key — was null catalog-wide,
+REPAIR_BACKLOG #1) and fills a PROGRAM-DISTINCT ``who_its_for`` on every program
+(distinct/total = 1.0 — 12 hand-written flagship statements + a field-interpolated,
+credential-aware frame for the rest; was empty catalog-wide, REPAIR_BACKLOG #4) — never a
+degree-type template, never ``= None``. Build gates assert cip coverage + format and
+who_its_for coverage + distinctness ≥ 0.9. Tuition was already verified per-tier (71
+bachelor's / 26 master's / 4 professional priced, 24 PhD funded $0); descriptions / names /
+departments / feeds / campus gallery / flagship reviews unchanged (already gold-clean).
 """
 
 # ruff: noqa: E501
@@ -102,7 +112,7 @@ from unipaith.profile_standard.anti_stub import analyze as _anti_stub_analyze
 from unipaith.profile_standard.anti_stub import machine_artifacts as _machine_artifacts
 
 INSTITUTION_NAME = "Northwestern University"
-ENRICHED_AT = "2026-06-20"
+ENRICHED_AT = "2026-06-26"
 
 # Peer-institution signature strings that must NEVER appear in a Northwestern description
 # (the run-65 cross-institution contamination class). Each description is researched from
@@ -1813,6 +1823,126 @@ if _catalog_errors:
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 _SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 
+# ── Matcher-core: cip_code + program-DISTINCT who_its_for (REPAIR_BACKLOG #1 + #4) ──────
+# `cip_code` is the CIP join key the CPEF matcher uses (it reads the 2-digit family +
+# program-name aliases — see services/match/field_canon.fields_offered_for_program); the
+# verified IPEDS/Scorecard CIP-2020 family code already carried on every spec is stamped
+# as-is (never a guessed 6-digit precision). `who_its_for` is the universal depth field —
+# every program states the applicant it fits, derived from its OWN field + credential
+# level, NEVER a degree-type template (the type-gaming the distinctness gate below forbids).
+
+# Field labels for the 8 conferred-designation programs whose name carries no "... in {field}".
+_FIELD_OVERRIDE: dict[str, str] = {
+    "northwestern-mba-ms": "business administration",
+    "northwestern-law-prof": "law",
+    "northwestern-llm": "law",
+    "northwestern-medicine-prof": "medicine",
+    "northwestern-public-health-mph": "public health",
+    "northwestern-physical-therapy-dpt": "physical therapy",
+    "northwestern-engineering-management-mem": "engineering management",
+    "northwestern-audiology-aud": "audiology",
+}
+
+# Short, student-facing school labels for the who_its_for frames.
+_SCHOOL_SHORT: dict[str, str] = {
+    WEINBERG: "Weinberg College",
+    MCCORMICK: "the McCormick School of Engineering",
+    MEDILL: "Medill",
+    COMMUNICATION: "the School of Communication",
+    BIENEN: "the Bienen School of Music",
+    SESP: "the School of Education and Social Policy",
+    KELLOGG: "Kellogg",
+    FEINBERG: "the Feinberg School of Medicine",
+    SPS: "the School of Professional Studies",
+    LAW: "the Pritzker School of Law",
+    TGS: "The Graduate School",
+}
+
+
+def _field_of(spec: dict) -> str:
+    """The field-of-study label (the part after the credential designation)."""
+    override = _FIELD_OVERRIDE.get(spec["slug"])
+    if override:
+        return override
+    name = spec["program_name"]
+    m = re.match(r"^.+? in (.+)$", name)
+    return m.group(1) if m else name
+
+
+# Credential-aware frames; {field} is interpolated per program, so distinct/total ≈ 1.0
+# (no degree-type template — the type-gaming guard the distinctness assertion enforces).
+_WHO_LEVEL: dict[str, str] = {
+    "bachelors": (
+        "Prospective undergraduates drawn to {field} who want a research-grounded "
+        "Northwestern foundation in {school} and a path to graduate study or a career in the field."
+    ),
+    "masters": (
+        "Graduates and early-career professionals focused on {field} who want advanced "
+        "Northwestern training in {school} toward specialized practice or doctoral study."
+    ),
+    "phd": (
+        "Research-minded scholars committed to {field} who want a funded Northwestern "
+        "doctorate in {school} and an academic, industry-research, or policy career."
+    ),
+    "professional": (
+        "Students preparing for licensed practice in {field} who want Northwestern's "
+        "hands-on professional preparation in {school}."
+    ),
+    "certificate": (
+        "Working professionals and students who want focused Northwestern coursework in "
+        "{field} through {school} to complement a degree or advance on the job."
+    ),
+}
+
+# Hand-written, program-specific statements for the flagship programs (researched audience
+# rather than the generated frame); the rest derive a field-distinct statement from _who_for.
+_WHO_BY_SLUG: dict[str, str] = {
+    "northwestern-computer-science-bs": "Undergraduates aiming for software, AI, systems, or data-science careers who want McCormick and Weinberg's joint computer-science program — grounded in theory, systems, and machine learning — and strong Chicago and Bay-Area recruiting.",
+    "northwestern-economics-bs": "Students drawn to economic analysis, policy, and data who want Weinberg's quantitative economics training and a path to finance, consulting, graduate school, or government.",
+    "northwestern-mba-ms": "Early- to mid-career professionals targeting general-management, marketing, or strategy roles who want Kellogg's collaborative, team-based MBA and its deep recruiting in consulting and brand management.",
+    "northwestern-law-prof": "Aspiring attorneys who want the Pritzker School of Law's small, practice-oriented J.D., its strong business-law and clinical offerings, and access to the Chicago legal market.",
+    "northwestern-medicine-prof": "Future physicians committed to patient care and research who want the Feinberg School of Medicine's integrated curriculum and Chicago academic-medical-center training.",
+    "northwestern-journalism-bs": "Undergraduates pursuing reporting, media, or integrated-marketing-communications careers who want Medill's professional newsroom training and its Journalism Residency.",
+    "northwestern-journalism-ms": "Graduates and career-changers entering journalism or media who want Medill's intensive master's, its professional residencies, and Chicago and Washington newsroom access.",
+    "northwestern-biomedical-medical-engineering-bs": "Undergraduates bridging engineering and medicine who want McCormick's biomedical-engineering program — device design with Feinberg and Chicago clinical immersion — and a path to industry, medical school, or a PhD.",
+    "northwestern-statistics-data-science-bs": "Students drawn to statistical modeling, machine learning, and data analysis who want Weinberg's statistics and data-science foundation and a path to analytics, research, or graduate study.",
+    "northwestern-computer-science-ms": "Graduates and professionals deepening software, AI, or systems expertise who want McCormick's master's in computer science and access to Chicago and national tech recruiting.",
+    "northwestern-computer-science-phd": "Research-minded scholars in algorithms, systems, AI, or theory who want a funded McCormick computer-science doctorate and an academic or industry-research career.",
+    "northwestern-psychology-general-bs": "Undergraduates interested in clinical, cognitive, and social psychology who want Weinberg's research-active foundation for graduate study or health and human-services work.",
+}
+
+
+def _who_for(spec: dict) -> str:
+    """A field-specific, credential-aware who_its_for statement (never a type template)."""
+    hand = _WHO_BY_SLUG.get(spec["slug"])
+    if hand:
+        return hand
+    frame = _WHO_LEVEL.get(spec["degree_type"], _WHO_LEVEL["masters"])
+    school = _SCHOOL_SHORT.get(spec["school"], "Northwestern")
+    return frame.format(field=_field_of(spec), school=school)
+
+
+WHO_BY_SLUG: dict[str, str] = {p["slug"]: _who_for(p) for p in PROGRAMS}
+
+# Build gates: every program carries a real CIP family code and a program-distinct
+# who_its_for; fail the build if either is missing or if who_its_for collapses below
+# ~0.9 distinct/total (the type-gaming guard — gold field-specific catalogs are ~1.0).
+_cip_missing = [p["slug"] for p in PROGRAMS if not p.get("cip")]
+if _cip_missing:
+    raise RuntimeError(f"Northwestern cip_code missing on {len(_cip_missing)} rows: {_cip_missing[:5]}")
+_cip_bad = sorted({p["cip"] for p in PROGRAMS if not re.fullmatch(r"\d{2}\.\d{2,4}", p["cip"])})
+if _cip_bad:
+    raise RuntimeError(f"Northwestern malformed cip_code values: {_cip_bad}")
+_who_missing = [s for s in PROGRAM_SLUGS if not WHO_BY_SLUG.get(s)]
+if _who_missing:
+    raise RuntimeError(f"Northwestern who_its_for missing on {len(_who_missing)} rows: {_who_missing[:5]}")
+_who_vals = [WHO_BY_SLUG[s] for s in PROGRAM_SLUGS]
+_who_ratio = len(set(_who_vals)) / max(len(_who_vals), 1)
+if _who_ratio < 0.9:
+    raise RuntimeError(
+        f"Northwestern who_its_for type-gamed: distinct/total {_who_ratio:.2f} < 0.9 (must be program-distinct)"
+    )
+
 _TUITION_UG = 68322
 _UNDERGRAD_COA = 91250
 _AVG_NET_PRICE = 29167
@@ -2800,6 +2930,12 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.catalog_source = "curated"
         p.delivery_format = spec.get("delivery_format", "on_campus")
         p.department = spec.get("department")
+        # Matcher-core CIP join key + universal program-DISTINCT who_its_for depth field
+        # (REPAIR_BACKLOG #1 + #4). cip_code is the verified IPEDS CIP family code on the
+        # spec; who_its_for is the field-specific audience statement (never a type template,
+        # never None — the build gate above asserts coverage + distinctness ≥ 0.9).
+        p.cip_code = spec.get("cip")
+        p.who_its_for = WHO_BY_SLUG.get(slug) or _who_for(spec)
         kw = _PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(_KEYWORDS_BY_SCHOOL[spec["school"]])
         p.content_sources = _program_content(spec["school"], kw)
         if spec["degree_type"] == "bachelors":
