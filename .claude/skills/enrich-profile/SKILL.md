@@ -694,6 +694,35 @@ Concrete misses observed in the first runs — each broke a real page:
      11-full / 29-empty / 0-partial split that is the dimension-skip fingerprint, while
      `tracks` / `class_profile` / `faculty_contacts` are sparse even on gold (so those
      stay coverage-gated; `who_its_for` is the one gold fills 100%).
+   - **`who_its_for` must be PROGRAM-DISTINCT, not a degree-type template — measure
+     DISTINCTNESS, not just non-null %.** Filling the field 100% does not satisfy the
+     field-specific bar if every program of a tier shares ONE identical sentence: "all
+     bachelors → 'a top public-research undergraduate education', all master's →
+     'advanced professional or specialized graduate training', all PhDs → 'a funded
+     <school> doctorate'" is a classification stub keyed on DEGREE-TYPE instead of
+     `{field}` — it games the non-null coverage gate while telling a prospective student
+     nothing that distinguishes one program from the next (a CS PhD and a Public-Policy
+     PhD must not read identically). The `_WHO_BY_TYPE.get(degree_type)` fallback is a
+     NARROW last resort for a genuinely audience-indistinct program — NOT the primary
+     fill; the bulk of programs need a `_WHO_BY_SLUG` field-specific statement (subject,
+     methods, who it fits, typical next step), exactly as the description does. Measurable
+     gate: distinct `who_its_for` strings / programs should approach the program count
+     (≈1.0), NOT collapse to ~one-per-degree-type (a ratio well under ~0.5 on a
+     multi-program catalog is type-gaming, FAIL). Verify-LIVE per catalog: sample N
+     details, count distinct `who_its_for`. The same anti-gaming logic applies to ANY
+     universal field gated only on coverage — a uniform fallback passing a non-null
+     metric is not depth. Evidence: live API this run — the coverage-"gold" catalogs
+     cited just above (MIT, Princeton, Caltech, Harvard, Yale, Columbia, Cornell,
+     Stanford, Chicago, Penn, Berkeley) are 100% NON-NULL but TYPE-GAMED (distinct/sampled
+     ≈ Berkeley 1/20, MIT 5/20, Michigan 3/20, most 2–5/20 ≤ 0.25), so they are a COVERAGE
+     reference only — NOT the distinctness bar; the TRUE `who_its_for` gold exemplars are
+     the field-specific catalogs that ship a distinct statement per program (≈1.0): Brown,
+     Emory, Purdue, Dartmouth, Georgetown, Vanderbilt, UC-Davis, UCLA, UC-Irvine, UNC, UVA,
+     WashU. A FRESH matcher-core repair (Michigan #1186/#1187) shipped who_its_for 100% via
+     the type fallback alone — coverage-passing, distinctness-failing — proving the class is
+     actively recurring, not legacy. This TIGHTENS the existing field-specific bar with a
+     measurable distinctness test; it loosens nothing (no-fabrication holds — Brown/Emory
+     prove a distinct statement is derivable from each program's own published material).
    - **A coverable field HARD-ASSIGNED to a literal `None` in a module's `apply()`
      program loop (`p.who_its_for = None`) is NOT an honest omission — it BAKES the
      starvation into the build AND REGRESSES the field on every `replace=True` re-apply,
