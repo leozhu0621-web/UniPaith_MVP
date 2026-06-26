@@ -1695,7 +1695,7 @@ _CATALOG: list[dict] = [
         program_name="Master of Science in Business Analytics",
         department="McIntire School of Commerce", cip="52.13", duration_months=12,
         keywords=["business analytics", "data"], tuition=_MSBA,
-        part_time=True, delivery_format="hybrid",
+        part_time=True,
         cost_source=_BOV_SRC,
         cost_note=(
             "2025-26 M.S. in Business Analytics program tuition (McIntire-Darden joint "
@@ -1820,21 +1820,41 @@ _CATALOG: list[dict] = [
         program_name="Master of Science in Data Science",
         department="School of Data Science", cip="30.70", duration_months=12,
         keywords=["data science", "MSDS"], tuition=_MSDS,
-        delivery_format="hybrid", part_time=True,
         cost_source=_BOV_SRC,
         cost_note=(
             "2025-26 residential M.S. in Data Science non-resident annual tuition (Board of "
-            "Visitors); Virginia residents pay $39,159; a fully online format is also "
-            "offered at $1,467 per credit."
+            "Visitors); Virginia residents pay $39,159."
         ),
         description=(
-            "The M.S. in Data Science is a one-year professional degree in statistics, "
-            "machine learning, computing, and data ethics, offered in residential and "
-            "fully online formats with strong career outcomes."
+            "The residential M.S. in Data Science is a one-year, full-time on-Grounds degree "
+            "in statistics, machine learning, computing, and data ethics, with a capstone "
+            "and strong career outcomes."
         ),
         who_its_for=(
-            "Graduates and working professionals who want to move into data-science and "
-            "machine-learning roles, in person or online."
+            "Graduates who want a full-time, in-person year to move into data-science and "
+            "machine-learning roles."
+        ),
+    ),
+    dict(
+        slug="uva-ms-data-science-online", school=_DATASCI, degree_type="masters",
+        program_name="Master of Science in Data Science (Online)",
+        department="School of Data Science", cip="30.70", duration_months=20,
+        keywords=["data science", "MSDS", "online"],
+        delivery_format="online", part_time=True,
+        omit_tuition_reason=(
+            "The fully online M.S. in Data Science is billed per credit hour at UVA's "
+            "2025-26 rate of $1,467 (resident and non-resident alike); no flat annual "
+            "tuition is published."
+        ),
+        description=(
+            "The online M.S. in Data Science delivers the same statistics, machine "
+            "learning, computing, and data-ethics curriculum in a 100% online, part-time "
+            "format completed in about 20 months across five terms, built for working "
+            "professionals."
+        ),
+        who_its_for=(
+            "Working professionals who want to move into data science without leaving "
+            "their jobs, studying fully online on a part-time schedule."
         ),
     ),
     dict(

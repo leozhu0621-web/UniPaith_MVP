@@ -24,12 +24,12 @@ Create Date: 2026-06-26
 
 from __future__ import annotations
 
-from sqlalchemy import select, text
+from sqlalchemy import delete, select, text
 from sqlalchemy.orm import Session
 
 from alembic import op
 from unipaith.data import uva_profile
-from unipaith.models.institution import Institution
+from unipaith.models.institution import Institution, Program, ProgramPreference
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "uvarev1"
@@ -51,6 +51,21 @@ def upgrade() -> None:
                 )
             )
             if inst is not None:
+                # Drop this institution's DERIVED preference rows so backfill RE-DERIVES
+                # them from the now-corrected degree_type (DNP phd → professional changes
+                # pref_levels) — backfill_program_preferences skips rows that already exist,
+                # so without this delete the live DNP/LL.M. signals would stay stale.
+                # Claimed / first-party rows are NEVER touched.
+                prog_ids = session.scalars(
+                    select(Program.id).where(Program.institution_id == inst.id)
+                ).all()
+                if prog_ids:
+                    session.execute(
+                        delete(ProgramPreference).where(
+                            ProgramPreference.program_id.in_(prog_ids),
+                            ProgramPreference.source == "derived",
+                        )
+                    )
                 backfill_program_preferences(session, institution_id=inst.id)
         session.flush()
     except Exception as exc:  # noqa: BLE001 — never let a data re-apply freeze the deploy
