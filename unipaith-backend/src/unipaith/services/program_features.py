@@ -269,6 +269,7 @@ def program_row_from_orm(program: Any) -> ProgramRow:
             degree_type=getattr(program, "degree_type", None),
             name=getattr(program, "program_name", "") or "",
             description=getattr(program, "description_text", "") or "",
+            campus_setting=getattr(program, "campus_setting", None),
         )
         # Only override when we actually derived something — a truly dataless
         # program keeps the existing neutral default (backward-compatible).
@@ -276,6 +277,8 @@ def program_row_from_orm(program: Any) -> ProgramRow:
             _derived.get("interest_themes")
             or _derived.get("career_arcs")
             or _derived.get("support_signals")
+            or _derived.get("values")
+            or _derived.get("social_features")
         ):
             for _k, _v in _derived.items():
                 sparse.setdefault(_k, _v)

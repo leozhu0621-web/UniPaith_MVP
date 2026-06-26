@@ -108,6 +108,65 @@ _KEYWORD_SUPPORTS: dict[str, tuple[str, float]] = {
     "diversity": ("strong_diversity", 0.6),
 }
 
+# Description keyword → CAREER_ARCS / VALUE_TAGS — a fallback so programs with no
+# (or an unmapped) CIP code still get career + value tags from their description,
+# instead of the whole crawler slice being mutually indistinguishable. Anything
+# not in the controlled vocab is dropped by _dedup_in_vocab.
+_KEYWORD_ARCS: dict[str, str] = {
+    "software": "software_engineering",
+    "data science": "data_science_industry",
+    "machine learning": "ml_research",
+    "research": "research_engineering",
+    "clinical": "clinical_medicine",
+    "public health": "public_health_policy",
+    "policy": "policy_analysis",
+    "consulting": "consulting_finance",
+    "finance": "consulting_finance",
+    "entrepreneur": "founder_track",
+    "startup": "founder_track",
+    "design": "product_design",
+    "nonprofit": "nonprofit_leadership",
+}
+_KEYWORD_VALUES: dict[str, str] = {
+    "research": "intellectual_rigor",
+    "rigorous": "intellectual_rigor",
+    "impact": "applied_impact",
+    "applied": "applied_impact",
+    "community": "service_to_community",
+    "service": "service_to_community",
+    "mentorship": "mentorship_culture",
+    "creativ": "creative_autonomy",
+    "sustainab": "environmental_responsibility",
+}
+
+# campus_setting / description cue → the student social_prefs vocab (small_cohort,
+# large_community, urban, suburban, rural, mentorship, peer_collab, independent).
+# Program social_features were ALWAYS empty, so the 30% social term of soft_align
+# was dead for every program; derive them from the program's real attributes.
+_CAMPUS_SOCIAL: dict[str, str] = {
+    "urban": "urban",
+    "city": "urban",
+    "metropolitan": "urban",
+    "suburban": "suburban",
+    "rural": "rural",
+    "small town": "rural",
+}
+_KEYWORD_SOCIAL: dict[str, str] = {
+    "small cohort": "small_cohort",
+    "small program": "small_cohort",
+    "intimate": "small_cohort",
+    "close-knit": "small_cohort",
+    "large community": "large_community",
+    "mentorship": "mentorship",
+    "mentor": "mentorship",
+    "advising": "mentorship",
+    "collaborat": "peer_collab",
+    "cohort-based": "peer_collab",
+    "team-based": "peer_collab",
+    "independent": "independent",
+    "self-directed": "independent",
+}
+
 _VOCAB = {
     "interest_themes": set(INTEREST_THEMES),
     "career_arcs": set(CAREER_ARCS),
@@ -138,6 +197,7 @@ def featurize_program(
     degree_type: str | None = None,
     name: str = "",
     description: str = "",
+    campus_setting: str | None = None,
 ) -> dict[str, Any]:
     """Derive the program's soft features in the shared controlled vocabulary.
 
@@ -154,6 +214,14 @@ def featurize_program(
     for kw, theme in _KEYWORD_THEMES.items():
         if kw in text:
             themes.append(theme)
+    # Description fallbacks so a program with no / an unmapped CIP still gets
+    # career + value tags (otherwise the crawler slice is indistinguishable).
+    for kw, arc in _KEYWORD_ARCS.items():
+        if kw in text:
+            arcs.append(arc)
+    for kw, val in _KEYWORD_VALUES.items():
+        if kw in text:
+            values.append(val)
 
     supports: dict[str, float] = {}
     for kw, (tag, strength) in _KEYWORD_SUPPORTS.items():
@@ -163,11 +231,23 @@ def featurize_program(
     if (degree_type or "").lower() in ("doctoral", "phd"):
         supports["research_opportunities"] = max(supports.get("research_opportunities", 0.0), 0.8)
 
+    # Social features in the student social_prefs vocab — campus setting +
+    # description cues. Previously always empty (dead 30% of soft_align).
+    social: dict[str, float] = {}
+    cs = (campus_setting or "").strip().lower()
+    for cue, key in _CAMPUS_SOCIAL.items():
+        if cue in cs:
+            social[key] = 1.0
+    for kw, key in _KEYWORD_SOCIAL.items():
+        if kw in text:
+            social[key] = 1.0
+
     return {
         "interest_themes": _dedup_in_vocab(themes, "interest_themes"),
         "career_arcs": _dedup_in_vocab(arcs, "career_arcs"),
         "values": _dedup_in_vocab(values, "values"),
         "support_signals": supports,
+        "social_features": social,
     }
 
 

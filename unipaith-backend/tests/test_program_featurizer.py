@@ -116,3 +116,32 @@ def test_soft_align_nonzero_for_matched_field():
     hist_score = soft_align(student, history)
     assert cs_score > 0.0  # the dead term is alive
     assert cs_score > hist_score  # and discriminates field fit
+
+
+def test_featurize_social_features_from_campus_and_description():
+    # Program social_features were always empty (dead 30% of soft_align); now
+    # derived from campus_setting + description cues in the social_prefs vocab.
+    f = featurize_program(
+        cip_code="11.0701",
+        name="Computer Science",
+        description="Small intimate cohort with strong mentorship and collaborative projects.",
+        campus_setting="Urban",
+    )
+    social = f["social_features"]
+    assert social.get("urban") == 1.0
+    assert social.get("small_cohort") == 1.0
+    assert social.get("mentorship") == 1.0
+    assert social.get("peer_collab") == 1.0
+
+
+def test_featurize_arcs_values_fallback_without_cip():
+    # A crawler-slice program (no CIP) still gets career + value tags from its
+    # description, so it isn't indistinguishable from every other dataless row.
+    f = featurize_program(
+        cip_code=None,
+        name="Software Engineering",
+        description="Hands-on software and machine learning research with real-world impact.",
+    )
+    assert "software_engineering" in f["career_arcs"]
+    assert "applied_impact" in f["values"]
+    _assert_in_vocab(f)
