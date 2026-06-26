@@ -208,7 +208,7 @@ resource "aws_ecs_task_definition" "backend" {
       # orchestrator serves the whole turn (never a 5xx), so this is a graceful,
       # reversible flip. agent/env ids are non-secret resource identifiers; the
       # managed-agents API authenticates with the existing ANTHROPIC_API_KEY.
-      { name = "AI_UNI_MANAGED_AGENT_V1", value = "true" },
+      { name = "AI_UNI_MANAGED_AGENT_V1", value = "false" },
       # Points at the platform-canonical agent ("UniPaith College Counselor").
       # The agent is edited on platform.claude.com (source of truth); the in-app
       # host (uni_tools.dispatch_tool) ADAPTS to its tool contract. Repointing
