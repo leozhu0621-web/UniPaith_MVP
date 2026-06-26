@@ -65,7 +65,7 @@ from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of California-Los Angeles"
-ENRICHED_AT = "2026-06-25"
+ENRICHED_AT = "2026-06-26"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -5174,8 +5174,13 @@ def _cost_for(spec: dict) -> tuple[int | None, dict]:
     if cost_override is not None:
         return cost_override["tuition_usd"], cost_override
     dt = spec["degree_type"]
+    # PUBLIC-university scalar (REPAIR_BACKLOG #4 / run-83 rule): the CPEF budget veto reads
+    # the flat ``program.tuition`` scalar for EVERY applicant regardless of residency, so the
+    # scalar carries the NON-RESIDENT (out-of-state) sticker — the conservative, broadly-correct
+    # input for the national + international pool (all international applicants pay non-resident).
+    # ``cost_data.breakdown`` still preserves BOTH the resident and non-resident rates.
     if dt == "bachelors":
-        return _TUITION_UG_IN_STATE, _undergrad_cost()
+        return _TUITION_UG_OOS, _undergrad_cost()
     if dt in ("phd", "doctoral"):
         # Only research Doctor of Philosophy degrees carry the standard funded tuition
         # remission. Professional / self-supporting doctorates encoded as "phd" — Ed.D.,
@@ -5186,15 +5191,1991 @@ def _cost_for(spec: dict) -> tuple[int | None, dict]:
             return 0, _phd_funded_cost()
         return None, _grad_cost_fallback(spec)
     if dt == "masters" and not _is_professional_master(spec) and not _is_self_supporting_master(spec):
-        return _TUITION_GRAD, _grad_academic_cost()
+        return _TUITION_GRAD_OOS, _grad_academic_cost()
     if dt == "certificate" and spec.get("delivery_format") != "online":
-        return _TUITION_GRAD, _grad_academic_cost()
+        return _TUITION_GRAD_OOS, _grad_academic_cost()
     return None, _grad_cost_fallback(spec)
 
 
 def _has_tuition(spec: dict) -> bool:
     """True when ``_cost_for`` stamps a real published tuition on this program."""
     return _cost_for(spec)[0] is not None
+
+
+# ---------------------------------------------------------------------------
+# Who it's for (REPAIR_BACKLOG #6 - universal-depth field). One field-specific
+# applicant statement per program, derived from the program's own verified
+# description + field + credential level (no new external claims). Replaces the
+# former hard-null ``p.who_its_for = None`` that left the field 0% live.
+# ---------------------------------------------------------------------------
+_WHO_BY_SLUG: dict[str, str] = {
+    "ucla-african-american-studies-ug": (
+        "Undergraduates drawn to the history, culture, and contemporary issues of African American "
+        "communities who want a foundation capped by hands-on work — an internship, honors thesis, "
+        "service-learning course, or independent project — before careers or graduate study in the "
+        "field."
+    ),
+    "ucla-african-and-middle-eastern-studies-ug": (
+        "Undergraduates curious about the Middle East, North Africa, the Arab states, or sub-Saharan "
+        "Africa who want an interdisciplinary, modern lens on the region, are eager to study abroad, "
+        "and aim to ground broad international issues in the concerns of one part of the world."
+    ),
+    "ucla-american-indian-studies-ug": (
+        "Undergraduates seeking a comprehensive grounding in American Indian cultures, societies, and "
+        "contemporary issues alongside traditional disciplines like history, law, and linguistics, "
+        "who want to build a focused area of expertise as a foundation for further study or "
+        "community-facing work."
+    ),
+    "ucla-american-literature-and-culture-ug": (
+        "Undergraduates passionate about American literature and culture who value close advising, "
+        "working with counselors and faculty to shape a course of study around their own interests "
+        "and goals as they build toward graduate study or writing- and analysis-driven careers."
+    ),
+    "ucla-ancient-near-east-and-egyptology-ug": (
+        "Undergraduates fascinated by ancient Egypt, Mesopotamia, and the wider Near East who want to "
+        "study its languages, history, archaeology, and texts — a foundation for graduate work, "
+        "museum and archaeological careers, or scholarship in the ancient world."
+    ),
+    "ucla-anthropology-ba-ug": (
+        "Undergraduates seeking a holistic, cross-cultural understanding of human behavior who "
+        "appreciate anthropology's integration with biology, history, linguistics, and the social "
+        "sciences and humanities, building a broad foundation for graduate study or careers spanning "
+        "many fields."
+    ),
+    "ucla-anthropology-bs-ug": (
+        "Undergraduates interested in human evolution and the biological side of anthropology who are "
+        "aiming toward the health sciences — medicine, dentistry, public health, or nursing — and "
+        "want science-grounded preparation for those careers."
+    ),
+    "ucla-applied-linguistics-ug": (
+        "Undergraduates intrigued by how language works in everyday life who want both linguistic "
+        "theory and community-based practice, preparing through service learning for paths like "
+        "language teaching, speech pathology, and translation and interpretation."
+    ),
+    "ucla-applied-mathematics-ug": (
+        "Undergraduates who enjoy mathematics and want to see it applied to the life, social, and "
+        "physical sciences and engineering, building a quantitative foundation for technical careers "
+        "or graduate study where math drives real-world problem-solving."
+    ),
+    "ucla-arabic-ug": (
+        "Undergraduates who want to master Arabic — a Central Semitic language spoken across the Arab "
+        "world, from Modern Standard to Classical forms — building language proficiency as a "
+        "foundation for careers or graduate work engaging the Arabic-speaking world."
+    ),
+    "ucla-art-history-ug": (
+        "Undergraduates drawn to studying artistic production and visual culture across human history "
+        "who want to analyze art's relationship to society, politics, and changing styles, building a "
+        "foundation for graduate study, museum and gallery work, or arts professions."
+    ),
+    "ucla-asian-american-studies-ug": (
+        "Undergraduates interested in the experiences of Asian and Pacific Islander Americans who "
+        "want a broad introduction as a launchpad for graduate-level work or careers in research, "
+        "public service, and community work related to these communities."
+    ),
+    "ucla-asian-humanities-ug": (
+        "Undergraduates curious about the literary, religious, and philosophical traditions of South, "
+        "Southeast, and East Asia, largely in translation, who want a humanities foundation for "
+        "graduate study or culturally engaged careers without requiring advanced language mastery."
+    ),
+    "ucla-asian-languages-and-linguistics-ug": (
+        "Undergraduates who want to pair advanced study of an Asian language with linguistic analysis "
+        "of its sounds, structure, and history, building both fluency and analytical skill toward "
+        "graduate work or language-focused careers."
+    ),
+    "ucla-asian-religions-ug": (
+        "Undergraduates fascinated by the religious traditions of Asia — Hinduism, Buddhism, Daoism, "
+        "Shinto — who want to study them through texts, history, and lived practice as a foundation "
+        "for graduate study or careers engaging religion and culture."
+    ),
+    "ucla-asian-studies-ug": (
+        "Undergraduates interested in Central, East, South, or Southeast Asia who want an "
+        "interdisciplinary, modern perspective on the region, are keen to study abroad, and aim to "
+        "focus broad international issues on the concerns of one part of Asia."
+    ),
+    "ucla-astrophysics-ug": (
+        "Undergraduates captivated by the nature of stars, galaxies, and the universe who want to "
+        "apply physics and chemistry to understanding heavenly bodies, building a science foundation "
+        "for graduate research or careers in astronomy and the physical sciences."
+    ),
+    "ucla-atmospheric-and-oceanic-sciences-ug": (
+        "Undergraduates drawn to weather, climate, and the physics of the atmosphere who want to "
+        "study meteorology, climatology, and aeronomy — a foundation for careers in forecasting and "
+        "atmospheric science or graduate study extending into planetary science."
+    ),
+    "ucla-atmospheric-and-oceanic-sciences-mathematics-ug": (
+        "Undergraduates who want to study the atmosphere, oceans, and climate alongside a rigorous "
+        "mathematics core, building the quantitative skills for technical work and graduate study in "
+        "the climate and earth sciences."
+    ),
+    "ucla-biochemistry-ug": (
+        "Undergraduates preparing for careers in biochemistry or fields demanding deep grounding in "
+        "both chemistry and biology, who want extensive science preparation as a foundation for "
+        "research, the health sciences, or graduate study."
+    ),
+    "ucla-biology-ug": (
+        "Undergraduates with broad interest in biology who want wide-ranging exposure across all "
+        "levels of the modern field, building strong preparation for medicine and the health "
+        "sciences, academic and public-service careers, biological industry, or even paths in "
+        "business and law."
+    ),
+    "ucla-biophysics-ug": (
+        "Undergraduates who want a flexible, quantitative science background bridging physics and "
+        "biology, aiming for competitive graduate programs in biophysics, molecular biology, or "
+        "biological physics, or careers in the medical field and neuroscience."
+    ),
+    "ucla-business-economics-ug": (
+        "Undergraduates who want economic theory paired with accounting and finance coursework and "
+        "access to recruiting in consulting, finance, and technology, building a foundation for "
+        "business careers across the Los Angeles economy."
+    ),
+    "ucla-central-and-east-european-languages-and-cultures-ug": (
+        "Undergraduates who want to master a Central or Eastern European language and gain "
+        "familiarity with its literature alongside the cultural, political, and social history of the "
+        "Slavic peoples, as a foundation for graduate study or internationally engaged careers."
+    ),
+    "ucla-chemistry-ug": (
+        "Undergraduates who intend to pursue a career in chemistry and want a rigorous grounding in "
+        "the discipline as preparation for graduate study, research, or work across the chemical "
+        "sciences."
+    ),
+    "ucla-chemistry-materials-science-ug": (
+        "Undergraduates interested in chemistry with an emphasis on material properties who want "
+        "expertise spanning semiconductors, polymers, biomaterials, ceramics, and nano-scale "
+        "structures, preparing for interdisciplinary graduate research in chemistry, engineering, and "
+        "applied science."
+    ),
+    "ucla-chicana-and-chicano-studies-ug": (
+        "Undergraduates committed to critical thinking about gender, race, ethnicity, class, and "
+        "social action who want a curriculum balancing social sciences, humanities, and the arts, "
+        "with the literary and visual arts as vehicles for social change and empowerment."
+    ),
+    "ucla-chinese-ug": (
+        "Undergraduates who want advanced proficiency in Mandarin Chinese alongside the study of "
+        "Chinese literature, linguistics, and culture from the classical period to the present, "
+        "building toward graduate study or careers engaging China."
+    ),
+    "ucla-classical-civilization-ug": (
+        "Undergraduates drawn to the cultures of ancient Greece and Rome who want a balanced "
+        "introduction to their history, art, and languages — a structured yet flexible foundation for "
+        "graduate study or careers building on the classical roots of the Western world."
+    ),
+    "ucla-climate-science-ug": (
+        "Undergraduates focused on the scientific study of Earth's climate — its variability, "
+        "mechanisms of change, and modern climate change — who want a science foundation drawing on "
+        "atmospheric science, oceanography, and physical geography for research or environmental "
+        "careers."
+    ),
+    "ucla-cognitive-science-ug": (
+        "Undergraduates curious about how intelligent systems work, both real and artificial, who "
+        "want an interdisciplinary blend of cognitive psychology, computer science, and mathematics, "
+        "with enough preparation to pursue graduate work in cognitive science or related fields."
+    ),
+    "ucla-communication-ug": (
+        "Undergraduates seeking a comprehensive, interdisciplinary understanding of human "
+        "communication who want to focus on an area like digital systems, interpersonal "
+        "communication, media institutions, or political and legal communication, drawing on the "
+        "sciences and humanities alike."
+    ),
+    "ucla-comparative-literature-ug": (
+        "Undergraduates drawn to studying literature and cultural expression across languages, "
+        "nations, and disciplines who want a comparative, boundary-crossing foundation for graduate "
+        "study or careers in writing, analysis, and global culture."
+    ),
+    "ucla-computational-biology-ug": (
+        "Undergraduates with strong quantitative interests who want to integrate computation and "
+        "biology through one of three tracks — bioinformatics, biological data sciences, or dynamical "
+        "modeling — building the modeling and analytical skills for research and graduate study."
+    ),
+    "ucla-data-theory-ug": (
+        "Undergraduates who want to extract knowledge from structured and unstructured data using "
+        "statistics, scientific computing, algorithms, and coding, building the foundation for data- "
+        "science careers or graduate study in the field."
+    ),
+    "ucla-disability-studies-ug": (
+        "Undergraduates seeking a conceptual and practical understanding of disability as a dimension "
+        "of social, cultural, and political identity who want an interdisciplinary, community-based "
+        "capstone major as a foundation for graduate or professional studies and careers across many "
+        "professions."
+    ),
+    "ucla-earth-and-environmental-science-ug": (
+        "Undergraduates fascinated by how Earth's biosphere, hydrosphere, atmosphere, and geosphere "
+        "interact who want a natural-science foundation spanning the physical, chemical, and "
+        "biological workings of the planet for research or environmental careers."
+    ),
+    "ucla-ecology-behavior-and-evolution-ug": (
+        "Undergraduates passionate about ecology, animal behavior, and evolution who want strong "
+        "field experience in California and beyond, preparing for graduate study or careers in "
+        "conservation, environmental biology, teaching, museum work, or government environmental "
+        "positions."
+    ),
+    "ucla-economics-ug": (
+        "Undergraduates interested in how societies produce, distribute, and consume goods and "
+        "services who want a social-science foundation in economic reasoning, opening paths to "
+        "graduate study or careers across business, policy, and analysis."
+    ),
+    "ucla-engineering-geology-ug": (
+        "Undergraduates who want to apply geology to engineering problems — slope stability, "
+        "groundwater, seismic hazards, and earth materials — building a foundation that bridges the "
+        "earth sciences and engineering practice for technical careers or graduate study."
+    ),
+    "ucla-english-ug": (
+        "Undergraduates devoted to literature and language in English who value close advising, "
+        "working with counselors and faculty to build a course of study around their interests and "
+        "goals toward graduate work or writing- and analysis-driven careers."
+    ),
+    "ucla-environmental-science-ug": (
+        "Undergraduates deeply interested in environmental science who want a collaborative program "
+        "spanning atmospheric sciences, environmental engineering, ecology, and geography, building "
+        "cross-disciplinary preparation for environmental careers or graduate study."
+    ),
+    "ucla-european-languages-and-transcultural-studies-ug": (
+        "Undergraduates who want to study the literatures, languages, film, and intellectual history "
+        "of Europe across national boundaries, training in two European languages alongside "
+        "comparative cultural analysis toward graduate study or internationally engaged careers."
+    ),
+    "ucla-european-languages-and-transcultural-studies-with-french-and-francophone-ug": (
+        "Undergraduates drawn to French and the wider French-speaking world who want to pair advanced "
+        "French language work with the literature, film, and cultures of France and Francophone "
+        "regions, building toward graduate study or careers engaging that world."
+    ),
+    "ucla-european-languages-and-transcultural-studies-with-german-ug": (
+        "Undergraduates focused on German who want advanced language study combined with the "
+        "literature, philosophy, film, and cultural history of the German-speaking world, as a "
+        "foundation for graduate work or internationally engaged careers."
+    ),
+    "ucla-european-languages-and-transcultural-studies-with-italian-ug": (
+        "Undergraduates drawn to Italy who want advanced Italian language study joined with the "
+        "literature, art, cinema, and cultural history of Italy from the medieval period to the "
+        "present, building toward graduate study or culturally engaged careers."
+    ),
+    "ucla-european-languages-and-transcultural-studies-with-scandinavian-ug": (
+        "Undergraduates interested in the Nordic world who want to study a Scandinavian language "
+        "alongside the literature, film, and cultural history of Denmark, Norway, Sweden, Iceland, "
+        "and Finland, as a foundation for graduate study or internationally engaged careers."
+    ),
+    "ucla-european-studies-ug": (
+        "Undergraduates interested in Western, Mediterranean, Scandinavian, or Central and Eastern "
+        "Europe who want an interdisciplinary, modern perspective on the region, are eager to study "
+        "abroad, and aim to focus broad international issues on one part of Europe."
+    ),
+    "ucla-financial-actuarial-mathematics-ug": (
+        "Undergraduates who want to apply mathematics to finance, the actuarial field, and related "
+        "areas, building the quantitative foundation for careers in actuarial work, finance, and risk "
+        "or for graduate study."
+    ),
+    "ucla-gender-studies-ug": (
+        "Undergraduates drawn to the study of gender who want a flexible major they can pursue alone "
+        "or pair with another Letters and Science field, building an interdisciplinary foundation for "
+        "graduate study or careers informed by gender analysis."
+    ),
+    "ucla-general-chemistry-ug": (
+        "Undergraduates who want a solid chemistry background aimed at teaching — especially future "
+        "secondary-school chemistry teachers or those headed to chemistry-related careers that "
+        "involve teaching chemistry to nonchemists — declaring the major before reaching 135 units."
+    ),
+    "ucla-geography-ug": (
+        "Undergraduates who want to combine a broad grounding in geography with focused interests in "
+        "areas like urban, economic, cultural, environmental, or physical geography, shaping a "
+        "program with their adviser around their personal and career goals."
+    ),
+    "ucla-geography-environmental-studies-ug": (
+        "Undergraduates seeking to understand environmental issues through an interactive "
+        "people/nature lens who want to analyze social, physical, and biotic systems and human "
+        "impacts on nature, building a foundation for environmental careers or graduate study."
+    ),
+    "ucla-geology-ug": (
+        "Undergraduates fascinated by Earth, the rocks that compose it, and the processes that change "
+        "it over time who want a natural-science foundation overlapping Earth-system and planetary "
+        "science for research, fieldwork, or graduate study."
+    ),
+    "ucla-geophysics-ug": (
+        "Undergraduates drawn to the quantitative study of Earth's interior, fields, and surrounding "
+        "space — gravity, magnetism, tectonics, and planetary processes — who want an observational, "
+        "physics-based foundation for research or graduate study in the earth and planetary sciences."
+    ),
+    "ucla-global-studies-ug": (
+        "Undergraduates fascinated by globalization and the big cross-border forces shaping politics, "
+        "economics, and the environment, who want an interdisciplinary foundation spanning political "
+        "science, sociology, and ecology rather than a nation-state-by-nation-state view, headed "
+        "toward international policy, NGOs, or graduate study."
+    ),
+    "ucla-greek-ug": (
+        "Undergraduates drawn to the ancient Greek language and the literature, history, and thought "
+        "of the classical Greek world, ready to build reading fluency from the ground up as a "
+        "foundation for graduate classics, teaching, law, or any field rewarding close textual "
+        "analysis."
+    ),
+    "ucla-greek-and-latin-ug": (
+        "Undergraduates captivated by classical antiquity who want to master both Ancient Greek and "
+        "Latin and study Greco-Roman literature, history, philosophy, and art together, building a "
+        "humanities foundation for graduate work in classics, teaching, or scholarship."
+    ),
+    "ucla-history-ug": (
+        "Undergraduates who want to investigate the human past rigorously, interpreting evidence to "
+        "build and explain narratives of what happened and why, building research and argument skills "
+        "that ground careers in law, education, journalism, public service, or graduate study."
+    ),
+    "ucla-human-biology-and-society-ba-ug": (
+        "Undergraduates who want to understand human biology alongside its history, ethics, and "
+        "policy, examining the societal context of genetics and medicine, and headed toward law, "
+        "policy, public health, or interdisciplinary graduate work connecting science and society."
+    ),
+    "ucla-human-biology-and-society-bs-ug": (
+        "Undergraduates seeking a science-heavy foundation in biology, chemistry, and quantitative "
+        "methods paired with the ethical and social dimensions of human biology, preparing for the "
+        "health professions, biomedical research, or graduate study bridging life sciences and "
+        "society."
+    ),
+    "ucla-individual-field-of-concentration-ba-in-letters-and-science-ug": (
+        "Self-directed undergraduates with a coherent intellectual question that no single department "
+        "answers, ready to design an interdisciplinary humanities-and-social-science B.A. with "
+        "faculty sponsorship, suited to those who can shape and defend their own focused plan of "
+        "study."
+    ),
+    "ucla-individual-field-of-concentration-bs-in-letters-and-science-ug": (
+        "Self-directed undergraduates pursuing a science- and quantitatively-oriented question that "
+        "spans several departments, ready to build a custom B.S. under faculty guidance, well-suited "
+        "to independent learners headed toward research or graduate study in an emerging "
+        "interdisciplinary area."
+    ),
+    "ucla-international-development-studies-ug": (
+        "Undergraduates committed to understanding global development debates and how class, gender, "
+        "race, and migration shape who benefits from interventions, who want methodological training "
+        "and case-study grounding for careers in NGOs, international agencies, policy, or development "
+        "research."
+    ),
+    "ucla-iranian-studies-ug": (
+        "Undergraduates drawn to the languages, history, and culture of Iran and the broader Iranian "
+        "world, willing to plan early for the additional coursework, often pairing the major with "
+        "another specialization to broaden career options in academia, government, or international "
+        "fields."
+    ),
+    "ucla-japanese-ug": (
+        "Undergraduates aiming for advanced fluency in Japanese alongside its literature, film, and "
+        "cultural history, building language and cultural expertise that supports careers in "
+        "translation, international business, education, diplomacy, or graduate study in Japanese "
+        "studies."
+    ),
+    "ucla-jewish-studies-ug": (
+        "Undergraduates drawn to Jewish history, religion, languages, literature, and culture across "
+        "the long span from antiquity to the present, who want an interdisciplinary humanities "
+        "foundation for graduate study, teaching, communal work, law, or the cultural professions."
+    ),
+    "ucla-korean-ug": (
+        "Undergraduates aiming for advanced Korean fluency together with Korean literature, "
+        "linguistics, and cultural history, building language and regional expertise that supports "
+        "careers in international business, translation, education, diplomacy, or graduate study in "
+        "Korean studies."
+    ),
+    "ucla-labor-studies-ug": (
+        "Undergraduates with at least a 2.5 GPA who want to study inequality at work and in "
+        "communities through an interdisciplinary lens, preparing for labor relations, human "
+        "resources, organizing, nonprofit and government work, law, or social welfare."
+    ),
+    "ucla-latin-ug": (
+        "Undergraduates drawn to the Latin language and the literature, history, and culture of "
+        "ancient Rome, ready to build reading command from the ground up as a foundation for graduate "
+        "classics, teaching, law, or work demanding close textual analysis."
+    ),
+    "ucla-latin-american-studies-ug": (
+        "Undergraduates eager to study Latin America or a subregion from an interdisciplinary, modern "
+        "perspective, who value international fieldwork and study abroad, building regional and "
+        "global expertise for careers in policy, NGOs, international business, or area-studies "
+        "graduate work."
+    ),
+    "ucla-linguistics-ug": (
+        "Undergraduates curious about how human language works as a system of sound, syntax, and "
+        "meaning, and about what language reveals about cognition, who want a scientific, theory- "
+        "driven foundation for graduate study, language technology, or research on how we learn and "
+        "process language."
+    ),
+    "ucla-linguistics-and-anthropology-ug": (
+        "Undergraduates who want to study both the formal structure of human language and how "
+        "language shapes history, identity, and social life, building combined expertise in "
+        "linguistic theory and anthropology suited to graduate study, fieldwork, or research on "
+        "language and culture."
+    ),
+    "ucla-linguistics-and-asian-languages-and-cultures-ug": (
+        "Undergraduates drawn to the languages and civilizations of China, Korea, Japan, and India "
+        "who also want to understand the structure and history of human language, building joint "
+        "regional and linguistic expertise toward graduate study, translation, or area-focused "
+        "careers."
+    ),
+    "ucla-linguistics-and-computer-science-ug": (
+        "Undergraduates who want professional preparation in computer science paired with the "
+        "scientific study of language, more drawn to theory and software than to hardware, building "
+        "skills for careers in language technology, computational linguistics, or graduate study "
+        "spanning both fields."
+    ),
+    "ucla-linguistics-and-english-ug": (
+        "Undergraduates who want to study the literatures and cultures of the English-speaking world "
+        "together with the structure and history of the English language and human language broadly, "
+        "building combined expertise for teaching, writing, editing, or graduate study in linguistics "
+        "or English."
+    ),
+    "ucla-linguistics-and-philosophy-ug": (
+        "Reflective undergraduates who want to examine both the nature of human language and the "
+        "foundations of their own beliefs, pairing linguistic theory with philosophical inquiry, "
+        "building rigorous analytical skills for graduate study, law, or any field that rewards "
+        "careful reasoning."
+    ),
+    "ucla-linguistics-and-psychology-ug": (
+        "Undergraduates interested in explaining human and animal behavior while studying the "
+        "structure and history of language, pairing linguistics with psychology to build a foundation "
+        "for research, graduate study in cognitive or language science, or work connecting mind and "
+        "language."
+    ),
+    "ucla-linguistics-and-spanish-ug": (
+        "Undergraduates who want to combine study of the Spanish language, literatures, and Hispanic "
+        "cultures with the scientific analysis of human language, building joint linguistic and "
+        "cultural expertise for teaching, translation, or graduate work in linguistics or Hispanic "
+        "studies."
+    ),
+    "ucla-marine-biology-ug": (
+        "Undergraduates set on the marine sciences who want a strong biology foundation plus "
+        "specialization in oceanography, marine ecology, and the physiology of marine organisms, with "
+        "field and research experience preparing them for graduate study in marine sciences, biology, "
+        "or medicine."
+    ),
+    "ucla-mathematics-ug": (
+        "Undergraduates whose central passion is mathematics itself, ready to build rigorous training "
+        "in pure mathematical reasoning as a foundation for graduate study, teaching, or any "
+        "quantitative career that rewards deep analytical and abstract thinking."
+    ),
+    "ucla-mathematics-for-teaching-ug": (
+        "Undergraduates planning to teach mathematics at the high school level who want broad "
+        "exposure to the mathematical topics most relevant to the classroom, building subject mastery "
+        "and pedagogical grounding as a foundation for a career in secondary math education."
+    ),
+    "ucla-mathematics-of-computation-ug": (
+        "Undergraduates whose primary interest is mathematics but who also want to work seriously "
+        "with computing, building a foundation that joins mathematical rigor with computational skill "
+        "for careers in software, data, or quantitative work, or for further study."
+    ),
+    "ucla-mathematics-applied-science-ug": (
+        "Undergraduates with a strong interest in mathematics and its application to a particular "
+        "field, ready to design their own program with a faculty adviser or follow a set track such "
+        "as history of science or medical and life sciences, headed toward applied or "
+        "interdisciplinary careers."
+    ),
+    "ucla-mathematics-economics-ug": (
+        "Undergraduates who want a solid joint foundation in mathematics and economics, emphasizing "
+        "the statistical and mathematical tools most relevant to economic analysis, ideally suited to "
+        "those aiming for graduate study in economics or quantitative analytical careers."
+    ),
+    "ucla-microbiology-immunology-and-molecular-genetics-ug": (
+        "Undergraduates preparing for biomedical research, medicine, dentistry, or the health "
+        "professions, biotechnology, public health, or bioethics, who want a science-intensive "
+        "foundation in biology, chemistry, physics, and math focused on microbes, immunity, and "
+        "molecular genetics."
+    ),
+    "ucla-middle-eastern-studies-ug": (
+        "Undergraduates drawn to the languages, history, politics, religions, and cultures of the "
+        "modern and historical Middle East, who want an interdisciplinary regional foundation for "
+        "careers in diplomacy, policy, journalism, NGOs, or graduate study in area studies."
+    ),
+    "ucla-molecular-cell-and-developmental-biology-ug": (
+        "Undergraduates aiming for graduate work in biology or medicine, or entry-level biotechnology "
+        "roles, who want grounding in the molecular and cellular concepts behind recent advances "
+        "across cell biology, immunology, developmental biology, and neurobiology in animals and "
+        "plants."
+    ),
+    "ucla-neuroscience-ug": (
+        "Undergraduates fascinated by how the nervous system gives rise to learning, memory, "
+        "perception, and behavior, who want a multidisciplinary science foundation spanning biology, "
+        "chemistry, and computation, preparing for biomedical research, medicine, or graduate study "
+        "in neuroscience."
+    ),
+    "ucla-nordic-studies-ug": (
+        "Undergraduates drawn to the Nordic languages and cultures of Denmark, the Faroes, Iceland, "
+        "Norway, and Sweden, ready to build language and regional expertise within a Germanic and "
+        "Indo-European context as a foundation for graduate study, translation, or culturally focused "
+        "careers."
+    ),
+    "ucla-philosophy-ug": (
+        "Undergraduates who want to read widely across world philosophical traditions, debate ideas "
+        "in conversation, and sharpen their thinking through rigorous writing, building reasoning and "
+        "argument skills that serve law, public life, graduate study, or any field demanding clear "
+        "thought."
+    ),
+    "ucla-physics-ba-ug": (
+        "Undergraduates who want a strong physics background while keeping room to study other "
+        "fields, well-suited to those planning a double major or a path into science teaching; those "
+        "aiming for a physics PhD are pointed toward the more intensive B.S. track."
+    ),
+    "ucla-physics-bs-ug": (
+        "Undergraduates committed to physics at the deepest level and intending to continue toward a "
+        "PhD, ready for the most rigorous physics training the department offers as a foundation for "
+        "graduate research and an academic or research career."
+    ),
+    "ucla-physiological-science-ug": (
+        "Undergraduates fascinated by how living systems function who plan to continue into graduate "
+        "study, with paths into interdepartmental physiology or neuroscience PhD programs, building a "
+        "science foundation for research, the health professions, or biomedical careers."
+    ),
+    "ucla-political-science-ug": (
+        "Undergraduates who want to understand political processes and institutions across national "
+        "and cultural contexts, the relations between states, and the changing bond between citizens "
+        "and governments, building analytical grounding for law, policy, government, or graduate "
+        "study."
+    ),
+    "ucla-portuguese-and-brazilian-studies-ug": (
+        "Undergraduates aiming for advanced Portuguese fluency together with the literatures and "
+        "cultures of Brazil, Portugal, and the wider Lusophone world, building language and regional "
+        "expertise toward careers in international work, translation, education, or graduate study."
+    ),
+    "ucla-psychobiology-ug": (
+        "Undergraduates planning graduate work in physiological psychology, neuroscience, or the "
+        "health sciences who want to study behavior from a biological perspective, drawing on neural, "
+        "genetic, evolutionary, and developmental approaches to understanding human and animal "
+        "behavior."
+    ),
+    "ucla-psychology-ug": (
+        "Undergraduates wanting broad and in-depth coverage of the fundamental areas of psychology, "
+        "building a strong foundation for graduate study in psychology or preparation for law, "
+        "education, public policy, business, or the health-related professions."
+    ),
+    "ucla-russian-language-and-literature-ug": (
+        "Undergraduates who want basic mastery of the Russian language and familiarity with the "
+        "classics of Russian literature, including those starting Russian in college, building "
+        "language and literary expertise toward graduate study, translation, or internationally "
+        "oriented careers."
+    ),
+    "ucla-russian-studies-ug": (
+        "Undergraduates who want to pair command of the Russian language with broad study of Russian "
+        "history, politics, literature, and culture, building interdisciplinary regional expertise "
+        "for careers in policy, international affairs, education, or graduate study."
+    ),
+    "ucla-sociology-ug": (
+        "Undergraduates curious about how society, social relationships, and culture shape everyday "
+        "life, who want training in empirical investigation and critical analysis across micro- and "
+        "macro-level questions, building a foundation for research, policy, social services, or "
+        "graduate study."
+    ),
+    "ucla-southeast-asian-studies-ug": (
+        "Undergraduates drawn to the languages, histories, politics, and cultures of Southeast Asia, "
+        "who want an interdisciplinary regional foundation for careers in international affairs, "
+        "NGOs, journalism, or graduate study in area studies."
+    ),
+    "ucla-spanish-ug": (
+        "Undergraduates who want to master Spanish, a global language with hundreds of millions of "
+        "speakers, and study its literatures and cultures, building language and cultural expertise "
+        "for careers in education, translation, international work, or graduate study."
+    ),
+    "ucla-spanish-and-community-and-culture-ug": (
+        "Undergraduates who want advanced Spanish paired with the study of U.S. Latino and Latin "
+        "American communities and cultures, including service learning in Spanish-speaking Los "
+        "Angeles, preparing for careers in education, social services, public health, or community- "
+        "engaged work."
+    ),
+    "ucla-spanish-and-linguistics-ug": (
+        "Undergraduates who want to join the study of Spanish language, literature, and culture with "
+        "formal linguistics, examining the phonology, syntax, and sociolinguistics of Spanish and its "
+        "varieties, building expertise toward graduate study, language work, or teaching."
+    ),
+    "ucla-spanish-and-portuguese-ug": (
+        "Undergraduates aiming for advanced study of both Spanish and Portuguese alongside the "
+        "literatures and cultures of Iberia, Latin America, and the Lusophone world, building broad "
+        "Ibero-American language and cultural expertise for international careers, translation, or "
+        "graduate study."
+    ),
+    "ucla-statistics-and-data-science-ug": (
+        "Undergraduates who want a general grounding in the practice of statistics and data science, "
+        "with theory, modern techniques, and applied experience, preparing for graduate-level "
+        "research or industry and government roles, ideally paired with a minor in an applied "
+        "discipline."
+    ),
+    "ucla-study-of-religion-ug": (
+        "Undergraduates who want to study religion historically and scientifically, describing, "
+        "comparing, and interpreting traditions through empirical and cross-cultural perspectives, "
+        "building analytical and humanistic skills for careers in education, nonprofits, law, or "
+        "graduate study."
+    ),
+    "ucla-african-american-studies-ms": (
+        "Graduate students seeking advanced expertise in African American history, culture, politics, "
+        "and social life, ready for rigorous seminars, methods training, and a thesis or capstone, "
+        "headed toward doctoral study, teaching, research, or specialized professional roles."
+    ),
+    "ucla-african-studies-ms": (
+        "Graduate students seeking advanced, specialized training in Africa's history, cultures, "
+        "politics, economies, languages, and religions, building Africanist expertise as a step "
+        "toward doctoral study, research, policy and international development work, or careers "
+        "focused on the continent."
+    ),
+    "ucla-american-indian-studies-ms": (
+        "Graduate students ready to deepen their command of American Indian cultures, histories, and "
+        "contemporary issues, who want methods training and a thesis or capstone to support work in "
+        "academia, community organizations, tribal institutions, or cultural and policy settings."
+    ),
+    "ucla-anthropology-ms": (
+        "Students drawn to an anthropological understanding of human behavior who value a cross- "
+        "cultural, holistic approach connecting biology, history, linguistics, the social sciences, "
+        "and the humanities, and who seek advanced graduate training to anchor research or applied "
+        "careers studying human societies."
+    ),
+    "ucla-archaeology-ms": (
+        "Committed graduate students who intend to pursue archaeology seriously rather than stop at "
+        "the master's degree, using advanced study as a stepping stone toward doctoral research and a "
+        "long-term scholarly or professional path in the field."
+    ),
+    "ucla-art-history-ms": (
+        "Students ready to study artistic production and visual culture across periods and cultures "
+        "at an advanced level, who want graduate seminars, methods training, and a thesis or capstone "
+        "to prepare for museum, gallery, curatorial, academic, or further doctoral work."
+    ),
+    "ucla-asian-american-studies-ms": (
+        "Graduate students seeking advanced expertise in Asian American studies who want disciplined "
+        "seminar work, methods training, and a thesis or capstone to ground research, teaching, "
+        "community, or policy careers focused on Asian American experience."
+    ),
+    "ucla-asian-languages-and-cultures-ms": (
+        "Post-graduate students who want to study Asian peoples, cultures, languages, history, and "
+        "politics through a field blending sociology, history, cultural anthropology, and cultural "
+        "studies, preparing them to research political, cultural, and economic phenomena in "
+        "traditional and contemporary Asian societies."
+    ),
+    "ucla-astronomy-and-astrophysics-mat-ms": (
+        "Students who want advanced graduate training in astrophysics, applying the methods and "
+        "principles of physics and chemistry to study astronomical objects and phenomena, and who "
+        "seek a master's grounded in understanding the nature of the heavenly bodies and the "
+        "universe."
+    ),
+    "ucla-astronomy-and-astrophysics-ms-ms": (
+        "Students pursuing rigorous graduate study in astrophysics who want to apply the methods of "
+        "physics and chemistry to astronomical objects and the universe, building a research-oriented "
+        "master's focused on understanding the nature of celestial bodies."
+    ),
+    "ucla-atmospheric-and-oceanic-sciences-ms": (
+        "Students ready for advanced study of the Earth's atmosphere and its physical processes, who "
+        "want graduate seminars, methods training, and a thesis or capstone to support research or "
+        "applied careers in atmospheric and oceanic science."
+    ),
+    "ucla-biochemistry-molecular-and-structural-biology-ms": (
+        "Students preparing for careers in biochemistry or fields demanding extensive grounding in "
+        "both chemistry and biology, who want advanced graduate training that bridges the two "
+        "disciplines and supports research or technical professional paths."
+    ),
+    "ucla-bioinformatics-ms": (
+        "Students at the intersection of biology and computation who want to develop methods and "
+        "software for understanding large, complex biological data, drawing on computer science, "
+        "statistics, mathematics, and the life sciences to prepare for analytical and research "
+        "careers."
+    ),
+    "ucla-biology-ms": (
+        "Students ready to study molecular, organismal, and ecological approaches to the life "
+        "sciences at an advanced level, who want graduate seminars, methods training, and a thesis or "
+        "capstone to support research or applied careers across biology."
+    ),
+    "ucla-chemistry-ms": (
+        "Students seeking advanced graduate expertise in chemistry who want disciplined seminar work, "
+        "methods training, and a thesis or capstone to ground research, laboratory, or technical "
+        "professional careers in the chemical sciences."
+    ),
+    "ucla-chicana-and-chicano-studies-ms": (
+        "Graduate students who want advanced, interdisciplinary expertise in Chicana and Chicano "
+        "studies, using seminars, methods training, and a thesis or capstone to support research, "
+        "teaching, community, or policy work centered on Chicana and Chicano experience."
+    ),
+    "ucla-classics-ms": (
+        "Students drawn to classical antiquity who want advanced study of ancient Greek and Roman "
+        "literature in their original languages, with room to engage philosophy, history, "
+        "archaeology, art, and mythology, preparing for scholarly, teaching, or further doctoral "
+        "paths."
+    ),
+    "ucla-communication-ms": (
+        "Students ready to study human communication across interpersonal, media, and political "
+        "contexts at an advanced level, who want graduate seminars, methods training, and a thesis or "
+        "capstone to support research, media, or applied communication careers."
+    ),
+    "ucla-comparative-literature-ms": (
+        "Students who want to study literature and cultural expression across languages and national "
+        "traditions at an advanced level, using graduate seminars, methods training, and a thesis or "
+        "capstone to prepare for scholarly, editorial, teaching, or further doctoral work."
+    ),
+    "ucla-conservation-of-cultural-heritage-ms": (
+        "Aspiring conservators who want hands-on training in the technical study, analysis, and "
+        "preservation of archaeological and ethnographic materials, combining laboratory science, "
+        "treatment, and fieldwork to enter professional conservation practice."
+    ),
+    "ucla-conservation-of-material-culture-ms": (
+        "Students preparing to examine, analyze, and preserve objects of material culture who want "
+        "training that integrates conservation science, materials analysis, and supervised treatment "
+        "of archaeological and ethnographic collections for professional conservation work."
+    ),
+    "ucla-east-asian-studies-ms": (
+        "Students seeking a broad humanistic understanding of East Asia past and present, who want "
+        "multidisciplinary graduate study of the region's culture, written language, history, and "
+        "political institutions to ground research, teaching, or area-focused careers."
+    ),
+    "ucla-economics-ms": (
+        "Students ready to study the production, distribution, and consumption of goods and services "
+        "at an advanced level, who want graduate seminars, methods training, and a thesis or capstone "
+        "to support analytical, research, or applied economics careers."
+    ),
+    "ucla-english-ms": (
+        "Students who want advanced study of English-language literature, criticism, and literary "
+        "theory, using graduate seminars, methods training, and a thesis or capstone to prepare for "
+        "teaching, editorial, writing-intensive, or further doctoral paths."
+    ),
+    "ucla-environment-and-sustainability-ms": (
+        "Students who want to apply fundamental principles of environmental science and "
+        "sustainability to pressing, multidisciplinary challenges, developing the skills and "
+        "perspectives needed for careers in academia and the public and private sectors."
+    ),
+    "ucla-french-and-francophone-studies-ms": (
+        "Students who want advanced graduate study of French language and the francophone world, "
+        "building deep command of a Romance language descended from Latin to support scholarly, "
+        "teaching, translation, or further doctoral work."
+    ),
+    "ucla-gender-studies-ms": (
+        "Students ready to study gender, sexuality, and feminist theory across social and cultural "
+        "life at an advanced level, who want graduate seminars, methods training, and a thesis or "
+        "capstone to support research, advocacy, or teaching careers."
+    ),
+    "ucla-geochemistry-ms": (
+        "Students who want to use the tools and principles of chemistry to explain major geological "
+        "systems, from the Earth's crust and oceans to processes across the Solar System, preparing "
+        "for research careers in this integrated field of chemistry and geology."
+    ),
+    "ucla-geography-ms": (
+        "Students ready for advanced spatial analysis of human and physical environments, who want "
+        "graduate seminars, methods training, and a thesis or capstone to support research, "
+        "analytical, or applied careers studying geography."
+    ),
+    "ucla-geology-ms": (
+        "Students seeking advanced graduate expertise in geology who want disciplined seminar work, "
+        "methods training, and a thesis or capstone to ground research, fieldwork, or technical "
+        "professional careers in the geological sciences."
+    ),
+    "ucla-geophysics-and-space-physics-ms": (
+        "Students drawn to the quantitative and observational study of Earth and its surrounding "
+        "space environment, who want advanced training in Earth's gravitational, magnetic, and "
+        "electromagnetic fields, internal structure, and dynamics for research-oriented careers."
+    ),
+    "ucla-germanic-languages-ms": (
+        "Students who want advanced graduate study of the Germanic languages and their cultures, "
+        "building deep linguistic and literary command within this Indo-European branch to support "
+        "scholarly, teaching, translation, or further doctoral work."
+    ),
+    "ucla-greek-ms": (
+        "Students committed to advanced study of ancient Greek language and literature, typically as "
+        "a step toward the doctorate, who want rigorous philological training within a classics "
+        "department as a foundation for scholarly and academic careers."
+    ),
+    "ucla-history-ms": (
+        "Students ready for systematic, advanced study of the human past, who want graduate seminars, "
+        "methods training, and a thesis or capstone to support research, teaching, archival, or "
+        "further doctoral work in history."
+    ),
+    "ucla-indo-european-studies-ms": (
+        "Students drawn to the Indo-European languages and their related cultural history, who want "
+        "interdisciplinary graduate training spanning historical linguistics, comparative philology, "
+        "archaeology, and genetics to support scholarly and research careers."
+    ),
+    "ucla-islamic-studies-ms": (
+        "Students who want multidisciplinary academic study of Islam and the Islamic world, "
+        "exchanging ideas across diverse fields to understand its past and potential future, "
+        "preparing for research, teaching, or area-focused professional paths."
+    ),
+    "ucla-italian-ms": (
+        "Students who want advanced graduate study of Italian language and culture, building deep "
+        "command of this Romance language and its literary tradition to support scholarly, teaching, "
+        "translation, or further doctoral work."
+    ),
+    "ucla-latin-ms": (
+        "Students committed to advanced study of Latin language and Roman literature, typically "
+        "within the doctoral program, who want rigorous philological training in a classics "
+        "department as a foundation for scholarly and academic careers."
+    ),
+    "ucla-latin-american-studies-ms": (
+        "Graduate students seeking advanced, interdisciplinary expertise in Latin American studies, "
+        "who want seminars, methods training, and a thesis or capstone to ground research, teaching, "
+        "or area-focused careers centered on the region."
+    ),
+    "ucla-linguistics-ms": (
+        "Students ready to study the structure, sound, meaning, and use of human language at an "
+        "advanced level, who want graduate seminars, methods training, and a thesis or capstone to "
+        "support research or applied careers in linguistics."
+    ),
+    "ucla-master-of-applied-chemical-sciences-ms": (
+        "Students who want applied, advanced graduate training grounded in the study of matter — its "
+        "composition, structure, properties, behavior, and the reactions and chemical bonds it "
+        "undergoes — to support professional and technical careers in the chemical sciences."
+    ),
+    "ucla-master-of-applied-geospatial-information-systems-and-technologies-ms": (
+        "Students who want applied, professional training in geographic information systems — the "
+        "hardware, software, and workflows used to store, manage, analyze, and visualize geographic "
+        "data — to support careers working with spatial data and GIS technologies."
+    ),
+    "ucla-master-of-applied-statistics-and-data-science-ms": (
+        "Students who want applied, professional training in data science, combining statistics, "
+        "scientific computing, algorithms, and coding to extract knowledge from noisy, structured, or "
+        "unstructured data and build careers as working data scientists."
+    ),
+    "ucla-master-of-quantitative-economics-ms": (
+        "Students who want rigorous, applied training in econometrics — using statistical methods to "
+        "give empirical content to economic relationships — to analyze actual economic phenomena and "
+        "prepare for quantitative, research, and analytical careers in economics."
+    ),
+    "ucla-master-of-quantum-science-and-technology-ms": (
+        "Students seeking an interdisciplinary professional master's spanning physics, electrical "
+        "engineering, computer science, and chemistry, who want training in quantum computing, "
+        "quantum information, sensing, and the engineering of quantum devices for careers in the "
+        "field."
+    ),
+    "ucla-master-of-social-science-ms": (
+        "Students who want to combine methods and theory across the social sciences in an "
+        "interdisciplinary graduate program, culminating in applied research on a focused social, "
+        "economic, or policy question to support analytical and applied careers."
+    ),
+    "ucla-mathematics-ma-ms": (
+        "Students whose central interest is mathematics and who want advanced graduate study of the "
+        "discipline, building deep theoretical command to support teaching, research, analytical, or "
+        "further doctoral paths."
+    ),
+    "ucla-mathematics-mat-ms": (
+        "Students whose central interest is mathematics who want advanced graduate study oriented "
+        "toward the teaching of the subject, building deep command of the discipline to support "
+        "careers in mathematics education."
+    ),
+    "ucla-medical-informatics-ms": (
+        "Students drawn to the application of computer science to improve the communication, "
+        "understanding, and management of medical information, who want advanced training at the "
+        "intersection of engineering, applied science, and health to support careers in health "
+        "informatics."
+    ),
+    "ucla-molecular-biology-ms": (
+        "Students who want to understand the molecular structures and chemical processes underlying "
+        "biological activity within and between cells, with advanced study centered on nucleic acids, "
+        "proteins, and processes like replication, transcription, and translation, for research "
+        "careers."
+    ),
+    "ucla-molecular-cell-and-developmental-biology-ms": (
+        "Students ready to study the molecular, cellular, and developmental processes of living "
+        "systems at an advanced level, who want graduate seminars, methods training, and a thesis or "
+        "capstone to support research or applied careers in the life sciences."
+    ),
+    "ucla-near-eastern-languages-and-cultures-ms": (
+        "Students drawn to the ancient Near East — Mesopotamia, the Levant, Egypt, Iran, Anatolia, "
+        "and the Arabian Peninsula — who want advanced graduate study of its languages, cultures, and "
+        "archaeology to support scholarly and research careers in ancient history."
+    ),
+    "ucla-philosophy-ms": (
+        "Students ready for advanced study of metaphysics, epistemology, ethics, and the history of "
+        "philosophy, who want graduate seminars, methods training, and a thesis or capstone to "
+        "support scholarly, teaching, or further doctoral work in philosophy."
+    ),
+    "ucla-physics-mat-ms": (
+        "Students who want advanced graduate training focused on the teaching of physics in secondary "
+        "education, combining seminars, methods training, and a thesis or capstone to prepare for "
+        "careers teaching physics at the secondary level."
+    ),
+    "ucla-physics-ms-ms": (
+        "Students ready for advanced study and research in physics, who want graduate seminars, "
+        "methods training, and a thesis or capstone to deepen their command of the discipline and "
+        "support research or technical careers."
+    ),
+    "ucla-physiological-science-ms": (
+        "Students ready to study the function of cells, organs, and systems in living organisms at an "
+        "advanced level, who want graduate seminars, methods training, and a thesis or capstone to "
+        "support research, health-related, or applied careers."
+    ),
+    "ucla-planetary-science-ms": (
+        "Students drawn to the scientific study of celestial bodies and planetary systems and how "
+        "they form, who want advanced training to investigate objects from micrometeoroids to gas "
+        "giants — their composition, dynamics, formation, and history — for research careers."
+    ),
+    "ucla-political-science-ms": (
+        "Graduates of politics, government, or related social sciences who want advanced grounding in "
+        "political institutions, behavior, theory, and international relations, and are ready for "
+        "graduate seminars, methods training, and a thesis or capstone before policy, analysis, or "
+        "doctoral work."
+    ),
+    "ucla-portuguese-ms": (
+        "Advanced students of Portuguese language and the literatures and cultures of its eight "
+        "official countries, from Portugal and Brazil to Angola, Mozambique, and Timor-Leste, ready "
+        "for graduate study leading toward teaching, translation, or research in a major world "
+        "language."
+    ),
+    "ucla-psychology-ms": (
+        "Psychology and behavioral-science graduates seeking advanced training in cognition, "
+        "behavior, and the biological and social bases of mind, prepared for graduate seminars, "
+        "methods coursework, and a thesis or capstone that opens applied or research roles."
+    ),
+    "ucla-scandinavian-ms": (
+        "Students of the North Germanic languages and Nordic cultures, including Danish, Faroese, "
+        "Icelandic, Norwegian, and Swedish traditions, ready for graduate-level study of these "
+        "languages and literatures toward teaching, translation, or further research."
+    ),
+    "ucla-slavic-east-european-and-eurasian-languages-and-cultures-ms": (
+        "Students of Slavic literatures and linguistics ready for advanced training that sharpens "
+        "critical and analytic skills, whether aiming toward college teaching and research or "
+        "alternative careers in language teaching, translation, interpreting, librarianship, "
+        "business, or government service."
+    ),
+    "ucla-sociology-ms": (
+        "Sociology and social-science graduates wanting advanced expertise in social structure, "
+        "institutions, and human social behavior, prepared to take on graduate seminars, methods "
+        "training, and a thesis or capstone before research, policy, or applied careers."
+    ),
+    "ucla-spanish-ms": (
+        "Advanced students of Spanish and Latin American language, literature, and culture ready for "
+        "graduate seminars, methods training, and a thesis or capstone, headed toward teaching, "
+        "translation, or scholarship in the Hispanic field."
+    ),
+    "ucla-statistics-ms": (
+        "Quantitatively grounded students who want rigorous statistical theory and modern data- "
+        "science practice, whether headed for further graduate research or employment applying "
+        "statistics in industry or government across substantive fields of application."
+    ),
+    "ucla-teaching-asian-languages-ms": (
+        "Aspiring and current language instructors who want to teach Chinese, Japanese, Korean, or "
+        "other Asian languages, ready to combine applied linguistics, language-acquisition theory, "
+        "and supervised classroom teaching into a professional teaching career."
+    ),
+    "ucla-anthropology-phd": (
+        "Aspiring scholars committed to original research across the cross-cultural, archaeological, "
+        "and biological study of humanity, ready for faculty-mentored dissertation work and "
+        "qualifying examinations on the way to academic and research careers in anthropology."
+    ),
+    "ucla-archaeology-phd": (
+        "Aspiring researchers drawn to the material remains of the human past who want to master "
+        "archaeological methods through faculty-mentored dissertation work and qualifying exams, "
+        "headed toward academic and research careers in archaeology."
+    ),
+    "ucla-art-history-phd": (
+        "Aspiring scholars of artistic production and visual culture across periods and cultures, "
+        "ready to pursue original dissertation research under faculty mentorship and qualifying "
+        "examinations toward teaching and research careers in art history."
+    ),
+    "ucla-asian-languages-and-cultures-phd": (
+        "Aspiring scholars of the languages, literatures, and cultures of Asia, prepared for faculty- "
+        "mentored dissertation research and qualifying examinations on the path to academic and "
+        "research careers in the field."
+    ),
+    "ucla-astronomy-and-astrophysics-phd": (
+        "Aspiring researchers who want to apply the methods of physics and chemistry to understand "
+        "the nature of the heavenly bodies and the universe, ready for faculty-mentored dissertation "
+        "work toward academic and research careers in astrophysics."
+    ),
+    "ucla-atmospheric-and-oceanic-sciences-phd": (
+        "Aspiring researchers focused on the Earth's atmosphere, oceans, and the physical processes "
+        "that drive them, ready for faculty-mentored dissertation work and qualifying examinations "
+        "toward academic and research careers in the field."
+    ),
+    "ucla-biochemistry-molecular-and-structural-biology-phd": (
+        "Aspiring researchers in biochemistry and molecular and structural biology who want to pursue "
+        "original dissertation work under faculty mentorship and qualifying examinations, headed "
+        "toward academic and research careers in the life sciences."
+    ),
+    "ucla-bioinformatics-phd": (
+        "Aspiring researchers at the intersection of biology and computing who want to develop "
+        "computational methods and software for analyzing biological data, ready for faculty-mentored "
+        "dissertation work toward academic and research careers in bioinformatics."
+    ),
+    "ucla-biology-phd": (
+        "Aspiring researchers drawn to molecular, organismal, and ecological approaches to the life "
+        "sciences, prepared for faculty-mentored dissertation work and qualifying examinations on the "
+        "path to academic and research careers in biology."
+    ),
+    "ucla-chemistry-phd": (
+        "Aspiring researchers in chemistry ready to pursue original dissertation work under faculty "
+        "mentorship and qualifying examinations, headed toward academic and research careers across "
+        "the chemical sciences."
+    ),
+    "ucla-chicana-and-chicano-studies-phd": (
+        "Aspiring scholars of Chicana and Chicano studies prepared for original dissertation research "
+        "under faculty mentorship and qualifying examinations, on the path to academic and research "
+        "careers in the field."
+    ),
+    "ucla-classics-phd": (
+        "Aspiring scholars of the languages, literature, and civilizations of ancient Greece and "
+        "Rome, ready for faculty-mentored dissertation research and qualifying examinations toward "
+        "academic and research careers in classics."
+    ),
+    "ucla-communication-phd": (
+        "Aspiring researchers studying human communication across interpersonal, media, and political "
+        "contexts, ready for faculty-mentored dissertation work and qualifying examinations on the "
+        "path to academic and research careers in communication."
+    ),
+    "ucla-comparative-literature-phd": (
+        "Aspiring scholars who read literature and cultural expression across languages and national "
+        "traditions, prepared for faculty-mentored dissertation research and qualifying examinations "
+        "toward academic and research careers in comparative literature."
+    ),
+    "ucla-conservation-of-material-culture-phd": (
+        "Aspiring conservation scientists committed to advanced research on the deterioration, "
+        "analysis, and preservation of cultural materials, ready for original doctoral research that "
+        "leads toward research and teaching careers in conservation science."
+    ),
+    "ucla-doctor-of-environmental-science-and-engineering-phd": (
+        "Problem-solvers who want to tackle complex environmental challenges across science, "
+        "engineering, and policy, ready for interdisciplinary doctoral coursework and a major applied "
+        "doctoral project rather than a purely theoretical research track."
+    ),
+    "ucla-economics-phd": (
+        "Aspiring researchers studying the production, distribution, and consumption of goods and "
+        "services, ready for faculty-mentored dissertation work and qualifying examinations on the "
+        "path to academic and research careers in economics."
+    ),
+    "ucla-english-phd": (
+        "Aspiring scholars of English-language literature, criticism, and literary theory, prepared "
+        "for faculty-mentored dissertation research and qualifying examinations toward academic and "
+        "research careers in English."
+    ),
+    "ucla-environment-and-sustainability-phd": (
+        "Aspiring researchers focused on environmental systems, sustainability, and policy, ready for "
+        "faculty-mentored dissertation work and qualifying examinations on the path to academic and "
+        "research careers in the field."
+    ),
+    "ucla-french-and-francophone-studies-phd": (
+        "Aspiring scholars of French and Francophone literature, language, and culture, prepared for "
+        "faculty-mentored dissertation research and qualifying examinations toward academic and "
+        "research careers in the field."
+    ),
+    "ucla-gender-studies-phd": (
+        "Aspiring scholars of gender, sexuality, and feminist theory across social and cultural life, "
+        "ready for faculty-mentored dissertation research and qualifying examinations on the path to "
+        "academic and research careers in gender studies."
+    ),
+    "ucla-geochemistry-phd": (
+        "Aspiring researchers studying the chemistry of Earth and planetary materials and processes, "
+        "prepared for faculty-mentored dissertation work and qualifying examinations toward academic "
+        "and research careers in geochemistry."
+    ),
+    "ucla-geography-phd": (
+        "Aspiring researchers drawn to the spatial analysis of human and physical environments, ready "
+        "for faculty-mentored dissertation work and qualifying examinations on the path to academic "
+        "and research careers in geography."
+    ),
+    "ucla-geology-phd": (
+        "Aspiring researchers in geology ready to pursue original dissertation work under faculty "
+        "mentorship and qualifying examinations, headed toward academic and research careers in the "
+        "Earth sciences."
+    ),
+    "ucla-geophysics-and-space-physics-phd": (
+        "Aspiring researchers studying the internal structure, composition, and dynamics of planetary "
+        "bodies, prepared for faculty-mentored dissertation work and qualifying examinations toward "
+        "academic and research careers in geophysics and space physics."
+    ),
+    "ucla-germanic-languages-phd": (
+        "Aspiring scholars of German and Germanic literature, language, and culture, ready for "
+        "faculty-mentored dissertation research and qualifying examinations on the path to academic "
+        "and research careers in Germanic languages."
+    ),
+    "ucla-history-phd": (
+        "Aspiring scholars committed to the systematic study of the human past, prepared for faculty- "
+        "mentored dissertation research and qualifying examinations toward academic and research "
+        "careers in history."
+    ),
+    "ucla-indo-european-studies-phd": (
+        "Aspiring scholars of Indo-European studies ready to pursue original dissertation research "
+        "under faculty mentorship and qualifying examinations, on the path to academic and research "
+        "careers in the field."
+    ),
+    "ucla-islamic-studies-phd": (
+        "Aspiring scholars dedicated to the academic study of Islam, prepared for faculty-mentored "
+        "dissertation research and qualifying examinations toward academic and research careers in "
+        "Islamic studies."
+    ),
+    "ucla-italian-phd": (
+        "Aspiring scholars of Italian language, literature, and cultural history, ready for faculty- "
+        "mentored dissertation research and qualifying examinations on the path to academic and "
+        "research careers in Italian."
+    ),
+    "ucla-linguistics-phd": (
+        "Aspiring researchers studying the structure, sound, meaning, and use of human language, "
+        "prepared for faculty-mentored dissertation work and qualifying examinations toward academic "
+        "and research careers in linguistics."
+    ),
+    "ucla-mathematics-phd": (
+        "Aspiring researchers in pure and applied mathematics, ready to pursue original dissertation "
+        "work under faculty mentorship and qualifying examinations, headed toward academic and "
+        "research careers in the mathematical sciences."
+    ),
+    "ucla-medical-informatics-phd": (
+        "Aspiring researchers in medical informatics ready to pursue original dissertation work under "
+        "faculty mentorship and qualifying examinations, on the path to academic and research careers "
+        "in the field."
+    ),
+    "ucla-molecular-biology-phd": (
+        "Aspiring researchers studying the molecular structures and chemical processes of living "
+        "systems, prepared for faculty-mentored dissertation work and qualifying examinations toward "
+        "academic and research careers in molecular biology."
+    ),
+    "ucla-molecular-cell-and-developmental-biology-phd": (
+        "Aspiring researchers focused on the molecular, cellular, and developmental processes of "
+        "living systems, ready for faculty-mentored dissertation work and qualifying examinations on "
+        "the path to academic and research careers in the life sciences."
+    ),
+    "ucla-molecular-cellular-and-integrative-physiology-phd": (
+        "Aspiring researchers in physiology applying directly to an interdepartmental doctoral "
+        "program, ready for faculty-mentored dissertation work and qualifying examinations toward "
+        "academic and research careers in molecular, cellular, and integrative physiology."
+    ),
+    "ucla-near-eastern-languages-and-cultures-phd": (
+        "Aspiring scholars of the languages, texts, and archaeology of the ancient Near East, "
+        "prepared for faculty-mentored dissertation research and qualifying examinations toward "
+        "academic and research careers in the field."
+    ),
+    "ucla-philosophy-phd": (
+        "Aspiring scholars working in metaphysics, epistemology, ethics, and the history of "
+        "philosophy, ready for faculty-mentored dissertation research and qualifying examinations on "
+        "the path to academic and research careers in philosophy."
+    ),
+    "ucla-physics-phd": (
+        "Aspiring researchers in physics ready to pursue original dissertation work under faculty "
+        "mentorship and qualifying examinations, headed toward academic and research careers across "
+        "the physical sciences."
+    ),
+    "ucla-planetary-science-phd": (
+        "Aspiring researchers studying planetary bodies, their formation, and the processes that "
+        "shape them, prepared for faculty-mentored dissertation work and qualifying examinations "
+        "toward academic and research careers in planetary science."
+    ),
+    "ucla-political-science-phd": (
+        "Aspiring researchers studying political institutions, behavior, theory, and international "
+        "relations, ready for faculty-mentored dissertation work and qualifying examinations on the "
+        "path to academic and research careers in political science."
+    ),
+    "ucla-psychology-phd": (
+        "Aspiring researchers studying cognition, behavior, and the biological and social bases of "
+        "mind, prepared for faculty-mentored dissertation work and qualifying examinations toward "
+        "academic and research careers in psychology."
+    ),
+    "ucla-slavic-east-european-and-eurasian-languages-and-cultures-phd": (
+        "Aspiring scholars of Slavic, East European, and Eurasian languages, literatures, and "
+        "cultures, ready for faculty-mentored dissertation research and qualifying examinations on "
+        "the path to academic and research careers in the field."
+    ),
+    "ucla-sociology-phd": (
+        "Aspiring researchers studying social structure, institutions, and human social behavior, "
+        "prepared for faculty-mentored dissertation work and qualifying examinations toward academic "
+        "and research careers in sociology."
+    ),
+    "ucla-statistics-phd": (
+        "Aspiring researchers in statistical theory, methodology, and data analysis, ready to pursue "
+        "original dissertation work under faculty mentorship and qualifying examinations, headed "
+        "toward academic and research careers in statistics."
+    ),
+    "ucla-aerospace-engineering-ug": (
+        "Undergraduates drawn to the design and construction of aircraft, helicopters, and "
+        "spacecraft, ready to work at the forefront of high-technology fields spanning air "
+        "transportation, national defense, and space exploration while building the engineering and "
+        "scientific foundations the discipline demands."
+    ),
+    "ucla-bioengineering-ug": (
+        "Undergraduates building the engineering foundations to apply quantitative methods to biology "
+        "and medicine, who want an ABET-accredited bioengineering degree as the launchpad for a "
+        "professional engineering career or further study."
+    ),
+    "ucla-chemical-engineering-ug": (
+        "Undergraduates seeking a professionally oriented, ABET-accredited grounding in modern "
+        "chemical engineering, who want to balance engineering science with practice and explore a "
+        "subfield such as biomedical, biomolecular, environmental, or semiconductor manufacturing "
+        "engineering."
+    ),
+    "ucla-civil-engineering-ug": (
+        "Undergraduates building the engineering foundations for a career in civil engineering, who "
+        "want an ABET-accredited degree as the credential behind designing and building the "
+        "infrastructure that communities rely on."
+    ),
+    "ucla-computer-engineering-ug": (
+        "Undergraduates with a strong math and science aptitude who want to build the hardware- "
+        "software systems behind the Internet of Things, robotics, and mobile, wearable, and "
+        "implantable devices, grounded in data science and embedded networked systems."
+    ),
+    "ucla-computer-science-ug": (
+        "Undergraduates who want rigorous training in algorithms, systems, and AI with hands-on "
+        "access to making and robotics facilities, aiming to recruit into major technology firms or "
+        "continue into graduate programs."
+    ),
+    "ucla-computer-science-and-engineering-ug": (
+        "Undergraduates who want to design, build, and program both the hardware and software of "
+        "digital systems, spanning electronic and logic design, VLSI, operating systems, networking, "
+        "and programming across the computer science and electrical and computer engineering "
+        "departments."
+    ),
+    "ucla-electrical-engineering-ug": (
+        "Undergraduates with a math and science foundation who want to master signals and systems, "
+        "circuits and embedded systems, and physical wave electronics, working toward inventions like "
+        "integrated circuits, photonic devices, and telecommunication systems."
+    ),
+    "ucla-materials-engineering-ug": (
+        "Undergraduates pursuing a professional career in the materials field who want a broad grasp "
+        "of how microstructure shapes the properties of metals, ceramics, polymers, and composites, "
+        "plus the principles of metallurgy and ceramic and polymer science behind designing and "
+        "testing them."
+    ),
+    "ucla-mechanical-engineering-ug": (
+        "Undergraduates building broad mechanical engineering foundations across thermodynamics, "
+        "fluid mechanics, heat transfer, solid mechanics, design, dynamics, control, and "
+        "manufacturing, who want an ABET-accredited degree for a professional engineering career."
+    ),
+    "ucla-aerospace-engineering-ms": (
+        "Engineers seeking advanced expertise in the design, dynamics, and control of aerospace "
+        "vehicles and systems, ready to deepen their specialization through graduate seminars, "
+        "methods training, and a thesis or capstone before advancing in industry or research."
+    ),
+    "ucla-bioengineering-ms": (
+        "Engineers seeking advanced training in applying engineering principles to biology and "
+        "medicine, ready to specialize through graduate seminars, methods coursework, and a thesis or "
+        "capstone for advancement in the medical-technology and life-sciences fields."
+    ),
+    "ucla-chemical-engineering-ms": (
+        "Engineers seeking advanced expertise in chemical processes, reaction engineering, and "
+        "process design, ready to specialize through graduate seminars, methods training, and a "
+        "thesis or capstone before advancing in the chemical and process industries."
+    ),
+    "ucla-civil-engineering-ms": (
+        "Engineers seeking advanced specialization across structural, environmental, geotechnical, "
+        "and transportation engineering, ready to deepen their practice through graduate seminars, "
+        "methods training, and a thesis or capstone for professional advancement."
+    ),
+    "ucla-computer-science-ms": (
+        "Engineers and computer scientists seeking advanced expertise in computing systems, "
+        "algorithms, artificial intelligence, and software, ready to specialize through graduate "
+        "seminars, methods training, and a thesis or capstone before advancing in industry or "
+        "research."
+    ),
+    "ucla-electrical-and-computer-engineering-ms": (
+        "Engineers seeking advanced coursework, in-depth training, and research investigations across "
+        "the several fields of electrical and computer engineering, ready to specialize and deepen "
+        "their technical expertise for industry advancement or further study."
+    ),
+    "ucla-engineer-ms": (
+        "Practicing engineers who already hold an M.S. and want still greater depth through "
+        "additional coursework and an engineering project, short of committing to a Ph.D. "
+        "dissertation, pursuing this advanced post-master's credential to strengthen their technical "
+        "standing."
+    ),
+    "ucla-engineering-ms": (
+        "Engineers seeking advanced coursework and research across the school's disciplines, often as "
+        "a step toward doctoral study or deeper technical specialization, who want flexibility to "
+        "deepen expertise before committing to a specific research path."
+    ),
+    "ucla-engineering-aerospace-ms": (
+        "Working engineers who want to specialize in aerodynamics, propulsion, flight mechanics, and "
+        "aerospace structures while staying on the job, advancing their careers through a fully "
+        "online aerospace engineering master's."
+    ),
+    "ucla-engineering-computer-networking-ms": (
+        "Practicing engineers who want to advance part-time into computer networking, deepening their "
+        "command of network architecture, protocols, wireless systems, and distributed computing "
+        "through a flexible online master's."
+    ),
+    "ucla-engineering-electrical-ms": (
+        "Practicing engineers studying part-time who want to deepen their electrical engineering "
+        "expertise across circuits, electromagnetics, control, and electronic systems through a fully "
+        "online master's while continuing to work."
+    ),
+    "ucla-engineering-electronic-materials-ms": (
+        "Working engineers who want to specialize in electronic materials, including semiconductors, "
+        "photonic and electronic materials, and their fabrication, advancing their expertise through "
+        "the online master's program while staying employed."
+    ),
+    "ucla-engineering-integrated-circuits-ms": (
+        "Practicing engineers who want to specialize in VLSI design, semiconductor devices, and chip "
+        "architecture, preparing for advanced work in the integrated-circuit industry through a "
+        "flexible online master's."
+    ),
+    "ucla-engineering-manufacturing-and-design-ms": (
+        "Working professionals who want to advance their command of manufacturing processes, product "
+        "design, and computer-aided engineering, deepening their technical breadth through a flexible "
+        "online master's while staying on the job."
+    ),
+    "ucla-engineering-materials-science-ms": (
+        "Working professionals who want to deepen their understanding of the structure, properties, "
+        "and processing of engineering materials, advancing their expertise through a fully online "
+        "materials science master's."
+    ),
+    "ucla-engineering-mechanical-ms": (
+        "Working professionals who want to deepen their mechanical engineering expertise across "
+        "dynamics, thermofluids, mechanics of materials, and design, advancing their careers through "
+        "a flexible fully online master's."
+    ),
+    "ucla-engineering-signal-processing-and-communications-ms": (
+        "Practicing engineers who want to specialize in signal processing and communications, "
+        "spanning digital signal processing, communication theory, and wireless systems, advancing "
+        "part-time through a flexible online master's."
+    ),
+    "ucla-engineering-structural-materials-ms": (
+        "Working engineers who want to specialize in structural materials, studying the mechanical "
+        "behavior, failure, and design of metals, alloys, and composites in load-bearing "
+        "applications, advancing their expertise through the online master's."
+    ),
+    "ucla-manufacturing-engineering-ms": (
+        "Engineers seeking advanced, professionally oriented training in manufacturing engineering, "
+        "who want to master planning manufacturing practices, developing tools, processes, and "
+        "machines, and integrating production systems for quality output at optimal cost."
+    ),
+    "ucla-master-of-engineering-ms": (
+        "Practicing engineers who want a professional, course-based degree emphasizing applied "
+        "technical breadth and engineering leadership rather than a research thesis, aiming to "
+        "advance into broader technical and management roles."
+    ),
+    "ucla-materials-science-and-engineering-ms": (
+        "Engineers seeking advanced specialization in one focused field of materials science and "
+        "engineering, choosing ceramics and ceramic processing, electronic and optical materials, or "
+        "structural materials to deepen expertise for industry advancement or further study."
+    ),
+    "ucla-mechanical-engineering-ms": (
+        "Engineers seeking advanced expertise across thermodynamics, fluid and solid mechanics, "
+        "dynamics, and design, ready to specialize through graduate seminars, methods training, and a "
+        "thesis or capstone before advancing in industry or research."
+    ),
+    "ucla-aerospace-engineering-phd": (
+        "Aspiring researchers headed for academia or R&D who want to pursue original dissertation "
+        "work in the design, dynamics, and control of aerospace vehicles and systems, with faculty "
+        "mentorship and qualifying examinations guiding their path to independent scholarship."
+    ),
+    "ucla-bioengineering-phd": (
+        "Aspiring researchers bound for academia or R&D who want to pursue original dissertation work "
+        "applying engineering principles to biology and medicine, supported by faculty mentorship and "
+        "qualifying examinations on the way to independent research."
+    ),
+    "ucla-chemical-engineering-phd": (
+        "Aspiring researchers headed for academia or R&D who want to lead original dissertation work "
+        "in chemical processes, reaction engineering, and process design, supported by faculty "
+        "mentorship and qualifying examinations toward independent scholarship."
+    ),
+    "ucla-civil-engineering-phd": (
+        "Aspiring researchers bound for academia or R&D who want to pursue original dissertation work "
+        "across structural, environmental, geotechnical, or transportation engineering, supported by "
+        "faculty mentorship and qualifying examinations on the path to independent research."
+    ),
+    "ucla-computer-science-phd": (
+        "Aspiring researchers headed for academia or R&D who want to advance original dissertation "
+        "work in computing systems, algorithms, artificial intelligence, and software, supported by "
+        "faculty mentorship and qualifying examinations toward independent scholarship."
+    ),
+    "ucla-electrical-and-computer-engineering-phd": (
+        "Aspiring researchers bound for academia or R&D who want to lead original dissertation work "
+        "in circuits, signals, devices, and computer engineering, supported by faculty mentorship and "
+        "qualifying examinations on the way to independent research."
+    ),
+    "ucla-materials-science-and-engineering-phd": (
+        "Aspiring researchers headed for academia or R&D who want to pursue original dissertation "
+        "work on the structure, properties, and processing of engineering materials, supported by "
+        "faculty mentorship and qualifying examinations toward independent scholarship."
+    ),
+    "ucla-mechanical-engineering-phd": (
+        "Aspiring researchers bound for academia or R&D who want to advance original dissertation "
+        "work in thermodynamics, fluid and solid mechanics, dynamics, and design, supported by "
+        "faculty mentorship and qualifying examinations on the path to independent research."
+    ),
+    "ucla-business-analytics-ms": (
+        "For early-career professionals who want to turn business data into decisions, this "
+        "specialized master's suits those who enjoy iterative exploration of past performance and "
+        "want statistical methods and analytics skills to drive planning rather than just report "
+        "metrics."
+    ),
+    "ucla-executive-master-of-business-administration-ms": (
+        "For experienced professionals who can commit to alternating weekends over 22 months without "
+        "pausing their careers, this executive MBA fits those ready to deepen general-management and "
+        "leadership skills, broaden their global perspective, and step into senior roles."
+    ),
+    "ucla-fully-employed-master-of-business-administration-ms": (
+        "For working professionals who want a full MBA without leaving the workforce, this part-time "
+        "program over roughly three years of evening and weekend classes suits those balancing a job "
+        "while building the management core and electives."
+    ),
+    "ucla-global-executive-master-of-business-administration-for-asia-pacific-ms": (
+        "For experienced managers focused on the Asia-Pacific region, this dual-degree executive "
+        "program with the National University of Singapore Business School suits those who want "
+        "cross-border management credentials and a footprint in both U.S. and Asian markets."
+    ),
+    "ucla-master-of-business-administration-ms": (
+        "For early-career professionals ready to step away from work full-time, this MBA fits those "
+        "who want to pair core business disciplines with applied electives and a real research "
+        "project, aiming for roles in consulting, entertainment, finance, healthcare, or technology."
+    ),
+    "ucla-master-of-financial-engineering-ms": (
+        "For quantitatively minded graduates targeting careers in quantitative finance, this 15-month "
+        "program suits those comfortable with stochastic calculus, data science, and computational "
+        "trading who want a summer internship and technical depth for trading or risk roles."
+    ),
+    "ucla-management-phd": (
+        "For aspiring business-school researchers and academics who want to study how organizations "
+        "are administered and resources managed across businesses, nonprofits, and government, this "
+        "doctoral program fits those committed to scholarship and a faculty or research career."
+    ),
+    "ucla-master-of-laws-ms": (
+        "A practicing lawyer, trained in the United States or abroad, who wants a focused year of "
+        "advanced specialization in a field like business law, international and comparative law, or "
+        "public-interest law to deepen an existing legal career."
+    ),
+    "ucla-master-of-legal-studies-ms": (
+        "A non-lawyer professional whose work runs into legal questions and who needs a working "
+        "command of legal reasoning, regulation, and compliance, without intending to practice law or "
+        "sit for the bar."
+    ),
+    "ucla-doctor-of-juridical-science-phd": (
+        "An experienced legal scholar, typically already holding an advanced law degree, who is ready "
+        "to write a substantial dissertation and is aiming for a career in legal academia and "
+        "original research."
+    ),
+    "ucla-juris-doctor-prof": (
+        "A future practicing attorney who wants doctrinal grounding paired with clinical work and "
+        "environmental-law training, and who is drawn to paths like federal clerkships and bar- "
+        "passage-required legal employment after graduation."
+    ),
+    "ucla-biomathematics-ms": (
+        "Quantitatively minded students who want advanced training in using mathematical modeling and "
+        "theoretical analysis to study living systems, rather than running bench experiments, and who "
+        "are building toward research or technical work that bridges mathematics and biology."
+    ),
+    "ucla-clinical-research-ms": (
+        "Clinicians and research-minded health professionals who want formal training to design and "
+        "run studies in people, testing the efficacy and safety of medications, devices, and "
+        "treatments, and who aim to lead trials aimed at preventing, diagnosing, or treating disease."
+    ),
+    "ucla-data-science-in-biomedicine-ms": (
+        "Computationally inclined students who want to apply computer science and data methods to "
+        "medical information, working at the intersection of health informatics and engineering, and "
+        "who aim to improve how clinical and biomedical data is managed and understood."
+    ),
+    "ucla-genetic-counseling-ms": (
+        "Compassionate students who want clinical training to guide individuals and families affected "
+        "by or at risk of genetic disorders, helping them understand and adapt to the medical, "
+        "psychological, and familial implications, and who aim to practice within genomic medicine."
+    ),
+    "ucla-human-genetics-ms": (
+        "Students seeking advanced master's-level training in human genetics, typically as a focused "
+        "or transitional step taken with departmental approval, and who want grounding in the "
+        "genetics of human health and inheritance before further research or professional work."
+    ),
+    "ucla-molecular-and-medical-pharmacology-ms": (
+        "Students pursuing graduate training in molecular and medical pharmacology, usually as part "
+        "of a longer research trajectory within the department rather than a terminal master's, who "
+        "want grounding in how drugs act at the molecular and medical level."
+    ),
+    "ucla-physics-and-biology-in-medicine-ms": (
+        "Physics-grounded students who want advanced training to apply physical concepts and methods "
+        "to preventing, diagnosing, and treating disease, and who are preparing for the medical "
+        "physics profession or further study at the meeting point of physics and medicine."
+    ),
+    "ucla-biomathematics-phd": (
+        "Aspiring researchers who want to pursue original dissertation work in mathematical and "
+        "theoretical biology, with faculty mentorship and qualifying examinations, and who are headed "
+        "toward academic or research careers modeling the principles that govern biological systems."
+    ),
+    "ucla-human-genetics-phd": (
+        "Aspiring researchers who want to pursue original dissertation work in the genetics of human "
+        "health, disease, and inheritance, supported by faculty mentorship and qualifying "
+        "examinations, and who are headed toward academic or research careers in human genetics."
+    ),
+    "ucla-molecular-and-medical-pharmacology-phd": (
+        "Aspiring researchers who want to pursue original dissertation work in molecular and medical "
+        "pharmacology and drug action, supported by faculty mentorship and qualifying examinations, "
+        "and who are headed toward academic or research careers studying how drugs work."
+    ),
+    "ucla-neuroscience-phd": (
+        "Aspiring researchers who want to pursue original dissertation work on the nervous system, "
+        "its functions, and its disorders, supported by faculty mentorship and qualifying "
+        "examinations, and who are headed toward academic or research careers in neuroscience."
+    ),
+    "ucla-physics-and-biology-in-medicine-phd": (
+        "Aspiring researchers who want to pursue original dissertation work in the physics and "
+        "biology underlying medical diagnosis and therapy, supported by faculty mentorship and "
+        "qualifying examinations, and who are headed toward academic or research careers at the "
+        "science-medicine interface."
+    ),
+    "ucla-doctor-of-medicine-prof": (
+        "Future physicians who want professional training that integrates foundational science with "
+        "clinical clerkships across UCLA Health and affiliated institutes, and who are committed to "
+        "becoming practicing clinicians serving patients across the full range of medical care."
+    ),
+    "ucla-oral-biology-ms": (
+        "Aspiring oral scientists who want graduate training in the biology of the mouth, including "
+        "oral microbiology and how resident microbiota colonize teeth and gums and interact with "
+        "their host. A strong fit for those moving toward research or specialized study before "
+        "doctoral or clinical work."
+    ),
+    "ucla-oral-biology-phd": (
+        "Researchers ready to pursue original dissertation work on the biology of the oral cavity, "
+        "its microbiota, and oral health. Built for those who want faculty mentorship, qualifying "
+        "exams, and a full dissertation, aiming for academic or research careers in oral biology."
+    ),
+    "ucla-doctor-of-dental-surgery-prof": (
+        "Future dentists committed to clinical practice who want a four-year professional path "
+        "through biomedical science, preclinical simulation, and supervised patient care across "
+        "general and specialty clinics, leading to licensure. A fit for those set on treating "
+        "patients chairside."
+    ),
+    "ucla-public-health-ba-ug": (
+        "Undergraduates who want to understand the determinants of population health and how "
+        "organized social efforts prevent disease and prolong life, drawn to the physical, "
+        "psychological, and social sides of well-being rather than a narrowly clinical or lab-heavy "
+        "track."
+    ),
+    "ucla-public-health-bs-ug": (
+        "Undergraduates ready for a science-intensive grounding in biology, chemistry, and "
+        "quantitative methods alongside public-health coursework, aiming toward the health "
+        "professions or research and comfortable with a heavier laboratory and analytic load."
+    ),
+    "ucla-biostatistics-mph-ms": (
+        "Applicants who want to put statistical methods to work in clinical medicine and public "
+        "health, learning to design studies and analyze and interpret biological data through a field "
+        "practicum, and heading into applied biostatistical practice rather than a doctorate."
+    ),
+    "ucla-biostatistics-ms-ms": (
+        "Quantitatively strong applicants seeking a focused research step in biostatistics, ready to "
+        "master experimental design, data collection, and analysis of biological and clinical data as "
+        "preparation for analytic roles or further doctoral study in medical statistics."
+    ),
+    "ucla-community-health-sciences-mph-ms": (
+        "Applicants drawn to working directly with communities, from neighborhoods to whole cities, "
+        "to prevent disease and promote health through organized social efforts; this practice- "
+        "oriented track with a field practicum suits those headed for hands-on community public- "
+        "health roles."
+    ),
+    "ucla-community-health-sciences-ms-ms": (
+        "Applicants who want an analytic, research-oriented step in community health sciences, "
+        "studying the determinants of population health across communities of any scale; suited to "
+        "those building toward research roles or doctoral study rather than direct practice."
+    ),
+    "ucla-community-health-health-promotion-and-education-ms": (
+        "Applicants who want to educate individuals and communities about health, expanding knowledge "
+        "and shaping attitudes across environmental, physical, social, emotional, and reproductive "
+        "health; this practicum-based MPH suits aspiring health educators and promotion "
+        "practitioners."
+    ),
+    "ucla-environmental-health-sciences-mph-ms": (
+        "Applicants concerned with how the natural and built environment affects human health, ready "
+        "to learn control of those factors through a field practicum; well suited to careers in "
+        "environmental science, toxicology, environmental epidemiology, or occupational health "
+        "practice."
+    ),
+    "ucla-environmental-health-sciences-ms-ms": (
+        "Applicants seeking a research step in environmental health, investigating how natural and "
+        "built environments shape human health and the controls a healthy environment requires; fits "
+        "those drawn to environmental science, toxicology, or environmental epidemiology as analysts "
+        "or future doctoral students."
+    ),
+    "ucla-epidemiology-mph-ms": (
+        "Applicants who want to track the distribution, patterns, and determinants of disease in "
+        "defined populations and apply that knowledge to prevent it; this practice-focused MPH with a "
+        "field practicum suits those headed for applied epidemiology in agencies or health "
+        "departments."
+    ),
+    "ucla-epidemiology-ms-ms": (
+        "Applicants seeking an analytic, research-oriented step in epidemiology, learning to study "
+        "how disease is distributed and determined across populations; suited to those building "
+        "methodological skill for research roles or doctoral study rather than frontline practice."
+    ),
+    "ucla-executive-master-of-public-health-ms": (
+        "Working professionals who want to advance applied public-health practice while continuing "
+        "their careers, grounding leadership in the science of preventing disease and promoting "
+        "health across populations large and small through an executive-format MPH with a field "
+        "practicum."
+    ),
+    "ucla-health-management-ms": (
+        "Applicants aiming to lead and administer health systems, hospitals, and hospital networks "
+        "across primary, secondary, and tertiary care; this practice-oriented MPH with a field "
+        "practicum suits those headed into health-services management and administration roles."
+    ),
+    "ucla-health-policy-ms": (
+        "Applicants who want to shape the decisions, plans, and actions that achieve healthcare goals "
+        "for society, defining priorities and building consensus; this practice-focused MPH with a "
+        "field practicum suits aspiring health-policy practitioners and analysts."
+    ),
+    "ucla-health-policy-and-management-mph-ms": (
+        "Applicants who want to engage in health services research and policy analysis on critical "
+        "local, national, and global health-care problems, collaborating with department research "
+        "centers; this practicum-based MPH suits those headed into agencies and organizations "
+        "tackling health-system challenges."
+    ),
+    "ucla-health-policy-and-management-ms-ms": (
+        "Applicants seeking a research step in health policy and management, ready to collaborate "
+        "with department centers on progressive health-services research across many topics; suited "
+        "to those building toward research and policy-analysis roles in universities, agencies, or "
+        "private organizations."
+    ),
+    "ucla-master-of-data-science-in-health-ms": (
+        "Applicants who want to apply computer science to medical information, improving how health "
+        "data is communicated, understood, and managed; this professional master's suits those moving "
+        "toward applied health-informatics and data-science roles at the intersection of engineering "
+        "and health."
+    ),
+    "ucla-master-of-healthcare-administration-ms": (
+        "Applicants preparing to lead health-care organizations who also want grounding in health- "
+        "services research on critical local, national, and global problems through collaboration "
+        "with the department's research centers; suited to those headed into health-services "
+        "administration and policy-informed management."
+    ),
+    "ucla-master-of-public-health-ms": (
+        "Applicants drawn to the broad science of preventing disease and promoting health across "
+        "populations from a handful of people to entire continents; this generalist MPH with a field "
+        "practicum suits those seeking applied public-health practice without committing to one "
+        "specialization."
+    ),
+    "ucla-biostatistics-phd": (
+        "Aspiring researchers and academics who want to develop and apply statistical methods to "
+        "clinical medicine and public health, advancing the design of studies and the analysis and "
+        "interpretation of biological data toward independent scholarship in biostatistics."
+    ),
+    "ucla-community-health-sciences-phd": (
+        "Aspiring public-health researchers who want to investigate the determinants of population "
+        "health and the social efforts that shape it across communities of any scale, building toward "
+        "an academic or research career grounded in community health sciences."
+    ),
+    "ucla-environmental-health-sciences-phd": (
+        "Aspiring researchers who want to study how the natural and built environment affects human "
+        "health and what a healthy environment requires, advancing scholarship across environmental "
+        "science, toxicology, environmental epidemiology, or occupational medicine toward an academic "
+        "or research career."
+    ),
+    "ucla-environmental-and-molecular-toxicology-phd": (
+        "Aspiring researchers drawn to the adverse effects of chemicals on living organisms, ready to "
+        "investigate dose-response relationships and the factors shaping toxicity across biology, "
+        "chemistry, pharmacology, and medicine; suited to those pursuing an academic or research "
+        "career in toxicology."
+    ),
+    "ucla-epidemiology-phd": (
+        "Aspiring public-health researchers who want to advance the study of how disease is "
+        "distributed and determined in populations and how that knowledge prevents it, building the "
+        "methodological depth for an academic or research career in epidemiology."
+    ),
+    "ucla-health-policy-and-management-phd": (
+        "Aspiring researchers who want to lead health-services research and policy analysis on "
+        "critical local, national, and global health-care problems, collaborating with the "
+        "department's research centers; suited to those pursuing academic careers or research roles "
+        "in universities, agencies, and private organizations."
+    ),
+    "ucla-nursing-bs-prelicensure-ug": (
+        "Future RNs entering nursing through their bachelor's, ready to train as nurse generalists "
+        "across primary, secondary, and tertiary prevention. You want individual- and population- "
+        "based care grounded in current research, plus the early foundations of a clinical leadership "
+        "role."
+    ),
+    "ucla-master-of-science-in-nursing-ms": (
+        "Registered nurses and clinicians pursuing graduate study to advance their practice, drawn to "
+        "nursing as a profession that integrates the art and science of caring. You're committed to "
+        "promoting health, preventing illness, facilitating healing, and easing suffering through "
+        "compassionate presence."
+    ),
+    "ucla-nursing-ms": (
+        "Career-changers from non-nursing backgrounds ready to become registered nurses through an "
+        "accelerated path. You're prepared for an intensive prelicensure curriculum and supervised "
+        "clinical placements that carry you toward RN licensure and advanced practice in one "
+        "continuous program."
+    ),
+    "ucla-nursing-phd": (
+        "Aspiring nursing scientists ready to commit to original dissertation research in nursing "
+        "science, patient care, and health promotion. You want close faculty mentorship, qualifying "
+        "examinations, and sustained doctoral inquiry on the Westwood campus to launch a research "
+        "career."
+    ),
+    "ucla-doctor-of-nursing-practice-prof": (
+        "Experienced advanced-practice nurses aiming for the highest level of clinical leadership. "
+        "You want to translate evidence into practice through advanced clinical training and a "
+        "scholarly project, stepping into roles that shape and lead patient care at the point of "
+        "delivery."
+    ),
+    "ucla-public-affairs-ug": (
+        "Undergraduates drawn to how governments implement public policy and manage programs that "
+        "tackle social and economic problems, and who want a liberal-arts foundation in public "
+        "administration before pursuing careers or graduate study in policy and public management."
+    ),
+    "ucla-master-of-public-policy-ms": (
+        "Aspiring policy analysts and program managers who want to design and implement the laws, "
+        "regulations, and programs that govern fields like education, health care, employment, "
+        "finance, and transportation, and who seek applied skills for careers across the public "
+        "administration of these issues."
+    ),
+    "ucla-master-of-real-estate-development-ms": (
+        "Professionals aiming to lead real-estate development projects who want grounding in finance, "
+        "design, and policy, learning through case studies and a hands-on capstone development "
+        "project toward careers in development, investment, and urban real estate."
+    ),
+    "ucla-master-of-social-welfare-ms": (
+        "Future clinical social workers pursuing LCSW licensure who want to pair field practica at "
+        "Los Angeles agencies with coursework in human behavior, social policy, and evidence-based "
+        "practice, preparing for direct clinical work in community settings."
+    ),
+    "ucla-master-of-urban-and-regional-planning-ms": (
+        "Those drawn to shaping land use and the built environment, planning transportation, "
+        "infrastructure, and the physical layout of cities and regions, and who want the applied "
+        "professional training to lead this work in public, private, or community planning roles."
+    ),
+    "ucla-master-of-urban-and-regional-planning-institut-detudes-de-paris-ms": (
+        "Planning students seeking an international, dual-degree path who want to study governance of "
+        "large metropolises at the Urban School of Sciences Po in Paris alongside urban and regional "
+        "planning at UCLA, building toward careers spanning both contexts."
+    ),
+    "ucla-social-welfare-phd": (
+        "Aspiring scholars who want to research and teach on poverty, child welfare, health "
+        "disparities, and community interventions, building original dissertation research toward an "
+        "academic or research career in social welfare."
+    ),
+    "ucla-urban-planning-phd": (
+        "Aspiring academics and researchers focused on land use, the built environment, "
+        "transportation, and infrastructure who want rigorous doctoral training to study how cities "
+        "and regions are planned and to pursue scholarship and teaching in urban planning."
+    ),
+    "ucla-education-and-social-transformation-ug": (
+        "Undergraduates drawn to how learning happens across formal schools, non-formal programs, and "
+        "everyday informal experience, and to the institutional frameworks shaping early childhood "
+        "through tertiary levels. A fit for those wanting a foundation in education before teaching, "
+        "policy, or graduate study."
+    ),
+    "ucla-education-ms": (
+        "Educators and aspiring practitioners ready to deepen their grounding in how knowledge and "
+        "character are taught across formal, non-formal, and informal settings, and across the levels "
+        "from early childhood through tertiary. Best for those pursuing teaching or applied roles in "
+        "schools."
+    ),
+    "ucla-master-of-education-ms": (
+        "Working or prospective teachers seeking a master's that frames education across formal "
+        "schooling, non-formal programs, and informal daily learning, spanning early childhood "
+        "through tertiary levels. Suited to those building careers in classrooms and educational "
+        "organizations."
+    ),
+    "ucla-master-of-library-and-information-science-ms": (
+        "Aspiring librarians, archivists, and records or information managers who want to master how "
+        "recorded information is created, organized, documented, and used. A fit for those entering "
+        "professional practice in libraries, archives, and information management."
+    ),
+    "ucla-doctor-of-education-phd": (
+        "Experienced education practitioners ready to step into leadership of schools and educational "
+        "organizations, who want applied research paired with coursework in policy, learning, and "
+        "organizational change. Best for those advancing from practice into senior leadership."
+    ),
+    "ucla-education-phd": (
+        "Aspiring education researchers prepared to pursue original dissertation work on how "
+        "knowledge, skills, and character are transmitted, with faculty mentorship and qualifying "
+        "examinations. Suited to scholars committed to academic careers grounded in Westwood-based "
+        "study."
+    ),
+    "ucla-information-studies-phd": (
+        "Aspiring information-science researchers focused on how information is analyzed, classified, "
+        "stored, retrieved, and protected, and on the interaction between people, organizations, and "
+        "information systems. A fit for scholars aiming to create, improve, and understand those "
+        "systems."
+    ),
+    "ucla-special-education-phd": (
+        "Aspiring special-education researchers and scholars ready to pursue doctoral study in the "
+        "field, offered jointly by UCLA and California State University, Los Angeles. Best for those "
+        "committed to advancing research and academic careers in special education."
+    ),
+    "ucla-architectural-studies-ug": (
+        "Undergraduates drawn to the built environment who want to understand architecture as a "
+        "cultural, creative, and technical practice with social impact. This two-year, liberal-arts- "
+        "grounded major suits those building a broad foundation from design history and theory to "
+        "building technologies, aiming toward graduate school or wide-ranging careers."
+    ),
+    "ucla-art-ug": (
+        "Undergraduate artists ready for sustained studio practice through experimentation across "
+        "ceramics, interdisciplinary studio, new genres, painting and drawing, photography, or "
+        "sculpture. Fits those who want to work between areas while grounding their making in "
+        "contemporary critical theory."
+    ),
+    "ucla-dance-ug": (
+        "Undergraduate dancers who want to integrate technique, composition, and analysis with "
+        "critical inquiry. Suits students ready to pursue a primary and secondary research area among "
+        "creative inquiry as research, critical dance studies, and dance and civic engagement, "
+        "including transfers with prior dance coursework."
+    ),
+    "ucla-design-media-arts-ug": (
+        "Undergraduate designers drawn to visual communication and interactive media who want to "
+        "master form, color, typography, motion, and interactivity. Fits those balancing theory, "
+        "criticism, and studio practice, eager to explore time, motion, and computer-generated "
+        "environments while grounding their work in design principles."
+    ),
+    "ucla-individual-field-of-concentration-ba-in-arts-and-architecture-ug": (
+        "Self-directed undergraduates in the arts who want to design their own B.A., weaving studio "
+        "practice with critical and historical study across multiple arts disciplines rather than "
+        "following a single departmental track."
+    ),
+    "ucla-world-arts-and-cultures-ug": (
+        "Undergraduates drawn to art-making across cultures who want a cross-cultural, "
+        "interdisciplinary path joining practice, community engagement, and multimedia analysis. "
+        "Suits those eager to study theories of culture, local-versus-global art perception, and how "
+        "colonialism has been understood and resisted worldwide."
+    ),
+    "ucla-architecture-ms": (
+        "Graduate students aiming to pursue research and scholarship in architecture rather than "
+        "professional practice. Fits aspiring academics and applied researchers preparing for "
+        "scholarly careers or research and consulting roles in the field."
+    ),
+    "ucla-architecture-and-urban-design-ms": (
+        "Practicing architects who already hold a first professional degree and want intensive, "
+        "advanced concentration in a chosen area of professional specialization. Suits those ready "
+        "for self-supporting study to deepen expertise in architecture and urban design."
+    ),
+    "ucla-art-ms": (
+        "Graduate students seeking advanced expertise in the discipline of art through seminars, "
+        "methods training, and a thesis or capstone. Fits those wanting rigorous academic grounding "
+        "in art at the Westwood campus."
+    ),
+    "ucla-choreographic-inquiry-ms": (
+        "Choreographers and dance artists ready to develop original performance research at the "
+        "graduate level. Fits those who want to integrate studio practice, critical theory, and "
+        "community-engaged, interdisciplinary work within World Arts and Cultures/Dance."
+    ),
+    "ucla-culture-and-performance-ms": (
+        "Doctoral students in culture and performance who earn this master's en route to the PhD. "
+        "Fits aspiring scholars pursuing the degree as a milestone within their doctoral research "
+        "program."
+    ),
+    "ucla-design-media-arts-ms": (
+        "Media artists pursuing advanced, professional-quality work with the field's most current "
+        "technologies over three years. Fits those ready to develop an individual thesis project "
+        "grounded in in-depth research and theory, culminating in a final exhibition."
+    ),
+    "ucla-master-of-architecture-ms": (
+        "Aspiring architects pursuing a NAAB-accredited first professional degree, including those "
+        "with no prior architecture background as well as four-year-degree holders ready for advanced "
+        "standing. Fits those preparing for professional careers in architectural practice."
+    ),
+    "ucla-architecture-phd": (
+        "Aspiring architecture scholars ready to pursue original dissertation research in design, "
+        "history, theory, or building technology. Fits those seeking faculty mentorship, qualifying "
+        "examinations, and sustained doctoral work at the Westwood campus."
+    ),
+    "ucla-culture-and-performance-phd": (
+        "Aspiring scholars of performance and cultural expression ready for original dissertation "
+        "research in performance, ritual, and the anthropology of cultural expression. Fits those "
+        "seeking faculty mentorship, qualifying examinations, and sustained doctoral work at the "
+        "Westwood campus."
+    ),
+    "ucla-film-and-television-ug": (
+        "Undergraduate storytellers who want to make and analyze screen work, moving between "
+        "production workshops, screenwriting, and critical studies while drawing on the UCLA Film & "
+        "Television Archive and mentors across the Los Angeles entertainment industry."
+    ),
+    "ucla-individual-field-of-concentration-ba-in-theater-film-and-television-ug": (
+        "Highly motivated TFT undergraduates whose specific interest spans or exceeds existing "
+        "majors, ready to design their own course of study with faculty sponsorship by combining two "
+        "or more fields or proposing a wholly new one that no current UCLA major covers."
+    ),
+    "ucla-theater-ug": (
+        "Undergraduate theater makers who want a liberal arts foundation joining critical study with "
+        "hands-on practice in acting, design, directing, playwriting, and production, building toward "
+        "creative careers, further training, or graduate study through advanced electives in their "
+        "chosen craft."
+    ),
+    "ucla-film-and-television-ma-ms": (
+        "Students developing a personal vision in film and television who want a graduate liberal "
+        "arts grounding across history, theory, and critical thinking alongside animation, "
+        "screenwriting, and the fundamentals of film, video, and television production."
+    ),
+    "ucla-film-and-television-mfa-ms": (
+        "Filmmakers seeking an intensive studio and creative-practice master's to develop a personal "
+        "directorial vision, training across animation, screenwriting, and the fundamentals of film, "
+        "video, and television production toward careers in the industry."
+    ),
+    "ucla-theater-ms": (
+        "Graduate students deepening expertise in theater, performance, and dramatic practice through "
+        "seminars, methods training, and a thesis or capstone, seeking advanced study within UCLA's "
+        "School of Theater, Film, and Television on the Westwood campus."
+    ),
+    "ucla-film-and-television-phd": (
+        "Aspiring film and television scholars pursuing doctoral research grounded in history, "
+        "theory, and critical thinking, alongside knowledge of animation, screenwriting, and "
+        "production practice, toward academic careers studying the breadth of screen media."
+    ),
+    "ucla-theater-and-performance-studies-phd": (
+        "Aspiring scholars drawn to performance studies as an interdisciplinary lens, ready to "
+        "research how performance operates across theatrical events, rituals, ceremonies, sporting "
+        "and political occasions, language, and identity, while developing their own performance "
+        "skills."
+    ),
+    "ucla-ethnomusicology-ug": (
+        "Undergraduate musicians drawn to the music cultures of the world who want to play in "
+        "ensembles from varied traditions while grounding themselves in global music theory and the "
+        "study of how music, society, and culture intertwine."
+    ),
+    "ucla-global-jazz-studies-ug": (
+        "Undergraduate jazz players and singers steeped in the music's roots from blues, spirituals, "
+        "and European harmony to African rhythm, ready to develop swing, blue notes, complex chords, "
+        "polyrhythm, and improvisation as a serious form of musical expression."
+    ),
+    "ucla-music-ug": (
+        "Undergraduate musicians who want a broad foundation spanning composition, improvisation, and "
+        "performance, and who see music as a versatile medium for human creativity rather than "
+        "committing early to a single specialized track."
+    ),
+    "ucla-music-composition-ug": (
+        "Undergraduate composers who want to create original vocal and instrumental works, learning "
+        "to structure pieces and handle orchestration, whether writing in classical notation or "
+        "building songs by ear and from memory."
+    ),
+    "ucla-music-education-ug": (
+        "Undergraduate musicians who want to teach music in schools, combining performance, theory, "
+        "and conducting with pedagogy and supervised teaching while working toward California "
+        "teaching credentials."
+    ),
+    "ucla-music-history-and-industry-ug": (
+        "Undergraduates who love music as an art form but want to study the music industry through a "
+        "musicology lens, gaining popular-music creation and production skills plus fiscal, "
+        "entrepreneurial, and legal training, capped by a Los Angeles industry internship."
+    ),
+    "ucla-music-industry-ug": (
+        "Undergraduate musicians who want to pair music study with business and entrepreneurship, "
+        "gaining hands-on experience across the recording, publishing, and live-music sectors of the "
+        "entertainment industry."
+    ),
+    "ucla-music-performance-ug": (
+        "Undergraduate instrumentalists and vocalists ready for intensive applied study on a "
+        "principal instrument or voice, building toward recitals through private lessons and "
+        "ensembles alongside a core of music theory and history."
+    ),
+    "ucla-musicology-ug": (
+        "Undergraduates with a musical background whose career goals lie outside professional "
+        "performance, who want humanities-grounded training in the study of music and a foundation "
+        "for graduate programs in music and related fields."
+    ),
+    "ucla-ethnomusicology-ms": (
+        "Musicians and scholars seeking advanced graduate training in ethnomusicology, specializing "
+        "in systematic musicology or music and anthropology, and preparing for university teaching or "
+        "careers in archiving, the music industry, public service, or music technology."
+    ),
+    "ucla-master-of-music-ms": (
+        "Musicians ready for graduate-level study of music as a versatile medium of human creativity, "
+        "seeking advanced training across its core elements of form, harmony, melody, and rhythm."
+    ),
+    "ucla-music-ms": (
+        "Musicians pursuing advanced graduate expertise in composition, performance, history, and "
+        "theory, ready for graduate seminars and methods training culminating in a thesis or "
+        "capstone."
+    ),
+    "ucla-musicology-ms": (
+        "Scholars seeking advanced graduate training in musicology, building bibliographical skills "
+        "and research methodologies to prepare for careers in teaching and other research-driven "
+        "fields."
+    ),
+    "ucla-ethnomusicology-phd": (
+        "Aspiring scholars committed to doctoral research in ethnomusicology, specializing in "
+        "systematic musicology or music and anthropology, and aiming for university teaching or "
+        "careers in archiving, public service, the music industry, or music technology."
+    ),
+    "ucla-music-dma-phd": (
+        "Advanced performers and creative artists pursuing the highest level of performance and "
+        "creative research in music, ready to treat sound and its expressive elements as the subject "
+        "of doctoral-level artistry."
+    ),
+    "ucla-music-phd-phd": (
+        "Aspiring music scholars pursuing doctoral research into music as a cultural universal, "
+        "prepared to investigate its defining elements of form, harmony, melody, and rhythm at the "
+        "deepest scholarly level."
+    ),
+    "ucla-musicology-phd": (
+        "Aspiring scholars pursuing a doctorate in musicology, developing the bibliographical skills "
+        "and research methodologies needed for university teaching and other research-intensive "
+        "careers."
+    ),
+}
+
+_missing_who = [s for s in PROGRAM_SLUGS if s not in _WHO_BY_SLUG]
+if _missing_who:
+    raise ValueError(
+        f"UCLA who_its_for missing on {len(_missing_who)} rows: {_missing_who[:5]}"
+    )
+_stray_who = [s for s in _WHO_BY_SLUG if s not in set(PROGRAM_SLUGS)]
+if _stray_who:
+    raise ValueError(f"UCLA who_its_for has stray slugs: {_stray_who[:5]}")
 
 
 def _program_standard(slug: str, spec: dict) -> dict:
@@ -5344,7 +7325,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
         p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
-        p.who_its_for = None
+        p.who_its_for = _WHO_BY_SLUG.get(slug)
         p.highlights = None
         p.application_deadline = None
     session.flush()
