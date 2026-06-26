@@ -65,6 +65,11 @@ export default function StrategyView({ forceExpanded = false }: { forceExpanded?
     queryFn: () => listGoals('active'),
     enabled: !strategy && !strategyError,
   })
+  // The backend requires at least one ACADEMIC goal to generate a strategy
+  // (strategy_service raises 400 otherwise), so gate the CTA on that — not on
+  // any active goal — or a student with only social/personal goals sees an
+  // enabled "Generate strategy" button that errors on click.
+  const academicGoals = goals.filter((g) => g.category === 'academic')
 
   // Spec 09 §3 / §12 — "Generate" (no active yet) and "Regenerate" (refresh the
   // active) both produce a *visible* active strategy: generate the new version,
@@ -116,7 +121,7 @@ export default function StrategyView({ forceExpanded = false }: { forceExpanded?
   }
 
   // State 1 — no goals at all → push student back to Discover.
-  if (!strategy && goals.length === 0) {
+  if (!strategy && academicGoals.length === 0) {
     return (
       <Card className="bg-muted border-border">
         <div className="flex items-start justify-between gap-3">
@@ -148,7 +153,7 @@ export default function StrategyView({ forceExpanded = false }: { forceExpanded?
                 Ready to plan your strategy.
               </div>
               <div className="text-xs text-foreground mt-1">
-                You have {goals.length} active goal{goals.length === 1 ? '' : 's'}.
+                You have {academicGoals.length} academic goal{academicGoals.length === 1 ? '' : 's'}.
               </div>
             </div>
           </div>
