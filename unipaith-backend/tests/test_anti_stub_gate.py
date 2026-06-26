@@ -29,7 +29,7 @@ from unipaith.profile_standard.anti_stub import (
 # Grow as scrape-built catalogs are researched per-program (UT-Austin still carries it).
 SCRAPE_DEBRIS_CLEAN = [
     "mit", "usc", "uiuc", "nyu", "columbia", "michigan", "cornell", "bu", "brown",
-    "vanderbilt", "dartmouth", "georgetown", "washu", "uva", "unc", "ucdavis",
+    "vanderbilt", "dartmouth", "georgetown", "washu", "uva", "unc", "ucdavis", "uci",
 ]
 
 # Catalogs whose per-program descriptions have been verified gold-equal (every metric 0).
@@ -138,6 +138,18 @@ CERTIFIED_CLEAN = [
     #             verified gallery, published tuition per tier (undergrad non-resident scalar,
     #             UCOP grad-academic + professional rates, funded PhDs, per-program omits with
     #             the verified UCOP PDST), sourced reviews on DVM / MBA / JD / MD (ucdavisprof1)
+    "uci",  # institution seed (5 empty-desc stubs) → gold + verified 160-program catalog
+    #             across the fifteen schools (Humanities, Social Sciences, Biological
+    #             Sciences, Physical Sciences, Bren ICS, Samueli Engineering, Claire Trevor
+    #             Arts, Social Ecology, Merage Business, Education, Wen Public Health, Gross
+    #             Nursing, Law, Medicine, Pharmacy); catalogue.uci.edu conferred
+    #             B.A./B.S./B.F.A./B.Mus./M.A./M.S./M.F.A./Ph.D./J.D./M.D./PharmD names, real
+    #             owning departments, field-specific per-program descriptions, cip_code +
+    #             who_its_for on every row; news.uci.edu RSS feed, 5-photo verified gallery;
+    #             published 2025-26 tuition per tier (undergrad non-resident scalar + both
+    #             rates in the breakdown, registrar professional rates, funded PhDs,
+    #             self-supporting omits-with-reason); sourced reviews on the MBA / JD / MD
+    #             (uciprof1)
     # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
     # junk; re-added after stanfordprof11 regeneration matching Michigan/UW repair model.
 ]
@@ -210,7 +222,7 @@ _FRAME_STRIPPED_CLEAN = [
     "mit", "rice", "uf", "usc", "uw_madison", "jhu", "uiuc", "uw", "harvard", "nyu",
     "ut_austin", "columbia", "michigan", "duke", "georgia_tech", "ucla", "berkeley",
     "stanford",     "penn", "cornell", "notre_dame", "bu", "vanderbilt", "ucsd",
-    "dartmouth", "georgetown", "washu", "uva", "unc", "ucdavis",
+    "dartmouth", "georgetown", "washu", "uva", "unc", "ucdavis", "uci",
 ]
 
 
@@ -240,7 +252,7 @@ def test_credential_siblings_have_no_frame_stripped_shared_body(name: str):
 _ABS_FLOOR_CLEAN = [
     "nyu", "mit", "columbia", "michigan", "ucla", "jhu", "berkeley", "uf", "stanford",
     "penn", "cornell", "ut_austin", "notre_dame", "bu", "vanderbilt", "ucsd", "dartmouth",
-    "georgetown", "washu", "uva", "unc", "ucdavis",
+    "georgetown", "washu", "uva", "unc", "ucdavis", "uci",
 ]
 
 
