@@ -1,0 +1,64 @@
+"""UVA — re-apply uva_profile after review-feedback fixes (degree_type / delivery / requirements)
+
+Follow-up to ``uvaprof1`` addressing the Codex review on PR #1174 (all verified):
+- Doctor of Nursing Practice ``degree_type`` ``phd`` → ``professional`` (a practice
+  doctorate belongs with JD/MD, not the research-PhD bucket, for degree-type filters).
+- M.S. in Data Science + M.S. in Business Analytics ``delivery_format`` → ``hybrid`` and
+  ``part_time_available`` → True (both publish an online / part-time format, so the
+  online/part-time discovery filters now surface them).
+- The LL.M. now takes graduate-law admissions requirements instead of the J.D.'s
+  LSAT/CAS checklist.
+
+The data fix lives in ``uva_profile`` (``apply()`` is idempotent); this migration just
+re-runs it so the changed rows update in place. No structural schema change.
+
+Deploy-safety (washuprof1/uvaprof1 pattern): the idempotent data apply runs inside a
+SAVEPOINT bounded by ``lock_timeout`` and is SKIPPED rather than hanging container boot if
+it cannot get its locks quickly. The migration still records as applied so the chain
+advances; ``uva_profile.apply()`` is idempotent and the routine re-applies it.
+
+Revision ID: uvarev1
+Revises: uvaprof1
+Create Date: 2026-06-26
+"""
+
+from __future__ import annotations
+
+from sqlalchemy import select, text
+from sqlalchemy.orm import Session
+
+from alembic import op
+from unipaith.data import uva_profile
+from unipaith.models.institution import Institution
+from unipaith.services.match.derive_preferences import backfill_program_preferences
+
+revision = "uvarev1"
+down_revision = "uvaprof1"
+branch_labels = None
+depends_on = None
+
+
+def upgrade() -> None:
+    bind = op.get_bind()
+    session = Session(bind=bind)
+    try:
+        session.execute(text("SET LOCAL lock_timeout = '30s'"))
+        with session.begin_nested():
+            uva_profile.apply(session)
+            inst = session.scalar(
+                select(Institution).where(
+                    Institution.name == uva_profile.INSTITUTION_NAME
+                )
+            )
+            if inst is not None:
+                backfill_program_preferences(session, institution_id=inst.id)
+        session.flush()
+    except Exception as exc:  # noqa: BLE001 — never let a data re-apply freeze the deploy
+        print(
+            f"  uvarev1: data re-apply skipped "
+            f"({type(exc).__name__}: {str(exc)[:140]})"
+        )
+
+
+def downgrade() -> None:
+    pass

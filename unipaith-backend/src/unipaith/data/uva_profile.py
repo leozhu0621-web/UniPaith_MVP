@@ -1695,6 +1695,7 @@ _CATALOG: list[dict] = [
         program_name="Master of Science in Business Analytics",
         department="McIntire School of Commerce", cip="52.13", duration_months=12,
         keywords=["business analytics", "data"], tuition=_MSBA,
+        part_time=True, delivery_format="hybrid",
         cost_source=_BOV_SRC,
         cost_note=(
             "2025-26 M.S. in Business Analytics program tuition (McIntire-Darden joint "
@@ -1819,6 +1820,7 @@ _CATALOG: list[dict] = [
         program_name="Master of Science in Data Science",
         department="School of Data Science", cip="30.70", duration_months=12,
         keywords=["data science", "MSDS"], tuition=_MSDS,
+        delivery_format="hybrid", part_time=True,
         cost_source=_BOV_SRC,
         cost_note=(
             "2025-26 residential M.S. in Data Science non-resident annual tuition (Board of "
@@ -2067,7 +2069,7 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-dnp", school=_NURSING, degree_type="phd",
+        slug="uva-dnp", school=_NURSING, degree_type="professional",
         program_name="Doctor of Nursing Practice",
         department="School of Nursing", cip="51.38", duration_months=36,
         keywords=["nursing", "DNP", "doctoral"], tuition=_DNP,
@@ -2192,6 +2194,7 @@ PROGRAMS: list[dict] = [
         "cost_note": r.get("cost_note"),
         "cost_source": r.get("cost_source"),
         "omit_tuition_reason": r.get("omit_tuition_reason"),
+        "part_time": r.get("part_time"),
     }
     for r in _CATALOG
 ]
@@ -2296,6 +2299,18 @@ _REQ_LAW = {
     "deadlines": {"regular_decision": "Rolling (see admissions site)"},
     "source": "https://www.law.virginia.edu/admissions",
 }
+_REQ_LLM = {
+    "materials": [
+        "Graduate studies application + personal statement",
+        "Law degree from a non-U.S. institution (or equivalent legal training)",
+        "Academic transcripts",
+        "Letters of recommendation",
+        "English-proficiency scores (TOEFL/IELTS) for non-native speakers",
+        "Resume",
+    ],
+    "deadlines": {"note": "See the School of Law graduate studies admissions page."},
+    "source": "https://www.law.virginia.edu/graduatestudies",
+}
 _REQ_MED = {
     "materials": [
         "AMCAS application + UVA secondary",
@@ -2312,7 +2327,9 @@ _REQ_MED = {
 def _requirements_for(spec: dict) -> dict:
     school = spec["school"]
     if school == _LAW:
-        return dict(_REQ_LAW)
+        # The J.D. takes the LSAT/CAS path; the LL.M. (a graduate degree for lawyers
+        # already trained abroad) takes graduate-law requirements, not the J.D. checklist.
+        return dict(_REQ_LAW) if spec["degree_type"] == "professional" else dict(_REQ_LLM)
     if school == _MEDICINE and spec["degree_type"] == "professional":
         return dict(_REQ_MED)
     if spec["slug"] == "uva-darden-mba":
@@ -2839,6 +2856,8 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.is_published = True
         p.catalog_source = "curated"
         p.delivery_format = spec["delivery_format"]
+        if spec.get("part_time") is not None:
+            p.part_time_available = spec["part_time"]
         p.content_sources = _program_content(spec["school"], spec["keywords"])
         if spec["degree_type"] == "bachelors":
             p.tuition = _UG_OOS
