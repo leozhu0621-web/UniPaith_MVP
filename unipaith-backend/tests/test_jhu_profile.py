@@ -161,6 +161,40 @@ def test_matcher_core_tuition_is_published_catalog_wide():
     assert covered == len(j.PROGRAMS)
 
 
+def test_matcher_core_cip_code_complete_and_well_formed():
+    """Every program carries a 6-digit NCES cip_code whose 2-digit family matches
+    the College Scorecard cip already used for breadth (REPAIR_BACKLOG #1)."""
+    import json as _json
+    import re
+
+    ref = {_json.loads(line)["cip_code"] for line in open("data/reference/ref_majors.jsonl")}
+    # Scorecard 4-digit families whose NCES dedicated 6-digit code lives in a
+    # different family (the Scorecard aggregate is broader than the real code).
+    # The program is name-aliased in field_canon, so the field signal is preserved.
+    family_exceptions = {"11.08"}  # Data Science -> 30.7001 (Data Science, General)
+    missing = [s for s, c in j.CIP6_BY_SLUG.items() if not c]
+    assert not missing, f"programs missing cip_code: {missing[:8]}"
+    for spec in j.PROGRAMS:
+        slug = spec["slug"]
+        cip6 = j.CIP6_BY_SLUG[slug]
+        assert re.match(r"^\d{2}\.\d{4}$", cip6), f"{slug}: cip6 not 6-digit: {cip6!r}"
+        assert cip6 in ref, f"{slug}: cip6 {cip6} absent from ref_majors vocabulary"
+        if spec.get("cip") not in family_exceptions:
+            assert cip6[:2] == (spec.get("cip") or "")[:2], (
+                f"{slug}: cip6 family {cip6[:2]} != Scorecard family {spec.get('cip')}"
+            )
+
+
+def test_who_its_for_complete_and_program_distinct():
+    """who_its_for is filled on every program and program-DISTINCT, not a
+    degree-type template (REPAIR_BACKLOG #4a, miss #8 distinctness)."""
+    missing = [s for s, w in j.WHO_BY_SLUG.items() if not w]
+    assert not missing, f"programs missing who_its_for: {missing[:8]}"
+    values = list(j.WHO_BY_SLUG.values())
+    ratio = len(set(values)) / len(values)
+    assert ratio >= 0.9, f"who_its_for type-gamed: distinct/total {ratio:.2f} < 0.9"
+
+
 def test_graduate_tiers_carry_published_tuition():
     """Whole graduate tiers at 0% is matcher starvation — each tier must be filled."""
     from collections import Counter

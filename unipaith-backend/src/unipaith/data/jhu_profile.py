@@ -82,6 +82,7 @@ from unipaith.data.jhu_catalog_maps import (
     SLUG_PROGRAM_NAMES,
     clean_cip_field,
 )
+from unipaith.data.jhu_cip_who import CIP6_BY_CIP4, compose_who
 from unipaith.data.jhu_field_descriptions import FIELD_DESCRIPTIONS
 from unipaith.data.jhu_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.data.jhu_reviews_depth import DEPTH_REVIEWS
@@ -91,7 +92,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 from unipaith.profile_standard.anti_stub import frame_stripped_shared_body
 
 INSTITUTION_NAME = "Johns Hopkins University"
-ENRICHED_AT = "2026-06-22"
+ENRICHED_AT = "2026-06-26"
 
 # IPEDS CIP rows with no real JHU degree page — omit rather than fabricate.
 _EXCLUDED_SLUGS = frozenset({
@@ -657,6 +658,46 @@ if _catalog_errors:
     raise RuntimeError(f"JHU catalog quality gate failed: {_catalog_errors}")
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 _SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
+
+
+# ---------------------------------------------------------------------------
+# Matcher-core fields (REPAIR_BACKLOG #1 / #4a; SKILL miss #2 + miss #8):
+# stamp a verified ``cip_code`` and a program-DISTINCT ``who_its_for`` on every
+# program. ``cip_code`` upgrades the catalog's College Scorecard 4-digit family
+# to its NCES 6-digit code (2-digit family preserved, so the matcher signal is
+# unchanged). ``who_its_for`` is a field-specific lead + credential tail, so a
+# field's credential siblings read differently. Build fails loudly if either is
+# missing or if ``who_its_for`` distinctness collapses (the type-gaming tell).
+# ---------------------------------------------------------------------------
+CIP6_BY_SLUG: dict[str, str] = {
+    p["slug"]: CIP6_BY_CIP4.get(p.get("cip")) for p in PROGRAMS
+}
+WHO_BY_SLUG: dict[str, str | None] = {
+    p["slug"]: compose_who(_field_from_program_name(p["program_name"]), p["degree_type"])
+    for p in PROGRAMS
+}
+
+_cip_missing = [s for s, c in CIP6_BY_SLUG.items() if not c]
+if _cip_missing:
+    raise RuntimeError(
+        f"JHU cip_code missing on {len(_cip_missing)} rows: {_cip_missing[:5]}"
+    )
+_who_missing = [s for s, w in WHO_BY_SLUG.items() if not w]
+if _who_missing:
+    _miss_fields = sorted(
+        {_field_from_program_name(_SPEC_BY_SLUG[s]["program_name"]) for s in _who_missing}
+    )
+    raise RuntimeError(
+        f"JHU who_its_for missing on {len(_who_missing)} rows; "
+        f"WHO_BY_FIELD lacks: {_miss_fields[:8]}"
+    )
+_who_values = list(WHO_BY_SLUG.values())
+_who_ratio = len(set(_who_values)) / len(_who_values)
+if _who_ratio < 0.9:
+    raise RuntimeError(
+        f"JHU who_its_for type-gamed: distinct/total {_who_ratio:.2f} < 0.9 "
+        "(field-specific statements required, not a degree-type template)"
+    )
 
 _TUITION_UG = 65230
 _UNDERGRAD_COA = 85947
@@ -1325,6 +1366,8 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         kw = _PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(_KEYWORDS_BY_SCHOOL[spec["school"]])
         p.content_sources = _program_content(spec["school"], kw)
         p.tuition, p.cost_data = _program_tuition(spec)
+        p.cip_code = CIP6_BY_SLUG.get(slug)
+        p.who_its_for = WHO_BY_SLUG.get(slug)
         p.application_requirements = _requirements_for(spec)
         outcomes = dict(_OUTCOMES_INSTITUTION)
         outcomes["_standard"] = _program_standard(slug, spec)
