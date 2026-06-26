@@ -64,6 +64,8 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from unipaith.data.profile_catalog_utils import validate_catalog
+from unipaith.data.uiuc_cip6 import CIP6_BY_SLUG
+from unipaith.data.uiuc_who import WHO_BY_SLUG
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
@@ -4466,6 +4468,22 @@ def _assert_anti_stub_clean(programs: list[dict]) -> None:
 
 _assert_anti_stub_clean(PROGRAMS)
 
+# Matcher-core coverage gates (REPAIR_BACKLOG #1 + #4): every program carries a real NCES CIP-2020
+# 6-digit code and a program-DISTINCT ``who_its_for`` (no degree-type template). Fail the build if
+# either is missing or if ``who_its_for`` collapses below ~0.9 distinct/total (type-gaming guard).
+_cip_missing = [s for s in PROGRAM_SLUGS if s not in CIP6_BY_SLUG]
+if _cip_missing:
+    raise ValueError(f"UIUC cip_code missing on {len(_cip_missing)} rows: {_cip_missing[:5]}")
+_who_missing = [s for s in PROGRAM_SLUGS if s not in WHO_BY_SLUG]
+if _who_missing:
+    raise ValueError(f"UIUC who_its_for missing on {len(_who_missing)} rows: {_who_missing[:5]}")
+_who_vals = [WHO_BY_SLUG[s] for s in PROGRAM_SLUGS]
+_who_ratio = len(set(_who_vals)) / max(len(_who_vals), 1)
+if _who_ratio < 0.9:
+    raise ValueError(
+        f"UIUC who_its_for type-gamed: distinct/total {_who_ratio:.2f} < 0.9 (must be program-distinct)"
+    )
+
 _WEBSITE_OVERRIDE: dict[str, str] = {
     "uiuc-computer-science-bs": "https://siebelschool.illinois.edu/academics/undergraduate/degree-program-options/bs-computer-science",
     "uiuc-computer-science-online-mcs": "https://siebelschool.illinois.edu/academics/graduate/professional-mcs/online-master-computer-science",
@@ -4611,11 +4629,14 @@ _PROF_TUITION: dict[str, tuple[int, int]] = {
 
 
 def _grad_pub_cost(res: int, nonres: int, note: str, *, intl: int | None = None) -> tuple[int, dict]:
+    # Public-university budget scalar (REPAIR_BACKLOG #2): the CPEF budget feature reads the flat
+    # ``program.tuition`` scalar, so a national/international applicant pool is scored on the
+    # NON-RESIDENT rate; both rates stay in the breakdown.
     bd: dict = {"tuition_in_state": res, "tuition_out_of_state": nonres}
     if intl is not None and intl != nonres:
         bd["tuition_international"] = intl
-    return res, {
-        "tuition_usd": res,
+    return nonres, {
+        "tuition_usd": nonres,
         "breakdown": bd,
         "funded": False,
         "note": note,
@@ -4628,9 +4649,11 @@ def _grad_pub_cost(res: int, nonres: int, note: str, *, intl: int | None = None)
 def _program_tuition(spec: dict) -> tuple[int | None, dict]:
     """Return (matcher_tuition, cost_data) from UIUC-published 2025-26 rates.
 
-    The matcher number is the Illinois-resident annual tuition; the breakdown carries the
-    non-resident rate. PhD rows are stamped 0 (funded) with the published sticker in the note;
-    funding is a separate signal. Online degrees use their published flat total tuition.
+    The matcher number is the NON-RESIDENT published annual tuition (REPAIR_BACKLOG #2 — the CPEF
+    budget feature reads this flat scalar for every applicant, so a public must expose the
+    out-of-state rate); the breakdown carries the Illinois-resident rate. PhD rows are stamped 0
+    (funded) with the published sticker in the note; funding is a separate signal. Online degrees
+    use their published flat total tuition (non-resident annualized where one is published).
     """
     dtype = spec["degree_type"]
     school = spec["school"]
@@ -4652,11 +4675,17 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
             "annual_tuition_in_state": annual_res,
             "program_length_months": months,
         }
+        annual_nonres = None
         if total_nonres:
+            annual_nonres = round(total_nonres / years)
             bd["total_program_tuition_out_of_state"] = total_nonres
-            bd["annual_tuition_out_of_state"] = round(total_nonres / years)
-        return annual_res, {
-            "tuition_usd": annual_res,
+            bd["annual_tuition_out_of_state"] = annual_nonres
+        # Public-university budget scalar (REPAIR_BACKLOG #2): use the non-resident annualized rate
+        # when this online degree publishes one; flat-rate online degrees (iMBA/iMSM/iMSA) charge a
+        # single rate to all students, so their lone published total is the correct scalar.
+        scalar = annual_nonres or annual_res
+        return scalar, {
+            "tuition_usd": scalar,
             "breakdown": bd,
             "funded": False,
             "note": (
@@ -4670,17 +4699,24 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
 
     if dtype == "bachelors":
         note = (
-            f"Published Illinois-resident base undergraduate tuition (new-student cohort, fees "
-            f"excluded). Full published tuition & fees run about ${_UG_TF_RES[0]:,}–${_UG_TF_RES[1]:,} "
-            f"for residents, ${_UG_TF_NONRES[0]:,}–${_UG_TF_NONRES[1]:,} for non-residents, and "
-            f"${_UG_TF_INTL[0]:,}–${_UG_TF_INTL[1]:,} for international students per year; majors in "
-            "differential-tuition colleges (Grainger Engineering, Gies Business, computer science, "
-            "and others) pay toward the top of that range."
+            f"Matcher scalar is the published NON-RESIDENT tuition & fees (general/lowest-college "
+            f"rate, ${_UG_TF_NONRES[0]:,}/yr) so the budget signal reflects the out-of-state and "
+            f"international applicant pool; the Illinois-resident base tuition (${_TUITION_UG_RES:,}, "
+            f"fees excluded) is in the breakdown. Full published tuition & fees run about "
+            f"${_UG_TF_RES[0]:,}–${_UG_TF_RES[1]:,} for residents, ${_UG_TF_NONRES[0]:,}–"
+            f"${_UG_TF_NONRES[1]:,} for non-residents, and ${_UG_TF_INTL[0]:,}–${_UG_TF_INTL[1]:,} "
+            "for international students per year; majors in differential-tuition colleges (Grainger "
+            "Engineering, Gies Business, computer science, and others) pay toward the top of that range."
         )
-        return _TUITION_UG_RES, {
-            "tuition_usd": _TUITION_UG_RES,
+        # Public-university budget scalar (REPAIR_BACKLOG #2): expose the NON-RESIDENT published
+        # tuition & fees (general/lowest-college rate) as the flat matcher scalar so the budget veto
+        # fires correctly for the out-of-state + international applicant pool (the majority at a
+        # flagship public); both the resident base and the residency ranges stay in the breakdown.
+        return _UG_TF_NONRES[0], {
+            "tuition_usd": _UG_TF_NONRES[0],
             "breakdown": {
                 "tuition_in_state": _TUITION_UG_RES,
+                "tuition_out_of_state": _UG_TF_NONRES[0],
                 "tuition_and_fees_in_state_range": list(_UG_TF_RES),
                 "tuition_and_fees_out_of_state_range": list(_UG_TF_NONRES),
                 "tuition_and_fees_international_range": list(_UG_TF_INTL),
@@ -5669,7 +5705,9 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
         p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
-        p.who_its_for = None
+        # Matcher-core CIP join key + universal who_its_for depth (REPAIR_BACKLOG #1 + #4).
+        p.cip_code = CIP6_BY_SLUG.get(slug)
+        p.who_its_for = WHO_BY_SLUG.get(slug)
         p.highlights = None
         p.application_deadline = None
     session.flush()
