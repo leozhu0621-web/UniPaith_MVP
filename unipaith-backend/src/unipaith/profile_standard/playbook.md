@@ -1,9 +1,29 @@
-# Profile sourcing & wording playbook (STANDARD_VERSION 1)
+# Profile sourcing & wording playbook (STANDARD_VERSION 2)
 
 This is the rulebook the enrichment engine (Phase 2) and its verification gate
 follow when filling any profile to the standard. It is derived from how the
 MIT / Sloan / MBAn reference instance is sourced. **Nothing is fabricated: if a
 field cannot be verified per the rules below, it is omitted, never guessed.**
+
+## Definition of done — fully enriched
+
+A node (institution / school / program) is **done only when it is fully
+enriched**: every required field is actually present, sourced per the rules
+below (`profile_standard.is_fully_enriched` / `enrichment_completeness`).
+
+- **Omitted ≠ done.** A field recorded in `_standard.omitted` is *open work*, not
+  a closed gap. The routine re-attempts it every run (the snapshot still shows it
+  missing) and must keep trying as new authoritative sources appear. Omission only
+  protects the no-fabrication guarantee in the meantime — it never marks the node
+  complete, and completeness reporting does not credit it.
+- **Target = 100% present.** The self-driving loop selects the node with the most
+  remaining required fields (not the lowest omitted-tolerant score) and works it
+  until `is_fully_enriched` is true. Stale (`_standard.version` < current) re-opens
+  every field.
+- **Still no fabrication.** "Fully enriched" raises the *target*, never the
+  tolerance: a field is filled only when it clears the verification gate. A node
+  that cannot be completed from real sources stays *open*, reported as partial —
+  never quietly accepted as done.
 
 ## Global rules
 

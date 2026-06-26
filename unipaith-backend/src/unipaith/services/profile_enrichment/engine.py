@@ -6,6 +6,12 @@ and runs it through the verification gate. Accepted values go into a patch (with
 their citations, which are themselves manifest fields); unverifiable fields are
 omitted with a reason — never guessed.
 
+Definition of done: a node is done only when it is **fully enriched** — every
+required field present (``profile_standard.is_fully_enriched``). An omitted field
+is *open work*, not done: it stays missing in the snapshot, so each subsequent run
+``plan``s it again and re-attempts it (e.g. once a new authoritative source
+exists). Omission keeps the no-fabrication guarantee; it does not close the field.
+
 The engine is pure given a ``Researcher``: the live web backend (Spec 60 crawler
 + uni_knowledge) is one adapter; tests use a deterministic fixture adapter. The
 LLM-judge layer (Phase 2b) wraps the deterministic gate, never replaces it.
@@ -58,6 +64,16 @@ class EnrichmentResult:
     filled: list[str] = field(default_factory=list)
     omitted: list[dict] = field(default_factory=list)
     standard_version: int = STANDARD_VERSION
+
+    @property
+    def fully_enriched(self) -> bool:
+        """Done == fully enriched: this run left nothing unfilled.
+
+        ``omitted`` fields are NOT "done" — they are open work the routine
+        re-attempts on the next run (the snapshot still shows them missing, so
+        ``plan`` re-selects them). A node is done only when ``omitted`` is empty.
+        """
+        return not self.omitted
 
 
 def _set_path(patch: dict, path: str, value) -> None:
