@@ -597,7 +597,10 @@ class DiscoveryService:
             .join(DiscoverySession, DiscoveryMessage.session_id == DiscoverySession.id)
             .where(
                 DiscoverySession.student_id == student_id,
-                DiscoverySession.track == "profile",
+                # The default unified conversation runs on the "discovery"
+                # track; personality facets are extracted there too, so the
+                # rail must read both tracks or it stays permanently empty.
+                DiscoverySession.track.in_(("profile", "discovery")),
             )
             .order_by(DiscoveryMessage.created_at)
         )

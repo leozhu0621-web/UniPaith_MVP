@@ -74,19 +74,28 @@ class QueryInterpreterAgent:
         db: AsyncSession | None = None,
     ) -> QueryInterpretResult:
         payload = self._payload(query, profile_summary)
-        response = await self.client.message(
-            agent=self.AGENT_NAME,
-            model="sonnet",
-            system=[{"type": "text", "text": self.system_prompt, "cache_control": CACHE_1H}],
-            messages=[{"role": "user", "content": payload}],
-            tools=[{**SUBMIT_CONSTRAINTS_TOOL, "cache_control": CACHE_1H}],
-            tool_choice={"type": "tool", "name": "submit_constraints"},
-            max_tokens=self.max_tokens,
-            temperature=self.temperature,
-            student_id=student_id,
-            surface="search",
-            db=db,
-        )
+        try:
+            response = await self.client.message(
+                agent=self.AGENT_NAME,
+                model="sonnet",
+                system=[{"type": "text", "text": self.system_prompt, "cache_control": CACHE_1H}],
+                messages=[{"role": "user", "content": payload}],
+                tools=[{**SUBMIT_CONSTRAINTS_TOOL, "cache_control": CACHE_1H}],
+                tool_choice={"type": "tool", "name": "submit_constraints"},
+                max_tokens=self.max_tokens,
+                temperature=self.temperature,
+                student_id=student_id,
+                surface="search",
+                db=db,
+            )
+        except Exception:
+            # Spec 10 §11/§26 — search must never surface a 5xx from the
+            # interpreter. On provider outage, consent denial, or cost-cap the
+            # caller falls back to the deterministic keyword parser.
+            logging.getLogger(__name__).warning(
+                "query interpreter failed; returning no chips", exc_info=True
+            )
+            return QueryInterpretResult()
         chips = self._parse_response(response.content_blocks)
         return QueryInterpretResult(
             chips=chips,

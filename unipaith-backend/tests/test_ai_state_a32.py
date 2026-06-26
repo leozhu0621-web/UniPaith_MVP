@@ -75,8 +75,11 @@ def test_goals_partial_goal_doesnt_count_until_smart_complete() -> None:
     assert "measurable" in v.next_probe_hint.lower() or "signal" in v.next_probe_hint.lower()
 
 
-def test_goals_unconfirmed_doesnt_count() -> None:
-    """Even a fully-SMART goal needs user_confirmed=True."""
+def test_goals_smart_complete_counts_without_confirmation_flag() -> None:
+    """A SMART-complete goal counts toward its category even though the legacy
+    ``user_confirmed`` flag is False — that flag was never wired into the
+    extraction pipeline, so requiring it left the GOALS track permanently at
+    0%. SMART-completeness is the real signal."""
     snap = StudentSnapshot(
         goals=[
             GoalEntry(
@@ -87,11 +90,14 @@ def test_goals_unconfirmed_doesnt_count() -> None:
                 relevant="ok",
                 time_bound="2027",
                 completeness=1.0,
-                user_confirmed=False,  # NOT confirmed
+                user_confirmed=False,  # never set by the pipeline
             )
         ]
     )
     v = evaluate_goals_track(snap)
+    # academic now satisfied; track still needs social + personal.
+    assert "goals.academic" not in v.missing_signals
+    assert v.completion_pct == Decimal("0.333")
     assert v.layer_complete is False
 
 
@@ -143,10 +149,7 @@ def test_needs_partial_coverage() -> None:
 
 def test_needs_full_complete() -> None:
     snap = StudentSnapshot(
-        needs=[
-            NeedEntry(maslow_level=lv, signal=f"{lv}-tag")
-            for lv in MASLOW_LEVELS
-        ]
+        needs=[NeedEntry(maslow_level=lv, signal=f"{lv}-tag") for lv in MASLOW_LEVELS]
     )
     v = evaluate_needs_track(snap)
     assert v.layer_complete is True

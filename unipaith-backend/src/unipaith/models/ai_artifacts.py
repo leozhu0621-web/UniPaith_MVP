@@ -138,7 +138,12 @@ class AiTurn(Base, UUIDPrimaryKeyMixin):
             # Spec 40 §5 — recruitment CRM agents (prospect ranking + territory planning).
             "'prospect_prioritizer','territory_optimizer',"
             # Spec 41 §5 — graduate-admissions agents (advisor fit, SoP extraction, funding mix).
-            "'advisor_matcher','sop_interest_extractor','funding_scenario_helper')",
+            "'advisor_matcher','sop_interest_extractor','funding_scenario_helper',"
+            # Discovery handoff strategy generator, offer outcome-brief, and
+            # identity-summary narrators. These wrote audit rows the CHECK
+            # rejected, so every successful call died on db.flush() in prod
+            # (mock_mode hides it in tests). See migration aiturnagents1.
+            "'strategy','outcome_brief','identity_summary')",
             name="ck_ai_turns_agent",
         ),
         # Spec 03 §8 + spec 63 §16: provider tracked per call so the cost ledger
