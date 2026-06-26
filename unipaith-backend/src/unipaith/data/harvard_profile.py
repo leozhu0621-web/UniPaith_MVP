@@ -70,6 +70,9 @@ from datetime import date
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.harvard_cip_who import _WHO_BY_SLUG as _WHO_OVERRIDES
+from unipaith.data.harvard_cip_who import CIP_BY_SLUG as _CIP_BY_SLUG
+from unipaith.data.harvard_cip_who import compose_who as _compose_who
 from unipaith.data.harvard_field_descriptions import (
     FIELD_ALIASES,
     FIELD_DESCRIPTIONS,
@@ -3026,22 +3029,26 @@ _COST_SRC_BY_SCHOOL: dict[str, tuple[str, str]] = {
     _DCE: ("Harvard Extension School", "https://extension.harvard.edu/paying-for-school/"),
 }
 
-# ── Who-it's-for + highlights ──────────────────────────────────────────────
-_WHO_BY_TYPE = {
-    "bachelors": "Applicants seeking a rigorous liberal-arts-and-sciences education at Harvard.",
-    "masters": "Students seeking advanced, professional, or specialized graduate training.",
-    "phd": "Researchers pursuing an academic or research career through a funded doctorate.",
-    "certificate": "Learners worldwide seeking a focused Harvard credential online.",
-}
-_WHO_BY_SLUG = {
-    "harvard-mba": "Early-to-mid-career professionals targeting general management and leadership.",
-    "harvard-jd": "Aspiring lawyers and legal scholars across every field of law.",
-    "harvard-md": "Future physicians and physician-scientists.",
-    "harvard-mpp": "Future policy analysts and public-sector leaders.",
-    "harvard-mpa": "Experienced professionals advancing into public-service leadership.",
-    "harvard-mph": "Clinicians, scientists, and leaders advancing population health.",
-    "harvard-edm": "Educators and leaders driving change in schools and learning organizations.",
-}
+# ── Matcher-core CIP join key (REPAIR_BACKLOG #1) ──────────────────────────
+# Verified CIP per program, in precedence order: (1) the spec's own CIP (IPEDS
+# Field-of-Study breadth rows); (2) harvard_cip_who.CIP_BY_SLUG for the curated
+# professional/flagship rows whose field is not in the IPEDS set; (3) the IPEDS
+# field→CIP map for a flagship academic row whose field IS in the IPEDS catalog
+# (e.g. Economics, Physics) but which carries no inline CIP. field_canon reads the
+# 2-digit family, so no code is invented — omit-never-guess.
+_FIELD_CIP: dict[str, str] = {}
+for _row in _IPEDS_CATALOG:
+    _FIELD_CIP.setdefault(_row[2], _row[4])
+
+
+def _cip_for(spec: dict) -> str | None:
+    return (
+        spec.get("cip")
+        or _CIP_BY_SLUG.get(spec["slug"])
+        or _FIELD_CIP.get(_field_from_program_name(spec.get("program_name", "")) or "")
+    )
+
+
 _HL_BY_TYPE = {
     "bachelors": [
         "Need-blind admission, 100% of need met with no loans",
@@ -3429,6 +3436,53 @@ for _p in PROGRAMS:
         or _field_from_program_name(_p.get("program_name", "")),
     )
 _assign_descriptions(PROGRAMS)
+
+# ── Universal program-DISTINCT "Who it's for" (REPAIR_BACKLOG #4b, miss #8) ──
+# Built over the FINALIZED catalog (after conferred-name normalization + dedupe, so
+# _field_from_program_name resolves the field). Award-named professional rows carry a
+# complete hand-written statement (_WHO_OVERRIDES); every other row composes a
+# field-specific lead + credential tail (harvard_cip_who.compose_who), so a field's
+# credential siblings read differently. Gated: fail loudly if any row is uncovered or
+# distinctness collapses (the type-gaming tell).
+_WHO_FINAL: dict[str, str] = {}
+_who_uncovered: list[str] = []
+for _p in PROGRAMS:
+    _slug = _p["slug"]
+    _who = _WHO_OVERRIDES.get(_slug) or _compose_who(
+        _field_from_program_name(_p["program_name"]), _p["degree_type"]
+    )
+    if not _who:
+        _who_uncovered.append(_slug)
+    else:
+        _WHO_FINAL[_slug] = _who
+if _who_uncovered:
+    _miss = sorted(
+        {
+            _field_from_program_name(p["program_name"]) or p["program_name"]
+            for p in PROGRAMS
+            if p["slug"] in _who_uncovered
+        }
+    )
+    raise RuntimeError(
+        f"Harvard who_its_for uncovered on {len(_who_uncovered)} rows; "
+        f"WHO_BY_FIELD / _WHO_BY_SLUG lacks: {_miss[:12]}"
+    )
+_who_ratio = len(set(_WHO_FINAL.values())) / len(_WHO_FINAL)
+if _who_ratio < 0.9:
+    raise RuntimeError(
+        f"Harvard who_its_for type-gamed: distinct/total {_who_ratio:.2f} < 0.9 "
+        "(field-specific statements required, not a degree-type template)"
+    )
+
+# Matcher-core CIP coverage gate: every program resolves to a verified CIP (the
+# breadth rows from the spec, the curated rows from CIP_BY_SLUG). A null here is
+# matcher field-starvation (REPAIR_BACKLOG #1), not an honest omission.
+_cip_uncovered = [p["slug"] for p in PROGRAMS if not _cip_for(p)]
+if _cip_uncovered:
+    raise RuntimeError(
+        f"Harvard cip_code uncovered on {len(_cip_uncovered)} rows: "
+        f"{_cip_uncovered[:12]} — add to harvard_cip_who.CIP_BY_SLUG"
+    )
 
 # ── Catalog quality gate (anti-stub miss #2/#8/#9, gold MIT = 0 on each) ───────
 _ROLLUP_NAME_RE = re.compile(
@@ -3919,8 +3973,10 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         else:
             outcomes["_standard"] = _program_standard(spec)
         p.outcomes_data = outcomes
-        # Audience + highlights: per-program for flagship, else by degree type.
-        p.who_its_for = _WHO_BY_SLUG.get(spec["slug"]) or _WHO_BY_TYPE.get(spec["degree_type"])
+        # Matcher-core CIP join key (REPAIR_BACKLOG #1): verified per-program CIP.
+        p.cip_code = _cip_for(spec)
+        # Audience: program-DISTINCT field-specific statement (REPAIR_BACKLOG #4b).
+        p.who_its_for = _WHO_FINAL[spec["slug"]]
         p.highlights = _HL_BY_SLUG.get(spec["slug"]) or _HL_BY_TYPE.get(spec["degree_type"])
         # Always assign so a stale value on a pre-existing row is cleared.
         p.tracks = _TRACKS_BY_SLUG.get(spec["slug"])

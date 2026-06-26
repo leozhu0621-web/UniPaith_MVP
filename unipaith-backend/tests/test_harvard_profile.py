@@ -188,6 +188,42 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     assert "need-blind" in ar["evaluation"].lower()
 
 
+async def test_apply_stamps_matcher_core_cip_and_distinct_who(db_session):
+    """REPAIR_BACKLOG #1 (cip_code starvation) + #4b (who_its_for type-gaming):
+    every program ships a verified CIP join key and a program-DISTINCT audience
+    statement (not one template per degree type)."""
+    inst = await _make_harvard(db_session)
+    await db_session.run_sync(harvard_profile.apply)
+    progs = (
+        (await db_session.execute(select(Program).where(Program.institution_id == inst.id)))
+        .scalars()
+        .all()
+    )
+    # (1) cip_code coverage ~100% — no program is matcher field-blind.
+    null_cip = [p.slug for p in progs if not p.cip_code]
+    assert not null_cip, f"cip_code null on {len(null_cip)} programs: {null_cip[:8]}"
+    by_slug = {p.slug: p for p in progs}
+    assert by_slug["harvard-economics-ab"].cip_code == "45.06"  # Economics (IPEDS field)
+    assert by_slug["harvard-mba"].cip_code == "52.02"  # Business Admin (CIP_BY_SLUG)
+    assert by_slug["harvard-jd"].cip_code == "22.01"  # Law (CIP_BY_SLUG)
+    assert by_slug["harvard-government-phd"].cip_code == "45.10"  # IPEDS field→CIP fallback
+
+    # (2) who_its_for is populated AND program-distinct (distinct/total ≈ 1.0), not a
+    # single degree-type template — the type-gaming tell the coverage gate alone misses.
+    whos = [p.who_its_for for p in progs]
+    assert all(whos), "every program carries a who_its_for"
+    ratio = len(set(whos)) / len(whos)
+    assert ratio >= 0.9, f"who_its_for type-gamed: distinct/total {ratio:.2f}"
+    # Credential siblings of one field read differently (field lead + level tail).
+    gov_ab = by_slug["harvard-government-ab"].who_its_for
+    gov_phd = by_slug["harvard-government-phd"].who_its_for
+    assert gov_ab != gov_phd
+    assert "government" in gov_ab.lower() and "government" in gov_phd.lower()
+    # A different field reads differently from Government.
+    econ_phd = by_slug["harvard-economics-phd"].who_its_for
+    assert econ_phd != gov_phd
+
+
 async def test_program_has_dependents_false_for_unreferenced_program(db_session):
     """The FK-introspection guard runs cleanly and reports no dependents for a
     fresh program (the negative path that lets the reconcile delete it)."""

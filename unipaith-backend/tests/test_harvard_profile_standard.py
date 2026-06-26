@@ -91,7 +91,7 @@ def _program_snapshot(spec: dict) -> dict:
         "description_text": h._DESC_RICH_BY_SLUG.get(slug) or spec["description"],
         "website_url": h._WEBSITE_BY_SLUG.get(slug) or h._SCHOOL_WEBSITE.get(spec["school"]),
         "highlights": h._HL_BY_SLUG.get(slug) or h._HL_BY_TYPE.get(spec["degree_type"]),
-        "who_its_for": h._WHO_BY_SLUG.get(slug) or h._WHO_BY_TYPE.get(spec["degree_type"]),
+        "who_its_for": h._WHO_FINAL.get(slug),
         "tracks": h._TRACKS_BY_SLUG.get(slug),
         "application_requirements": reqs,
         "cost_data": _program_cost(spec),
