@@ -250,12 +250,11 @@ async def discovery_opener_stream(
             "drawing you toward your next step?"
         )
         signals = {
-            # This static opener only runs when the managed agent is off or its
-            # setup failed — i.e. limited mode. Tag it so the UI shows the
-            # "Limited mode active — your replies are still saved" banner
-            # consistently (it already does for the orchestrator's rule_based
-            # turns), instead of silently serving a scripted greeting.
-            "_mode": "rule_based",
+            # The managed agent is off by default, so this warm greeting is the
+            # NORMAL opener — not a degraded "limited mode" state. We deliberately
+            # do NOT tag it "_mode": "rule_based", so the UI shows a clean greeting
+            # (no limited-mode banner). The conversation itself runs on Qwen the
+            # moment the student replies.
             "suggested_options": [
                 "A field I love",
                 "A career goal",
