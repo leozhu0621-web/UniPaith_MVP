@@ -189,10 +189,21 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     assert len(progs) >= 170  # full IPEDS/Scorecard catalog breadth
     # Undergraduate programs carry Stanford's undergrad tuition, not the grad rate.
     assert cs_bs.tuition == 67731
-    # Professional degrees carry the professional admissions baseline, and their
-    # per-school tuition is omitted (not shown as the wrong standard grad rate).
+    # Professional degrees carry the professional admissions baseline and their OWN
+    # published professional-school tuition (REPAIR_BACKLOG #3) — not the standard grad
+    # rate and never null (both J.D. and M.D. publish a rate).
     jd = next(p for p in progs if p.slug == "stanford-jd")
     assert jd.degree_type == "professional"
     assert jd.application_requirements["source"].startswith("Stanford")
-    assert jd.tuition is None
-    assert "tuition_usd" not in jd.cost_data
+    assert jd.tuition == 76608
+    assert jd.cost_data["tuition_usd"] == 76608
+    md = next(p for p in progs if p.slug == "stanford-md")
+    assert md.degree_type == "professional"
+    assert md.tuition == 92884
+    assert md.cost_data["tuition_usd"] == 92884
+    # Matcher-core cip_code is stamped on every program (REPAIR_BACKLOG #1).
+    assert all(p.cip_code for p in progs)
+    # who_its_for is program-DISTINCT, not a per-degree-type template (#4b).
+    who_vals = [p.who_its_for for p in progs if p.who_its_for]
+    assert len(who_vals) == len(progs)
+    assert len(set(who_vals)) / len(who_vals) >= 0.9

@@ -52,25 +52,42 @@ def upgrade() -> None:
         select(Institution).where(Institution.name == stanford_profile.INSTITUTION_NAME)
     )
     if inst is not None:
-        prog_ids = session.scalars(
+        # apply() rewrote matcher-/rationale-feeding fields (cip_code, who_its_for,
+        # tuition/cost_data, description) on EVERY Stanford program, so invalidation
+        # spans the whole catalog — not just the unclaimed rows we re-derive prefs for.
+        all_prog_ids = session.scalars(
+            select(Program.id).where(Program.institution_id == inst.id)
+        ).all()
+        # Preference re-derivation must NOT touch first-party (claimed) rows.
+        unclaimed_ids = session.scalars(
             select(Program.id).where(
                 Program.institution_id == inst.id,
                 Program.is_claimed.is_(False),
             )
         ).all()
-        if prog_ids:
+        if unclaimed_ids:
             session.execute(
                 delete(ProgramPreference).where(
-                    ProgramPreference.program_id.in_(prog_ids),
+                    ProgramPreference.program_id.in_(unclaimed_ids),
                     ProgramPreference.source == "derived",
                 )
             )
             session.flush()
         backfill_program_preferences(session, institution_id=inst.id)
-        if prog_ids:
+        if all_prog_ids:
+            # Bump feature_version so the rationale cache (keyed on program_version)
+            # and the lazy embedding rebuild (embedding_version != feature_version)
+            # both invalidate against the corrected cip_code / who_its_for / tuition —
+            # the same cache key the normal program-edit path bumps. Then mark every
+            # cached MatchResult stale so GET /me/matches rescore against fresh data.
+            session.execute(
+                Program.__table__.update()
+                .where(Program.id.in_(all_prog_ids))
+                .values(feature_version=Program.feature_version + 1)
+            )
             session.execute(
                 MatchResult.__table__.update()
-                .where(MatchResult.program_id.in_(prog_ids))
+                .where(MatchResult.program_id.in_(all_prog_ids))
                 .values(is_stale=True)
             )
     session.flush()
