@@ -51,8 +51,9 @@ def _program_snapshot(spec: dict) -> dict:
     # estimate / professional per-term×2 / funded PhD (0).
     if dtype == "bachelors":
         cost = {
-            # PUBLIC scalar = NON-RESIDENT (out-of-state); breakdown keeps BOTH (REPAIR_BACKLOG #4).
-            "tuition_usd": p._TUITION_UG_OOS,
+            # cost_data stays RESIDENT-consistent; only the matcher scalar p.tuition is
+            # non-resident (REPAIR_BACKLOG #4, the Berkeley pattern).
+            "tuition_usd": p._TUITION_UG_INSTATE,
             "total_cost_of_attendance": p._UNDERGRAD_COA,
             "avg_net_price": p._AVG_NET_PRICE,
             "breakdown": {

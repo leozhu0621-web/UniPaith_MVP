@@ -11,12 +11,14 @@ fired and the affordability fit over-scored.
 The fix is a choice between two ALREADY-PUBLISHED numbers, never a guess: every affected
 bachelor row already carries BOTH ``cost_data.breakdown.tuition_in_state`` AND
 ``cost_data.breakdown.tuition_out_of_state`` (verified, sourced). This migration stamps each
-row's OWN published non-resident rate (read from its breakdown) into the scalar ``tuition``
-column AND ``cost_data.tuition_usd``, while PRESERVING both rates in the breakdown — so the
-matcher reads the conservative, broadly-correct figure for a national/international pool and the
-detail page keeps the honest resident/non-resident split. Reading the value per-row from each
-row's own breakdown correctly handles the per-school undergraduate differentials at Michigan and
-UW-Madison (no single campus-wide figure to hardcode).
+row's OWN published non-resident rate (read from its breakdown) into the MATCHER SCALAR
+``programs.tuition`` ONLY, leaving ``cost_data`` untouched on the RESIDENT basis (the Berkeley
+pattern, berkeleycip1): ``cost_data.tuition_usd`` + ``total_cost_of_attendance`` stay internally
+consistent and the breakdown keeps both rates, so the cost card never shows tuition > total cost,
+while the matcher reads the conservative, broadly-correct non-resident figure for a
+national/international pool. Reading the value per-row from each row's own breakdown correctly
+handles the per-school undergraduate differentials at Michigan and UW-Madison (no single
+campus-wide figure to hardcode).
 
 The six affected institutions (live API this run): University of California-Los Angeles
 (15,202 -> 49,402), University of California-San Diego (16,758 -> 50,958), University of
@@ -63,20 +65,17 @@ _INSTITUTIONS = [
 def upgrade() -> None:
     bind = op.get_bind()
     # Stamp each published bachelor row's OWN verified non-resident rate (already in its
-    # breakdown) into the scalar tuition column + cost_data.tuition_usd. Only touches rows that
-    # actually carry a numeric tuition_out_of_state in the breakdown, so it is a no-op on a
-    # fresh/CI database (and idempotent — re-running sets the same value).
+    # breakdown) into the MATCHER SCALAR `programs.tuition` ONLY. cost_data is left untouched on
+    # the RESIDENT basis (tuition_usd + total_cost_of_attendance stay internally consistent; the
+    # breakdown already carries both rates) — the Berkeley pattern (berkeleycip1): only the
+    # exposed matcher scalar is the non-resident rate, so the cost card never shows
+    # tuition > total cost. Only touches rows that actually carry a numeric tuition_out_of_state
+    # in the breakdown, so it is a no-op on a fresh/CI database (and idempotent).
     bind.execute(
         text(
             """
             UPDATE programs p
-            SET tuition = (p.cost_data->'breakdown'->>'tuition_out_of_state')::int,
-                cost_data = jsonb_set(
-                    p.cost_data,
-                    '{tuition_usd}',
-                    p.cost_data->'breakdown'->'tuition_out_of_state',
-                    true
-                )
+            SET tuition = (p.cost_data->'breakdown'->>'tuition_out_of_state')::int
             FROM institutions i
             WHERE p.institution_id = i.id
               AND i.name = ANY(:names)

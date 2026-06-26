@@ -759,9 +759,10 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
     school = spec["school"]
     name = spec["program_name"]
     if dt == "bachelors":
-        # PUBLIC scalar = NON-RESIDENT (out-of-state); breakdown keeps BOTH (REPAIR_BACKLOG #4).
+        # Matcher scalar = NON-RESIDENT; cost_data stays RESIDENT-consistent (tuition_usd + COA);
+        # breakdown carries BOTH (REPAIR_BACKLOG #4, the Berkeley pattern).
         return _TUITION_UG_OOS, {
-            "tuition_usd": _TUITION_UG_OOS, "total_cost_of_attendance": _UNDERGRAD_COA,
+            "tuition_usd": _TUITION_UG_INSTATE, "total_cost_of_attendance": _UNDERGRAD_COA,
             "avg_net_price": _AVG_NET_PRICE, "funded": False,
             "breakdown": {"tuition_in_state": _TUITION_UG_INSTATE, "tuition_out_of_state": _TUITION_UG_OOS},
             "source": _COST_SRC[0], "source_url": _COST_SRC[1], "year": "2024-25",
