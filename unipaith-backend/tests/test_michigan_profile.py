@@ -160,12 +160,35 @@ def test_michigan_catalog_has_no_frame_stripped_shared_body():
 def test_cip_code_full_coverage():
     """Matcher-core CIP join key (REPAIR_BACKLOG #1): every program resolves a
     standard IPEDS CIP-2020 4-digit code — catalog-wide, no guesses, no null."""
+    import json
+    import pathlib
     import re
 
     missing = [p["slug"] for p in m.PROGRAMS if not p.get("cip")]
     assert not missing, f"programs missing cip_code: {missing[:10]}"
     bad = sorted({p["cip"] for p in m.PROGRAMS if not re.fullmatch(r"\d{2}\.\d{4}", p["cip"])})
     assert not bad, f"non-CIP-2020 codes: {bad}"
+    # Every code must be a REAL CIP-2020 code (present in the reference table), so the
+    # matcher's CIP→ref_majors / field-family resolution never hits an invented code.
+    ref_path = pathlib.Path(m.__file__).parents[3] / "data" / "reference" / "ref_majors.jsonl"
+    valid = {json.loads(ln)["cip_code"] for ln in ref_path.read_text().splitlines() if ln.strip()}
+    invalid = sorted({p["cip"] for p in m.PROGRAMS if p["cip"] not in valid})
+    assert not invalid, f"CIP codes not in ref_majors (not real CIP-2020): {invalid}"
+
+
+def test_paid_doctorates_do_not_advertise_funding():
+    """A phd-type row that is not actually funded (a paid/applied doctorate) must not
+    claim Rackham funding in its highlights (no-fabrication)."""
+    for p in m.PROGRAMS:
+        if p["degree_type"] != "phd":
+            continue
+        _, cost = m._program_tuition(p)
+        funded = bool((cost or {}).get("funded"))
+        hl = m._highlights_for("phd", funded=funded) or []
+        claims_funding = any("Funded" in h or "Rackham" in h for h in hl)
+        assert claims_funding == funded, (
+            f"{p['slug']}: funding highlight must match funded={funded}"
+        )
 
 
 def test_who_its_for_full_coverage_no_hard_null():
