@@ -281,6 +281,7 @@ class DiscoveryService:
             persist_extraction,
             snapshot_from_extracted_signals_history,
         )
+        from unipaith.ai.client import ConsentDeniedError
         from unipaith.ai.extractor import get_extractor
         from unipaith.ai.orchestrator import TurnContext, get_orchestrator
         from unipaith.ai.validator import default_validator
@@ -289,26 +290,41 @@ class DiscoveryService:
         # prompt can both read it after the try/except.
         verdict = None
         try:
-            # 1. Extract from the just-arrived student turn.
-            extraction = await get_extractor().extract(
-                student_turn=student_message.content,
-                student_id=student_id,
-                discovery_message_id=student_message.id,
-                db=self.db,
-            )
-
-            # Stamp the audit trail on the student message.
-            if extraction.raw_response is not None:
-                student_message.extracted_signals = extraction.raw_response
-                await self.db.flush()
-
-            # 2. Persist typed artifacts (goals/needs/identity).
-            await persist_extraction(
-                db=self.db,
-                student_id=student_id,
-                session_id=session.id,
-                extraction=extraction,
-            )
+            # 1. Extract from the just-arrived student turn. Best-effort: a
+            # consent denial (analytics off / trial lapsed) or any extractor
+            # failure skips enrichment but must never crash the turn.
+            extraction = None
+            try:
+                extraction = await get_extractor().extract(
+                    student_turn=student_message.content,
+                    student_id=student_id,
+                    discovery_message_id=student_message.id,
+                    db=self.db,
+                )
+                # Stamp the audit trail on the student message.
+                if extraction.raw_response is not None:
+                    student_message.extracted_signals = extraction.raw_response
+                    await self.db.flush()
+                # 2. Persist typed artifacts (goals/needs/identity).
+                await persist_extraction(
+                    db=self.db,
+                    student_id=student_id,
+                    session_id=session.id,
+                    extraction=extraction,
+                )
+            except ConsentDeniedError:
+                logger.info(
+                    "Extractor consent-denied for session=%s — skipping signal "
+                    "extraction; the conversation continues normally.",
+                    session.id,
+                )
+            except Exception:
+                logger.warning(
+                    "Extractor failed for session=%s — skipping signal extraction; "
+                    "the conversation continues.",
+                    session.id,
+                    exc_info=True,
+                )
 
             # 3. Build snapshot from the session's accumulated extractions.
             history = await self._load_extracted_signals_for_session(session.id)
@@ -731,25 +747,48 @@ class DiscoveryService:
                 persist_extraction,
                 snapshot_from_extracted_signals_history,
             )
+            from unipaith.ai.client import ConsentDeniedError
             from unipaith.ai.extractor import get_extractor
             from unipaith.ai.orchestrator import TurnContext, get_orchestrator
             from unipaith.ai.validator import default_validator
 
-            extraction = await get_extractor().extract(
-                student_turn=student_msg.content,
-                student_id=student_id,
-                discovery_message_id=student_msg.id,
-                db=self.db,
-            )
-            if extraction.raw_response is not None:
-                student_msg.extracted_signals = extraction.raw_response
-                await self.db.flush()
-            await persist_extraction(
-                db=self.db,
-                student_id=student_id,
-                session_id=session.id,
-                extraction=extraction,
-            )
+            # Signal extraction is a SILENT, best-effort enrichment step — it must
+            # never crash the student's conversation. If it is consent-gated off
+            # (e.g. analytics consent withdrawn, or the trial lapsed) or otherwise
+            # fails, skip it and let the orchestrator still generate Uni's reply on
+            # the live model. (Previously a ConsentDeniedError here bubbled to the
+            # outer handler and degraded the whole turn to "hit a snag".)
+            extraction = None
+            try:
+                extraction = await get_extractor().extract(
+                    student_turn=student_msg.content,
+                    student_id=student_id,
+                    discovery_message_id=student_msg.id,
+                    db=self.db,
+                )
+                if extraction.raw_response is not None:
+                    student_msg.extracted_signals = extraction.raw_response
+                    await self.db.flush()
+                await persist_extraction(
+                    db=self.db,
+                    student_id=student_id,
+                    session_id=session.id,
+                    extraction=extraction,
+                )
+            except ConsentDeniedError:
+                logger.info(
+                    "Extractor consent-denied for session=%s — skipping signal "
+                    "extraction; the conversation continues normally.",
+                    session.id,
+                )
+            except Exception:
+                logger.warning(
+                    "Extractor failed for session=%s — skipping signal extraction; "
+                    "the conversation continues.",
+                    session.id,
+                    exc_info=True,
+                )
+
             history = await self._load_extracted_signals_for_session(session.id)
             snapshot = snapshot_from_extracted_signals_history(history)
 
@@ -1264,6 +1303,8 @@ def _summarize_snapshot(snapshot) -> str:  # type: ignore[no-untyped-def]
 def _summarize_extraction(extraction) -> str:  # type: ignore[no-untyped-def]
     """One-line-per-signal summary of the latest extraction. Used in the
     orchestrator's state header so the model knows what was just captured."""
+    if extraction is None:
+        return ""
     bits: list[str] = []
     for p in extraction.personality:
         bits.append(f"- personality.{p.get('facet')}: {p.get('value')}")
