@@ -1,7 +1,7 @@
 """Activate built-but-orphaned primitives.
 
-- Spec 70 §3: GET /me/scholarships/match exposes the orphaned FinancialFit
-  scholarship matcher to students.
+- Spec 70 §3: GET /me/scholarships/match surfaces scholarships to students from
+  the seeded external catalog (ScholarshipService.matches_for_student).
 - Spec 67 §2: the application submit path records a labeled confidence outcome
   (the learning loop's training data), consent-gated.
 """
