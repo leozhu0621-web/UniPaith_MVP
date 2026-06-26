@@ -561,6 +561,12 @@ async def snapshot_from_structured_tables(db: AsyncSession, student_id: UUID) ->
                 achievable=g.achievable_notes,
                 relevant=g.relevant_notes,
                 time_bound=g.time_bound.isoformat() if g.time_bound else None,
+                # Persisted goals already cleared the completeness==1.0 persist
+                # gate, so they are SMART-complete and accepted. Mark them so the
+                # completion evaluator credits them (the table columns don't
+                # carry the in-memory completeness / confirmation flags).
+                completeness=1.0,
+                user_confirmed=True,
             )
         )
 

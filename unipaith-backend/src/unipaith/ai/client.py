@@ -221,6 +221,11 @@ Agent = Literal[
     "inbox_reply_drafter",
     # Spec 24 §9 / 45 §19 — dataset upload parse triage (Haiku).
     "document_parse_triage",
+    # Discovery handoff strategy generator, offer outcome-brief, identity
+    # summary — must also be in ck_ai_turns_agent (migration aiturnagents1).
+    "strategy",
+    "outcome_brief",
+    "identity_summary",
 ]
 
 

@@ -485,3 +485,19 @@ def test_alembic_has_single_head():
     script = ScriptDirectory.from_config(cfg)
     heads = script.get_heads()
     assert len(heads) == 1, f"Expected exactly one alembic head, found {len(heads)}: {heads}"
+
+
+def test_ai_turns_check_includes_all_persisting_agents() -> None:
+    """Every agent that writes an audit turn must appear in the
+    ``ck_ai_turns_agent`` CHECK, or its LLM call dies on ``db.flush()`` in prod
+    (``mock_mode`` returns before the turn is logged, so tests don't catch it).
+    Regression guard for the strategy, outcome_brief, and identity_summary
+    agents, whose names were missing from the constraint."""
+    from unipaith.models.ai_artifacts import AiTurn
+
+    check = next(
+        c for c in AiTurn.__table__.constraints if getattr(c, "name", "") == "ck_ai_turns_agent"
+    )
+    sql = str(check.sqltext)
+    for name in ("strategy", "outcome_brief", "identity_summary"):
+        assert f"'{name}'" in sql, f"{name} missing from ck_ai_turns_agent"

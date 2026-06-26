@@ -166,12 +166,26 @@ class StudentSnapshot:
         return out
 
     def complete_goal_categories(self) -> set[str]:
-        """Categories with at least one fully-completed (SMART-filled),
-        user-confirmed goal."""
+        """Categories with at least one fully-completed (SMART-filled) goal.
+
+        NOTE: the original gate also required ``g.user_confirmed``, but nothing
+        in the extraction/persistence pipeline ever set that flag True (the
+        "confirm" probe asked the student, but their reply was never written
+        back). That left this set permanently empty -> the GOALS track stuck at
+        0% -> the matches handoff (needs goals >= 0.5) could never fire. A goal
+        is treated as complete when it is SMART-filled: the extractor's
+        self-reported ``completeness == 1.0`` OR all five SMART fields present
+        (the deterministic equivalent, robust to the structured-table rebuild
+        where ``completeness`` defaults to 0.0).
+        """
         return {
             g.category
             for g in self.goals
-            if g.completeness >= 1.0 and g.user_confirmed and g.specific
+            if g.specific
+            and (
+                g.completeness >= 1.0
+                or bool(g.measurable and g.achievable and g.relevant and g.time_bound)
+            )
         }
 
     # NEEDS helpers ──────────────────────────────────────────────────────
