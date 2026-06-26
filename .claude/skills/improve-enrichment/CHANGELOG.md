@@ -6,6 +6,101 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-26 — Run 89 (FULL-FLEET sweep of all 300 live + all 40 catalogs · 🆕 1 rule change = `who_its_for` TYPE-GAMING, a NEW gap-class a DISTINCTNESS pass surfaced that every prior coverage-only run missed · enricher cleared 4 backlog catalogs since run 88 · UC-Irvine dead feed ESCALATED to an ops flag · run-88 BU-Law-JD spot-check RESOLVED clean)
+
+**Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`.**
+A direct full-fleet crawl: all 300 institutions fetched (campus-photo gallery length + posts-feed count,
+threaded); all 40 program-bearing catalogs fully paginated (**8,024 programs**, up from 7,639) and run
+through a per-catalog description-NON-EMPTINESS scan, an exact-duplicate `(program_name, degree_type)` scan,
+a name-realness scan, a per-`degree_type` tuition COVERAGE measure, and a grad==undergrad copy-down scan; 12
+program DETAILS/catalog (`GET /programs/{id}`) probed for `cip_code` / `who_its_for` / `external_reviews`
+coverage, the public bachelor `tuition`-scalar-vs-`cost_data.breakdown` resident/non-resident axis, AND —
+**new this run** — a `who_its_for` DISTINCTNESS measure (distinct strings / 20 sampled). The merged-PR list,
+the `who_its_for = None` hard-null grep, the missing-`.cip_code` grep, the UCI RSS reachability check, and the
+fresh-migration `backfill_program_preferences` / `content_sources` calls were read via `git` / `curl` over
+`origin/main`. (The DB-backed `test_profile_standard.py` / `test_profile_enrichment.py` cannot run in this
+grader env — no Postgres; the grader PR touches only the two skill markdown files, so backend CI is unaffected.)
+
+**Merged since run 88 (grader PR #1183):** the enricher worked the backlog top — **#1182 Purdue** (cip + who +
+non-resident tuition), **#1184 Emory** (cip + who + reviews), **#1185 Brown** (cip + master's tuition + who +
+reviews), **#1186/#1187 Michigan** (cip + non-resident tuition + who, + valid-CIP / no-funding-claim review
+fixes). Net: cip-null 19→16, who-0% 20→16, public-scalar mis-signal 6→4. All 4 fresh migrations call
+`backfill_program_preferences` (matcher-side compliant, `git`-confirmed).
+
+**Findings (with live evidence):**
+- **🆕 🟡 NEW GAP-CLASS — `who_its_for` TYPE-GAMING (the 1 rule change).** A distinctness pass (distinct
+  `who_its_for` strings / 20 sampled) shows ~12 catalogs ship the field 100%-NON-NULL but collapsed to ONE
+  degree-type template per tier: **Berkeley 1/20 (0.05)** · Columbia/Cornell/Princeton/Stanford/Yale 2/20 ·
+  Caltech/Chicago/Penn/**Michigan** 3/20 · Harvard 4/20 · **MIT 5/20**. Every PhD reads "a funded <school>
+  doctorate", every bachelor's an identical "top public-research undergraduate education" sentence — passing
+  the coverage gate while a CS PhD and a Public-Policy PhD read identically. The freshly-repaired Michigan
+  (#1186/#1187) shipped it this way, so the class is ACTIVELY RECURRING. **Why this is a NEW rule, not a
+  compliance gap:** the existing run-84 `who_its_for` rule sets a "field-specific, never a classification stub"
+  bar — but its OWN evidence line holds up MIT/Princeton/.../Berkeley as the "100% gold-complete" exemplars,
+  the EXACT catalogs that are type-gamed. Prior runs measured only non-null coverage, so the rule's prose bar
+  and its cited exemplars silently CONTRADICTED each other for 5 runs. The new rule requires `who_its_for` be
+  PROGRAM-DISTINCT (distinct/total ≈1.0, FAIL well under ~0.5), bounds the `_WHO_BY_TYPE` fallback to a narrow
+  last resort, and reclassifies the old exemplars as a COVERAGE reference only — the TRUE distinctness gold is
+  the field-specific set (Brown · Emory · Purdue · Dartmouth · Georgetown · Vanderbilt · UC-Davis · UCLA ·
+  UC-Irvine · UNC · UVA · WashU, all ≈1.0). Loosens nothing (no-fabrication holds — those 12 prove a distinct
+  statement is derivable from each program's own material). Backlog #4b · sharpened FLAG #4 (the coverage
+  metric must assert DISTINCTNESS, not just non-null).
+- **🔴 COMPLIANCE GAP (rule run 82): `cip_code` STARVATION — 15 mature catalogs null + MIT control** (BU · CMU ·
+  Cornell · Duke · Harvard · JHU · NYU · Northwestern · Rice · Stanford · UF · UIUC · USC · UW-Madison · Yale).
+  `grep -L '\.cip_code'` returns EXACTLY these 16 modules — perfect correlation, one assignment each, no
+  research. ~4,300 programs scored field-blind. Backlog #1 (highest matcher leverage). NOT re-added → FLAG #2.
+- **🔴 COMPLIANCE GAP (rule run 83): PUBLIC resident-scalar — 4 publics still in-state** (UCSD 16,758/oos 50,958
+  · Florida 6,381/28,659 · Wisconsin 12,186/44,210 · UIUC 12,992 — UIUC's breakdown now carries an oos RANGE
+  [38,398–46,498], a published number to stamp). **Michigan & Purdue FIXED to oos.** Backlog #2 → FLAG #6.
+- **🔴 COMPLIANCE GAP (rule run 74/87): master's / professional tuition residual** — worst Georgetown
+  master's 6/79 (73 null!) + prof 10/17, UW-Seattle 14, USC 12, UC-Irvine 11, UT-Austin 10, Yale 8, UVA 7…
+  PhD/cert nulls EXCLUDED (funded/per-credit → legitimate omit). Backlog #3 → FLAG #7.
+- **🟢 run-88 BU-Law-JD spot-check RESOLVED CLEAN.** Web-verified: BU Law JD tuition+fees 2024-25 = **$69,870** —
+  the stamped value is the VERIFIED rate, MD ($72,626) / DMD ($99,680) distinctly carried → NOT a copy-down. The
+  tuition-VALUE-copy-down class stays clean fleet-wide (BU + USC grad-flat = verified-flat-rate signature).
+- **🟡 COMPLIANCE GAP (rule run 84/86): `who_its_for` 0% (non-null) on 16 catalogs** (was 20). 9 modules still
+  carry literal `p.who_its_for = None` (duke · georgia_tech · nyu · rice · ucla · uiuc · usc · ut_austin · uw);
+  ⚠️ UCLA sibling-masked latent regression persists. Backlog #4a → FLAG #4.
+- **🟡 `external_reviews` sparse** (NYU 0/12; many 1/12; richest Princeton 6/12) — coverage-gated depth-pass
+  priority on structurally-clean catalogs, NOT a fabrication mandate (gold MIT 5/12). Backlog #5.
+- **🔴 UC-Irvine DEAD FEED ESCALATED (ops, not data/rule).** UC-Irvine (160 programs) is the ONLY program-bearing
+  node reading posts=0 (every other has 10–2,380), a week+ live. `uci_profile.py` sets `content_sources`
+  (`https://news.uci.edu/feed/`, `git`-confirmed) AND that RSS is LIVE (HTTP 200, 421 KB) — the enricher
+  complied; the background ingest pipeline stranded it. Run-88 watched it ("escalate if still dead") — it is.
+  NOT a rule/data defect → Backlog #6 + new FLAG #9 (ops re-ingest trigger). Per step 3 (confirm data-vs-render),
+  no enricher action helps.
+- **🟢 STRUCTURE / DESCRIPTIONS(pattern + NON-EMPTINESS) / NAMES / EXACT-DUPS / TUITION-COPY-DOWN gold-clean
+  fleet-wide.** 0 empty/whitespace `description_text` across all 8,024 programs; 0 exact-dup `(program_name,
+  degree_type)` rows on all 40 catalogs; 0 fabricated names (multi-clause "comma-and" hits all VERIFIED real
+  interdisciplinary majors — run-77 false-positive). Deploy pipeline healthy (single head).
+- **🟢 SEEDS (external).** 33 zero-photo · 50 at 1–3 · **217 at 4+** (up from 177 — photo coverage improved).
+
+**Rule change (1, within the ≤3 anti-churn ceiling):** ADDED the `who_its_for` DISTINCTNESS rule (SKILL.md
+§2 deep-fields, new sub-bullet after the universal-field bullet). This is the ONE genuinely new gap-class the
+full-fleet sweep surfaced — a measurable tightening that resolves a 5-run-old contradiction between the
+existing rule's prose bar and its cited exemplars. EVERY other residual live defect (cip_code · public scalar ·
+master's tuition · who-0% · reviews) is a VIOLATION of an EXISTING rule → per the "default has flipped"
+doctrine + the BOUNDED/ANTI-CHURN rail, queued in the backlog + logged here, NOT re-added. UC-Irvine's dead
+feed is an OPS issue (the enricher complied) → flagged, not ruled. **Self-review:** re-read the edited region —
+the new bullet reads coherently, explicitly reconciles the prior "gold-complete" evidence line (reclassifying
+it as coverage-only), preserves the `_WHO_BY_SLUG ... or _WHO_BY_TYPE` pattern (now bounded), and weakens no
+immutable invariant (no-fabrication / verify-rendered-output / merge-mandatory all intact; the change RAISES
+the depth bar).
+
+**Backlog delta:** critical tier still EMPTY. Re-ranked: #1 cip_code (16, was 19) · #2 public scalar (4, was 6)
+· #3 master's tuition · #4 who_its_for now TWO-part — **4a** 0% (16, was 20) + **4b** 🆕 TYPE-GAMED (12) · #5
+reviews · #6 🆕 UC-Irvine ops feed · #7 bulk seeds. Flags #1–8 carried; #4 sharpened (distinctness metric);
+#9 added (UC-Irvine ingest). Brown/Emory/Purdue/Michigan moved to the CLEAR list (cip + who-coverage), Michigan
+re-queued under 4b for who-distinctness.
+
+**Enricher health check:** DB-free — the full-fleet live crawl computed cleanly over all 40 catalogs (0 empty
+desc, 0 dups, 0 fabricated names, 8,024 programs), `git`-confirmed the fresh migrations call
+`backfill_program_preferences` + set `content_sources`, and the UCI RSS source returns HTTP 200. This grader PR
+changes only the two skill markdown files (SKILL.md who_its_for tightening + REPAIR_BACKLOG + this CHANGELOG) —
+no code, no data, no migration — so backend CI is unaffected.
+
+---
+
 ## 2026-06-26 — Run 88 (FULL-FLEET sweep of all 300 live + all 40 catalogs · all 3 run-87 CRITICAL entries CLEARED LIVE · 0 rule changes — no new gap-class survived the sweep)
 
 **Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`.**
