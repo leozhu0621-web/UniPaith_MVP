@@ -34,25 +34,20 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: pgvector/pgvector:pg16
-        env:
-          POSTGRES_USER: unipaith
-          POSTGRES_PASSWORD: unipaith
-          POSTGRES_DB: unipaith
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     steps:
+      - name: Start Postgres (pgvector, tuned for parallel test DDL)
+        run: |
+          docker run -d --name postgres --shm-size=512m \
+            -e POSTGRES_USER=unipaith -e POSTGRES_PASSWORD=unipaith -e POSTGRES_DB=unipaith \
+            -p 5432:5432 pgvector/pgvector:pg16 \
+            -c max_locks_per_transaction=512 -c max_connections=200
+          for i in $(seq 1 30); do docker exec postgres pg_isready -U unipaith && break; sleep 1; done
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: unipaith-backend/pyproject.toml
       - name: Install dependencies
         working-directory: unipaith-backend
         run: |
@@ -68,7 +63,10 @@ jobs:
           AI_MOCK_MODE: "true"
           S3_LOCAL_MODE: "true"
         run: |
-          PYTHONPATH=src pytest tests/ -v --tb=short
+          # -n auto fans tests across all CPUs; each xdist worker gets its own
+          # database (see tests/conftest.py). loadscope keeps a module's tests
+          # on one worker, preserving intra-module ordering.
+          PYTHONPATH=src pytest tests/ -n auto --dist loadscope --tb=short
 
   deploy:
     needs: test
@@ -86,30 +84,28 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build, tag, and push image
         id: build
-        working-directory: unipaith-backend
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          # Capture digest from docker push output (no ECR DescribeImages perm needed).
-          # docker push prints: "<tag>: digest: sha256:<hex> size: <n>"
-          DIGEST=$(docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG | tee /dev/stderr | grep -oE 'sha256:[a-f0-9]{64}' | head -1)
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          if [ -z "$DIGEST" ]; then
-            echo "::error::Failed to capture image digest from docker push"
-            exit 1
-          fi
-          echo "Image digest: $DIGEST"
-          echo "DIGEST=$DIGEST" >> $GITHUB_OUTPUT
+        uses: docker/build-push-action@v6
+        with:
+          context: unipaith-backend
+          push: true
+          # Plain image manifest (not an attestation index) so ECS pulls by digest.
+          provenance: false
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
+          # Persist layers across runs: unchanged deps/source skip the rebuild.
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Register new task definition with pinned digest
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          DIGEST: ${{ steps.build.outputs.DIGEST }}
+          DIGEST: ${{ steps.build.outputs.digest }}
         run: |
           NEW_IMAGE="$ECR_REGISTRY/$ECR_REPOSITORY@$DIGEST"
           echo "Pinning to $NEW_IMAGE"

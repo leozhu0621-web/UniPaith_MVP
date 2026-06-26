@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM python:3.12-slim AS builder
 
 # implicit (ALS) builds C extensions; slim image has no compiler by default
@@ -5,9 +6,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends build-essential
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+
+# Install third-party dependencies first, keyed only on pyproject.toml. This is
+# the slow layer (compiling asyncpg/scipy/xgboost/shap/hdbscan/lxml wheels) and
+# is reused whenever dependencies are unchanged — even when app source changes.
+# The pip cache mount also persists built wheels across CI builds.
 COPY pyproject.toml .
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python -c "import tomllib; d=tomllib.load(open('pyproject.toml','rb')); open('/tmp/reqs.txt','w').write(chr(10).join(d['project']['dependencies']))" \
+    && pip install -r /tmp/reqs.txt
+
+# Then install just the local package (fast; deps already satisfied).
 COPY src/ src/
-RUN pip install --no-cache-dir .
+RUN --mount=type=cache,target=/root/.cache/pip pip install --no-deps .
 
 FROM python:3.12-slim
 
