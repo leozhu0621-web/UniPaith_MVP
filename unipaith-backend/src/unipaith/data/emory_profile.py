@@ -943,7 +943,251 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "verbatim reviews."
         ),
     },
+    "emory-public-health-mph": {
+        "summary": (
+            "Coverage consistently places Rollins among the very top U.S. schools of public "
+            "health — ranked No. 2 in the nation by peers in U.S. News & World Report's 2026 "
+            "Best Public Health Schools list — with reviewers citing its Atlanta location "
+            "beside the CDC, Emory Healthcare, and CARE, and depth in epidemiology, "
+            "biostatistics, and global health. The most common caution is high cost and a "
+            "competitive applicant pool relative to public-school MPH options."
+        ),
+        "themes": [
+            {"label": "Top-ranked reputation", "sentiment": "positive", "detail": "Ranked No. 2 nationally among accredited schools of public health by U.S. News peers in 2026, for the second year running."},
+            {"label": "CDC and Atlanta network", "sentiment": "positive", "detail": "Proximity to the CDC, The Carter Center, CARE, and Emory's health system drives practicum placements and applied research."},
+            {"label": "Epi and biostatistics depth", "sentiment": "positive", "detail": "Reviewers single out strong epidemiology and biostatistics faculty and global-health pathways."},
+            {"label": "Cost", "sentiment": "caution", "detail": "Private-school tuition makes the MPH expensive relative to in-state public programs; aid varies by department."},
+        ],
+        "sources": [
+            {"label": "Rollins School of Public Health — ranked No. 2 by U.S. News 2026", "url": "https://sph.emory.edu/news/rollins-school-public-health-ranked-2-again-by-peers-us-news-world-report-2026"},
+            {"label": "U.S. News — Best Health Schools, Emory (Rollins)", "url": "https://www.usnews.com/best-graduate-schools/top-health-schools/emory-university-139658"},
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "emory-nursing-bs": {
+        "summary": (
+            "Emory's Nell Hodgson Woodruff School of Nursing draws strong third-party coverage: "
+            "U.S. News & World Report ranked its BSN program No. 2 in the nation for 2026 (No. 1 "
+            "in 2024), and the school sits among the top five in NIH nursing research funding and "
+            "is an NLN Center of Excellence. Reviewers praise clinical immersion across Emory "
+            "Healthcare; the main cautions are a small, highly selective cohort and an intensive, "
+            "fast-paced clinical schedule."
+        ),
+        "themes": [
+            {"label": "Top-ranked BSN", "sentiment": "positive", "detail": "U.S. News ranked the BSN No. 2 nationally in 2026 (No. 1 in 2024) — top five every year since the undergraduate rankings began."},
+            {"label": "Clinical placement", "sentiment": "positive", "detail": "Clinical rotations across Emory Healthcare and partner Atlanta hospitals give early, hands-on patient experience."},
+            {"label": "Research funding", "sentiment": "positive", "detail": "Among the top five U.S. nursing schools in NIH funding and a National League for Nursing Center of Excellence."},
+            {"label": "Selective, intensive cohort", "sentiment": "caution", "detail": "A small BSN cohort (~340 students) and a demanding clinical schedule make admission and the workload competitive."},
+        ],
+        "sources": [
+            {"label": "Emory News — BSN ranked No. 2 by U.S. News (2026)", "url": "https://news.emory.edu/stories/2025/09/son_us_news_undergrad_2026/story.html"},
+            {"label": "U.S. News — Best Nursing Schools, Emory (Woodruff)", "url": "https://www.usnews.com/best-graduate-schools/top-nursing-schools/emory-university-33063"},
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "emory-law-prof": {
+        "summary": (
+            "Coverage describes Emory Law as a solidly mid-first-tier school — ranked No. 38 by "
+            "U.S. News & World Report for 2025 — with particular recognition in health law, "
+            "transactional and business law, intellectual property, international and comparative "
+            "law, and law and religion. Reviewers note a strong Atlanta market and clinics; the "
+            "common cautions are a national profile below the T14 and a recruiting pull "
+            "concentrated in the Southeast."
+        ),
+        "themes": [
+            {"label": "Health law strength", "sentiment": "positive", "detail": "Emory's health care law program ranks in the U.S. News top 25 (around #23), reinforced by the Atlanta medical and CDC ecosystem."},
+            {"label": "Transactional and IP focus", "sentiment": "positive", "detail": "Recognized strength in business/corporate law, contracts, intellectual property, and international and comparative law."},
+            {"label": "Atlanta market and clinics", "sentiment": "positive", "detail": "Clinics, externships, and a major legal market in Atlanta support practical experience and regional placement."},
+            {"label": "National profile", "sentiment": "caution", "detail": "Ranked in the mid-first tier (around #38), with strongest hiring in the Southeast rather than coast-to-coast."},
+        ],
+        "sources": [
+            {"label": "U.S. News — Best Law Schools, Emory University", "url": "https://www.usnews.com/best-graduate-schools/top-law-schools/emory-university-03039"},
+            {"label": "Emory Law — message from the dean on rankings", "url": "https://law.emory.edu/news-and-events/releases/2024/04/message-dean-ranking-2024-2025.html"},
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "emory-medicine-prof": {
+        "summary": (
+            "Third-party coverage rates Emory School of Medicine a top research medical school — "
+            "U.S. News places it in Tier 1 for research (a lower tier for primary care) — with "
+            "noted strength in infectious disease and vaccines, organ transplantation, oncology "
+            "through the Winship Cancer Institute, and global health. Reviewers highlight the "
+            "five-month third-year 'Discovery' research phase; the main caution is that the "
+            "program's profile is research-led rather than primary-care-led."
+        ),
+        "themes": [
+            {"label": "Research tier", "sentiment": "positive", "detail": "Ranked in U.S. News's top (Tier 1) research band, with robust NIH funding across basic, translational, and clinical science."},
+            {"label": "Infectious disease and vaccines", "sentiment": "positive", "detail": "Distinctive strength in infectious disease, HIV/AIDS, and vaccine science (Emory Vaccine Center), aided by CDC proximity."},
+            {"label": "Discovery research phase", "sentiment": "positive", "detail": "A dedicated five-month third-year 'Discovery' phase lets students pursue research or scholarly projects."},
+            {"label": "Primary-care emphasis", "sentiment": "caution", "detail": "The school ranks notably higher for research than for primary care, so a primary-care-focused applicant should weigh fit."},
+        ],
+        "sources": [
+            {"label": "U.S. News — Best Medical Schools, Emory University", "url": "https://www.usnews.com/best-graduate-schools/top-medical-schools/emory-university-04023"},
+            {"label": "Emory Woodruff Health Sciences Center — rankings", "url": "https://whsc.emory.edu/about/facts-figures/rankings.html"},
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "emory-business-administration-bba": {
+        "summary": (
+            "Goizueta's undergraduate BBA earns strong coverage — ranked among the top 10 "
+            "nationally by Poets&Quants and No. 12 by U.S. News & World Report — with reviewers "
+            "citing high selectivity (about a 10% admit rate), excellent placement (98% of the "
+            "Class of 2025 with offers within three months, ~$87,749 average salary), a recently "
+            "redesigned tech- and analytics-heavy curriculum, and full STEM designation. The most "
+            "cited caution is a comparatively lower alumni-rated academic-experience score."
+        ),
+        "themes": [
+            {"label": "Top-10 BBA ranking", "sentiment": "positive", "detail": "Ranked in the Poets&Quants top 10 (8th in 2025) and No. 12 by U.S. News — in the top 15 for undergraduate business for over 15 years."},
+            {"label": "Career outcomes", "sentiment": "positive", "detail": "98% of 2025 BBA grads received offers within three months at an average salary near $87,749, with strong consulting, finance, and healthcare placement."},
+            {"label": "STEM-designated, redesigned curriculum", "sentiment": "positive", "detail": "A 2023 curriculum overhaul added data analytics, technology, and experiential learning, and the program is now fully STEM-designated."},
+            {"label": "Academic-experience rating", "sentiment": "caution", "detail": "Goizueta ranks lower on the alumni-surveyed academic-experience measure (around #28) than on selectivity and outcomes."},
+        ],
+        "sources": [
+            {"label": "Poets&Quants for Undergrads — Emory (Goizueta) profile", "url": "https://poetsandquantsforundergrads.com/school-profile/emory-university-goizueta-business-school/"},
+            {"label": "EmoryBusiness — BBA No. 12 by U.S. News (2025)", "url": "https://www.emorybusiness.com/2025/09/23/bba-program-rises-to-12th-in-nation-by-u-s-news-world-report/"},
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
 }
+
+
+# ── Matcher-core CIP join key (REPAIR_BACKLOG #1) ─────────────────────────────
+# ``cip_code`` is the CIP code the CPEF matcher uses to resolve a program's field to
+# ``ref_majors`` + the field-66 vocabulary (the interest/field signal alongside the
+# ``description_text`` embedding). Emory's catalog shipped ``cip_code`` null fleet-wide,
+# so those programs scored field-blind. Each code is the standard IPEDS CIP-2020 code for
+# the program's field — a published taxonomy lookup, never a guess.
+_CIP_BY_SLUG: dict[str, str] = {
+    "emory-anthropology-ba": "45.0201",
+    "emory-art-history-ba": "50.0703",
+    "emory-biology-bs": "26.0101",
+    "emory-biophysics-bs": "26.0203",
+    "emory-chemistry-bs": "40.0501",
+    "emory-classics-ba": "16.1200",
+    "emory-comparative-literature-ba": "16.0104",
+    "emory-computer-science-bs": "11.0701",
+    "emory-data-science-bs": "30.7001",
+    "emory-economics-ba": "45.0601",
+    "emory-english-ba": "23.0101",
+    "emory-environmental-sciences-bs": "03.0104",
+    "emory-film-and-media-ba": "50.0601",
+    "emory-history-ba": "54.0101",
+    "emory-human-health-ba": "51.0000",
+    "emory-international-studies-ba": "45.0901",
+    "emory-mathematics-bs": "27.0101",
+    "emory-music-ba": "50.0901",
+    "emory-neuroscience-and-behavioral-biology-bs": "26.1501",
+    "emory-philosophy-ba": "38.0101",
+    "emory-physics-bs": "40.0801",
+    "emory-political-science-bs": "45.1001",
+    "emory-psychology-bs": "42.0101",
+    "emory-public-policy-analysis-bs": "44.0501",
+    "emory-religion-ba": "38.0201",
+    "emory-sociology-ba": "45.1101",
+    "emory-spanish-ba": "16.0905",
+    "emory-theater-studies-ba": "50.0501",
+    "emory-african-american-studies-ba": "05.0201",
+    "emory-linguistics-ba": "16.0102",
+    "emory-business-administration-bba": "52.0201",
+    "emory-business-administration-mba": "52.0201",
+    "emory-nursing-bs": "51.3801",
+    "emory-public-health-mph": "51.2201",
+    "emory-public-health-msph": "51.2201",
+    "emory-theology-mdiv": "39.0602",
+    "emory-law-prof": "22.0101",
+    "emory-medicine-prof": "51.1201",
+    "emory-biology-phd": "26.0101",
+    "emory-computer-science-phd": "11.0701",
+    "emory-economics-phd": "45.0601",
+    "emory-psychology-phd": "42.0101",
+    "emory-chemistry-phd": "40.0501",
+    "emory-history-phd": "54.0101",
+    "emory-biostatistics-phd": "26.1102",
+    "emory-computer-science-ms": "11.0701",
+}
+
+# ── Universal-depth ``who_its_for`` (REPAIR_BACKLOG #4) ────────────────────────
+# "Who it's for" is a UNIVERSAL depth field: every program can state the applicant it
+# fits, derived from its own field, credential level, and published audience/fit material.
+# A catalog-wide 0% is un-done depth, not an honest omission — so each statement below is a
+# field-specific 1–2 sentence statement of the applicant the program fits (background,
+# goals, readiness), NEVER a classification stub ("for students interested in {field}").
+_WHO_BY_SLUG: dict[str, str] = {
+    "emory-anthropology-ba": "Students curious about human cultures, evolution, and societies who want field and laboratory research and are headed toward careers in research, public health, law, or global work.",
+    "emory-art-history-ba": "Students drawn to visual culture and museums who want object-based study and are aiming at curatorial, gallery, conservation, or graduate art-history paths.",
+    "emory-biology-bs": "Pre-health and future life-science researchers who want laboratory experience across molecular, cellular, and ecological biology before medical or graduate school.",
+    "emory-biophysics-bs": "Quantitatively minded students who want to apply physics and chemistry to living systems and are headed for research in biophysics, medicine, or the quantitative life sciences.",
+    "emory-chemistry-bs": "Students strong in the physical sciences who want rigorous laboratory training and undergraduate research, preparing for chemistry graduate work, medicine, or industry.",
+    "emory-classics-ba": "Students fascinated by the ancient Mediterranean who want Greek and Latin language study alongside history, literature, and archaeology, often toward law, academia, or the humanities.",
+    "emory-comparative-literature-ba": "Multilingual readers and writers who want to study literature across languages and cultures and value translation and literary theory.",
+    "emory-computer-science-bs": "Students who want to build software and study algorithms, AI, and systems, headed for software engineering, data, or computing research and graduate study.",
+    "emory-data-science-bs": "Students who enjoy statistics, programming, and applying analysis to real problems across the sciences and want careers in data science, analytics, or quantitative research.",
+    "emory-economics-ba": "Analytically minded students interested in markets, policy, and data who want theory and econometrics for careers in finance, consulting, policy, or graduate economics.",
+    "emory-english-ba": "Strong readers and writers who want to study literature and sharpen critical and creative writing for careers in writing, law, education, or the humanities.",
+    "emory-environmental-sciences-bs": "Students committed to sustainability and the environment who want to combine ecology, earth science, and policy for careers in conservation, consulting, or environmental research.",
+    "emory-film-and-media-ba": "Students who want to both analyze and make film and media, headed toward production, media industries, criticism, or graduate study.",
+    "emory-history-ba": "Students who love archives and big-picture context across regions and eras, building research and writing skills for law, education, public history, or graduate work.",
+    "emory-human-health-ba": "Students interested in health, wellness, and disease across disciplines — pre-health, public health, or health-policy bound — who want an interdisciplinary foundation rather than a single science track.",
+    "emory-international-studies-ba": "Globally minded students interested in world politics, economics, and culture who want language study and study abroad toward careers in diplomacy, development, or international business.",
+    "emory-mathematics-bs": "Students who enjoy rigorous, abstract problem-solving and want a foundation in pure and applied mathematics for graduate study, data science, finance, or research.",
+    "emory-music-ba": "Performers, composers, and scholars of music who want to combine applied study with theory and ensembles within a liberal-arts setting.",
+    "emory-neuroscience-and-behavioral-biology-bs": "Students fascinated by the brain and behavior — often pre-med or research-bound — who want an interdisciplinary mix of biology, psychology, and chemistry.",
+    "emory-philosophy-ba": "Students who enjoy rigorous argument about ethics, mind, and knowledge and want analytical skills useful for law, medicine, policy, or graduate philosophy.",
+    "emory-physics-bs": "Students drawn to how the physical world works who want a strong foundation in classical and modern physics for research, engineering, or graduate study.",
+    "emory-political-science-bs": "Students interested in government, elections, and international relations who want empirical methods and theory for careers in law, policy, government, or research.",
+    "emory-psychology-bs": "Students curious about cognition, behavior, and clinical science who want laboratory research experience before careers in psychology, health, or graduate study.",
+    "emory-public-policy-analysis-bs": "Students who want to evaluate and design public programs with quantitative methods, economics, and political institutions, headed toward policy, government, or graduate study.",
+    "emory-religion-ba": "Students interested in the world's religious traditions, texts, and practices who want to study belief and culture comparatively, often toward law, ministry, or the humanities.",
+    "emory-sociology-ba": "Students interested in inequality, institutions, and social change who want both social theory and research methods for careers in research, policy, law, or social services.",
+    "emory-spanish-ba": "Students who want advanced Spanish proficiency plus the literatures and cultures of Spain and Latin America, valuable for careers in health, law, education, or international work.",
+    "emory-theater-studies-ba": "Students who want to combine performance, directing, and design with dramatic literature and hands-on production work in a liberal-arts context.",
+    "emory-african-american-studies-ba": "Students committed to the histories, cultures, and politics of African-descended peoples who want interdisciplinary study toward law, public service, education, or research.",
+    "emory-linguistics-ba": "Students fascinated by how language works — sound, structure, and meaning — who want analytical and computational skills for tech, speech science, or graduate linguistics.",
+    "emory-business-administration-bba": "High-achieving undergraduates who want a selective, STEM-designated business degree with strong consulting, finance, and healthcare placement and early career focus.",
+    "emory-business-administration-mba": "Early-career professionals seeking a small-cohort, general-management MBA with strong healthcare and consulting recruiting, especially those targeting the Southeast.",
+    "emory-nursing-bs": "Students committed to becoming registered nurses who want top-ranked, clinically intensive training across Emory Healthcare and are ready for a selective, fast-paced cohort.",
+    "emory-public-health-mph": "Aspiring public-health practitioners and researchers who want rigorous epidemiology and biostatistics training and value Atlanta's CDC and global-health network.",
+    "emory-public-health-msph": "Graduates aiming at research-oriented public-health careers who want deeper biostatistics, epidemiology, and environmental-health methods than the practice-focused MPH.",
+    "emory-theology-mdiv": "Students preparing for ordained ministry or faith-based leadership who want biblical, theological, and pastoral formation, often in the Methodist tradition.",
+    "emory-law-prof": "Aspiring lawyers drawn to health law, transactional and business law, or international law who want clinics and a strong Atlanta legal market.",
+    "emory-medicine-prof": "Future physicians drawn to a research-intensive M.D. with strength in infectious disease, transplantation, and oncology and a dedicated research 'Discovery' phase.",
+    "emory-biology-phd": "Aspiring research scientists pursuing doctoral work across molecular, cellular, and ecological biology toward academic or industry research careers.",
+    "emory-computer-science-phd": "Students aiming at research careers in AI, systems, theory, or computational science who want to pursue an original dissertation with CS faculty.",
+    "emory-economics-phd": "Future academic and applied economists who want rigorous doctoral training in micro, macro, and econometrics with strength in health and development economics.",
+    "emory-psychology-phd": "Research-bound students pursuing doctoral work in cognition, clinical science, or systems neuroscience using behavioral and neuroimaging methods.",
+    "emory-chemistry-phd": "Aspiring chemists pursuing doctoral research across synthetic, physical, biological, or materials chemistry toward academic or industry careers.",
+    "emory-history-phd": "Future historians and scholars pursuing archival doctoral research across American, European, African, and global history.",
+    "emory-biostatistics-phd": "Quantitatively strong students pursuing doctoral research in statistical methods for public health, clinical trials, and genomics, housed at Rollins.",
+    "emory-computer-science-ms": "Graduates and professionals who want advanced computing coursework and research preparation as a step toward industry roles or a doctorate.",
+}
+
+_who_missing = [s for s in PROGRAM_SLUGS if s not in _WHO_BY_SLUG]
+if _who_missing:
+    raise RuntimeError(f"Emory who_its_for missing on {len(_who_missing)} rows: {_who_missing[:5]}")
+_who_stray = [s for s in _WHO_BY_SLUG if s not in set(PROGRAM_SLUGS)]
+if _who_stray:
+    raise RuntimeError(f"Emory who_its_for has stray slugs: {_who_stray[:5]}")
+_cip_missing = [s for s in PROGRAM_SLUGS if s not in _CIP_BY_SLUG]
+if _cip_missing:
+    raise RuntimeError(f"Emory cip_code missing on {len(_cip_missing)} rows: {_cip_missing[:5]}")
+_cip_stray = [s for s in _CIP_BY_SLUG if s not in set(PROGRAM_SLUGS)]
+if _cip_stray:
+    raise RuntimeError(f"Emory cip_code has stray slugs: {_cip_stray[:5]}")
 
 
 def _lead_campus_photo(school_outcomes: dict) -> str | None:
@@ -1149,7 +1393,9 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
         p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
-        p.who_its_for = None
+        # Matcher-core CIP join key (REPAIR_BACKLOG #1) + universal who_its_for depth (#4).
+        p.cip_code = _CIP_BY_SLUG.get(slug)
+        p.who_its_for = _WHO_BY_SLUG.get(slug)
         p.highlights = None
         p.application_deadline = (
             date(2027, 1, 1) if spec["degree_type"] == "bachelors" else None

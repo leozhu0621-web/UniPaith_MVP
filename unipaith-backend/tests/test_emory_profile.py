@@ -151,3 +151,32 @@ def test_graduate_tiers_carry_published_tuition():
             assert cost["tuition_usd"] != p._TUITION_UG, spec["slug"]
         elif dtype == "phd":
             assert not p._grad_has_verified_tuition(spec), spec["slug"]
+
+
+def test_cip_code_complete():
+    """REPAIR_BACKLOG #1 — every program carries a real CIP join key for the matcher."""
+    import re
+
+    for spec in p.PROGRAMS:
+        cip = p._CIP_BY_SLUG.get(spec["slug"])
+        assert cip, f"{spec['slug']} missing cip_code"
+        assert re.fullmatch(r"\d{2}\.\d{2,4}", cip), f"{spec['slug']} bad cip {cip}"
+    assert set(p._CIP_BY_SLUG) == set(p.PROGRAM_SLUGS)
+
+
+def test_who_its_for_complete_and_not_stub():
+    """REPAIR_BACKLOG #4 — who_its_for is a universal depth field; 100%, never a stub."""
+    assert set(p._WHO_BY_SLUG) == set(p.PROGRAM_SLUGS)
+    for spec in p.PROGRAMS:
+        who = p._WHO_BY_SLUG.get(spec["slug"])
+        assert who and len(who) > 40, f"{spec['slug']} thin who_its_for"
+        # never the banned classification stub form
+        assert not who.lower().startswith("for students interested in"), spec["slug"]
+
+
+def test_reviews_are_program_specific_and_sourced():
+    """Added reviews carry resolvable sources and no CIP-rollup synthesis tells."""
+    for slug, rev in p._REVIEWS_BY_SLUG.items():
+        assert rev["summary"] and rev["sources"], slug
+        assert all(s.get("url", "").startswith("http") for s in rev["sources"]), slug
+        assert ", General" not in rev["summary"] and ", Other" not in rev["summary"], slug
