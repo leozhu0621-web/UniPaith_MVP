@@ -396,6 +396,29 @@ class InboxService:
             conv.action_label = "status_update_only"
 
         await self.db.flush()
+        # Ring the institution's bell — a student reply previously reached no one
+        # until the inbox happened to be open and polled. Best-effort + idempotent
+        # (event_id per message), so a retry never double-notifies.
+        try:
+            recipient_user_id = conv.assigned_to
+            if recipient_user_id is None and conv.institution_id:
+                recipient_user_id = await self.db.scalar(
+                    select(Institution.admin_user_id).where(Institution.id == conv.institution_id)
+                )
+            if recipient_user_id is not None:
+                from unipaith.services.notification_service import NotificationService
+
+                await NotificationService(self.db).notify(
+                    user_id=recipient_user_id,
+                    notification_type="inquiry",
+                    title="New student reply",
+                    body="A student replied to a conversation in your inbox.",
+                    action_url="/i/communications?tab=inbox",
+                    metadata={"conversation_id": str(thread_id)},
+                    event_id=f"inbox_reply:{message.id}",
+                )
+        except Exception:
+            logger.warning("inbox post_message: institution notify failed", exc_info=True)
         return InboxMessageResponse(
             id=message.id,
             thread_id=message.conversation_id,
