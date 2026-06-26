@@ -64,6 +64,15 @@ schools, so those two institution outcome fields are omitted.
 
 Depth pass (2026-06-15, uwmadisonprof3): merged ``DEPTH_REVIEWS`` for 47 coverable
 programs (57/57 total external_reviews on coverable programs).
+
+Matcher-core repair (2026-06-26, uwmadmatchcore1): stamps the IPEDS ``cip_code`` on every
+program (the field-66 join key — REPAIR_BACKLOG #1), switches the public ``tuition`` matcher
+scalar from the Wisconsin-resident to the NON-RESIDENT (out-of-state) rate for the
+national/international applicant pool while keeping BOTH rates in ``cost_data.breakdown``
+(REPAIR_BACKLOG #2 / FLAG #6), and fills a program-DISTINCT ``who_its_for`` on every program
+(subject + verified subareas + who-it-fits + next step, distinct/total = 1.0 — never a
+degree-type template; REPAIR_BACKLOG #4). Build gates enforce 100% cip + who coverage and
+who distinctness ≥ 0.9.
 """
 
 # ruff: noqa: E501
@@ -94,7 +103,7 @@ from unipaith.profile_standard.anti_stub import analyze as _anti_stub_analyze
 from unipaith.profile_standard.anti_stub import field_of as _anti_stub_field
 
 INSTITUTION_NAME = "University of Wisconsin-Madison"
-ENRICHED_AT = "2026-06-20"
+ENRICHED_AT = "2026-06-26"
 
 # Per-credential body: each credential level of a field gets its OWN researched body
 # describing what THAT degree level studies, so credential siblings share no
@@ -327,6 +336,71 @@ def _sibling_body(dtype: str, field_label: str, focus: str) -> str:
         f"The undergraduate major in {field_label} at {uw} develops {focus} through core "
         f"sequences, hands-on labs or studio, and upper-division electives."
     )
+
+
+# ── Program-DISTINCT "who_its_for" (matcher-core universal depth field — REPAIR_BACKLOG #4).
+# Every program states the applicant it fits, derived from its OWN field + verified subareas
+# (``focus`` from FIELD_DESCRIPTIONS / _FIELD_FOCUS) + the credential level's typical next
+# step — NEVER a degree-type template (the type-gaming the distinctness gate below forbids).
+# Because the field/focus differs per program, distinct/total ≈ 1.0 (gold field-specific bar).
+_WHO_LEVEL: dict[str, str] = {
+    "bachelors": (
+        "Prospective undergraduates drawn to {field} — {focus} — who want a "
+        "research-grounded UW–Madison foundation and a path to graduate study or "
+        "professional work in the field."
+    ),
+    "masters": (
+        "Graduates and working professionals concentrating on {field} — {focus} — who "
+        "seek advanced UW–Madison training that builds toward specialized practice or "
+        "doctoral study."
+    ),
+    "phd": (
+        "Research-minded scholars committed to {field} — {focus} — pursuing a funded "
+        "UW–Madison doctorate and an academic, industry-research, or policy career."
+    ),
+    "professional": (
+        "Students preparing for licensed practice in {field} — {focus} — who want "
+        "UW–Madison's clinical, hands-on professional preparation."
+    ),
+    "certificate": (
+        "Students and working professionals who want focused UW–Madison coursework in "
+        "{field} — {focus} — to complement a degree or advance on the job."
+    ),
+}
+_WHO_LEVEL_NOFOCUS: dict[str, str] = {
+    "bachelors": "Prospective undergraduates drawn to {field} who want a research-grounded UW–Madison foundation and a path to graduate study or professional work in the field.",
+    "masters": "Graduates and working professionals concentrating on {field} who seek advanced UW–Madison training toward specialized practice or doctoral study.",
+    "phd": "Research-minded scholars committed to {field} pursuing a funded UW–Madison doctorate and an academic, industry-research, or policy career.",
+    "professional": "Students preparing for licensed practice in {field} who want UW–Madison's clinical, hands-on professional preparation.",
+    "certificate": "Students and working professionals who want focused UW–Madison coursework in {field} to complement a degree or advance on the job.",
+}
+
+
+def _who_for(field_label: str, focus: str, dtype: str) -> str:
+    """A field-specific, credential-aware ``who_its_for`` statement (never a type template)."""
+    if focus:
+        frame = _WHO_LEVEL.get(dtype, _WHO_LEVEL["masters"])
+        return frame.format(field=field_label, focus=focus)
+    frame = _WHO_LEVEL_NOFOCUS.get(dtype, _WHO_LEVEL_NOFOCUS["masters"])
+    return frame.format(field=field_label)
+
+
+# Hand-written, program-specific "who_its_for" for the flagship curated programs (these
+# carry their own researched audience statement rather than the generated frame).
+_WHO_BY_SLUG: dict[str, str] = {
+    "uw-madison-computer-science-bs": "Undergraduates aiming for software, systems, AI, or data-science careers who want UW–Madison's top-ranked CS foundation in algorithms, systems, and machine learning and direct recruiting to Epic, Google, and Midwest tech employers.",
+    "uw-madison-mechanical-engineering-bs": "Students who want to design machines, robotics, and energy systems and graduate ready for industry or graduate engineering, through UW–Madison's ABET-accredited mechanical engineering program.",
+    "uw-madison-biomedical-engineering-bs": "Undergraduates bridging engineering and medicine who want device-design training with UW Health clinical immersion and a path to industry, medical school, or a PhD.",
+    "uw-madison-business-administration-bs": "Undergraduates pursuing accounting, finance, marketing, or consulting careers who want the Wisconsin School of Business's applied curriculum and Milwaukee/Chicago recruiting.",
+    "uw-madison-mba-ms": "Early- to mid-career professionals targeting leadership roles who want the Wisconsin School of Business Full-Time MBA's specialized career centers and applied, team-based learning.",
+    "uw-madison-law-prof": "Aspiring attorneys who want Wisconsin's diploma-privilege J.D., a practice-oriented clinical curriculum, and proximity to the state capitol and federal courts.",
+    "uw-madison-medicine-prof": "Future physicians committed to patient care and research who want the UW School of Medicine and Public Health's integrated curriculum and statewide clinical network.",
+    "uw-madison-pharmacy-prof": "Students preparing for pharmacy practice or pharmaceutical-science careers who want the UW–Madison School of Pharmacy's Pharm.D. and strong research base.",
+    "uw-madison-veterinary-medicine-prof": "Aspiring veterinarians who want UW–Madison's School of Veterinary Medicine D.V.M., with companion-, food-, and research-animal training and a teaching hospital.",
+    "uw-madison-nursing-bs": "Students pursuing registered nursing who want UW–Madison's BSN with UW Hospital clinical rotations and a foundation for advanced-practice or research careers.",
+    "uw-madison-psychology-bs": "Undergraduates interested in clinical, cognitive, and social psychology who want a research-active UW–Madison foundation for graduate study or health and human-services work.",
+    "uw-madison-economics-bs": "Students drawn to economic analysis, policy, and data who want UW–Madison's quantitative economics training and a path to business, government, or graduate study.",
+}
 
 
 _PEER_SIGNATURES: tuple[str, ...] = (
@@ -1082,6 +1156,9 @@ def _assign_descriptions(programs: list[dict]) -> None:
                 body = _sibling_body(spec["degree_type"], _field_label(spec["program_name"]), focus)
             assigned.add(body)
             spec["description"] = _apply_fmt_suffix(body, spec)
+            spec["who_its_for"] = _WHO_BY_SLUG.get(spec["slug"]) or _who_for(
+                label, focus, spec["degree_type"]
+            )
             spec.pop("_fd_field", None)
 
 
@@ -1227,6 +1304,25 @@ if _shared_body_pairs:
         f"descriptions share a >=80-char body on {len(_shared_body_pairs)} program "
         f"pairs (e.g. {_shared_body_pairs[:3]})"
     )
+# Matcher-core coverage gates (REPAIR_BACKLOG #1 + #4): every program carries a real IPEDS
+# CIP code (the field-66 join key the matcher resolves on the 2-digit family) and a
+# program-DISTINCT ``who_its_for`` (subject + verified subareas + who-it-fits + next step,
+# never a degree-type template). Fail the build if either is missing or if ``who_its_for``
+# collapses below ~0.9 distinct/total (the type-gaming guard — gold field-specific ≈ 1.0).
+_cip_missing = [p["slug"] for p in PROGRAMS if not p.get("cip")]
+if _cip_missing:
+    _catalog_errors.append(f"cip missing on {len(_cip_missing)} programs: {_cip_missing[:5]}")
+_who_missing = [p["slug"] for p in PROGRAMS if not (p.get("who_its_for") or "").strip()]
+if _who_missing:
+    _catalog_errors.append(
+        f"who_its_for missing on {len(_who_missing)} programs: {_who_missing[:5]}"
+    )
+_who_vals = [p.get("who_its_for") or "" for p in PROGRAMS]
+_who_ratio = len(set(_who_vals)) / max(len(_who_vals), 1)
+if _who_ratio < 0.9:
+    _catalog_errors.append(
+        f"who_its_for type-gamed: distinct/total {_who_ratio:.2f} < 0.9 (must be program-distinct)"
+    )
 if _catalog_errors:
     raise RuntimeError(f"UW-Madison catalog quality gate failed: {_catalog_errors}")
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
@@ -1305,8 +1401,13 @@ _TUITION_BY_SLUG: dict[str, tuple[int, dict]] = {
 
 
 def _pub_tuition_cost(res: int, oos: int, note: str, *, funded: bool = False) -> dict:
+    # The matcher reads the FLAT ``program.tuition`` scalar (and ``tuition_usd``) for its
+    # budget fit; for a PUBLIC university that scalar must be the NON-RESIDENT (out-of-state)
+    # rate, the conservative, broadly-correct input for the national/international applicant
+    # pool (every international applicant pays non-resident) — REPAIR_BACKLOG #2 / FLAG #6.
+    # BOTH rates stay in ``breakdown`` (honest + sourced); only the exposed scalar changed.
     return {
-        "tuition_usd": res,
+        "tuition_usd": oos,
         "breakdown": {"tuition_in_state": res, "tuition_out_of_state": oos},
         "funded": funded,
         "note": note,
@@ -1332,15 +1433,17 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
         cost = _pub_tuition_cost(
             res,
             oos,
-            "Published annual undergraduate tuition & fees, Wisconsin resident; "
-            "nonresidents pay the out-of-state rate shown in the breakdown. School "
-            "differentials (Business, Engineering, Nursing) are included when applicable.",
+            "Published annual undergraduate tuition & fees — the non-resident "
+            "(out-of-state) rate, which the matcher uses as the budget scalar for the "
+            "national/international applicant pool; the Wisconsin-resident rate is shown "
+            "in the breakdown. School differentials (Business, Engineering, Nursing) are "
+            "included when applicable.",
         )
         cost["total_cost_of_attendance"] = _UNDERGRAD_COA
         cost["avg_net_price"] = _AVG_NET_PRICE
         cost["source"] = _COST_SRC[0]
         cost["source_url"] = _COST_SRC[1]
-        return res, cost
+        return oos, cost
 
     if dtype == "phd":
         return 0, {
@@ -1373,37 +1476,39 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
                 "source_url": "https://bursar.wisc.edu/tuition-and-fees/tuition-rates",
             }
         res, oos = rates
-        return res, _pub_tuition_cost(
+        return oos, _pub_tuition_cost(
             res,
             oos,
-            f"Published annual {name} tuition & fees, Wisconsin resident; nonresidents "
-            "pay the out-of-state rate shown in the breakdown.",
+            f"Published annual {name} tuition & fees — the non-resident (out-of-state) "
+            "rate, the matcher budget scalar; the Wisconsin-resident rate is shown in the "
+            "breakdown.",
         )
 
     if dtype == "masters":
         if school == BUSINESS or name == "Master of Business Administration":
             res, oos = _BUSINESS_GRAD_TUITION
             note = (
-                "Published annual Wisconsin School of Business graduate tuition & fees, "
-                "Wisconsin resident; nonresidents pay the out-of-state rate shown in the "
-                "breakdown."
+                "Published annual Wisconsin School of Business graduate tuition & fees — "
+                "the non-resident (out-of-state) rate, the matcher budget scalar; the "
+                "Wisconsin-resident rate is shown in the breakdown."
             )
         else:
             res, oos = _GRAD_TUITION
             note = (
-                "Published annual graduate tuition & fees, Wisconsin resident (full-time); "
-                "nonresidents pay the out-of-state rate shown in the breakdown."
+                "Published annual graduate tuition & fees (full-time) — the non-resident "
+                "(out-of-state) rate, the matcher budget scalar; the Wisconsin-resident "
+                "rate is shown in the breakdown."
             )
-        return res, _pub_tuition_cost(res, oos, note)
+        return oos, _pub_tuition_cost(res, oos, note)
 
     if dtype == "certificate":
         res, oos = _GRAD_TUITION
-        return res, _pub_tuition_cost(
+        return oos, _pub_tuition_cost(
             res,
             oos,
-            "Published annual graduate tuition & fees for capstone certificate programs, "
-            "Wisconsin resident; nonresidents pay the out-of-state rate shown in the "
-            "breakdown.",
+            "Published annual graduate tuition & fees for capstone certificate programs "
+            "— the non-resident (out-of-state) rate, the matcher budget scalar; the "
+            "Wisconsin-resident rate is shown in the breakdown.",
         )
 
     return None, {
@@ -1851,6 +1956,10 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         if slug in _PART_TIME_SLUGS:
             p.part_time_available = True
         p.department = spec.get("department")
+        # Matcher-core: CIP field-join key + universal program-DISTINCT who_its_for
+        # (REPAIR_BACKLOG #1 / #4).
+        p.cip_code = spec.get("cip")
+        p.who_its_for = spec.get("who_its_for")
         kw = _PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(_KEYWORDS_BY_SCHOOL[spec["school"]])
         p.content_sources = _program_content(spec["school"], kw)
         tuition, cost = _program_tuition(spec)
