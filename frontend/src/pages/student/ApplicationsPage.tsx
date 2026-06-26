@@ -187,8 +187,12 @@ export default function ApplicationsPage() {
   const rawView = searchParams.get('tab')
   const view: AppView = rawView === 'offers' ? 'offers' : rawView === 'costs' ? 'costs' : 'all'
   // ?status= deep links (the home pipeline tiles) pre-select a bucket filter.
-  const [statusFilter, setStatusFilter] = useState<'all' | Bucket>(() => {
+  // Grouped deep-link filters ('draft' = all drafts; 'in_flight' = submitted /
+  // under_review / interview) so the home pipeline tiles, whose counts span
+  // several buckets, land on a list that matches the number they showed.
+  const [statusFilter, setStatusFilter] = useState<'all' | Bucket | 'draft' | 'in_flight'>(() => {
     const s = searchParams.get('status')
+    if (s === 'draft' || s === 'in_flight') return s
     return s && BUCKET_ORDER.includes(s as Bucket) ? (s as Bucket) : 'all'
   })
   const [institution, setInstitution] = useState('all')
@@ -270,7 +274,10 @@ export default function ApplicationsPage() {
 
   const filtered = useMemo(() => {
     let list = apps
-    if (statusFilter !== 'all') list = list.filter(a => bucketOf(a) === statusFilter)
+    if (statusFilter === 'draft') list = list.filter(a => a.status === 'draft')
+    else if (statusFilter === 'in_flight')
+      list = list.filter(a => ['submitted', 'under_review', 'interview'].includes(a.status))
+    else if (statusFilter !== 'all') list = list.filter(a => bucketOf(a) === statusFilter)
     if (institution !== 'all') list = list.filter(a => a.program?.institution_name === institution)
     if (priorityFilter !== 'all') {
       // Map reach/target/safer to fit_band values (low/medium/high).
@@ -554,8 +561,13 @@ export default function ApplicationsPage() {
           <Select
             aria-label="Filter by status"
             value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value as 'all' | Bucket)}
-            options={[{ value: 'all', label: 'All statuses' }, ...BUCKET_ORDER.map(b => ({ value: b, label: BUCKET_LABELS[b] }))]}
+            onChange={e => setStatusFilter(e.target.value as 'all' | Bucket | 'draft' | 'in_flight')}
+            options={[
+              { value: 'all', label: 'All statuses' },
+              { value: 'draft', label: 'In progress (drafts)' },
+              { value: 'in_flight', label: 'Submitted' },
+              ...BUCKET_ORDER.map(b => ({ value: b, label: BUCKET_LABELS[b] })),
+            ]}
           />
         </div>
         {institutions.length > 0 && (

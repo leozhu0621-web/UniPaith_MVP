@@ -152,8 +152,8 @@ export default function MySpaceHomePage() {
           {/* B — dense dashboard. Pipeline with an earned-gold Offers tile. */}
           <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3 rounded-lg border border-border bg-card px-4 py-3">
             <button onClick={() => navigate('/s/saved')} className="text-left" aria-label="Saved programs"><StatTile label="Saved" value={savedList.length} /></button>
-            <button onClick={() => navigate('/s/applications?status=in_progress')} className="text-left" aria-label="Applications in progress"><StatTile label="In progress" value={drafts.length} /></button>
-            <button onClick={() => navigate('/s/applications?status=submitted')} className="text-left" aria-label="Submitted applications"><StatTile label="Submitted" value={inFlight.length} /></button>
+            <button onClick={() => navigate('/s/applications?status=draft')} className="text-left" aria-label="Applications in progress"><StatTile label="In progress" value={drafts.length} /></button>
+            <button onClick={() => navigate('/s/applications?status=in_flight')} className="text-left" aria-label="Submitted applications"><StatTile label="Submitted" value={inFlight.length} /></button>
             <button
               onClick={() => navigate('/s/applications?tab=offers')}
               aria-label="Offers"
