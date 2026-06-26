@@ -31,6 +31,7 @@ from sqlalchemy.orm import Session
 from alembic import op
 from unipaith.data import carnegie_mellon_profile
 from unipaith.models.institution import Institution, Program, ProgramPreference
+from unipaith.models.matching import MatchResult
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "cmucip2"
@@ -61,6 +62,16 @@ def upgrade() -> None:
             )
             session.flush()
         backfill_program_preferences(session, institution_id=inst.id)
+        # The corrected CIP changes the program-side field signal, so any cached
+        # MatchResult for these programs is stale. Mark them stale (the same
+        # invalidation institution_service.update_program() does) so GET /me/matches
+        # lazily rescores against the corrected data instead of serving old scores.
+        if prog_ids:
+            session.execute(
+                MatchResult.__table__.update()
+                .where(MatchResult.program_id.in_(prog_ids))
+                .values(is_stale=True)
+            )
     session.flush()
 
 
