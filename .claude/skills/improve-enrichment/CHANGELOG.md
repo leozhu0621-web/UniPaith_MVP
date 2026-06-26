@@ -6,6 +6,101 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-26 — Run 86 (FULL-FLEET sweep of all 300 live + all 40 catalogs + the alembic graph on `origin/main` · 🔴 CRITICAL headline = the DEPLOY PIPELINE is STILL BLOCKED and WORSE: 13 concurrent alembic heads strand the merged Georgetown #1169 repair NOT-LIVE · 1 rule change — the destructive HARD-NULL / re-apply REGRESSION class, root cause of the `who_its_for` 0% + UCLA's 100%→0% regression)
+
+**Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`.**
+I crawled the fully-paginated `/programs` list of every program-bearing catalog (**40 catalogs, 7,300 programs**;
+the other 260 are bare institution-level stubs) and per catalog computed: a description-NON-EMPTINESS scan, an
+exact-duplicate `(program_name, degree_type)` scan, a name-realness scan (CIP-rollup TITLE + "…and Related
+Sciences/Services" / ", General/Other" / `(CIP NN.NN)` / possessive "Bachelor's in" / bare-abbrev / embedded-slash
+tells), and per-`degree_type` tuition coverage. Over program DETAILS (`GET /programs/{id}`, 10/catalog · 5 for
+seeds) I probed `cip_code`, `who_its_for`, `external_reviews`, and the bachelor `tuition` scalar vs
+`cost_data.breakdown` resident/non-resident. Over ALL 300 institutions I fetched campus-photo count + posts-feed
+count (threaded). **The alembic graph was AST-parsed over `origin/main` (520 revisions, robust to multi-line
+`down_revision` tuples — a naïve line-regex over-counted 16; the AST resolve gives 13) — it found THIRTEEN
+concurrent heads (deploy BLOCKED).** Merged PRs + per-module `p.cip_code` / `p.who_its_for` assignments read via `git`.
+
+**🔴 CRITICAL HEADLINE — the deploy pipeline is STILL BLOCKED and WORSE (8→13 heads; drives backlog #1; no new
+rule — fully covered by §8/§9).** `origin/main` carries **13 alembic leaf-heads** (`c25a1b2c3d4e`, `d4e5f6a7b8c9`,
+`f24da7a0c1b3`, `dartfinish1`, `f1a9c0d2e3b4`, `georgetownprof1`, `l2m3n4o5p6q7`, `nyuprof4`, `pennnames1`,
+`r40a1b2c3d4e`, `scoredweights1`, `uiucmrg1`, `uiucuwmrg1`, `uscprof3`, `utaprof1`), so `alembic upgrade head` errors
+"Multiple head revisions are present" and no migration applies in prod. **Direct live proof:** Georgetown PR #1169
+(`georgetownprof1`, the LATEST commit on main — a full 190-program real catalog, `georgetown_profile.py` carries
+`description_text`+`who_its_for`+`cip_code` on every row) MERGED, yet the live API STILL serves Georgetown's 5
+empty-description seed programs — merged-but-not-executed. Several heads are NON-enrichment feature migrations
+(spec24/25/32/40, claim-fields, confidence-pairs, drop-crawler, scored-weights), so the fixup must unify all 13.
+Rules EXIST (SKILL.md §8 head-sync + step 5 — which PREDICTS this exact parallel-auto-merge divergence — +
+`test_alembic_has_single_head` + §9 "a merge is NOT a deploy… do NOT start a new university"), so this is a
+COMPLIANCE GAP (queued, not re-added) + FLAG #1/#2 for a human (the CI gate checks single-head on the PR branch,
+never the post-merge `main`; and heavy data migrations are "stamped-not-run" to avoid hanging container boot).
+
+**1 RULE CHANGE — the destructive HARD-NULL / re-apply REGRESSION class (the genuinely NEW gap-class this run).**
+Tracing the recurring `who_its_for` 0% finding to its mechanism (per CLAUDE.md: re-checked the source DIRECTLY, not
+via a sub-agent), I found the `apply()` program loop of exactly the 12 catalogs reading `who_its_for` 0% contains
+the literal `p.who_its_for = None` (`brown · duke · emory · georgia_tech · michigan · nyu · rice · ucla · uiuc · usc
+· ut_austin · uw _profile.py`), while the who-COMPLETE catalogs assign `_WHO_BY_SLUG.get(slug) or
+_WHO_BY_TYPE.get(degree_type)`. Because `apply()` rewrites the SAME row with `replace=True`, a literal `= None` (or
+any un-assigned field) is written to null on EVERY re-apply — so it both bakes starvation into the build AND
+REGRESSES the field whenever an unrelated single-dimension repair re-applies the module. **Live proof of the
+regression: UCLA's `who_its_for` went 100% → 0% after its `cip_code` follow-up (#1141/#1142) re-applied the
+hard-nulling module.** No existing rule covers this (the "never overwrite first-party" rules are about CLAIMED rows;
+the run-84 who-rule says "fill who" but not that `= None` is the destructive mechanism + regresses on re-apply). The
+new rule (a sub-bullet under miss #2, between the who_its_for and delivery_format bullets): a module must NEVER
+hard-set a coverable field to `None` (populate it, or leave unset + `_standard.omitted`), and a single-dimension
+repair is not done until it CARRIES FORWARD every already-shipped field and verify-LIVEs the OTHER deep fields.
+TIGHTENS verify-live + omit-with-reason; loosens nothing. Also fixed a now-stale evidence line in the who-rule
+(UCLA → Berkeley in the who-complete list, since UCLA regressed) for coherence.
+
+**Other findings — all COMPLIANCE GAPS to existing rules (queued + flagged, NOT re-added per the default-flipped
+anti-churn doctrine):**
+- **EMPTY-description seeds (CRITICAL #2):** all 6 flagship seeds (Georgetown · UC-Davis · UC-Irvine · UNC · UVA ·
+  WashU) still ship 30 blank-description / null-department / 0%-tuition / 0%-who / dead-feed programs. Georgetown's
+  fix is WRITTEN (#1169) but stranded by #1; the other 5 unbuilt. Rule EXISTS (run 85 desc-non-emptiness gate).
+- **`cip_code` STARVATION (HIGH #3):** null on 20 mature catalogs (MIT-control · Brown · BU · CMU · Cornell · Duke ·
+  Emory · Harvard · JHU · NYU · Northwestern · Purdue · Rice · Stanford · UF · UIUC · Michigan · USC · UW-Madison ·
+  Yale); only 15 of 35 modules assign `p.cip_code`. Rule EXISTS (run 82) → FLAG #3 for the durable CI gate.
+- **PUBLIC resident-scalar mis-signal (HIGH #4):** 6 publics still ship the in-state rate as the matcher scalar
+  (UCLA · UCSD · Michigan · Florida · Wisconsin · Purdue) + UIUC (breakdown has NO out-of-state — research it).
+  UW-Seattle/UT-Austin/Berkeley/Georgia Tech now CLEARED. Rule EXISTS (run 83).
+- **master's/professional tuition residual (HIGH #5):** worst UW-Seattle master's 138/152 + USC 249/261 + Yale
+  30/38 + BU/UT/Cornell/Penn/Harvard/UCSD/NYU smaller; PhD/cert nulls excluded (funded/per-credit). Rule EXISTS.
+- **`who_its_for` 0% (MEDIUM #6, root cause above):** 21 mature catalogs at 0% + UCLA regressed; Berkeley/Vanderbilt/
+  Dartmouth flipped to 100% this cycle. Rule EXISTS (run 84) + the new hard-null rule.
+- **reviews depth-pass (MEDIUM #7)** + **bulk seeds / 33 zero-photo stubs (MEDIUM #8):** miss #8 / miss #7 / seed tier.
+
+**Diagnosed NOT-a-defect / CLEAN (verified LIVE):** name-realness is CLEAN fleet-wide — every name-scan hit was a
+FALSE-POSITIVE of the broad embedded-slash tell on a legit combined/joint name ("Radio/Television/Film", MD/PhD,
+JD/LLM, "Asian/Pacific/American Studies", joint majors) — kept, never mangled (per the run-77 "shared≠rollup / never
+mangle a verified name" carve-out). Exact-duplicate `(program_name, degree_type)` = 0 on all 40 catalogs.
+Structure / `machine_artifacts` / `template_slot_artifacts` / `scrape_debris` / `frame_abs150` = 0 on the mature
+fleet. Tuition-VALUE copy-down clean (BU's verified flat $69,870 grad rate the only grad==undergrad). 0 empty
+descriptions of 7,270 MATURE-catalog programs (the 30 empties are all on the 6 seeds). **PROGRESS landed LIVE since
+run 85:** Columbia · Vanderbilt · Dartmouth `cip_code`+`who_its_for` now 100%; Berkeley who 0→100%, cip 100%,
+non-resident scalar correct.
+
+**Rule changes: 1 of ≤3 (bounded, evidence-backed, NOT a duplicate).** After the full-fleet sweep, exactly ONE
+genuinely new gap-class existed (the hard-null / re-apply regression — code-traced, generalizable, uncovered);
+every OTHER live defect is a VIOLATION of an existing rule, so per the default-flipped + anti-churn rails they are
+queued + logged, never re-added. Inventing more rules to "not stop at one" would breach no-edit-without-NEW-evidence.
+Post-edit self-review: re-read the edited region — the new bullet sits coherently under miss #2 (no numbered miss
+renumbered), the UCLA→Berkeley coherence fix removes the only contradiction, all IMMUTABLE INVARIANTS intact (the
+edit ADDS a no-fabrication-aligned anti-regression requirement; verify-rendered-output, omit-with-reason,
+enrichment-only, merge-mandatory all untouched — it loosens nothing).
+
+**Backlog delta:** rewritten worst-first, full-fleet (run 86). #1 alembic block re-measured 8→13 heads (Georgetown
+the new stranded proof). #2 seeds unchanged (Georgetown fix written-but-stranded). #3 cip null 22→20 (Columbia +
+Vanderbilt + Dartmouth cleared LIVE). #4 publics 7→6 in-state + UIUC. #6 who 29→21 (Berkeley/Vanderbilt/Dartmouth
+cleared, UCLA still regressed) — now with the code-traced ROOT CAUSE. CLEARED/CLEAN: exact-dups, names,
+tuition-value, mature-fleet descriptions.
+
+**Enricher health check:** the DB-backed `test_profile_standard.py` / `test_profile_enrichment.py` need a live
+Postgres the grader env lacks. DB-free substantive check: AST-parsed the full alembic graph on `origin/main` (520
+revisions, 13 heads confirmed), and grep-verified the `p.who_its_for = None` / `p.cip_code =` / `_WHO_BY_SLUG`
+mechanisms directly in the 35 `*_profile.py` modules. This grader PR changes only the three skill markdown files
+(SKILL.md + REPAIR_BACKLOG + CHANGELOG) — no code, no data, no migration — so backend CI is unaffected.
+
+---
+
 ## 2026-06-25 — Run 85 (FULL-FLEET sweep of all 300 live + all 40 catalogs + the alembic graph on `origin/main` · 🔴 CRITICAL headline = the DEPLOY PIPELINE is BLOCKED: 8 concurrent alembic heads strand the merged Vanderbilt #1155 + Dartmouth #1159 repairs NOT-LIVE · 2nd find = ALL 6 flagship seeds ship EMPTY descriptions that the anti_stub gate cannot see · 1 rule change — the description-NON-EMPTINESS coverage gate)
 
 **Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`,**

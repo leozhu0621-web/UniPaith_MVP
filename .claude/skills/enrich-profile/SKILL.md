@@ -689,11 +689,39 @@ Concrete misses observed in the first runs — each broke a real page:
      gold-contrast bar; omit-with-reason still applies to the coverage-gated fields).
      Evidence: live API this run — `who_its_for` is populated on 100% of EVERY program of
      the 11 gold-complete catalogs (MIT, Princeton, Caltech, Harvard, Yale, Columbia,
-     Cornell, Stanford, Chicago, Penn, UCLA) yet 0% on 29 others — including the freshly
+     Cornell, Stanford, Chicago, Penn, Berkeley) yet 0% on 29 others — including the freshly
      matcher-core-repaired UT-Austin / UW-Seattle / Georgia Tech / UCSD — a stark
      11-full / 29-empty / 0-partial split that is the dimension-skip fingerprint, while
      `tracks` / `class_profile` / `faculty_contacts` are sparse even on gold (so those
      stay coverage-gated; `who_its_for` is the one gold fills 100%).
+   - **A coverable field HARD-ASSIGNED to a literal `None` in a module's `apply()`
+     program loop (`p.who_its_for = None`) is NOT an honest omission — it BAKES the
+     starvation into the build AND REGRESSES the field on every `replace=True` re-apply,
+     silently blanking whatever a prior or concurrent PR set (the live ROOT CAUSE of the
+     `who_its_for` 0% class above, and of a once-live value reverting to null).** `apply()`
+     rewrites the SAME program row each run, so every field it sets to a literal `None` —
+     or simply never assigns — is overwritten to null in production. That makes a hard-null
+     categorically different from an omission: an honest omission LEAVES the field untouched
+     (or records it in `_standard.omitted` with a reason), whereas `p.who_its_for = None`
+     actively writes null over a coverable, universal field, so the catalog can never
+     populate it AND any later/parallel PR that did fill it is reverted on the next
+     re-apply. The consequence is the regression fingerprint: a catalog reads 100% on a
+     field one run and 0% the next after an UNRELATED single-dimension repair re-applies its
+     module. So (a) a module must NEVER hard-set a coverable field to `None` — populate it
+     (a per-slug dict like the gold catalogs' `_WHO_BY_SLUG.get(slug) or
+     _WHO_BY_TYPE.get(degree_type)`) or, for a genuinely uncoverable field, leave it unset
+     and record it in `_standard.omitted`, never `= None`; and (b) a SINGLE-DIMENSION repair
+     (stamp `cip_code`, fix tuition) is not done until you CARRY FORWARD every already-shipped
+     field in the rebuilt module AND verify-LIVE that the OTHER deep fields still read
+     populated — not only the dimension you changed. This TIGHTENS verify-live +
+     omit-with-reason with the concrete re-apply mechanism; it loosens nothing
+     (no-fabrication holds; a genuinely-uncoverable field still goes to `_standard.omitted`).
+     Evidence: live API + repo this run — `p.who_its_for = None` sits verbatim in the
+     `apply()` program loop of exactly the 12 catalogs reading `who_its_for` 0% (brown ·
+     duke · emory · georgia_tech · michigan · nyu · rice · ucla · uiuc · usc · ut_austin ·
+     uw), while the who-COMPLETE catalogs assign `_WHO_BY_SLUG`; UCLA's field went
+     **100% → 0%** after its `cip_code` follow-up re-applied the hard-nulling module (the
+     same loop also hard-nulls `p.tracks` / `p.highlights`).
    - Set `delivery_format` (`on_campus` / `online` / `hybrid`) on every program.
 3. **Links everywhere — were missing (issue: campus resources & others have no
    links).** Whenever you name a lab, institute, research center, campus resource,
