@@ -3775,8 +3775,8 @@ _CIP_BY_FIELD: dict[str, str] = {
     "middle east studies": "05.0109",
     "middle eastern and north african studies": "05.0109",
     "russian, east european, and eurasian studies": "05.0110",
-    "international studies": "05.0901",
-    "international and regional studies": "05.0901",
+    "international studies": "30.2001",
+    "international and regional studies": "30.2001",
     "women’s and gender studies": "05.0207",
     "transcultural studies": "05.0102",
     # 16 — Foreign Languages, Literatures & Linguistics
@@ -3915,7 +3915,7 @@ _CIP_BY_FIELD: dict[str, str] = {
     "cellular and molecular biology (pibs)": "26.0406",
     "molecular, cellular, and developmental biology": "26.0406",
     "molecular, cellular, and developmental biology (pibs)": "26.0406",
-    "molecular and cellular pathology (pibs)": "26.0410",
+    "molecular and cellular pathology (pibs)": "26.0406",
     "molecular and integrative physiology": "26.0901",
     "molecular and integrative physiology (pibs)": "26.0901",
     "microbiology": "26.0502",
@@ -4798,6 +4798,15 @@ _HL_BY_TYPE: dict[str, list[str]] = {
     ],
 }
 
+# A paid doctorate (a professional/applied doctorate billed at a real rate, e.g. the
+# D.Eng., or a per-program-billed DrPH) is NOT a funded research Ph.D., so it must not
+# advertise Rackham funding (no-fabrication). Such phd-type rows get the non-funding
+# doctoral highlights instead.
+_HL_PHD_UNFUNDED: list[str] = [
+    "Advanced doctoral study at a top public research university",
+    "World-class research environment",
+]
+
 # Tracks/concentrations are not published as structured data for U-M programs, so
 # ``tracks`` is honestly omitted (recorded in _standard.omitted) catalog-wide — routed
 # through this (empty) lookup rather than a literal ``= None`` (FLAG #4).
@@ -4808,7 +4817,12 @@ def _who_for(slug: str, degree_type: str) -> str | None:
     return _WHO_BY_SLUG.get(slug) or _WHO_BY_TYPE.get(degree_type)
 
 
-def _highlights_for(degree_type: str) -> list[str] | None:
+def _highlights_for(degree_type: str, funded: bool = False) -> list[str] | None:
+    # A phd-TYPE row that is not actually funded (a paid/applied doctorate) must not
+    # advertise Rackham funding (no-fabrication) — only a genuinely funded research
+    # Ph.D. (tuition waived) gets the "Funded — Rackham …" highlight.
+    if degree_type == "phd" and not funded:
+        return list(_HL_PHD_UNFUNDED)
     return _HL_BY_TYPE.get(degree_type)
 
 
@@ -4958,7 +4972,9 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
         p.who_its_for = _who_for(slug, spec["degree_type"])
-        p.highlights = _highlights_for(spec["degree_type"])
+        p.highlights = _highlights_for(
+            spec["degree_type"], funded=bool((p.cost_data or {}).get("funded"))
+        )
         p.application_deadline = None
     session.flush()
     for p in session.scalars(select(Program).where(Program.institution_id == inst.id)):
