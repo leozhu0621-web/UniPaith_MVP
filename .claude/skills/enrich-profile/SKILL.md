@@ -603,6 +603,29 @@ Concrete misses observed in the first runs — each broke a real page:
      freshly de-fabbed, already-DEPLOYED catalogs ship 53–55% possessive "Bachelor's in
      {field}" rows beside conferred doctoral siblings, with federal CIP titles ("Area
      Studies", "… and Related Services") still riding the surviving bachelor's rows.
+   - **A program name must NOT use the generic degree-TYPE NOUN as the credential
+     designation — a name of the form "{DegreeType} program in {field}" ("Professional
+     program in Law", "Professional program in Veterinary Medicine", "Graduate program in
+     {field}") is a name-realness defect EVEN WHEN the field is genuine, because it ships
+     the `degree_type` value title-cased ("Professional"/"Graduate"/"Doctoral") AS the
+     program name in place of the institution's actual CONFERRED designation (Juris Doctor /
+     J.D., Doctor of Veterinary Medicine / D.V.M. or V.M.D., Doctor of Musical Arts / D.M.A.,
+     Doctor of Medicine / M.D.).** This is the sibling of the possessive-mint tell above —
+     same root (a generic award-level placeholder substituting for the real degree name) but
+     a DIFFERENT deterministic tell, so a gate built from the possessive forms ("Bachelor's
+     in"/"Master's in"/"Doctorate in") PASSES it (exactly as the casing bullet below evades
+     the fabrication tells). Every clean catalog names its professional/doctoral rows with
+     the institution's published conferred designation; a "{DegreeType} program in {field}"
+     name proves the row was minted off the `degree_type` enum and never resolved to the real
+     degree. So after building OR repairing any catalog, scan every `program_name` for a
+     leading title-cased degree-TYPE noun followed by "program/degree in {field}" and resolve
+     it to the institution's PUBLISHED conferred designation — never the degree_type label,
+     and omit-with-reason only for a genuinely unnamed professional track. This TIGHTENS the
+     name-realness gate; it loosens NOTHING (resolving to the published designation is
+     verification, not fabrication). Evidence: live API this run — Cornell ships "Professional
+     program in Music" + "Professional program in Veterinary Medicine" and Penn ships
+     "Professional program in Law" + "Professional program in Veterinary Medicine", while every
+     other catalog names its professional rows with the conferred degree (gold MIT 0 of 65).
    - **A program name must carry the institution's PUBLISHED CASING (title case) — a
      SENTENCE-CASED / lowercase-normalized name ("Bachelor of Arts in American studies",
      "… in Art history") is a name-FORM defect EVEN WHEN the field is genuine and the
