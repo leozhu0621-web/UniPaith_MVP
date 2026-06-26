@@ -1430,13 +1430,887 @@ _HL_BY_TYPE = {
     ],
 }
 _WHO_BY_SLUG = {
-    "stanford-mba": (
-        "Future leaders and entrepreneurs with strong records and a few years of "
-        "work experience, seeking a small, transformational general-management program."
-    ),
     "stanford-cs-ms": (
-        "Technically strong graduates who want to deepen computer-science expertise "
-        "in a chosen specialization, often before industry or a PhD."
+        "Technically strong graduates who want to deepen computer-science expertise in a "
+        "chosen area such as artificial intelligence, systems, theory, or human-computer "
+        "interaction, usually before a software career or doctoral study."
+    ),
+    "stanford-cs-bs": (
+        "Undergraduates drawn to algorithms, programming, and computation who want a rigorous "
+        "foundation spanning systems, theory, and applications like AI or graphics, often "
+        "heading into software engineering, startups, or graduate study."
+    ),
+    "stanford-cs-phd": (
+        "Researchers committed to advancing computer science through original work in areas "
+        "like machine learning, systems, or theory, pursuing a funded doctorate toward a "
+        "faculty position or a research role in industry."
+    ),
+    "stanford-ee-ms": (
+        "Engineers who want advanced training in electrical engineering, from circuits and "
+        "signal processing to communications, photonics, or hardware for computing, preparing "
+        "for specialized industry roles or further research."
+    ),
+    "stanford-me-ms": (
+        "Engineers seeking advanced study in mechanical systems, design, dynamics, "
+        "thermosciences, or robotics, building specialized skills for industry practice or a "
+        "path toward doctoral research."
+    ),
+    "stanford-me-bs": (
+        "Undergraduates fascinated by how machines and physical systems work who want a "
+        "rigorous foundation in mechanics, design, materials, and thermodynamics, often "
+        "heading into engineering practice or graduate school."
+    ),
+    "stanford-cee-ms": (
+        "Engineers who want advanced training in the built and natural environment, spanning "
+        "structures, water, sustainable construction, and environmental systems, preparing "
+        "for professional practice or research."
+    ),
+    "stanford-aa-ms": (
+        "Engineers focused on flight and space who want advanced study in aerodynamics, "
+        "propulsion, structures, and control of aircraft and spacecraft, preparing for the "
+        "aerospace industry, government labs, or doctoral work."
+    ),
+    "stanford-bioe-bs": (
+        "Undergraduates who want to apply engineering and quantitative methods to biology and "
+        "medicine, studying topics like biomechanics, biomaterials, and biological systems, "
+        "often before graduate school, medical school, or biotech work."
+    ),
+    "stanford-mse-ms": (
+        "Quantitatively minded students who want to apply optimization, decision analysis, "
+        "and operations methods to complex organizations and systems, preparing for roles in "
+        "analytics, consulting, finance, or technology management."
+    ),
+    "stanford-economics-bs": (
+        "Undergraduates who want to analyze how individuals, firms, and markets make "
+        "decisions using economic theory and data, as a foundation for business, public "
+        "policy, finance, or graduate study."
+    ),
+    "stanford-economics-phd": (
+        "Researchers pursuing original work in economic theory and empirical analysis of "
+        "markets, policy, and behavior, undertaking a funded doctorate toward an academic or "
+        "research-economist career."
+    ),
+    "stanford-human-biology-bs": (
+        "Undergraduates curious about humans across biological and social dimensions who want "
+        "an interdisciplinary program blending biology, health, and behavior, often before "
+        "medicine, public health, or research."
+    ),
+    "stanford-symbolic-systems-bs": (
+        "Undergraduates drawn to the intersection of computation, mind, and language who want "
+        "to combine computer science, linguistics, philosophy, and psychology to study "
+        "intelligence in humans and machines."
+    ),
+    "stanford-mathematics-bs": (
+        "Undergraduates who love rigorous abstract reasoning and want a foundation in areas "
+        "like analysis, algebra, and topology, preparing for graduate study, research, or "
+        "quantitative careers in technology and finance."
+    ),
+    "stanford-political-science-bs": (
+        "Undergraduates who want to study power, institutions, and political behavior across "
+        "domestic and international politics, building analytical skills for law, policy, "
+        "public service, or graduate study."
+    ),
+    "stanford-international-relations-bs": (
+        "Undergraduates interested in how states, institutions, and economies interact across "
+        "borders, studying diplomacy, security, and global political economy as a foundation "
+        "for policy, foreign service, or graduate study."
+    ),
+    "stanford-psychology-bs": (
+        "Undergraduates curious about mind and behavior who want to study cognition, "
+        "development, social processes, and the brain using empirical methods, as a "
+        "foundation for research, health professions, or graduate study."
+    ),
+    "stanford-english-bs": (
+        "Undergraduates who love close reading and want to study literature across periods "
+        "and genres alongside their own critical writing, building skills for law, education, "
+        "publishing, or graduate study in the humanities."
+    ),
+    "stanford-earth-systems-bs": (
+        "Undergraduates concerned with the environment who want an interdisciplinary science "
+        "of the planet, linking the land, oceans, atmosphere, and human systems, often toward "
+        "environmental science, policy, or graduate work."
+    ),
+    "stanford-energy-science-engineering-ms": (
+        "Engineers and scientists who want advanced, interdisciplinary training in energy "
+        "systems, resources, and technologies, preparing for technical and leadership roles "
+        "in the energy transition or for further research."
+    ),
+    "stanford-mba": (
+        "Experienced professionals ready to step into general management and leadership, "
+        "building broad grounding in strategy, finance, operations, and organizations to lead "
+        "companies, found ventures, or move into senior roles."
+    ),
+    "stanford-msx": (
+        "Mid-career managers and executives who want an intensive, accelerated graduate "
+        "program in management to sharpen leadership and strategic skills and pivot toward "
+        "broader executive or entrepreneurial roles."
+    ),
+    "stanford-gsb-phd": (
+        "Researchers aiming for academic careers in business who want a funded doctorate "
+        "doing rigorous theoretical and empirical work in fields such as finance, marketing, "
+        "organizational behavior, or operations."
+    ),
+    "stanford-education-ms": (
+        "Educators and aspiring practitioners who want graduate study of learning, teaching, "
+        "and educational systems, preparing for roles in schools, policy, or program design, "
+        "or for further doctoral work."
+    ),
+    "stanford-education-phd": (
+        "Researchers committed to studying how people learn and how educational institutions "
+        "and policies work, pursuing a funded doctorate toward faculty, research, or "
+        "leadership roles in education."
+    ),
+    "stanford-jd": (
+        "Students preparing to enter the legal profession who want rigorous training in legal "
+        "analysis, doctrine, and advocacy, leading to bar admission and careers in practice, "
+        "government, business, or public interest."
+    ),
+    "stanford-md": (
+        "Students committed to becoming physicians who want comprehensive training in the "
+        "biomedical sciences and clinical medicine, leading toward residency and a career in "
+        "patient care, research, or both."
+    ),
+    "stanford-natural-resources-conservation-and-research-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "earth and environmental systems and conservation, deepening their grounding without "
+        "committing to a full degree."
+    ),
+    "stanford-natural-resources-conservation-and-research-ms": (
+        "Graduates who want advanced, interdisciplinary study of the earth's systems and "
+        "natural-resource conservation, preparing for technical, analytical, or policy roles "
+        "in environmental science and management."
+    ),
+    "stanford-area-studies-bs": (
+        "Undergraduates interested in world regions and global affairs who want to study "
+        "international policy, institutions, and political economy, as a foundation for "
+        "policy work, foreign service, or graduate study."
+    ),
+    "stanford-area-studies-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "international policy and global affairs to sharpen regional and policy expertise "
+        "without pursuing a full degree."
+    ),
+    "stanford-area-studies-ms": (
+        "Graduates who want advanced study of international policy, examining global "
+        "institutions, security, and political economy, preparing for careers in government, "
+        "international organizations, or policy analysis."
+    ),
+    "stanford-ethnic-cultural-minority-gender-and-group-studies-bs": (
+        "Undergraduates who want to study race and ethnicity comparatively, examining "
+        "identity, inequality, and culture across communities, building analytical skills for "
+        "law, public service, education, or graduate study."
+    ),
+    "stanford-communication-and-media-studies-bs": (
+        "Undergraduates who want to study how media and communication shape society, "
+        "examining journalism, technology, and persuasion with social-science methods, as a "
+        "foundation for media, tech, policy, or graduate study."
+    ),
+    "stanford-communication-and-media-studies-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "communication and media to sharpen analytical and research skills without committing "
+        "to a full degree."
+    ),
+    "stanford-communication-and-media-studies-ms": (
+        "Graduates who want advanced study of communication and media processes, applying "
+        "research methods to questions of influence, technology, and public life, for careers "
+        "in media industries, research, or strategy."
+    ),
+    "stanford-radio-television-and-digital-communication-ms": (
+        "Graduates focused on media studies who want advanced training in analyzing and "
+        "producing across broadcast and digital platforms, preparing for roles in media "
+        "industries, research, or communication strategy."
+    ),
+    "stanford-public-relations-advertising-and-applied-communication-ms": (
+        "Graduates who want advanced, applied training in public relations and strategic "
+        "communication, building skills in messaging, audience research, and campaigns for "
+        "careers in communications and advisory roles."
+    ),
+    "stanford-computer-science-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "computer science to build skills in areas like software, AI, or systems without "
+        "enrolling in a full degree."
+    ),
+    "stanford-education-general-cert": (
+        "Working educators or current students who want focused graduate coursework in "
+        "education to deepen knowledge of learning and teaching without committing to a full "
+        "degree."
+    ),
+    "stanford-educational-assessment-evaluation-and-research-ms": (
+        "Graduates who want advanced training in educational measurement, assessment, and "
+        "program evaluation, building methodological skills for roles in research, testing, "
+        "policy, or district analytics."
+    ),
+    "stanford-teacher-education-and-professional-development-specific-levels-and-methods-ms": (
+        "Aspiring and current teachers who want graduate preparation in teaching methods and "
+        "practice for specific grade levels, building the skills and credential needed to "
+        "lead a classroom effectively."
+    ),
+    "stanford-teacher-education-and-professional-development-specific-subject-areas-ms": (
+        "Aspiring and current teachers who want graduate preparation to teach a specific "
+        "subject area, combining content depth with pedagogy to step confidently into "
+        "subject-focused classroom teaching."
+    ),
+    "stanford-aerospace-aeronautical-and-astronautical-space-engineering-bs": (
+        "Undergraduates captivated by flight and spaceflight who want a rigorous foundation "
+        "in aerodynamics, propulsion, structures, and control, preparing for the aerospace "
+        "industry, government labs, or graduate study."
+    ),
+    "stanford-aerospace-aeronautical-and-astronautical-space-engineering-cert": (
+        "Working engineers or current students who want focused graduate coursework in "
+        "aeronautics and astronautics to deepen expertise in aerospace systems without "
+        "pursuing a full degree."
+    ),
+    "stanford-biomedical-medical-engineering-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "bioengineering, applying engineering to biology and medicine, without committing to "
+        "a full degree."
+    ),
+    "stanford-biomedical-medical-engineering-ms": (
+        "Engineers and scientists who want advanced training in applying engineering to "
+        "biology and medicine, in areas like biomechanics, imaging, or biomaterials, for "
+        "careers in biotech, medical devices, or research."
+    ),
+    "stanford-chemical-engineering-bs": (
+        "Undergraduates who want to engineer processes that transform matter at scale, "
+        "studying reaction engineering, thermodynamics, and transport, often heading into "
+        "energy, materials, pharmaceuticals, or graduate study."
+    ),
+    "stanford-chemical-engineering-cert": (
+        "Working engineers or current students who want focused graduate coursework in "
+        "chemical engineering to sharpen expertise in processes and reaction systems without "
+        "a full degree."
+    ),
+    "stanford-chemical-engineering-ms": (
+        "Engineers who want advanced study of chemical processes, reaction engineering, and "
+        "transport phenomena, building specialized skills for industry roles in energy, "
+        "materials, or biotechnology, or for further research."
+    ),
+    "stanford-civil-engineering-bs": (
+        "Undergraduates who want to design and build the physical and environmental "
+        "infrastructure of society, studying structures, water, and sustainability, preparing "
+        "for engineering practice or graduate study."
+    ),
+    "stanford-civil-engineering-cert": (
+        "Working engineers or current students who want focused graduate coursework in civil "
+        "and environmental engineering to deepen expertise in structures, water, or "
+        "sustainability without a full degree."
+    ),
+    "stanford-electrical-electronics-and-communications-engineering-bs": (
+        "Undergraduates fascinated by electronics, signals, and computing hardware who want a "
+        "rigorous foundation in circuits, systems, and communications, preparing for "
+        "engineering practice or graduate study."
+    ),
+    "stanford-electrical-electronics-and-communications-engineering-cert": (
+        "Working engineers or current students who want focused graduate coursework in "
+        "electrical engineering to build expertise in circuits, signals, or hardware without "
+        "pursuing a full degree."
+    ),
+    "stanford-environmental-environmental-health-engineering-bs": (
+        "Undergraduates who want to engineer solutions for clean water, air, and a healthy "
+        "environment, studying pollution control, hydrology, and sustainability, preparing "
+        "for environmental engineering work or graduate study."
+    ),
+    "stanford-materials-engineering-bs": (
+        "Undergraduates fascinated by how the structure of materials shapes their properties, "
+        "studying metals, polymers, and electronic materials, preparing for careers in "
+        "manufacturing, electronics, or graduate study."
+    ),
+    "stanford-materials-engineering-cert": (
+        "Working engineers or current students who want focused graduate coursework in "
+        "materials science and engineering to deepen expertise in material structure and "
+        "properties without a full degree."
+    ),
+    "stanford-mechanical-engineering-cert": (
+        "Working engineers or current students who want focused graduate coursework in "
+        "mechanical engineering to strengthen skills in design, mechanics, or thermosciences "
+        "without committing to a full degree."
+    ),
+    "stanford-engineering-other-bs": (
+        "Undergraduates who want to combine engineering, art, and human-centered methods to "
+        "design products people use, studying prototyping, mechanics, and creativity, "
+        "preparing for careers in design, engineering, or entrepreneurship."
+    ),
+    "stanford-engineering-other-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "product design and human-centered engineering to sharpen design skills without "
+        "pursuing a full degree."
+    ),
+    "stanford-engineering-other-ms": (
+        "Graduates who want advanced, human-centered training in product design, blending "
+        "engineering, prototyping, and creativity to design products and experiences for "
+        "careers in design, technology, or entrepreneurship."
+    ),
+    "stanford-engineering-related-fields-bs": (
+        "Undergraduates who want a broad engineering foundation in fundamentals like "
+        "mathematics, mechanics, and design before specializing, preparing for a range of "
+        "engineering paths or graduate study."
+    ),
+    "stanford-engineering-related-fields-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "core engineering fundamentals to broaden their technical base without committing to "
+        "a full degree."
+    ),
+    "stanford-engineering-related-fields-ms": (
+        "Graduates who want advanced grounding in engineering fundamentals across "
+        "disciplines, building a flexible technical foundation for varied engineering roles "
+        "or further specialized study."
+    ),
+    "stanford-linguistic-comparative-and-related-language-studies-and-services-bs": (
+        "Undergraduates fascinated by how language works who want to study its structure, "
+        "sounds, and meaning, along with how languages compare and change, as a foundation "
+        "for research, technology, or graduate study."
+    ),
+    "stanford-linguistic-comparative-and-related-language-studies-and-services-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "linguistics to deepen understanding of language structure and analysis without a "
+        "full degree."
+    ),
+    "stanford-linguistic-comparative-and-related-language-studies-and-services-ms": (
+        "Graduates who want advanced study of language structure, meaning, and variation "
+        "using formal and empirical methods, preparing for research, language technology, or "
+        "doctoral work."
+    ),
+    "stanford-east-asian-languages-literatures-and-linguistics-bs": (
+        "Undergraduates drawn to East Asia who want to study its languages, literatures, and "
+        "cultures in depth, building skills for careers in education, business, diplomacy, or "
+        "graduate study."
+    ),
+    "stanford-east-asian-languages-literatures-and-linguistics-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "East Asian languages and cultures to deepen regional and linguistic expertise "
+        "without a full degree."
+    ),
+    "stanford-east-asian-languages-literatures-and-linguistics-ms": (
+        "Graduates who want advanced study of the languages, literatures, and cultures of "
+        "East Asia, building scholarly depth for research, teaching, or doctoral work."
+    ),
+    "stanford-slavic-baltic-and-albanian-languages-literatures-and-linguistics-bs": (
+        "Undergraduates interested in the Slavic world who want to study its languages and "
+        "literatures, including Russian, alongside cultural and historical context, as a "
+        "foundation for graduate study or international work."
+    ),
+    "stanford-slavic-baltic-and-albanian-languages-literatures-and-linguistics-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "Slavic languages and literatures to deepen linguistic and cultural expertise without "
+        "a full degree."
+    ),
+    "stanford-slavic-baltic-and-albanian-languages-literatures-and-linguistics-ms": (
+        "Graduates who want advanced study of Slavic languages and literatures, building "
+        "scholarly depth in the texts and cultures of the region for research, teaching, or "
+        "doctoral work."
+    ),
+    "stanford-germanic-languages-literatures-and-linguistics-bs": (
+        "Undergraduates drawn to the German-speaking world who want to study its language, "
+        "literature, and culture and the ideas they carry, as a foundation for graduate "
+        "study, education, or international careers."
+    ),
+    "stanford-germanic-languages-literatures-and-linguistics-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "German studies to deepen linguistic and cultural expertise without a full degree."
+    ),
+    "stanford-germanic-languages-literatures-and-linguistics-ms": (
+        "Graduates who want advanced study of German language, literature, and culture, "
+        "engaging closely with its texts and intellectual traditions to build scholarly depth "
+        "for research, teaching, or doctoral work."
+    ),
+    "stanford-romance-languages-literatures-and-linguistics-bs": (
+        "Undergraduates drawn to French and Italian who want to study their languages, "
+        "literatures, and cultures, building fluency and critical skills for graduate study, "
+        "education, or international careers."
+    ),
+    "stanford-romance-languages-literatures-and-linguistics-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "French and Italian to deepen linguistic and literary expertise without a full "
+        "degree."
+    ),
+    "stanford-romance-languages-literatures-and-linguistics-ms": (
+        "Graduates who want advanced study of French and Italian language, literature, and "
+        "culture, building scholarly depth for research, teaching, or doctoral work."
+    ),
+    "stanford-classics-and-classical-languages-literatures-and-linguistics-bs": (
+        "Students captivated by the ancient Greek and Roman worlds who want to study their "
+        "languages, literature, history, and material culture, often heading toward law, "
+        "academia, or the humanities."
+    ),
+    "stanford-classics-and-classical-languages-literatures-and-linguistics-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "classics, deepening their study of Greek and Roman languages and culture without a "
+        "full degree."
+    ),
+    "stanford-classics-and-classical-languages-literatures-and-linguistics-ms": (
+        "Graduates who want advanced study of the ancient Greek and Roman worlds, working "
+        "closely with their languages, literature, and history toward research, teaching, or "
+        "doctoral study."
+    ),
+    "stanford-law-phd": (
+        "Scholars who want to study law analytically and theoretically rather than for "
+        "practice alone, pursuing a doctoral degree toward research and academic careers in "
+        "law and related fields."
+    ),
+    "stanford-legal-research-and-advanced-professional-studies-cert": (
+        "Working professionals or lawyers who want focused graduate coursework in law to "
+        "deepen expertise in a legal area without pursuing a full degree."
+    ),
+    "stanford-legal-research-and-advanced-professional-studies-ms": (
+        "Professionals from non-law fields, or lawyers seeking depth, who want graduate study "
+        "of law and legal reasoning to apply legal knowledge in their work without becoming "
+        "practicing attorneys."
+    ),
+    "stanford-english-language-and-literature-general-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "English literature to deepen their reading and critical skills without committing to "
+        "a full degree."
+    ),
+    "stanford-english-language-and-literature-general-ms": (
+        "Graduates who want advanced study of literature in English across periods and "
+        "genres, building critical and scholarly skills for teaching, writing, or doctoral "
+        "work."
+    ),
+    "stanford-english-language-and-literature-letters-other-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "comparative literature, reading across languages and traditions, without a full "
+        "degree."
+    ),
+    "stanford-english-language-and-literature-letters-other-ms": (
+        "Graduates who want advanced study of literature across languages and cultures, "
+        "examining texts comparatively and theoretically, preparing for research, teaching, "
+        "or doctoral work."
+    ),
+    "stanford-liberal-arts-and-sciences-general-studies-and-humanities-bs": (
+        "Undergraduates who want a broad, integrative grounding in the humanities, reading "
+        "across literature, philosophy, history, and the arts, building critical and "
+        "interpretive skills for varied paths or graduate study."
+    ),
+    "stanford-liberal-arts-and-sciences-general-studies-and-humanities-ms": (
+        "Graduates who want an interdisciplinary humanities program, engaging texts and ideas "
+        "across fields to deepen critical and interpretive skills for teaching, writing, or "
+        "further study."
+    ),
+    "stanford-biology-general-bs": (
+        "Undergraduates fascinated by living systems who want a rigorous foundation across "
+        "molecules, cells, organisms, and ecosystems, often heading toward research, "
+        "medicine, biotech, or graduate study."
+    ),
+    "stanford-biology-general-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "biology to deepen their grounding in the life sciences without a full degree."
+    ),
+    "stanford-biology-general-ms": (
+        "Graduates who want advanced study across the life sciences, deepening knowledge of "
+        "biological systems for careers in research, biotechnology, health, or further "
+        "doctoral work."
+    ),
+    "stanford-biochemistry-biophysics-and-molecular-biology-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "biochemistry, studying the molecules and reactions of life without committing to a "
+        "full degree."
+    ),
+    "stanford-biochemistry-biophysics-and-molecular-biology-ms": (
+        "Graduates who want advanced study of the chemistry of living systems, examining "
+        "proteins, metabolism, and molecular mechanisms, preparing for research roles in "
+        "biotech, pharma, or doctoral work."
+    ),
+    "stanford-cell-cellular-biology-and-anatomical-sciences-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "cell and developmental biology, studying how cells function and organisms develop, "
+        "without a full degree."
+    ),
+    "stanford-cell-cellular-biology-and-anatomical-sciences-ms": (
+        "Graduates who want advanced study of how cells work and how organisms develop, "
+        "examining cellular mechanisms and developmental processes for research careers or "
+        "doctoral work."
+    ),
+    "stanford-microbiological-sciences-and-immunology-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "microbiology and immunology, studying microbes and host defenses, without a full "
+        "degree."
+    ),
+    "stanford-microbiological-sciences-and-immunology-ms": (
+        "Graduates who want advanced study of microbes and the immune system, examining "
+        "infection, host defense, and microbial biology, preparing for research in biomedical "
+        "science or doctoral work."
+    ),
+    "stanford-genetics-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "genetics, studying inheritance and the genome, without committing to a full degree."
+    ),
+    "stanford-genetics-ms": (
+        "Graduates who want advanced study of genes, inheritance, and genomics, examining how "
+        "genetic information shapes biology and disease, for research roles in biomedicine, "
+        "biotech, or doctoral work."
+    ),
+    "stanford-physiology-pathology-and-related-sciences-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "physiology, studying how the body's organs and systems function, to deepen their "
+        "grounding without committing to a full degree."
+    ),
+    "stanford-physiology-pathology-and-related-sciences-ms": (
+        "Graduates who want advanced study of how the body's systems function and how disease "
+        "disrupts them, building knowledge for research, the health professions, or doctoral "
+        "work."
+    ),
+    "stanford-ecology-evolution-systematics-and-population-biology-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "ecology and evolution, studying organisms, populations, and environments, without a "
+        "full degree."
+    ),
+    "stanford-ecology-evolution-systematics-and-population-biology-ms": (
+        "Graduates who want advanced study of how organisms interact with their environments "
+        "and evolve over time, building skills for research in ecology, conservation, or "
+        "doctoral work."
+    ),
+    "stanford-neurobiology-and-neurosciences-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "neuroscience, studying the brain and nervous system, without committing to a full "
+        "degree."
+    ),
+    "stanford-neurobiology-and-neurosciences-ms": (
+        "Graduates who want advanced study of the brain and nervous system, examining how "
+        "neurons and circuits give rise to behavior, preparing for research in neuroscience, "
+        "medicine, or doctoral work."
+    ),
+    "stanford-biological-and-biomedical-sciences-other-cert": (
+        "Working professionals or current students who want focused graduate coursework "
+        "across the biosciences to broaden their grounding in life-science research without a "
+        "full degree."
+    ),
+    "stanford-biological-and-biomedical-sciences-other-ms": (
+        "Graduates who want advanced, interdisciplinary study across the biosciences, "
+        "building a flexible foundation in modern biology for research careers or further "
+        "specialized study."
+    ),
+    "stanford-mathematics-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "mathematics to strengthen their command of advanced topics without committing to a "
+        "full degree."
+    ),
+    "stanford-mathematics-ms": (
+        "Graduates who want advanced study of pure mathematics, in areas like analysis, "
+        "algebra, and geometry, deepening their training for doctoral work or quantitative "
+        "careers."
+    ),
+    "stanford-applied-mathematics-bs": (
+        "Undergraduates who want to use mathematics to model and solve real problems, "
+        "studying areas like differential equations, optimization, and scientific computing, "
+        "as a foundation for technical careers or graduate study."
+    ),
+    "stanford-applied-mathematics-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "applied mathematics, sharpening modeling and computational skills without a full "
+        "degree."
+    ),
+    "stanford-applied-mathematics-ms": (
+        "Graduates who want advanced training in mathematical modeling, computation, and "
+        "analysis applied to science and engineering problems, preparing for quantitative "
+        "careers or doctoral work."
+    ),
+    "stanford-statistics-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "statistics to build skills in data analysis and inference without committing to a "
+        "full degree."
+    ),
+    "stanford-statistics-ms": (
+        "Graduates who want advanced training in statistical theory, modeling, and inference "
+        "for data-rich problems, preparing for roles in data science, analytics, research, or "
+        "doctoral work."
+    ),
+    "stanford-systems-science-and-theory-bs": (
+        "Undergraduates drawn to how complex systems behave who want to study modeling, "
+        "control, and the design of engineered systems, building analytical foundations for "
+        "technical careers or graduate study."
+    ),
+    "stanford-science-technology-and-society-bs": (
+        "Undergraduates who want to examine how science and technology shape, and are shaped "
+        "by, society, combining technical literacy with the social sciences and humanities "
+        "for careers in policy, tech, or research."
+    ),
+    "stanford-cognitive-science-ms": (
+        "Graduates drawn to the science of mind and intelligence who want advanced, "
+        "interdisciplinary study across computation, cognition, language, and philosophy, "
+        "preparing for technical, research, or doctoral paths."
+    ),
+    "stanford-sustainability-studies-bs": (
+        "Undergraduates committed to environmental and social sustainability who want to "
+        "study the science and systems behind climate, resources, and resilience, preparing "
+        "for careers in sustainability or graduate study."
+    ),
+    "stanford-sustainability-studies-ms": (
+        "Graduates who want advanced, interdisciplinary training in sustainability science "
+        "and systems, building expertise to address climate, energy, and resource challenges "
+        "in technical, policy, or leadership roles."
+    ),
+    "stanford-philosophy-bs": (
+        "Undergraduates drawn to fundamental questions about knowledge, ethics, mind, and "
+        "reality who want rigorous training in argument and analysis, building skills for "
+        "law, policy, or graduate study."
+    ),
+    "stanford-philosophy-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "philosophy to deepen their engagement with philosophical questions and argument "
+        "without a full degree."
+    ),
+    "stanford-philosophy-ms": (
+        "Graduates who want advanced study of philosophical problems in areas like ethics, "
+        "metaphysics, logic, and the philosophy of mind, building rigorous analytical depth "
+        "for further study or scholarly work."
+    ),
+    "stanford-religion-religious-studies-bs": (
+        "Undergraduates curious about religious traditions, texts, and their role in human "
+        "life who want to study them critically across cultures and history, building "
+        "interpretive skills for varied paths or graduate study."
+    ),
+    "stanford-religion-religious-studies-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "religious studies to deepen their understanding of religious traditions and texts "
+        "without a full degree."
+    ),
+    "stanford-religion-religious-studies-ms": (
+        "Graduates who want advanced study of religious traditions, texts, and practices "
+        "across cultures, building scholarly depth for teaching, research, or doctoral work."
+    ),
+    "stanford-chemistry-bs": (
+        "Undergraduates fascinated by matter and molecular transformation who want a rigorous "
+        "foundation across organic, inorganic, and physical chemistry, often heading toward "
+        "research, medicine, industry, or graduate study."
+    ),
+    "stanford-chemistry-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "chemistry to deepen expertise in chemical theory and practice without committing to "
+        "a full degree."
+    ),
+    "stanford-chemistry-ms": (
+        "Graduates who want advanced study of chemistry, deepening expertise across areas "
+        "like organic, physical, or inorganic chemistry for research roles in industry or "
+        "doctoral work."
+    ),
+    "stanford-geological-and-earth-sciences-geosciences-bs": (
+        "Undergraduates fascinated by the earth's materials, processes, and history who want "
+        "to study rocks, minerals, and the forces that shape the planet, preparing for "
+        "geoscience careers or graduate study."
+    ),
+    "stanford-geological-and-earth-sciences-geosciences-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "geological sciences to deepen expertise in earth processes and materials without a "
+        "full degree."
+    ),
+    "stanford-geological-and-earth-sciences-geosciences-ms": (
+        "Graduates who want advanced study of the earth's structure, materials, and dynamic "
+        "processes, building skills for careers in geoscience, energy, environment, or "
+        "doctoral research."
+    ),
+    "stanford-physics-bs": (
+        "Undergraduates driven to understand nature's fundamental laws who want a rigorous "
+        "foundation in mechanics, electromagnetism, and quantum physics, preparing for "
+        "research, technical careers, or graduate study."
+    ),
+    "stanford-physics-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "physics to strengthen their command of advanced physical theory without committing "
+        "to a full degree."
+    ),
+    "stanford-physics-ms": (
+        "Graduates who want advanced study of physics, deepening expertise across areas like "
+        "quantum, condensed matter, or particle physics, preparing for research roles or "
+        "doctoral work."
+    ),
+    "stanford-psychology-general-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "psychology to deepen their understanding of mind and behavior without committing to "
+        "a full degree."
+    ),
+    "stanford-psychology-general-ms": (
+        "Graduates who want advanced study of mind and behavior using empirical methods, "
+        "deepening expertise in areas like cognition, development, or social processes for "
+        "research or doctoral work."
+    ),
+    "stanford-public-policy-analysis-bs": (
+        "Undergraduates who want to analyze and shape public problems, combining economics, "
+        "politics, and quantitative methods to evaluate policy, as a foundation for "
+        "government, advocacy, or graduate study."
+    ),
+    "stanford-public-policy-analysis-ms": (
+        "Graduates who want advanced training in analyzing and designing public policy, "
+        "applying economics, statistics, and political analysis to real problems for careers "
+        "in government, nonprofits, or consulting."
+    ),
+    "stanford-anthropology-bs": (
+        "Undergraduates curious about human societies and cultures across time who want to "
+        "study people through ethnography, archaeology, and comparison, building skills for "
+        "research, global work, or graduate study."
+    ),
+    "stanford-anthropology-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "anthropology to deepen their understanding of human cultures and societies without a "
+        "full degree."
+    ),
+    "stanford-anthropology-ms": (
+        "Graduates who want advanced study of human societies and cultures, applying "
+        "ethnographic and comparative methods to questions of culture, power, and difference, "
+        "for research or doctoral work."
+    ),
+    "stanford-archeology-bs": (
+        "Undergraduates fascinated by the human past who want to study ancient societies "
+        "through their material remains, combining fieldwork, analysis, and history, as a "
+        "foundation for research or graduate study."
+    ),
+    "stanford-economics-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "economics to sharpen their grasp of economic theory and analysis without committing "
+        "to a full degree."
+    ),
+    "stanford-economics-ms": (
+        "Graduates who want advanced training in economic theory and empirical analysis of "
+        "markets and policy, building quantitative depth for careers in research, finance, or "
+        "further doctoral study."
+    ),
+    "stanford-international-relations-and-national-security-studies-ms": (
+        "Graduates who want advanced study of international relations and security, examining "
+        "diplomacy, conflict, and global political economy for careers in government, "
+        "international organizations, or policy analysis."
+    ),
+    "stanford-political-science-and-government-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "political science to deepen their understanding of institutions and political "
+        "behavior without a full degree."
+    ),
+    "stanford-political-science-and-government-ms": (
+        "Graduates who want advanced study of political institutions, behavior, and policy, "
+        "applying analytical and empirical methods for careers in research, policy, or "
+        "doctoral work."
+    ),
+    "stanford-sociology-bs": (
+        "Undergraduates curious about how societies, groups, and institutions shape behavior "
+        "who want to study inequality, organizations, and social change with empirical "
+        "methods, as a foundation for varied careers or graduate study."
+    ),
+    "stanford-sociology-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "sociology to deepen their understanding of social structures and behavior without a "
+        "full degree."
+    ),
+    "stanford-sociology-ms": (
+        "Graduates who want advanced study of social structures, institutions, and "
+        "inequality, applying empirical and theoretical methods for careers in research, "
+        "policy, or doctoral work."
+    ),
+    "stanford-urban-studies-affairs-bs": (
+        "Undergraduates interested in cities and the forces that shape them who want to study "
+        "urban planning, policy, and social dynamics, building skills for work in planning, "
+        "government, or graduate study."
+    ),
+    "stanford-design-and-applied-arts-ms": (
+        "Artists who want advanced, studio-based training in art practice, developing their "
+        "creative work, technique, and conceptual depth toward exhibiting, teaching, or a "
+        "sustained studio career."
+    ),
+    "stanford-drama-theatre-arts-and-stagecraft-bs": (
+        "Undergraduates drawn to the stage who want to study theater and performance through "
+        "practice and scholarship, exploring acting, directing, and dramatic history as a "
+        "foundation for the arts or graduate study."
+    ),
+    "stanford-drama-theatre-arts-and-stagecraft-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "theater and performance studies to deepen their craft and scholarship without a full "
+        "degree."
+    ),
+    "stanford-drama-theatre-arts-and-stagecraft-ms": (
+        "Graduates who want advanced study of theater and performance, combining practice "
+        "with scholarship on performance, history, and theory for careers in the arts, "
+        "teaching, or research."
+    ),
+    "stanford-film-video-and-photographic-arts-bs": (
+        "Undergraduates passionate about moving images who want to study film and media "
+        "through both critical analysis and creative practice, as a foundation for careers in "
+        "media, the arts, or graduate study."
+    ),
+    "stanford-film-video-and-photographic-arts-ms": (
+        "Graduates who want advanced study of film and media, combining critical scholarship "
+        "with creative production, preparing for careers in media industries, the arts, or "
+        "research."
+    ),
+    "stanford-fine-and-studio-arts-bs": (
+        "Undergraduates fascinated by art across cultures and eras who want to study the "
+        "history, meaning, and context of visual art and architecture, building skills for "
+        "museums, the arts, or graduate study."
+    ),
+    "stanford-fine-and-studio-arts-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "art history to deepen their understanding of art and its contexts without a full "
+        "degree."
+    ),
+    "stanford-fine-and-studio-arts-ms": (
+        "Graduates who want advanced study of the history and interpretation of visual art "
+        "and architecture, building scholarly depth for careers in museums, research, or "
+        "doctoral work."
+    ),
+    "stanford-music-bs": (
+        "Undergraduates devoted to music who want to study performance, composition, theory, "
+        "and history, developing both their musicianship and scholarship as a foundation for "
+        "the arts or graduate study."
+    ),
+    "stanford-music-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "music to deepen their craft or scholarship without committing to a full degree."
+    ),
+    "stanford-music-ms": (
+        "Graduates who want advanced study in music, deepening expertise in areas like "
+        "performance, composition, theory, or musicology for careers in the arts, teaching, "
+        "or research."
+    ),
+    "stanford-allied-health-diagnostic-intervention-and-treatment-professions-ms": (
+        "Clinicians and health professionals who want advanced training in the methods of "
+        "clinical research, learning to design and analyze studies, often to strengthen "
+        "research roles in medicine and the health sciences."
+    ),
+    "stanford-medicine-phd": (
+        "Researchers committed to biomedical science who want a funded doctorate doing "
+        "original work on the biology of health and disease, toward careers in academic, "
+        "industry, or translational research."
+    ),
+    "stanford-public-health-cert": (
+        "Working health professionals or current students who want focused graduate "
+        "coursework in epidemiology and clinical research methods to strengthen their "
+        "research skills without a full degree."
+    ),
+    "stanford-public-health-ms": (
+        "Clinicians and graduates who want advanced training in epidemiology and clinical "
+        "research, learning to study disease patterns and design rigorous studies for careers "
+        "in research, public health, or medicine."
+    ),
+    "stanford-medical-illustration-and-informatics-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "biomedical informatics, applying data and computation to biomedicine, without a full "
+        "degree."
+    ),
+    "stanford-medical-illustration-and-informatics-ms": (
+        "Graduates who want advanced training in biomedical informatics, applying data "
+        "science and computation to biology, medicine, and health, preparing for roles in "
+        "research, health technology, or doctoral work."
+    ),
+    "stanford-business-administration-management-and-operations-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "business administration to build management and operations skills without pursuing a "
+        "full degree."
+    ),
+    "stanford-management-sciences-and-quantitative-methods-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "management science and engineering, applying quantitative methods to decisions and "
+        "operations, without a full degree."
+    ),
+    "stanford-history-bs": (
+        "Undergraduates who want to understand the past through evidence and interpretation, "
+        "studying societies, events, and ideas across periods and regions, building research "
+        "and writing skills for law, policy, or graduate study."
+    ),
+    "stanford-history-cert": (
+        "Working professionals or current students who want focused graduate coursework in "
+        "history to deepen their research and interpretive skills without committing to a "
+        "full degree."
+    ),
+    "stanford-history-ms": (
+        "Graduates who want advanced study of the past, using primary sources and historical "
+        "methods to interpret societies and change, preparing for teaching, research, or "
+        "doctoral work."
     ),
 }
 _HL_BY_SLUG = {
@@ -1456,6 +2330,28 @@ _HL_BASELINE = [
     "Need-blind undergraduate aid",
     "Silicon Valley proximity",
 ]
+# Matcher-core / depth self-checks (REPAIR_BACKLOG #1 + #4b; SKILL §8.5): fail the
+# build loudly if a program ships without a verified ``cip_code`` (matcher field-blind)
+# or if ``who_its_for`` distinctness collapses toward a per-degree-type template
+# (the type-gaming tell). Gold catalogs run distinct/total ~= 1.0.
+_cip_missing = [p["slug"] for p in PROGRAMS if not p.get("cip")]
+if _cip_missing:
+    raise RuntimeError(
+        f"Stanford cip_code missing on {len(_cip_missing)} rows: {_cip_missing[:5]}"
+    )
+_who_missing = [s for s in PROGRAM_SLUGS if not _WHO_BY_SLUG.get(s)]
+if _who_missing:
+    raise RuntimeError(
+        f"Stanford who_its_for missing on {len(_who_missing)} rows: {_who_missing[:5]}"
+    )
+_who_values = [_WHO_BY_SLUG[s] for s in PROGRAM_SLUGS]
+_who_ratio = len(set(_who_values)) / len(_who_values)
+if _who_ratio < 0.9:
+    raise RuntimeError(
+        f"Stanford who_its_for distinctness collapsed to {_who_ratio:.2f} "
+        "(type-gaming tell; expected ~1.0)"
+    )
+
 _FOS_CONDITIONS = (
     "Median earnings 1 year after completion for degree recipients in this field of "
     "study, as reported by the U.S. Dept. of Education College Scorecard for Stanford "
@@ -1536,6 +2432,30 @@ _COST_BY_SLUG: dict[str, dict] = {
         "note": "Tuition is charged per unit; $21,180 per quarter at 11-18 units (three quarters).",
         "source": "Stanford Student Services — 2025-26 Graduate & Professional Tuition",
         "source_url": "https://studentservices.stanford.edu/tuition-rates/2025-2026-graduate-and-professional-tuition-rates",
+    },
+    # Professional schools carry their own published rate — REPAIR_BACKLOG #3
+    # (professional-tier tuition must NOT be null nor the undergrad/grad sticker).
+    "stanford-jd": {
+        "tuition_usd": 76608,
+        "year": "2025-26",
+        "funded": False,
+        "note": (
+            "Stanford Law School J.D. tuition, payable in three installments; "
+            "tuition plus mandatory fees totals about $79,707."
+        ),
+        "source": "Stanford Student Services — 2025-26 Graduate & Professional Tuition",
+        "source_url": "https://studentservices.stanford.edu/tuition-rates/2025-2026-graduate-and-professional-tuition-rates",
+    },
+    "stanford-md": {
+        "tuition_usd": 92884,
+        "year": "2025-26",
+        "funded": False,
+        "note": (
+            "School of Medicine M.D. program tuition, billed at $23,221 per quarter "
+            "across four quarters."
+        ),
+        "source": "Stanford Medicine — M.D. Program Handbook, Tuition & Fees 2025-26",
+        "source_url": "https://med.stanford.edu/md/mdhandbook/section-7-tuition-and-financial-aid/tuition---fees.html",
     },
 }
 
@@ -2854,6 +3774,10 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.duration_months = spec.get("duration_months")
         p.description_text = spec["description"]
         p.department = spec.get("department")
+        # Matcher-core CIP join key (REPAIR_BACKLOG #1) — the IPEDS CIP already used
+        # for the breadth cross-check; field_canon resolves the 2-digit family to a
+        # canonical field. Verified per program, never guessed.
+        p.cip_code = spec.get("cip")
         p.website_url = _WEBSITE_BY_SLUG.get(slug) or _SCHOOL_WEBSITE.get(spec["school"])
         p.school_id = school_by_name[spec["school"]].id
         p.is_published = True
