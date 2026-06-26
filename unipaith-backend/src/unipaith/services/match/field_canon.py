@@ -62,6 +62,12 @@ _ALIASES: tuple[tuple[str, str], ...] = (
     ("data analytics", "data_science"),
     ("machine learning", "data_science"),
     ("artificial intelligence", "computer_science"),
+    # HCI carries the dedicated CIP 30.3101 (CIP family 30 is intentionally NOT in
+    # _CIP_FAMILY_FIELD — it spans Cognitive Science, Data Science, International
+    # Studies, so no single family token is safe), so a program named "Human-Computer
+    # Interaction" needs a NAME alias to classify. It is computing-housed, so it maps
+    # to the closest existing canonical token.
+    ("human computer interaction", "computer_science"),
     ("computer science", "computer_science"),
     ("computer engineering", "computer_science"),
     ("software engineering", "computer_science"),
