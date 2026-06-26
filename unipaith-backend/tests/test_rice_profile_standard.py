@@ -220,3 +220,29 @@ def test_no_identical_across_credential_levels():
     assert shared == 0, (
         f"{shared} programs share a description verbatim with a credential sibling"
     )
+
+
+def test_matcher_core_cip_code_complete():
+    """Every program carries a real NCES CIP-2020 6-digit code (REPAIR_BACKLOG #1)."""
+    import json
+    import pathlib
+    import re
+
+    ref_path = pathlib.Path(r.__file__).parents[3] / "data" / "reference" / "ref_majors.jsonl"
+    ref = {json.loads(line)["cip_code"] for line in open(ref_path)}
+    missing = [s for s in r.PROGRAM_SLUGS if not r.CIP6_BY_SLUG.get(s)]
+    assert not missing, f"cip_code missing on {len(missing)} rows: {missing[:5]}"
+    bad_form = [s for s, c in r.CIP6_BY_SLUG.items() if not re.fullmatch(r"\d{2}\.\d{4}", c)]
+    assert not bad_form, f"malformed CIP codes: {bad_form[:5]}"
+    not_ref = [(s, c) for s, c in r.CIP6_BY_SLUG.items() if c not in ref]
+    assert not not_ref, f"CIP codes absent from ref_majors (not real): {not_ref[:5]}"
+
+
+def test_matcher_core_who_its_for_distinct():
+    """who_its_for filled on every program AND program-DISTINCT, never a degree-type
+    template (REPAIR_BACKLOG #4; gold field-specific catalogs are ~1.0)."""
+    missing = [s for s in r.PROGRAM_SLUGS if not (r.WHO_BY_SLUG.get(s) or "").strip()]
+    assert not missing, f"who_its_for missing/blank on {len(missing)} rows: {missing[:5]}"
+    vals = [r.WHO_BY_SLUG[s] for s in r.PROGRAM_SLUGS]
+    ratio = len(set(vals)) / len(vals)
+    assert ratio >= 0.9, f"who_its_for type-gamed: distinct/total {ratio:.2f} < 0.9"
