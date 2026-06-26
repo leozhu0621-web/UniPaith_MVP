@@ -6,6 +6,107 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-26 — Run 87 (FULL-FLEET sweep of all 300 live + all 40 catalogs + the alembic graph on `origin/main` · 🟢 the run-86 13-head DEPLOY BLOCK is CLEARED — single head, and the Georgetown/UVA/WashU seed repairs landed LIVE-gold · 🔴 NEW CRITICAL = UNC stranded NOT-LIVE by an all-GREEN self-skipping data migration · 1 rule change — the all-green stranded-deploy class: green-deploy + single-advanced-head + applied-migration is a FALSE proof-of-live)
+
+**Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`.** A
+direct crawl fetched all 300 institutions (campus-photo count + posts-feed count, threaded), fully paginated the
+`/programs` list of every program-bearing catalog (**40 catalogs, 7,639 programs**; the other 260 are bare
+institution stubs), and per catalog computed `analyze` / `machine_artifacts` / `template_slot_artifacts` /
+`scrape_debris` (imported direct from `profile_standard/anti_stub.py`), a description-NON-EMPTINESS scan, an
+exact-duplicate `(program_name, degree_type)` scan, a name-realness scan (CIP-rollup TITLE / "…and Related
+Sciences/Services" / ", General/Other" / `(CIP NN.NN)` / possessive "Bachelor's in" / bare-abbrev tells), and
+per-`degree_type` tuition coverage. Over 12 program DETAILS/catalog (`GET /programs/{id}`) I probed `cip_code`,
+`who_its_for`, `external_reviews`, and the bachelor `tuition` scalar vs `cost_data.breakdown` resident/non-resident.
+The alembic graph was AST-parsed over `origin/main` (525 revisions, multi-line `down_revision` tuples resolved); the
+merged-PR list + each module's `content_sources` were read via `git`.
+
+**Merged since run 86 (grader #1170):** the enricher cleared the run-86 CRITICAL deploy block — **#1171 unified the
+13 concurrent alembic heads**, and follow-up fixups kept the chain single — so `origin/main` now carries a SINGLE
+head (`uncprof1`) and migrations apply in prod again. With the pipeline unblocked, the stranded empty-desc seed
+repairs DEPLOYED: **Georgetown (#1169, 190 programs) · UVA (#1174, 100) · WashU (#1173, 58)** are now LIVE and read
+GOLD (real names · field-specific descriptions · `cip_code` 100% · `who_its_for` 100% · non-resident tuition
+scalar). Of run 86's 6 empty-desc flagship seeds, 4 are resolved (those 3 live + UNC built); UC-Davis / UC-Irvine
+remain unbuilt.
+
+**HEADLINE — a NEW gap-class → the 1 rule change: the all-GREEN stranded deploy.** UNC-Chapel Hill's full
+89-program catalog (`uncprof1`, PR #1176) is the SINGLE head on `origin/main`, merged with Deploy Backend GREEN and
+the migration recorded as applied — **yet the live API still returns UNC's 5 EMPTY-description seed programs**
+(`program_count` = 5, every `description_text` blank, `department` null, 3 photos, dead feed). The migration's own
+docstring states the data apply "runs inside a SAVEPOINT bounded by `lock_timeout` and is SKIPPED rather than hanging
+container boot… still records as applied so the chain advances." The byte-identical pattern on WashU/UVA the same
+cycle DID land (58 / 100 live), proving the skip is NON-DETERMINISTIC lock-timing, not a code error. §9's existing
+verify-live rule attributes a still-live defect to a FAILED/cancelled deploy or a dual-head race — a RED signal — so
+an enricher reading §9 today looks for a red deploy / dual head, finds neither for UNC, and wrongly concludes it
+shipped. That is a real blind spot: the all-green self-skip passes every check §9 names.
+
+**Findings (with live evidence):**
+- **NEW CLASS → 1 rule change (§9, the "A merge is NOT a deploy" block).** Added a paragraph: a GREEN Deploy Backend
+  + a SINGLE advanced alembic head + the migration showing APPLIED is NOT proof the enrichment is live — a deploy-safe
+  data migration that records-itself-applied while SKIPPING its `lock_timeout`-bounded data apply makes all three
+  green signals lie; the ONLY valid verify-live gate is the live-API CONTENT (program count / real `description_text`),
+  and a skipped apply is NOT done until an explicit RE-APPLY executes `<uni>_profile.apply()` in prod (cf. the prior
+  Berkeley re-apply). TIGHTENS verify-live (re-query keyed on CONTENT, never on a deploy/chain signal); loosens nothing
+  (merge-mandatory + Deploy-Backend-green stay NECESSARY, just no longer SUFFICIENT). General (no school name — uses
+  `<uni>prof`); UNC lives only in the backlog. Pairs with FLAG #1 (the durable code fix).
+- **COMPLIANCE GAP (rule exists, queued not re-added): UNC stranded.** Backlog entry #1 (critical) — the new rule's
+  live instance; the fix is an explicit re-apply, NOT re-authoring the correct `unc_profile` data.
+- **COMPLIANCE GAP: `cip_code` starvation — 20 mature catalogs null** (BU · Brown · CMU · Cornell · Duke · Emory ·
+  Harvard · JHU · MIT-control · NYU · Northwestern · Purdue · Rice · Stanford · UF · UIUC · Michigan · USC · UW-Madison
+  · Yale), ~15/35 modules set `p.cip_code`. Rule EXISTS (run 82). Backlog #3 + FLAG #2.
+- **COMPLIANCE GAP: public in-state tuition scalar — 6 publics + UIUC** (UCLA · UCSD · Michigan · Florida · Wisconsin ·
+  Purdue still in-state; UVA[NEW] now correct out-of-state). Rule EXISTS (run 83). Backlog #4 + FLAG #6.
+- **COMPLIANCE GAP: master's / professional-tier tuition residual** — incl. on FRESH gold catalogs: **Georgetown
+  master's 6/79 (73 null!) + prof 10/17**, UVA 8/15, WashU 4/10, plus UW-Seattle 14, Yale 8, UT-Austin 7, Cornell 6,
+  Penn 6, Harvard 5, UCSD 5, Brown 4, Dartmouth 3. PhD/cert nulls EXCLUDED (funded/per-credit). Per-tier rule EXISTS.
+  Backlog #5 + FLAG #7.
+- **COMPLIANCE GAP: `who_its_for` 0% on 24 catalogs + UCLA REGRESSED** (root cause `p.who_its_for = None`, run 86
+  rule). who-COMPLETE now 16 catalogs (the 13 from run 86 + Georgetown / UVA / WashU). Rule EXISTS. Backlog #6 + FLAG #4.
+- **COMPLIANCE GAP: `external_reviews` sparse** (0/12 on 12+ catalogs; richest Duke/Princeton 50%). Coverage-gated →
+  depth-pass priority, NOT fabrication (miss #8). Backlog #7.
+- **DIAGNOSED NOT-A-DEFECT — dead feeds on the 3 FRESH live-built catalogs are ingest-TIMING.** Georgetown · UVA ·
+  WashU read posts=0, but ALL THREE modules set `content_sources` (real `news_rss` + `events_feed`, confirmed direct in
+  the profile modules), so the daily ingest simply has not populated these recently-live catalogs (the 34 older mature
+  catalogs all carry live feeds). Per step 3 this is a WATCH, not a miss #1 — re-check next run; escalate Georgetown if
+  still dead.
+- **Diagnosed NOT-a-class:** gold MIT's single `analyze.name_prefixed` hit is a one-line "Master in City Planning (MCP)
+  from DUSP." — a pre-existing thin description on the 0-control reference, not a NEW defect class.
+
+**Rule change (1 of ≤3, bounded, evidence-backed, not a duplicate):** the all-green stranded-deploy / verify-live-on-
+CONTENT rule (above). No other rule warranted — after a full-fleet sweep, every OTHER live defect is a VIOLATION of an
+EXISTING rule (cip → run-82 gate; public scalar → run-83; master's tuition → the per-tier rule; who → run-84 + run-86
+hard-null; reviews → miss #8; seeds → seed tier), so per the default-flipped doctrine they are queued + logged, not
+re-added (anti-churn). Inventing filler rules to "not stop at one" would breach no-edit-without-NEW-evidence — exactly
+one genuinely new, now-demonstrated gap-class existed (the all-green self-skip, only visible because the head-block
+cleared and exposed it as the SOLE stranding cause). Post-edit re-read confirms SKILL.md reads coherently: the new
+paragraph sits inside §9 between "A merge is NOT a deploy" and "An opened-but-unmerged PR" — no numbered miss
+renumbered, no invariant touched (it strengthens verify-live).
+
+**Flags (code/workflow, not grader-editable):** (1) the self-skipping `lock_timeout` data migration — the SOLE stranding
+cause now the head-block cleared; durable fix = a prod execution path that ACTUALLY RUNS the data apply (the new rule is
+the enricher-side stopgap). (2) `cip_code` coverage gate (~15/35 modules). (3) anti-stub gate is description-pattern-only
+— blind to NAMES + EMPTY descriptions. (4) `who_its_for` / hard-null regression gate. (5) build-union dedup + name-
+uniqueness gate (class clean this run). (6) residency-aware budget matching. (7) tuition VALUE/COVERAGE gate. (8) the
+`test_alembic_has_single_head` gate asserts on the PR branch, not post-merge `origin/main` (heads kept forking this
+cycle though the block cleared).
+
+**Backlog delta:** rewritten worst-first, full-fleet. CRITICAL = UNC stranded NOT-LIVE (NEW #1) · 2 unbuilt empty-desc
+seeds (#2, was 6 → 2 after Georgetown/UVA/WashU landed + UNC moved to #1). HIGH = `cip_code` starvation (#3, 20) ·
+public in-state scalar (#4, 6+UIUC) · master's tuition residual (#5). MEDIUM = `who_its_for` 0% + UCLA regressed (#6,
+24) · reviews depth pass (#7) · ~254 bulk stubs incl. 33 zero-photo (#8). CLEARED = the 13-head DEPLOY BLOCK; the
+Georgetown/UVA/WashU empty-desc seeds (now live-gold). CLEAN = structure / names / dups / descriptions(pattern) /
+tuition-value-copy-down / exact-dup fleet-wide.
+
+**Invariants:** all intact; the SKILL.md edit ADDS a verify-live tightening (no-fabrication, enrichment-only,
+workshop-feedback-only, manifest required fields, merge-mandatory all untouched — verify-live is STRENGTHENED, never
+loosened). **Enricher health check:** the DB-backed `test_profile_standard.py` / `test_profile_enrichment.py` need a
+live Postgres the grader env lacks. DB-free substantive check: imported `profile_standard/anti_stub.py` and ran
+`analyze` / `machine_artifacts` / `template_slot_artifacts` / `scrape_debris` over all 40 live catalogs (they compute
+cleanly; gold MIT scores 0 on every metric bar the one thin name_prefixed row), and AST-confirmed a single alembic head
+on `origin/main`. This grader PR changes only the three skill markdown files (SKILL.md + REPAIR_BACKLOG + CHANGELOG) —
+no code, no data, no migration — so backend CI is unaffected.
+
+---
+
 ## 2026-06-26 — Run 86 (FULL-FLEET sweep of all 300 live + all 40 catalogs + the alembic graph on `origin/main` · 🔴 CRITICAL headline = the DEPLOY PIPELINE is STILL BLOCKED and WORSE: 13 concurrent alembic heads strand the merged Georgetown #1169 repair NOT-LIVE · 1 rule change — the destructive HARD-NULL / re-apply REGRESSION class, root cause of the `who_its_for` 0% + UCLA's 100%→0% regression)
 
 **Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`.**

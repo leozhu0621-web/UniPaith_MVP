@@ -1838,6 +1838,39 @@ clear the dual head, re-trigger Deploy Backend — and **do NOT rewrite the alre
 data** (re-pointing or re-authoring a clean catalog only risks a fresh dual head and a
 second failed deploy). The data is done; the deploy is the unfinished half.
 
+**A GREEN Deploy Backend + a SINGLE advanced alembic head + the migration showing
+APPLIED is STILL NOT proof the enrichment is live — a "deploy-safe" data migration that
+RECORDS ITSELF APPLIED WHILE SKIPPING ITS OWN DATA APPLY makes all three green signals
+lie, so the ONLY valid verify-live gate is the live-API CONTENT itself.** The dual-head /
+failed-deploy mechanism above is a RED signal you can SEE; this one is ALL-GREEN and so the
+more dangerous — it passes every check the prior paragraph tells you to watch. To stop a heavy
+per-program data apply from hanging container boot, the recent migrations wrap
+`<uni>_profile.apply(session)` in a `lock_timeout`-bounded SAVEPOINT that is SKIPPED (caught,
+logged) rather than retried if it cannot grab its locks quickly — and the migration STILL
+records as applied so the alembic chain advances to a single head. The consequence: Deploy
+Backend goes GREEN, `alembic heads` shows ONE head, and that head's migration reads "applied,"
+yet the data apply NEVER RAN in prod, so the live API keeps serving the OLD seed rows. The skip
+is NON-DETERMINISTIC (it turns on prod lock contention at boot), so the byte-identical pattern
+LANDS for one university and silently SKIPS for the next — you therefore CANNOT infer "this one
+is live" from "a sibling enriched with the same migration pattern deployed fine." So: (a) NEVER
+treat green-deploy / single-advanced-head / applied-migration as proof — re-query the live API
+for the institution's PROGRAM COUNT and a sample program's real `description_text`, and a count
+still at the seed number (e.g. 5) or an empty description means the apply was SKIPPED, NOT that
+the enrichment shipped; (b) when the apply was skipped the enrichment is NOT done — land an
+explicit RE-APPLY that actually EXECUTES `<uni>_profile.apply(session)` in prod (a re-apply
+migration / one-off job, exactly as the prior Berkeley re-apply did), then re-verify the live
+count matches the real catalog before declaring done. This TIGHTENS verify-live (the live
+re-query is now keyed on CONTENT, never on any deploy/chain signal) and NAMES the self-skipping
+mechanism; it loosens NOTHING (merge-mandatory and Deploy-Backend-green remain NECESSARY — they
+are simply no longer SUFFICIENT). The durable fix — a prod execution path that genuinely RUNS
+the data apply instead of skipping it at boot — is CODE (flagged for a human). Evidence: live API
++ repo this run — the single alembic head `<uni>prof` data migration (a full ~89-program catalog,
+merged with Deploy Backend GREEN and exactly one head) serves only the institution's 5
+EMPTY-description seed programs live, because its own migration "runs inside a SAVEPOINT bounded
+by `lock_timeout` and is SKIPPED rather than hanging container boot… still records as applied so
+the chain advances"; the byte-identical pattern on two sibling seed-repairs the same cycle DID
+land (58 / 100 programs live), proving the skip is non-deterministic timing, not a code error.
+
 **An opened-but-unmerged PR is a FAILED run, not a finished one.** Opening a PR and
 stopping leaves the whole university invisible to students (the seeded thin profile
 still shows) and lets work rot — a batch of fully-enriched universities once sat in
