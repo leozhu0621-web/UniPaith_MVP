@@ -112,6 +112,19 @@ def setup_scheduler() -> None:
             **_job_defaults(),
         )
 
+    # Deadline reminder delivery (Spec 16) — scan student_calendar for due
+    # reminder_at rows and push an in-app notification. Idempotent (event_id +
+    # reminder_sent_at marker) + fail-soft.
+    if settings.reminder_delivery_enabled:
+        scheduler.add_job(
+            _run_reminder_delivery,
+            "interval",
+            minutes=settings.reminder_delivery_interval_minutes,
+            id="reminder_delivery",
+            name="Reminder Delivery Loop",
+            **_job_defaults(),
+        )
+
     # Daily channel-sourced Events/Updates refresh — re-fetch every
     # institution/school/program feed, re-apply the keyword relevance gate, and
     # idempotently upsert so the school/program profiles stay current with no
@@ -222,6 +235,25 @@ async def _run_notification_digest() -> None:
             logger.info("Notification digest loop sent %d digest email(s)", sent)
     except Exception as exc:  # noqa: BLE001 — never let a tick break the scheduler
         logger.warning("Notification digest loop failed: %s", exc)
+
+
+async def _run_reminder_delivery() -> None:
+    """Deliver due student_calendar.reminder_at reminders as in-app notifications.
+
+    Opens its own session; idempotent (event_id + reminder_sent_at marker) so a
+    re-run never double-sends. Fail-soft — a scheduled job must never crash the loop.
+    """
+    from unipaith.database import async_session
+    from unipaith.services.calendar_service import CalendarService
+
+    try:
+        async with async_session() as session:
+            sent = await CalendarService(session).deliver_due_reminders()
+            await session.commit()
+        if sent:
+            logger.info("Reminder delivery loop sent %d reminder(s)", sent)
+    except Exception as exc:  # noqa: BLE001 — never let a tick break the scheduler
+        logger.warning("Reminder delivery loop failed: %s", exc)
 
 
 async def _run_content_ingest_refresh() -> None:

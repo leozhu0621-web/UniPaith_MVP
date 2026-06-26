@@ -137,6 +137,13 @@ class Settings(BaseSettings):
     # always fire immediately. Off by default, on in prod.
     notification_digest_enabled: bool = False
     notification_digest_interval_minutes: int = 1440  # daily
+    # Deadline/offer/milestone reminder delivery: scan student_calendar for due
+    # reminder_at rows and push an in-app notification. Idempotent via event_id +
+    # a reminder_sent_at marker, so a re-run never double-sends. On by default;
+    # the scheduler only runs outside tests, and the migration stamps pre-deploy
+    # overdue rows so enabling it never blasts the historical backlog.
+    reminder_delivery_enabled: bool = True
+    reminder_delivery_interval_minutes: int = 15
     # Daily channel-sourced Events/Updates refresh: re-fetch every institution/
     # school/program feed, re-apply the keyword relevance gate, idempotently
     # upsert. Off by default (test), on in prod via ECS env. Idempotent +

@@ -93,6 +93,61 @@ class CalendarService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
+    async def deliver_due_reminders(self, *, now: datetime | None = None) -> int:
+        """Send one in-app notification per ``student_calendar.reminder_at`` that
+        is now due and not yet delivered, then stamp ``reminder_sent_at`` so it
+        never re-fires.
+
+        Idempotent twice over: the marker skips already-delivered rows, and
+        ``notify(event_id=...)`` makes a duplicate notification row physically
+        impossible (partial-unique ``uq_notifications_event_id``). In-app is
+        always written; email follows the user's notification prefs. Caller
+        commits. Returns the number of reminders delivered.
+        """
+        from unipaith.models.student import StudentProfile
+        from unipaith.services.notification_service import NotificationService
+
+        now = now or datetime.now(UTC)
+        rows = (
+            await self.db.execute(
+                select(StudentCalendar, StudentProfile.user_id)
+                .join(StudentProfile, StudentProfile.id == StudentCalendar.student_id)
+                .where(
+                    StudentCalendar.reminder_at.is_not(None),
+                    StudentCalendar.reminder_at <= now,
+                    StudentCalendar.reminder_sent_at.is_(None),
+                    StudentCalendar.status != "completed",
+                )
+            )
+        ).all()
+        if not rows:
+            return 0
+
+        notifier = NotificationService(self.db)
+        sent = 0
+        for cal, user_id in rows:
+            if user_id is None:
+                # Orphaned row — nothing to deliver; stamp it so it isn't
+                # re-scanned forever.
+                cal.reminder_sent_at = now
+                continue
+            await notifier.notify(
+                user_id=user_id,
+                notification_type="deadline_reminders",
+                title=cal.title or "Reminder",
+                body=cal.description or "You have an upcoming item on your calendar.",
+                action_url="/s/manage?tab=calendar",
+                metadata={
+                    "calendar_id": str(cal.id),
+                    "application_id": str(cal.application_id) if cal.application_id else None,
+                },
+                event_id=f"deadline_reminders:{cal.id}",
+            )
+            cal.reminder_sent_at = now
+            sent += 1
+        await self.db.flush()
+        return sent
+
     # ── Read ───────────────────────────────────────────────────────────────
 
     async def get_calendar(

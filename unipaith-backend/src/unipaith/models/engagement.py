@@ -150,6 +150,9 @@ class StudentCalendar(Base):
     start_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     end_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     reminder_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Stamped once the reminder_at notification has been delivered, so the
+    # delivery loop never re-sends (NULL = pending; set = delivered/suppressed).
+    reminder_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # Spec 16 §6 CalendarItem fields ---------------------------------------
     # Spec 17 reuses `status` ("completed") to mark an inbox-linked deadline
     # done when the thread is marked complete (via reference_id = thread id).
