@@ -73,6 +73,12 @@ national/international applicant pool while keeping BOTH rates in ``cost_data.br
 (subject + verified subareas + who-it-fits + next step, distinct/total = 1.0 — never a
 degree-type template; REPAIR_BACKLOG #4). Build gates enforce 100% cip + who coverage and
 who distinctness ≥ 0.9.
+
+Cost-consistency fix (2026-06-26, uwmadcoa1, PR #1193 review): with the undergraduate
+matcher scalar now non-resident, the top-level ``total_cost_of_attendance`` is rebased to
+the NON-RESIDENT COA (living/other is residency-invariant, derived from the published
+resident COA minus resident base tuition) so it never reads below tuition alone; both
+residency COAs are carried in ``cost_data.breakdown``.
 """
 
 # ruff: noqa: E501
@@ -1439,8 +1445,20 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
             "in the breakdown. School differentials (Business, Engineering, Nursing) are "
             "included when applicable.",
         )
-        cost["total_cost_of_attendance"] = _UNDERGRAD_COA
+        # COA must stay CONSISTENT with the non-resident tuition scalar above (PR #1193
+        # review): the top-level total_cost_of_attendance is the NON-RESIDENT COA (else it
+        # would read below tuition alone). Living/other is residency-invariant — derive it
+        # from the published resident COA minus the resident base tuition — so both residency
+        # COAs are real published-derived figures, carried in the breakdown.
+        living_other = _UNDERGRAD_COA - _TUITION_UG_INSTATE
+        cost["total_cost_of_attendance"] = oos + living_other
+        cost["breakdown"]["total_cost_of_attendance_in_state"] = res + living_other
+        cost["breakdown"]["total_cost_of_attendance_out_of_state"] = oos + living_other
         cost["avg_net_price"] = _AVG_NET_PRICE
+        cost["avg_net_price_note"] = (
+            "Average net price after aid for Wisconsin residents (College Scorecard); "
+            "non-resident net price is higher."
+        )
         cost["source"] = _COST_SRC[0]
         cost["source_url"] = _COST_SRC[1]
         return oos, cost
