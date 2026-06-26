@@ -2172,7 +2172,10 @@ class InstitutionService:
         if delivery_format:
             stmt = stmt.where(Program.delivery_format == delivery_format)
         if campus_setting:
-            stmt = stmt.where(Program.campus_setting == campus_setting)
+            # campus_setting is institution-level (Program.campus_setting is never
+            # populated); filter the joined Institution column so the facet isn't a
+            # guaranteed zero-result.
+            stmt = stmt.where(Institution.campus_setting == campus_setting)
         if max_duration_months is not None:
             stmt = stmt.where(Program.duration_months <= max_duration_months)
         if city:

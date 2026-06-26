@@ -321,7 +321,7 @@ class WorkshopFeedbackService:
         # Wrap raw strings into the schema's dict shape.
         missing = [{"element": s, "importance": "should_have"} for s in fb.missing_elements]
         questions = [
-            {"question": q, "why": fb.prompt_alignment_notes or ""}
+            {"question": q, "why": fb.prompt_alignment_notes or "Aligned to your draft's prompt."}
             for q in fb.questions_for_student
         ]
         return rubric, fb.structural_issues, missing, questions
@@ -577,7 +577,9 @@ class WorkshopFeedbackService:
         # to first if present).
         questions: list[dict] = []
         for cat in fb.resource_categories:
-            questions.append({"question": cat, "why": fb.timeline_notes or ""})
+            questions.append(
+                {"question": cat, "why": fb.timeline_notes or "Based on your study timeline."}
+            )
         return rubric, issues, missing, questions
 
     # ── List ──────────────────────────────────────────────────────────────

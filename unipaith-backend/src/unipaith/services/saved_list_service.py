@@ -50,10 +50,28 @@ _APP_TO_SAVED_STATUS: dict[str, SavedStatus] = {
 }
 
 
-def _status_from_application(app_status: str | None) -> SavedStatus | None:
-    if not app_status:
+def _status_from_application(app) -> SavedStatus | None:
+    if app is None:
         return None
-    return _APP_TO_SAVED_STATUS.get(app_status)
+    status = app.status
+    if status == "decision_made":
+        # The real admit / reject / waitlist outcome lives on decision /
+        # student_decision, not on status (which stays "decision_made") — so the
+        # status-only map collapsed every outcome to "submitted".
+        decision = (app.decision or "").strip().lower()
+        student_decision = (app.student_decision or "").strip().lower()
+        if "accept" in student_decision or decision in (
+            "admitted",
+            "accepted",
+            "conditional_admission",
+        ):
+            return "accepted"
+        if decision in ("rejected", "denied"):
+            return "rejected"
+        if decision in ("waitlisted", "waitlist"):
+            return "waitlisted"
+        return "submitted"
+    return _APP_TO_SAVED_STATUS.get(status)
 
 
 def _program_card(prog: Program, inst: Institution | None) -> SavedProgramCard:
@@ -190,7 +208,7 @@ class SavedListService:
                     weight_ranking=weight_ranking,
                 )
 
-            derived = _status_from_application(app.status if app else None)
+            derived = _status_from_application(app)
             row_status = item.status if item.status in VALID_STATUSES else "considering"
             status: SavedStatus = derived or row_status  # type: ignore[assignment]
 

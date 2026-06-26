@@ -62,7 +62,16 @@ class PeerService:
             select(StudentDataConsent).where(StudentDataConsent.student_id == student_id)
         )
         if consent is None:
-            consent = StudentDataConsent(student_id=student_id, consent_peer_connect=opted_in)
+            # Preserve the platform default for analytics so opting into Peers
+            # doesn't silently disable the Discovery extractor (which requires
+            # analytics consent): materializing a fresh consent row otherwise
+            # flips research from the all-True no-row default (DEFAULT_MASK) to
+            # the column default False.
+            consent = StudentDataConsent(
+                student_id=student_id,
+                consent_peer_connect=opted_in,
+                consent_research=True,
+            )
             self.db.add(consent)
         else:
             consent.consent_peer_connect = opted_in

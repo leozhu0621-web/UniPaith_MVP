@@ -915,6 +915,14 @@ class StudentService:
         # program net-price estimator instead of reading blank.
         if data.answers is not None:
             await self._fan_in_preferences(profile.id, answers)
+            if state.get("completed_at"):
+                # A post-completion re-edit changed durable prefs (budget/degree/
+                # region) — recompute matches against the new profile. First
+                # completion seeds them below; this covers later edits, which
+                # previously left matches scored against the old profile.
+                from unipaith.services.match_service import MatchService
+
+                await MatchService(self.db).invalidate_for_profile_change(profile.id)
         now_iso = datetime.now(UTC).isoformat()
         if data.completed and not state.get("completed_at"):
             state["completed_at"] = now_iso
@@ -958,7 +966,13 @@ class StudentService:
             pref.target_start_term = term
         if geos and not pref.preferred_regions:
             pref.preferred_regions = list(geos)
-        if band in self._BUDGET_BAND_RANGES:
+        if band == "need_aid":
+            # "I'll need financial aid" — a demonstrated-need funding signal the
+            # matcher (needs_aid) + net-price estimator read; previously dropped
+            # because need_aid is not one of the budget ranges.
+            if not pref.funding_requirement:
+                pref.funding_requirement = "partial"
+        elif band in self._BUDGET_BAND_RANGES:
             current = (pref.budget_min, pref.budget_max)
             band_derived = current == (None, None) or current in set(
                 self._BUDGET_BAND_RANGES.values()
