@@ -93,7 +93,7 @@ def _program_snapshot(slug: str) -> dict:
         "description_text": spec["description"],
         "website_url": cu._WEBSITE_BY_SLUG.get(slug) or cu._SCHOOL_WEBSITE.get(spec["school"]),
         "highlights": cu._HL_BY_SLUG.get(slug) or cu._HL_BASELINE,
-        "who_its_for": cu._WHO_BY_SLUG.get(slug) or cu._WHO_BASELINE,
+        "who_its_for": cu._WHO_FINAL[slug],
         "tracks": cu._TRACKS_BY_SLUG.get(slug),
         "application_requirements": cu._requirements_for(spec),
         "cost_data": cost,
@@ -183,8 +183,10 @@ def test_catalog_breadth_and_shape():
     # Environment) and DROPPED 11 rows that collide with a real degree or are federal
     # aggregations Cornell does not confer (Research & Experimental Psychology, Behavioral
     # Sciences, Pharmacology & Toxicology, Biological & Physical Sciences, Management
-    # Sciences MBA, Allied Health, Legal Research, Natural Resources bachelors) → 222.
-    assert len(cu.PROGRAMS) >= 222
+    # Sciences MBA, Allied Health, Legal Research, Natural Resources bachelors) → 222,
+    # then the redundant Veterinary Medicine professional IPEDS row de-duped against the
+    # curated D.V.M. flagship (REPAIR_BACKLOG #5a) → 221.
+    assert len(cu.PROGRAMS) >= 221
     _assert_no_cip_rollup_names(cu.PROGRAMS)
     assert len(set(cu.PROGRAM_SLUGS)) == len(cu.PROGRAM_SLUGS)
     assert cu.RANKING_DATA["ownership_type"] == "private"
@@ -258,7 +260,7 @@ def test_structure_integrity():
     assert len(cu.PROGRAM_SLUGS) == len(set(cu.PROGRAM_SLUGS)), "duplicate program slug"
     # Full catalog breadth: College Scorecard Field-of-Study list for UNITID 190415.
     # Floor reflects the run-79 whole-class CIP-title de-fabrication (233 → 222).
-    assert len(cu.PROGRAMS) >= 222, "verified real Cornell catalog breadth (de-padded)"
+    assert len(cu.PROGRAMS) >= 221, "verified real Cornell catalog breadth (de-padded)"
     # Every program sets a delivery_format, and at least one online + one hybrid exist.
     fmts = {p.get("delivery_format") for p in cu.PROGRAMS}
     assert None not in fmts
@@ -377,3 +379,22 @@ def test_johnson_mba_flagship_is_deeply_enriched():
     assert snap["external_reviews"].get("summary")
     assert snap["tracks"] is not None
     assert snap["class_profile"].get("cohort_size")
+
+
+def test_matcher_core_cip_who_and_no_placeholder_names():
+    """REPAIR_BACKLOG #1 (cip_code), #4b (who_its_for distinctness), #5a (placeholder
+    names). Gold MIT ships cip_code/who field-specific; these assert Cornell does too."""
+    # cip_code: every program carries a verified CIP (apply stamps p.cip_code = spec["cip"]).
+    missing_cip = [p["slug"] for p in cu.PROGRAMS if not p.get("cip")]
+    assert not missing_cip, f"cip_code starvation on {missing_cip[:5]}"
+    # who_its_for: covered on every row and program-DISTINCT (not a degree-type template).
+    assert len(cu._WHO_FINAL) == len(cu.PROGRAMS), "who_its_for uncovered rows"
+    whos = list(cu._WHO_FINAL.values())
+    ratio = len(set(whos)) / len(whos)
+    assert ratio >= 0.9, f"who_its_for type-gamed (distinct/total {ratio:.2f} < 0.9)"
+    # Names: no generic "{DegreeType} program in {field}" placeholder (gold MIT = 0).
+    placeholders = [
+        p["program_name"] for p in cu.PROGRAMS
+        if "program in" in p["program_name"].lower()
+    ]
+    assert not placeholders, f"degree-type-noun placeholder names: {placeholders}"
