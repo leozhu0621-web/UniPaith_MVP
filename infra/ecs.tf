@@ -330,17 +330,18 @@ resource "aws_ecs_task_definition" "backend" {
       # Spec 03 §5/§6 — provider abstraction. anthropic is the default
       # for every agent. Per-agent overrides go in AI_PROVIDER_PER_AGENT_JSON.
       { name = "AI_PROVIDER_DEFAULT", value = "together" },
-      # AI Structure — route the ML/extraction agents to the self-hosted Qwen
-      # (qwen_vllm.tf). The Claude<->Qwen boundary (ai/boundary.py) keeps every
-      # human-facing agent on Claude regardless; on a Qwen failure the failover
-      # chain (anthropic) serves the request. Embeddings stay on Voyage.
+      # 2026-06-25: route the ML/extraction agents to Together (managed Qwen 3)
+      # too. The self-hosted vLLM (qwen_vllm.tf) lacks --tool-call-parser, so its
+      # forced-tool-choice extraction 400s ("requires --tool-call-parser"), which
+      # cascades the whole turn to limited rule-based mode. Together serves the
+      # same Qwen models serverless with working tool calls. Embeddings stay on Voyage.
       { name = "AI_PROVIDER_PER_AGENT_JSON", value = jsonencode({
-        extractor             = "qwen"
-        validator             = "qwen"
-        feature_emitter       = "qwen"
-        query_interpreter     = "qwen"
-        document_parse_triage = "qwen"
-        crawler_extraction    = "qwen"
+        extractor             = "together"
+        validator             = "together"
+        feature_emitter       = "together"
+        query_interpreter     = "together"
+        document_parse_triage = "together"
+        crawler_extraction    = "together"
       }) },
       # Spec 03 §9 — failover order. Try anthropic → openai → rule_based.
       # Per-attempt timeout for the LLM round trip.
@@ -350,7 +351,9 @@ resource "aws_ecs_task_definition" "backend" {
       { name = "TOGETHER_BASE_URL", value = "https://api.together.xyz/v1" },
       { name = "TOGETHER_MODEL_FLAGSHIP", value = "Qwen/Qwen3-235B-A22B-Instruct-2507-FP8" },
       { name = "TOGETHER_MODEL_WORKHORSE", value = "Qwen/Qwen3-235B-A22B-Instruct-2507-FP8" },
-      { name = "TOGETHER_MODEL_BATCH", value = "Qwen/Qwen3-30B-A3B" },
+      # Qwen3-30B-A3B is NOT serverless on Together (returns model_not_available);
+      # use the flagship which IS serverless so batch/processing agents work.
+      { name = "TOGETHER_MODEL_BATCH", value = "Qwen/Qwen3-235B-A22B-Instruct-2507-FP8" },
       { name = "AI_PROVIDER_FAILOVER_TIMEOUT_MS", value = "30000" },
       { name = "EMBEDDING_MODEL", value = "voyage-3-large" },
       { name = "CORS_ORIGINS", value = "[\"https://app.${var.domain_name}\"]" },

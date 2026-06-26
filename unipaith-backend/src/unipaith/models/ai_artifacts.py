@@ -143,11 +143,12 @@ class AiTurn(Base, UUIDPrimaryKeyMixin):
         ),
         # Spec 03 §8 + spec 63 §16: provider tracked per call so the cost ledger
         # splits spend across the transports and the compliance audit can verify
-        # provider routing. "qwen" is the spec-63 ML backend — its presence here
-        # is the auditable proof surface that no human-facing agent is served by
-        # Qwen (those rows always carry anthropic/openai; see ai/boundary.py).
+        # provider routing. "qwen" is the self-hosted ML backend; "together" is
+        # the managed Qwen transport (2026-06-25: Uni's conversation + processing
+        # agents). Self-hosted "qwen" rows are never human-facing (see
+        # ai/boundary.py); human-facing turns now carry "together".
         CheckConstraint(
-            "provider IN ('anthropic','openai','bedrock','qwen','rule_based')",
+            "provider IN ('anthropic','openai','bedrock','qwen','rule_based','together')",
             name="ck_ai_turns_provider",
         ),
         CheckConstraint(
