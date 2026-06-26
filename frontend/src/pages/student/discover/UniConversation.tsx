@@ -28,34 +28,13 @@ import type {
   DiscoverySessionDetail,
 } from '../../../types'
 import MaterialUpload from '../../../components/student/MaterialUpload'
-import EnrichWidget from '../../../components/student/EnrichWidget'
 import AnswerChoices from './AnswerChoices'
 import UniOrb, { type OrbState } from '../../../components/student/UniOrb'
 import { deriveComposerOrbState } from './composerOrbState'
-import FirstLookCard from './FirstLookCard'
 import NoticedCard from './NoticedCard'
 import { attachRefs, noticedItemsFromSignals } from './noticed'
 import ProfileDrawer from './ProfileDrawer'
 import { useJourneyState } from './useJourneyState'
-
-/**
- * Inline enrich widget — a structured Prompt-Library card that appears in the
- * Uni thread after the most recent assistant message.  It lets the student fill
- * the next missing profile signal without leaving the chat. Renders nothing
- * when the profile is complete (getEnrichNext returns no items) or when Uni is
- * still streaming (avoids flickering in the middle of a reply).
- *
- * Sits in Uni's column (left-aligned, indented past the orb) to read as part
- * of the assistant's turn, matching the chat-with-widgets.html mockup.
- */
-function InlineChatEnrichCard() {
-  return (
-    // Indent past the 28px orb + 10px gap so the card aligns with Uni's bubbles.
-    <div className="pl-[38px]">
-      <EnrichWidget inline />
-    </div>
-  )
-}
 
 function UniBubble({
   message,
@@ -134,9 +113,6 @@ export default function UniConversation({
   // re-seeds from the right thread.
   const boundToChat = chatSessionId != null
   const [sessionId, setSessionId] = useState<string | null>(conversationSessionId)
-  // The student can wave off Uni's handoff offer; it re-surfaces after the next
-  // turn (reset in the mutation's onSuccess).
-  const [handoffDismissed, setHandoffDismissed] = useState(false)
 
   // Token-streaming state (Spec 77 §6) — optimistic student bubble + an
   // accumulating assistant bubble while Uni streams; cleared once the canonical
@@ -273,7 +249,6 @@ export default function UniConversation({
     },
     onSuccess: (data: AppendMessageResponse) => {
       setDraft('')
-      setHandoffDismissed(false)
       const sid = data.student_message.session_id
       qc.invalidateQueries({ queryKey: ['discovery', 'session', sid] })
       qc.invalidateQueries({ queryKey: ['discovery', 'completion'] })
@@ -348,7 +323,6 @@ export default function UniConversation({
     const finish = async () => {
       if (finished) return
       finished = true
-      setHandoffDismissed(false)
       if (sid) await refreshAfterTurn(sid)
       setStreaming(false)
       setStreamStudent(null)
@@ -456,7 +430,6 @@ export default function UniConversation({
     const finish = async () => {
       if (finished) return
       finished = true
-      setHandoffDismissed(false)
       if (sid) await refreshAfterTurn(sid)
       setStreaming(false)
       setStreamText('')
@@ -562,16 +535,6 @@ export default function UniConversation({
             )
           })
         )}
-        {/* Inline enrich widget — surfaces the next Prompt-Library prompt as a
-            structured card in the thread. Only shown when the conversation has
-            at least one message, Uni is idle (not streaming), and the profile
-            still has signals to fill (EnrichWidget self-renders null otherwise).
-            Placed before the streaming bubbles so it scrolls out of view
-            naturally as new messages arrive. */}
-        {!isEmpty && !streaming && !turnMut.isPending && (
-          <InlineChatEnrichCard />
-        )}
-
         {/* In-flight streaming turn (Spec 77 §6) — optimistic student + live reply. */}
         {streaming && streamStudent && <UniBubble message={streamStudent} />}
         {streaming && streamText && (
@@ -603,9 +566,6 @@ export default function UniConversation({
           </div>
         )}
 
-        {!isEmpty && !handoffDismissed && !streaming && (
-          <FirstLookCard variant="always" onKeepTalking={() => setHandoffDismissed(true)} />
-        )}
       </div>
 
       {offeredAdvance && !turnMut.isPending && !streaming && (
