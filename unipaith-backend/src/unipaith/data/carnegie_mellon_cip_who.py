@@ -10,8 +10,11 @@ catalog (180 real, field-specific programs) shipped both fields null:
   against the NCES CIP user site and DHS STEM list (AI 11.0102, Robotics 14.4201,
   Data Science 30.7001, Business Analytics 30.7102, Music Technology 50.0913,
   Language Interpretation and Translation 16.0103, Rhetoric and Composition 23.1304,
-  Financial Mathematics 27.0305, Medical Informatics 51.2706). No guesses — a genuinely
-  uncodeable program would be omitted with a reason, but every CMU field is codeable.
+  Financial Mathematics 27.0305, Medical Informatics 51.2706, Human Computer Interaction
+  30.3101, Sustainable Design/Architecture 04.0403). Every code is also present in the repo's
+  own CIP vocabulary (``data/reference/ref_majors.jsonl``), the table the matcher resolves
+  against. No guesses — a genuinely uncodeable program would be omitted with a reason, but
+  every CMU field is codeable.
 
 * ``who_its_for`` — a UNIVERSAL depth field: a field-specific, program-DISTINCT 1-2
   sentence statement of the applicant each program fits (background/interest, goal or
@@ -32,7 +35,7 @@ CIP6_BY_SLUG: dict[str, str] = {
     "cmu-cs-bs": "11.0701",
     "cmu-ai-bs": "11.0102",
     "cmu-compbio-bs": "26.1104",
-    "cmu-hci-bs": "11.0104",
+    "cmu-hci-bs": "30.3101",
     "cmu-robotics-bs": "14.4201",
     "cmu-mscs": "11.0701",
     "cmu-cs-phd": "11.0701",
@@ -47,9 +50,9 @@ CIP6_BY_SLUG: dict[str, str] = {
     "cmu-mrsd": "14.4201",
     "cmu-mscv": "11.0701",
     "cmu-robotics-phd": "14.4201",
-    "cmu-mhci": "11.0104",
+    "cmu-mhci": "30.3101",
     "cmu-msle": "11.0104",
-    "cmu-hci-phd": "11.0104",
+    "cmu-hci-phd": "30.3101",
     "cmu-mse": "14.0903",
     "cmu-mse-online": "14.0903",
     "cmu-msit-privacy": "11.1003",
@@ -173,7 +176,7 @@ CIP6_BY_SLUG: dict[str, str] = {
     "cmu-music-technology-bs": "50.0913",
     "cmu-march": "04.0201",
     "cmu-maad": "04.0201",
-    "cmu-ms-msrsd": "04.0501",
+    "cmu-ms-msrsd": "04.0403",
     "cmu-mud": "04.0301",
     "cmu-arch-phd": "04.0201",
     "cmu-art-mfa": "50.0702",
