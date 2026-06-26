@@ -94,6 +94,7 @@ from unipaith.data.uf_catalog_maps import (
     SLUG_PROGRAM_NAMES,
     clean_cip_field,
 )
+from unipaith.data.uf_cip6 import CIP6_BY_SLUG as _CIP6_BY_SLUG
 from unipaith.data.uf_field_descriptions import DISCIPLINE_DEFS
 from unipaith.data.uf_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.data.uf_reviews_depth import DEPTH_REVIEWS
@@ -1736,7 +1737,11 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.department = spec.get("department")
         kw = _PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(_KEYWORDS_BY_SCHOOL[spec["school"]])
         p.content_sources = _program_content(spec["school"], kw)
-        p.cip_code = spec.get("cip")  # matcher-core CIP join key (REPAIR_BACKLOG #1)
+        # matcher-core CIP join key (REPAIR_BACKLOG #1): the verified 6-digit CIP-2020
+        # code present in ref_majors — NOT the 2-digit family rollup in ``spec["cip"]``,
+        # which never resolves the exact ref_majors / field-66 lookup. Falls back to the
+        # family only if a slug is somehow unmapped (never silently null).
+        p.cip_code = _CIP6_BY_SLUG.get(slug) or spec.get("cip")
         # Public-university budget scalar: the CPEF matcher reads the flat ``program.tuition``
         # for the over-budget veto + affordability fit, so it must be the NON-RESIDENT
         # (out-of-state) sticker — the conservative, broadly-correct input for a national +
