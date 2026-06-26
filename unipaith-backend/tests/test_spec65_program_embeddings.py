@@ -145,3 +145,16 @@ async def test_can_match_false_without_feature_vector(db_session: AsyncSession) 
 async def test_can_match_true_when_ready(db_session: AsyncSession) -> None:
     profile, _ = await _seed(db_session)
     assert await MatchService(db_session).can_match(profile.id) is True
+
+
+async def test_backfill_embeds_published_programs_missing_embedding(db_session: AsyncSession):
+    """The scheduler-driven backfill embeds published programs that have no
+    embedding yet (idempotent via the NULL filter + fail-soft), so cosine fires."""
+    _, program = await _seed(db_session)
+    assert program.embedding is None
+
+    n = await MatchService(db_session).backfill_missing_program_embeddings(limit=50)
+    assert n >= 1
+    await db_session.refresh(program)
+    assert isinstance(program.embedding, list)
+    assert len(program.embedding) == 1024

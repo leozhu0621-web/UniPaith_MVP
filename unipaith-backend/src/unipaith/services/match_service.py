@@ -694,6 +694,31 @@ class MatchService:
             await self.db.flush()
         return out
 
+    async def backfill_missing_program_embeddings(self, *, limit: int = 200) -> int:
+        """Embed up to ``limit`` published programs that have no embedding yet, so
+        the matcher's cosine term can fire (students already carry an embedding;
+        no program did until this backfill ran). Idempotent (only NULL-embedding
+        rows are fetched) + fail-soft (``ensure_program_embeddings`` skips a row on
+        provider/consent/cost failure). Returns the count embedded. Caller commits.
+        """
+        from unipaith.models.institution import Program
+
+        rows = (
+            (
+                await self.db.execute(
+                    select(Program)
+                    .where(Program.is_published.is_(True), Program.embedding.is_(None))
+                    .limit(limit)
+                )
+            )
+            .scalars()
+            .all()
+        )
+        if not rows:
+            return 0
+        embedded = await self.ensure_program_embeddings(rows)
+        return len(embedded)
+
     def cached_program_embeddings(self, programs: list[Any]) -> dict[Any, list[float]]:
         """Read-only sibling of ``ensure_program_embeddings``: return the
         ALREADY-stored embedding for each program and compute NOTHING.

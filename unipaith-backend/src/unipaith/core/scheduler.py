@@ -125,6 +125,20 @@ def setup_scheduler() -> None:
             **_job_defaults(),
         )
 
+    # Program embedding backfill (Spec 65 §3) — populate Program.embedding so the
+    # matcher's cosine term fires. Bounded batch per tick + fail-soft; starts
+    # shortly after deploy so catalog coverage builds promptly.
+    if settings.program_embedding_backfill_enabled:
+        scheduler.add_job(
+            _run_program_embedding_backfill,
+            "interval",
+            minutes=settings.program_embedding_backfill_interval_minutes,
+            id="program_embedding_backfill",
+            name="Program Embedding Backfill",
+            next_run_time=datetime.now() + timedelta(seconds=120),
+            **_job_defaults(),
+        )
+
     # Daily channel-sourced Events/Updates refresh — re-fetch every
     # institution/school/program feed, re-apply the keyword relevance gate, and
     # idempotently upsert so the school/program profiles stay current with no
@@ -254,6 +268,26 @@ async def _run_reminder_delivery() -> None:
             logger.info("Reminder delivery loop sent %d reminder(s)", sent)
     except Exception as exc:  # noqa: BLE001 — never let a tick break the scheduler
         logger.warning("Reminder delivery loop failed: %s", exc)
+
+
+async def _run_program_embedding_backfill() -> None:
+    """Embed published programs that have no embedding yet so the matcher's cosine
+    term (and the Outcomes/Selectivity sliders that feed it) can fire. Bounded
+    batch per tick, idempotent + fail-soft.
+    """
+    from unipaith.database import async_session
+    from unipaith.services.match_service import MatchService
+
+    try:
+        async with async_session() as session:
+            n = await MatchService(session).backfill_missing_program_embeddings(
+                limit=settings.program_embedding_backfill_batch
+            )
+            await session.commit()
+        if n:
+            logger.info("Program embedding backfill embedded %d program(s)", n)
+    except Exception as exc:  # noqa: BLE001 — never let a tick break the scheduler
+        logger.warning("Program embedding backfill failed: %s", exc)
 
 
 async def _run_content_ingest_refresh() -> None:

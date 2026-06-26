@@ -144,6 +144,14 @@ class Settings(BaseSettings):
     # overdue rows so enabling it never blasts the historical backlog.
     reminder_delivery_enabled: bool = True
     reminder_delivery_interval_minutes: int = 15
+    # Program embedding backfill (Spec 65 §3): students already carry an
+    # embedding, but Program.embedding was never populated, so the matcher's
+    # cosine term — and the Outcomes/Selectivity sliders that feed it — was dead.
+    # A fail-soft, idempotent loop embeds published programs missing an embedding,
+    # a bounded batch per tick, so cosine fires once the catalog is covered.
+    program_embedding_backfill_enabled: bool = True
+    program_embedding_backfill_interval_minutes: int = 10
+    program_embedding_backfill_batch: int = 200
     # Daily channel-sourced Events/Updates refresh: re-fetch every institution/
     # school/program feed, re-apply the keyword relevance gate, idempotently
     # upsert. Off by default (test), on in prod via ECS env. Idempotent +
