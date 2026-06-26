@@ -2551,7 +2551,65 @@ class InstitutionService:
         post.published_at = datetime.now(UTC)
         await self.db.flush()
         await self.db.refresh(post)
+        await self._notify_followers_of_post(institution_id, post)
         return await self._enrich_post(post)
+
+    async def _notify_followers_of_post(self, institution_id: UUID, post: InstitutionPost) -> None:
+        """Fan a newly-published post out to the institution's non-muted followers
+        as an in-app notification (the "Posts from saved programs" feature, which
+        was a dead preference — publish never notified anyone). Best-effort +
+        idempotent (event_id per follower) so a re-publish never double-notifies
+        and a failure never blocks the publish. DIGEST-class, so email batches
+        into the periodic digest rather than one mail per post."""
+        from unipaith.models.follow import InstitutionFollow
+        from unipaith.models.institution import Institution
+        from unipaith.models.student import StudentProfile
+        from unipaith.services.notification_service import NotificationService
+
+        try:
+            rows = (
+                await self.db.execute(
+                    select(StudentProfile.user_id)
+                    .join(
+                        InstitutionFollow,
+                        InstitutionFollow.student_id == StudentProfile.id,
+                    )
+                    .where(
+                        InstitutionFollow.institution_id == institution_id,
+                        InstitutionFollow.muted.is_(False),
+                    )
+                )
+            ).all()
+            if not rows:
+                return
+            inst_name = (
+                await self.db.scalar(
+                    select(Institution.name).where(Institution.id == institution_id)
+                )
+                or "A program you follow"
+            )
+            notifier = NotificationService(self.db)
+            title = (post.title or "New update")[:180]
+            body = (post.body or "")[:500]
+            for (user_id,) in rows:
+                if user_id is None:
+                    continue
+                await notifier.notify(
+                    user_id=user_id,
+                    notification_type="institution_post",
+                    title=f"{inst_name}: {title}",
+                    body=body,
+                    action_url="/s/posts",
+                    metadata={"institution_id": str(institution_id), "post_id": str(post.id)},
+                    event_id=f"institution_post:{post.id}:{user_id}",
+                )
+        except Exception:
+            logger.warning(
+                "post follower fan-out failed for institution=%s post=%s",
+                institution_id,
+                getattr(post, "id", None),
+                exc_info=True,
+            )
 
     # Spec 27 §5 — per-object engagement: (object_type, action) -> counter column.
     _ENGAGEMENT_COLUMNS: dict[tuple[str, str], str] = {
