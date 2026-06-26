@@ -544,6 +544,11 @@ class ApplicationService:
         # External: the student submits on the institution's own portal; we
         # record the platform side without invoking institution-receive (§7).
         if app.submission_mode == "external":
+            # The fee gate must apply regardless of submission mode — otherwise a
+            # student who owes a fee can flip to "external" and submit for free.
+            # No-op when the program has no fee, so legitimate free external
+            # submissions are unaffected.
+            await self._assert_fee_clear_for_submit(app)
             now = datetime.now(UTC)
             app.status = "submitted"
             app.submitted_at = now

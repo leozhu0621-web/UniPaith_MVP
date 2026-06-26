@@ -210,6 +210,12 @@ class SavedListService:
 
             derived = _status_from_application(app)
             row_status = item.status if item.status in VALID_STATUSES else "considering"
+            # A withdrawn / deleted application leaves the saved row stranded at
+            # "application_started" with no app behind it — clamp back to
+            # "considering" so the "Start application" CTA returns instead of a
+            # dead "Application started" badge.
+            if app is None and row_status == "application_started":
+                row_status = "considering"
             status: SavedStatus = derived or row_status  # type: ignore[assignment]
 
             tags = item.tags if isinstance(item.tags, list) else []

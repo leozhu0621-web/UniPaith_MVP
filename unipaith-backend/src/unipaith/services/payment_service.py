@@ -182,6 +182,19 @@ class PaymentService:
         if not dep["enabled"]:
             raise BadRequestException("No enrollment deposit is configured for this program")
 
+        # Only an admitted student who accepted their offer may pay a deposit —
+        # otherwise a rejected / undecided student mints a bogus "deposit_recorded"
+        # enrollment that inflates the institution's yield and pays for a seat
+        # that isn't theirs. Mirrors the enrollment-window gate (§7).
+        from unipaith.services.enrollment_service import EnrollmentService
+
+        _enr = EnrollmentService(self.db)
+        _offer = await _enr._offer_for(app.id)
+        if not _enr._is_accepted(app, _offer):
+            raise BadRequestException(
+                "You can pay an enrollment deposit only after accepting an offer."
+            )
+
         payment = await self._get_or_create_payment(
             app.id, "enrollment_deposit", amount_cents=dep["amount_cents"], currency=dep["currency"]
         )
