@@ -19,7 +19,11 @@ export const deleteDocument = (docId: string) =>
 
 export const uploadToS3 = (url: string, file: File, onProgress?: (pct: number) => void) =>
   axios.put(url, file, {
-    headers: { 'Content-Type': file.type },
+    // Must match the Content-Type the presigned URL was signed with (callers use
+    // `file.type || 'application/octet-stream'`). Without the same fallback, files
+    // with an empty MIME type (.md, some .csv, drag-drops) get a 403
+    // SignatureDoesNotMatch and the upload silently fails.
+    headers: { 'Content-Type': file.type || 'application/octet-stream' },
     onUploadProgress: (e) => {
       if (onProgress && e.total) onProgress(Math.round((e.loaded / e.total) * 100))
     },

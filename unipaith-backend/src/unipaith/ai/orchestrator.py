@@ -217,6 +217,31 @@ class Orchestrator:
         Callers (the SSE endpoint) typically forward `text_delta` events
         directly to the wire and persist the final response on 'done'.
         """
+        # AIClient.stream_message is Anthropic-only (it calls anthropic.messages
+        # .stream directly). When the configured provider for this human-facing
+        # agent is NOT Anthropic, streaming here would silently run the visible
+        # conversation on Claude. Reroute to the registry-routed, non-streaming
+        # respond() so the turn actually runs on the configured provider (Qwen via
+        # Together). The reply is emitted as one delta; token-by-token streaming on
+        # the open-model path is a follow-up, not a correctness issue.
+        try:
+            from unipaith.ai.providers.registry import get_provider_for_agent
+
+            _provider_name = getattr(get_provider_for_agent(self.AGENT_NAME), "name", "")
+        except Exception:
+            _provider_name = ""
+        if _provider_name and _provider_name != "anthropic":
+            resp = await self.respond(
+                ctx=ctx,
+                student_id=student_id,
+                discovery_message_id=discovery_message_id,
+                db=db,
+            )
+            if resp.text:
+                yield ("text_delta", resp.text)
+            yield ("done", resp)
+            return
+
         system = self._build_system_blocks(ctx)
         # Tool order is fixed (record_artifact → request_layer_advance →
         # suggest_replies) so the tool block is byte-stable across turns and

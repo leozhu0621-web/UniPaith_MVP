@@ -25,7 +25,7 @@ import logging
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import delete, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.config import settings
@@ -664,13 +664,17 @@ class IntakeEngineService:
         downstream cache miss."""
         try:
             from unipaith.ai.cache_invalidation import invalidate_for_consent_change
-            from unipaith.models.matching import MatchResult
+            from unipaith.services.match_service import MatchService
 
-            # Match service: a changed signal can move every per-program score,
-            # so drop the cached rationales + the materialized match_results.
+            # A changed signal can move every per-program score. Invalidate the
+            # cached rationales, then mark existing matches STALE rather than
+            # deleting them, so the lazy recompute on the next GET /me/matches
+            # regenerates them. (Deleting left zero rows, and the lazy refresh
+            # only fires on stale ROWS — so a deleted set never returned until a
+            # manual "Refresh matches", which read like total data loss after any
+            # preference/profile edit.)
             await invalidate_for_consent_change(self.db, student_id)
-            await self.db.execute(delete(MatchResult).where(MatchResult.student_id == student_id))
-            await self.db.flush()
+            await MatchService(self.db).invalidate_for_profile_change(student_id)
         except Exception:  # pragma: no cover — fanout is advisory
             logger.exception(
                 "Intake fanout failed for student=%s signal=%s", student_id, signal_name

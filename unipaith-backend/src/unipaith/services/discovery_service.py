@@ -902,6 +902,14 @@ class DiscoveryService:
                     await self.db.refresh(assistant)
                     # Auto-advance the profile layer on the streaming path too.
                     await self._maybe_advance_profile_layer(session=session, verdict=verdict)
+                    # Mirror the non-streaming path: when a layer/track completes,
+                    # emit features + recompute matches (best-effort — never fails
+                    # the turn). Without this, finishing Discovery on the live
+                    # streaming path left match_results empty until a manual refresh.
+                    if verdict is not None and verdict.layer_complete:
+                        await self._emit_features_for_completion(
+                            student_id=student_id, snapshot=snapshot
+                        )
                     yield ("assistant_message", _msg_dict(assistant))
         except Exception as exc:  # pragma: no cover — degraded path
             logger.exception("Discovery stream_message failed for session=%s", session_id)

@@ -395,7 +395,12 @@ async def test_fanout_invalidates_match_results(db_session):
         .scalars()
         .all()
     )
-    assert remaining == []  # signal change invalidated the materialized matches
+    # A signal change marks materialized matches STALE (it no longer deletes them),
+    # so the lazy recompute on the next GET /me/matches regenerates them instead of
+    # collapsing to an empty list. (Deleting left zero rows the lazy path — which
+    # only fires on stale rows — could never detect, so matches never came back.)
+    assert len(remaining) == 1
+    assert remaining[0].is_stale is True
 
 
 # ── §5.4 external link + §4 completeness ──────────────────────────────────────
