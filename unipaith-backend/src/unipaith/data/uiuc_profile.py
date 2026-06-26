@@ -4749,13 +4749,13 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
             res, nonres = rates
             return _grad_pub_cost(
                 res, nonres,
-                f"Published annual {name} tuition (Illinois resident); non-residents pay the rate in "
-                "the breakdown.",
+                f"Published annual {name} tuition — non-resident/out-of-state rate, the matcher "
+                "budget basis; Illinois residents pay the lower rate shown in the breakdown.",
             )
         return _grad_pub_cost(
             _GRAD_RES, _GRAD_NONRES,
-            "Billed at UIUC's published graduate tuition rate (Illinois resident, full-time); "
-            "non-residents pay the rate in the breakdown.",
+            "UIUC's published full-time graduate tuition — non-resident/out-of-state rate, the "
+            "matcher budget basis; Illinois residents pay the lower rate shown in the breakdown.",
         )
 
     # masters + diploma — graduate tuition: exact program override → school differential → base.
@@ -4765,8 +4765,9 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
         intl = named[2] if len(named) > 2 else None
         return _grad_pub_cost(
             res, nonres,
-            f"Published annual {name} tuition (Illinois resident); non-residents"
-            f"{' (and international, shown separately)' if intl else ''} pay the rate in the breakdown.",
+            f"Published annual {name} tuition — non-resident/out-of-state rate, the matcher budget "
+            f"basis{' (international shown separately)' if intl else ''}; Illinois residents pay the "
+            "lower rate shown in the breakdown.",
             intl=intl,
         )
     sch = _GRAD_SCHOOL_DIFF.get(school)
@@ -4774,13 +4775,15 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
         res, nonres = sch
         return _grad_pub_cost(
             res, nonres,
-            f"Published annual {school} graduate tuition (Illinois resident, includes the college "
-            "differential); non-residents pay the rate in the breakdown.",
+            f"Published annual {school} graduate tuition — non-resident/out-of-state rate (includes "
+            "the college differential), the matcher budget basis; Illinois residents pay the lower "
+            "rate shown in the breakdown.",
         )
     return _grad_pub_cost(
         _GRAD_RES, _GRAD_NONRES,
-        "Published annual graduate base tuition (Illinois resident, full-time); non-residents pay "
-        "the rate in the breakdown. Some programs carry a college or program differential.",
+        "Published annual full-time graduate base tuition — non-resident/out-of-state rate, the "
+        "matcher budget basis; Illinois residents pay the lower rate shown in the breakdown. Some "
+        "programs carry a college or program differential.",
     )
 
 
