@@ -603,6 +603,37 @@ Concrete misses observed in the first runs — each broke a real page:
      freshly de-fabbed, already-DEPLOYED catalogs ship 53–55% possessive "Bachelor's in
      {field}" rows beside conferred doctoral siblings, with federal CIP titles ("Area
      Studies", "… and Related Services") still riding the surviving bachelor's rows.
+   - **A program name must carry the institution's PUBLISHED CASING (title case) — a
+     SENTENCE-CASED / lowercase-normalized name ("Bachelor of Arts in American studies",
+     "… in Art history") is a name-FORM defect EVEN WHEN the field is genuine and the
+     credential designation is correct, and it EVADES every prior name gate because those
+     all key on FABRICATION tells (CIP rollups, abbreviations, the possessive mint), none
+     on casing.** The prior bullets fix the wrong FIELD or the wrong DESIGNATION; this
+     fixes the wrong CASE of a verified-real name. Gold MIT and the clean fleet title-case
+     every content word of the field ("Bachelor of Arts in American Studies", "Bachelor of
+     Arts in Art History", "Bachelor of Science in Classical Languages"); a name whose
+     field part is sentence-cased — only the first word capitalized, the rest lowercased
+     ("American studies", "Asian cultures and languages", "Behavioral and social data
+     science") — is a normalization artifact of a source ingested in lower/sentence case
+     and never re-cased to the institution's published degree name, the form the student
+     reads on the card and detail page. The deterministic tell: a mid-name **content**
+     word that is lowercase where it is NOT a legitimately-lowercase connective
+     (`and · of · the · in · for · to · a · an · or · on · with · at · by · as`) and NOT
+     inside a parenthetical qualifier ("(online)", "(7-year)") — those are real lowercase
+     and must be PRESERVED, as must genuine post-positive / foreign casing ("Institut
+     d'Études", a lowercase species epithet) and acronyms (LL.M., iMBA). So after building
+     OR repairing any catalog, scan every `program_name` AND `department` for a mid-name
+     lowercase content word and re-case it to the institution's published title-case form;
+     a catalog shipping its field names sentence-cased is NOT done on the NAME dimension.
+     This TIGHTENS the name-realness gate to the casing axis; it loosens NOTHING (no
+     fabrication — re-casing never invents or changes a word, and omit-never-guess is
+     untouched: the published name's spelling is verified, only its capitalization is
+     corrected — and the carve-outs above forbid "correcting" a name that is genuinely
+     lowercase in its published form). Evidence: live API this run — UT-Austin ships **70
+     of 338** rows sentence-cased ("Bachelor of Arts in American studies", "… in Art
+     history", "… in Asian studies", "… in Classical languages", "… in Behavioral and
+     social data science"), while every other catalog title-cases its field names (gold MIT
+     0 of 65), so the defect is a per-catalog normalization slip, not a fleet pattern.
    - **Do NOT mint one program row per concentration / track / specialization of a
      single degree (count-padding by over-decomposition).** A degree's
      concentrations belong in that program's `tracks` field (step 6), not as

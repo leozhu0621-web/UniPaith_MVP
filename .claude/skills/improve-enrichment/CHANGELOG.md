@@ -7562,3 +7562,97 @@ imported `profile_standard/anti_stub.py` and ran all five metrics over the 40 li
 gold MIT scores 0 on every description metric), and AST-confirmed a single alembic head on `origin/main`. This
 grader PR changes only the three skill markdown files (SKILL.md + REPAIR_BACKLOG + CHANGELOG) — no code, no data,
 no migration — so backend CI is unaffected.
+
+---
+
+## 2026-06-26 — Run 90 (FULL-FLEET sweep of all 300 live + all 40 catalogs · enricher CLEARED 4 catalogs since run 89 · headline = a NEW name-quality class, program-name CASING · 1 rule change)
+
+**Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`.**
+Per catalog I fully paginated the program list (all 40 program-bearing catalogs = 8,024 programs; the other 260
+are bare institution-level stubs) and computed a description-NON-EMPTINESS scan, an exact-duplicate
+`(program_name, degree_type)` scan, a name-FABRICATION scan (CIP-rollup title / "…and Related Sciences/Services" /
+", General/Other" / `(CIP NN.NN)` / possessive "Bachelor's in" / bare-abbreviation), a **NEW name-CASING scan
+(mid-name lowercase content word, excluding small connectives + parentheticals)**, a per-`degree_type` tuition
+COVERAGE measure, and a grad/prof-vs-undergrad tuition-VALUE copy-down scan. Over 20 program DETAILS/catalog
+(`GET /programs/{id}`) I probed `cip_code` / `who_its_for` (coverage AND distinctness) / `external_reviews`
+coverage and the public bachelor `tuition`-scalar-vs-`cost_data.breakdown` resident/non-resident axis. Over all
+300 institutions I fetched campus-photo count + posts-feed count — **the feed count read as a LIST length, fixing
+a run-89 false negative** (the posts endpoint returns a JSON list, and the prior crawler's `.get("total")` on it
+threw, silently dropping every node from the dead-feed filter and mis-reporting "no dead feeds"). The cip-null /
+`who_its_for = None` / `backfill_program_preferences` greps were read via `git` over `origin/main`.
+
+**Merged since run 89 (grader PR #1189):** the enricher worked the backlog hard — **#1188 UF** (cip + non-resident
+tuition + who, though who shipped type-gamed because #1188 merged BEFORE the run-89 distinctness rule), **#1190/
+#1191 UIUC** (cip + non-resident tuition + distinct who), **#1192 Rice** (cip + distinct who), **#1193/#1194
+UW-Madison** (cip + non-resident tuition + distinct who). Net live deltas: **cip-null 15→11**, **who-0% 16→12**,
+**who-field-specific 12→15**, **public resident-scalar mis-signal 4→1 (UCSD only)**. Every POST-run-89 repair
+(UIUC/Rice/UW-Madison) did `who_its_for` field-specific (distinct ≈1.0) — the run-89 distinctness rule WORKS.
+
+**HEADLINE — a NEW measurable name-quality class: program-name CASING (drives the 1 rule change).** The
+fabrication name-realness scan is ZERO fleet-wide (no CIP rollups, no `(CIP NN.NN)`, no possessive mint, no bare
+abbreviations) — but a NEW scan for a mid-name lowercase CONTENT word surfaced **UT-Austin shipping 70 of 338
+rows SENTENCE-CASED**: "Bachelor of Arts in American studies", "… in Art history", "… in Asian studies", "… in
+Classical languages", "… in Behavioral and social data science". These are verified-REAL degrees in the WRONG
+CASE — the form the student reads on the card + detail page — and they EVADE every prior name gate because those
+all key on FABRICATION tells, none on casing. Every other catalog title-cases its field names (gold MIT 0/65),
+so it is a per-catalog normalization slip (the source strings are stored sentence-cased verbatim in
+`ut_austin_profile.py`), not a fleet pattern.
+
+**Findings (with live evidence):**
+- **NEW CLASS → 1 rule change: a program-name CASING gate.** Added as a new sub-bullet under miss #2, right
+  after the "conferred-degree DESIGNATION" bullet (its nearest relative — both govern the name FORM of a
+  verified-real degree, not its fabrication). The rule: a program name must carry the institution's PUBLISHED
+  title-case; a sentence-cased field part (only the first word capitalized) is a name-FORM defect even when the
+  field + designation are genuine; the deterministic tell is a mid-name lowercase content word that is NOT a
+  small connective (`and · of · the · in · for · to · …`) and NOT inside a parenthetical, with explicit
+  carve-outs PRESERVING legitimate lowercase (parentheticals "(online)", post-positives "Institut d'Études",
+  species epithets, acronyms LL.M./iMBA). TIGHTENS the name-realness gate to the casing axis; loosens NOTHING
+  (re-casing never invents or changes a word — omit-never-guess untouched; the carve-outs forbid "correcting" a
+  genuinely-lowercase published name). Evidence: UT-Austin 70/338, MIT 0/65.
+- **COMPLIANCE GAP (rule exists run 82; queued not re-added): `cip_code` starvation.** 11 mature catalogs null
+  (BU · CMU · Cornell · Duke · Harvard · JHU · NYU · Northwestern · Stanford · USC · Yale) + MIT control;
+  `grep -L '\.cip_code'` returns exactly those 11 + MIT. Queued entry #1; durable lever is FLAG #2 (coverage gate).
+- **COMPLIANCE GAP (rule exists run 83): public resident-scalar mis-signal.** UCSD only — scalar 16,758 (in-state)
+  while `breakdown.tuition_out_of_state` = 50,958. UF/UIUC/UW-Madison cleared. Queued entry #2; durable fix FLAG #6.
+- **COMPLIANCE GAP (rule exists run 74): master's/professional-tier tuition residual.** Georgetown master's 73/79
+  + prof 7/17 is by far the worst; UW-Seattle/USC/UC-Irvine/BU/UT-Austin/UVA/Cornell/WashU/Penn/UCSD/NYU/Harvard/
+  Yale smaller; professional-tier-only nulls Stanford 2/2 + Columbia 2/8 (these publish a rate → FAIL). PhD/cert
+  nulls excluded (funded/per-credit → omit-with-reason). Queued entry #3.
+- **COMPLIANCE GAP (rules exist run 84/86 + run 89): `who_its_for` 0% (12 catalogs) + TYPE-GAMED (13).** 0% on
+  BU/CMU/Duke/GT/JHU/NYU/Northwestern/USC/UT-Austin/UCSD/Notre Dame/UW-Seattle (7 modules carry literal `= None`;
+  UCLA's hard-null is sibling-masked). Type-gamed (distinct < 0.5) on Stanford/Berkeley 1/20, Caltech/Cornell/
+  Chicago/Penn 2/20, Columbia/Princeton/Yale 3/20, Harvard/MIT/Michigan/Florida 4/20 — UF the only addition vs
+  run 89, and it merged before the rule. Queued entry #4; durable lever FLAG #4.
+- **COMPLIANCE / DEPTH-pass (miss #8): `external_reviews` sparse.** 0/20 on Dartmouth/Georgetown/NYU/UC-Davis/
+  UCLA/UIUC/Notre Dame; richest Princeton 11/20, Caltech/MIT 10/20. Coverage-gated (gold MIT 10/20) → calibrated
+  depth-pass priority (entry #6), NOT a fabrication mandate.
+- **Diagnosed NOT-a-defect / corrected prior error:** UC-Irvine's feed is STILL dead (posts=0 a week+) — the
+  run-89 "no dead feeds" was the crawler bug above, not a recovery. content_sources set + RSS live → ops, FLAG #9
+  (entry #7). The 4 single-value professional tiers (Brown/Dartmouth/JHU/Notre Dame) carry a DISTINCT, HIGHER
+  rate than the undergrad sticker → NOT copy-downs (tuition-value clean fleet-wide). `backfill_program_preferences`
+  is present in 156 migrations → the fleet's derived-preference coverage is compliant.
+
+**Rule change (1 of ≤3, bounded, evidence-backed, not a duplicate):** the program-name CASING gate (above). No
+OTHER rule warranted — after the full-fleet sweep every other live defect is a VIOLATION of an existing rule
+(cip_code → run 82; public scalar → run 83; master's tuition → run 74; who_its_for 0% + type-gaming → run 84/86 +
+89), so per the default-flipped doctrine they are queued + logged, not re-added (anti-churn). Exactly one
+genuinely new, now-measurable gap-class existed; inventing more to "not stop at one" would breach
+no-edit-without-NEW-evidence. Post-edit re-read confirms `enrich-profile/SKILL.md` reads coherently (the new
+bullet sits inside miss #2's name-realness list between the conferred-DESIGNATION bullet and the concentration
+bullet; no numbered miss renumbered; no invariant touched — it ADDS a name-form requirement, loosens nothing).
+
+**Flags (code/workflow, not grader-editable):** carried 1–9, with FLAG #3 EXTENDED — the name-realness metric a
+human should add must scan for BOTH fabrication tells AND a mid-name lowercase content word (casing); FLAG #9
+(UC-Irvine ingest) confirmed still firing.
+
+**Backlog delta:** rewritten worst-first, full-fleet. HIGH = `cip_code` starvation (#1, 11 catalogs, was 15) ·
+UCSD public scalar (#2, was 4) · master's/prof tuition residual (#3). MEDIUM = `who_its_for` 0%+type-gamed (#4) ·
+NEW UT-Austin name-casing (#5) · reviews depth (#6) · UC-Irvine dead feed (#7, persists) · ~254 bulk seeds incl.
+33 zero-photo (#8). CLEARED since run 89: UF · UIUC · Rice · UW-Madison (cip + who + public-scalar).
+
+**Invariants:** all intact; the SKILL.md edit ADDS a name-form (casing) requirement (no-fabrication preserved —
+re-casing changes only capitalization, never a word; verify-rendered-output reinforced; enrichment-only,
+merge-mandatory, workshop-feedback-only all untouched). **Health check:** the full `pytest` suite needs a live
+Postgres the grader env lacks; this grader PR changes only the two skill markdown files (SKILL.md +
+REPAIR_BACKLOG; CHANGELOG appended) — no code, no data, no migration — so backend CI is unaffected. Single
+alembic head confirmed on `origin/main` via `git log`.
