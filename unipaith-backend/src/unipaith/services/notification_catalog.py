@@ -131,15 +131,15 @@ _ENTRIES: tuple[CatalogEntry, ...] = (
         body="New programs match a search you saved.",
         deep_link="/s/saved?tab=searches",
     ),
-    CatalogEntry(
-        "match_update",
-        "match_updates",
-        DIGEST,
-        silenceable=True,
-        title="Your matches were refreshed",
-        body="Your program recommendations were updated.",
-        deep_link="/s/explore",
-    ),
+    # NOTE: a "match_update" ("your matches were refreshed") type lived here but
+    # had zero producers — match recompute is deliberately lazy (on GET /me/matches
+    # or explicit refresh, never a background per-student catalog sweep, because
+    # re-scoring the ~7k-program catalog off the request path is too costly), so the
+    # only non-redundant moment to fire it (the student is away AND the top-set
+    # changed) doesn't exist without that sweep. The same "match_updates" preference
+    # category is already served by the wired `saved_search_alert` above (new
+    # programs matching a saved search → /s/saved), which covers re-engagement, so
+    # the dead type was retired rather than shipped unfired.
     CatalogEntry(
         "institution_post",
         "institution_posts",
