@@ -31,7 +31,7 @@ apply runs DIRECTLY (no lock-bounded self-skipping SAVEPOINT), so a failure fail
 rather than silently stranding the data not-live.
 
 Revision ID: purduewhotuition1
-Revises: uclawhotuition1
+Revises: aiturnagents1
 Create Date: 2026-06-26
 """
 
@@ -46,7 +46,7 @@ from unipaith.models.institution import Institution, Program, ProgramPreference
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "purduewhotuition1"
-down_revision = "uclawhotuition1"
+down_revision = "aiturnagents1"
 branch_labels = None
 depends_on = None
 
