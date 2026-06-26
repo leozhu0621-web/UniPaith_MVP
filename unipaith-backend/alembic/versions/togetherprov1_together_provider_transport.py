@@ -15,7 +15,7 @@ table was built from a prior migration head (prod) or from the models via
 ``s63a1b2c3d4e_spec63_qwen_provider``.
 
 Revision ID: togetherprov1
-Revises: n9p2q4r6s8t0
+Revises: washuprof1
 Create Date: 2026-06-26
 
 """
@@ -26,7 +26,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "togetherprov1"  # pragma: allowlist secret
-down_revision = "n9p2q4r6s8t0"  # pragma: allowlist secret
+down_revision = "washuprof1"  # pragma: allowlist secret
 branch_labels = None
 depends_on = None
 
