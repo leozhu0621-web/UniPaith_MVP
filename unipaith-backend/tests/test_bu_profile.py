@@ -236,11 +236,12 @@ def test_matcher_core_tuition_is_value_correct():
     so a general full-time graduate row at $69,870 is its real published rate, not a copy-down.
     Invariants:
       * funded research doctorates (PhD/DSc) and per-credit graduate certificates carry NO
-        flat tuition — they are recorded as honest omissions. EXCEPTION: the Goldman SDM
-        postdoctoral / advanced-education clinical specialties (endodontics, periodontology,
-        etc.) publish ONE uniform annual rate ($101,630, BUMC OSFS) across their certificate /
-        master's / clinical-doctorate tiers and are billed (not funded), so they carry that
-        verified published rate (REPAIR_BACKLOG #3) — never the undergrad sticker;
+        flat tuition — they are recorded as honest omissions, including SDM research PhDs and
+        pure CAGS certificates. EXCEPTION: Goldman SDM postdoctoral specialty MASTER'S study —
+        the master's tier AND combined CAGS/MSD rows that award an MSD but are filed under the
+        certificate bucket — publishes ONE uniform annual rate ($101,630, BUMC OSFS) and is
+        billed (not funded), so it carries that verified published rate (clears REPAIR_BACKLOG
+        #3's master's null residual) — never the undergrad sticker;
       * schools with a DISTINCT published rate stamp it, never the undergrad sticker;
       * every program with tuition None records cost_data.tuition_usd in _standard.omitted and
         carries a cost_data explanation.
@@ -250,16 +251,21 @@ def test_matcher_core_tuition_is_value_correct():
         tuition, cost = b._program_tuition(spec)
         dt = spec["degree_type"]
         is_sdm = spec.get("school_key") == "SDM"
+        # SDM specialty MASTER'S study is billed: the master's tier AND combined CAGS/MSD
+        # rows that award an MSD but are filed under the certificate bucket (slug carries
+        # "msd"). SDM research PhDs (funded) and pure CAGS certificates stay omitted.
+        sdm_billed = is_sdm and (
+            dt == "masters" or (dt == "certificate" and "msd" in spec["slug"].lower())
+        )
         assert cost and cost.get("note") and cost.get("source"), f"{spec['slug']} cost incomplete"
-        # Funded research doctorates + per-credit certificates ship no flat number — except
-        # the billed Goldman SDM postdoctoral specialties, which publish a flat annual rate.
-        if (dt in ("phd", "doctoral") or dt == "certificate") and not is_sdm:
-            assert tuition is None, f"{spec['slug']}: {dt} should be omitted, got {tuition}"
-        if is_sdm and dt != "professional":
+        if sdm_billed:
             assert tuition == b._SDM_POSTDOC_TUITION, (
-                f"{spec['slug']}: SDM advanced-education should carry the published "
+                f"{spec['slug']}: SDM specialty master's should carry the published "
                 f"postdoctoral rate {b._SDM_POSTDOC_TUITION}, got {tuition}"
             )
+        elif dt in ("phd", "doctoral") or dt == "certificate":
+            # Funded research doctorates + per-credit certificates ship no flat number.
+            assert tuition is None, f"{spec['slug']}: {dt} should be omitted, got {tuition}"
         if tuition is None:
             omitted = b._program_standard(spec["slug"], spec)["omitted"]
             assert "cost_data.tuition_usd" in omitted, f"{spec['slug']} omission not recorded"
