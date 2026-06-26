@@ -314,7 +314,10 @@ resource "aws_ecs_task_definition" "backend" {
       # set). The digest job batches low-urgency notifications into one periodic email;
       # urgent events stay immediate. Both pinned on for prod auditability.
       { name = "REALTIME_ENABLED", value = "true" },
-      { name = "NOTIFICATION_DIGEST_ENABLED", value = "true" },
+      # Email notifications dropped — notifications are in-app only (REALTIME on).
+      # The digest is an email-only feature, so it's off (EMAIL_NOTIFICATIONS_ENABLED
+      # stays unset = off). Transactional email (recommender requests) is separate.
+      { name = "NOTIFICATION_DIGEST_ENABLED", value = "false" },
       # Daily channel-sourced Events/Updates refresh — re-fetch every
       # institution/school/program feed, re-apply the keyword relevance gate,
       # idempotently upsert. Keeps the school/program profiles current with no

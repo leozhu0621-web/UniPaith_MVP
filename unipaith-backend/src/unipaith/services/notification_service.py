@@ -231,7 +231,8 @@ class NotificationService:
         notification: Notification,
     ) -> str:
         """Decide + perform the email send. Returns the per-channel status string."""
-        if not settings.notifications_enabled:
+        # Email notifications are dropped — notifications are in-app only now.
+        if not settings.notifications_enabled or not settings.email_notifications_enabled:
             return "skipped"
 
         prefs = await self.get_preferences(user_id)
@@ -285,6 +286,10 @@ class NotificationService:
         ``is_emailed=True`` so the next run skips it — idempotent across runs.
         Returns the number of digest emails sent. Caller commits.
         """
+        # Email notifications are dropped — the digest (an email-only feature) is a
+        # no-op now; notifications live in-app only.
+        if not settings.email_notifications_enabled:
+            return 0
         since = datetime.now(UTC) - timedelta(hours=max(1, lookback_hours))
         rows = (
             (

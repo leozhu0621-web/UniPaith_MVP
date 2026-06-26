@@ -219,6 +219,7 @@ async def test_run_digest_batches_and_marks(db_session, monkeypatch):
         )
     # Enable email + stub the SES send.
     monkeypatch.setattr(settings, "notifications_enabled", True)
+    monkeypatch.setattr(settings, "email_notifications_enabled", True)
     sent_emails: list[tuple] = []
 
     async def _fake_send(uid, subject, body):
@@ -241,6 +242,7 @@ async def test_urgent_not_deferred_to_digest(db_session, monkeypatch):
     svc = NotificationService(db_session)
     monkeypatch.setattr(settings, "notifications_enabled", True)
     monkeypatch.setattr(settings, "notification_digest_enabled", True)
+    monkeypatch.setattr(settings, "email_notifications_enabled", True)
 
     async def _ok(uid, subject, body):
         return True
@@ -257,6 +259,7 @@ async def test_digest_class_deferred_when_digest_enabled(db_session, monkeypatch
     svc = NotificationService(db_session)
     monkeypatch.setattr(settings, "notifications_enabled", True)
     monkeypatch.setattr(settings, "notification_digest_enabled", True)
+    monkeypatch.setattr(settings, "email_notifications_enabled", True)
     n = await svc.notify(
         user_id=user.id,
         notification_type="saved_search_alert",

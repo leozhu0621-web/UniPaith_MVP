@@ -739,6 +739,12 @@ class Settings(BaseSettings):
     ses_sender_name: str = "UniPaith"
     campaign_unsubscribe_secret: str = "unipaith-campaign-unsub-v1"
     notifications_enabled: bool = False
+    # Email NOTIFICATIONS (the notification-center channel + digest) are dropped —
+    # notifications are in-app only now (the email frequency / SMS / push controls
+    # never fully worked, so the app is kept simple). Off everywhere unless
+    # explicitly turned on; not set in production. Transactional email below is
+    # separate and has its own switch.
+    email_notifications_enabled: bool = False
     # Transactional email (services/email_service.py) — direct, user-triggered
     # sends such as the recommender request email. Off by default; flipped on in
     # production (infra/ecs.tf) where the SES domain identity for unipaith.co is
