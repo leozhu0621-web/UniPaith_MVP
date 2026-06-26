@@ -255,6 +255,10 @@ resource "aws_ecs_task_definition" "backend" {
       # by default per the spec (auto-routing risks mis-routing); ship as a
       # suggestion first. Flip to "true" to surface reason-code suggestions.
       { name = "AI_INBOUND_INTENT_V2_ENABLED", value = "false" },
+      # Peers (Spec 20 §6) dropped for the internal test — disable the whole
+      # surface (peer endpoints 404 via _require_peers_enabled; the UI hides on
+      # the disabled peers/status). Re-enable by flipping to "true".
+      { name = "CONNECT_PEERS_ENABLED", value = "false" },
       # Spec 33 §9 — interview helpers: Haiku InterviewInviteDrafter ("AI draft"
       # in the Propose modal) + Sonnet InterviewScorePrefill ("AI prefill" in the
       # Score modal). Both return null on failure, so the module works with it

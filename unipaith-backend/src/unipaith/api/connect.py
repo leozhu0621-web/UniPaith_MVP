@@ -307,7 +307,11 @@ async def peers_cohort_counts(
     review 2026-06-14 #5). Batch (one request per card grid). Empty for a viewer
     who isn't opted in; counts below the k-floor are suppressed (omitted).
     Never returns identities."""
-    _require_peers_enabled()
+    # Peers dropped for the internal test (connect_peers_enabled off): this is a
+    # passive enrichment query fired per card grid, not a user action, so return
+    # empty counts instead of 404 — the peer chip just hides, no failed request.
+    if not settings.connect_peers_enabled:
+        return {"counts": {}}
     pid = await _profile_id(user, db)
     counts = await PeerService(db).cohort_counts(pid, body.program_ids)
     return {"counts": {str(k): v for k, v in counts.items()}}
