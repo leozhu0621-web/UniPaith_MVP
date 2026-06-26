@@ -374,7 +374,16 @@ export default function EnrichWidget({
   const { data, isLoading } = useQuery({ queryKey: QK, queryFn: () => getEnrichNext(limit, section) })
   const mutation = useMutation({
     mutationFn: ({ field, value }: { field: string; value: unknown }) => setEnrichValue(field, value),
-    onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
+    onSuccess: () => {
+      // Advance the enrich prompt AND refresh the profile caches the saved
+      // signal feeds, so My Space / Profile reflect it immediately (not only
+      // after staleTime lapses).
+      qc.invalidateQueries({ queryKey: QK })
+      qc.invalidateQueries({ queryKey: ['profile'] })
+      qc.invalidateQueries({ queryKey: ['goals'] })
+      qc.invalidateQueries({ queryKey: ['needs'] })
+      qc.invalidateQueries({ queryKey: ['identity'] })
+    },
   })
 
   if (isLoading) return null

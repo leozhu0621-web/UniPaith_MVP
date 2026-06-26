@@ -472,6 +472,18 @@ class DiscoveryService:
         await self.db.flush()
         await self.db.refresh(assistant)
 
+        # Persist the orchestrator's inline record_artifact captures (best-effort —
+        # never fails the turn). Idempotent vs the extractor (persist_extraction
+        # de-dups), so it only adds obvious claims the extractor missed.
+        _arts = assistant_signals.get("record_artifact_calls")
+        if _arts:
+            try:
+                await self._persist_record_artifacts(student_id, session.id, _arts)
+            except Exception:
+                logger.warning(
+                    "record_artifact persist failed for session=%s", session.id, exc_info=True
+                )
+
         # Spec 19 §2.1/§4.1 — auto-advance the profile layer once this layer's
         # exit conditions are met (basic→personality→identity). No-op for
         # goals/needs and for incomplete layers.
@@ -910,6 +922,20 @@ class DiscoveryService:
                         await self._emit_features_for_completion(
                             student_id=student_id, snapshot=snapshot
                         )
+                    # Persist the orchestrator's inline record_artifact captures
+                    # (best-effort — never fails the turn). Idempotent vs the
+                    # extractor (persist_extraction de-dups).
+                    if record_calls:
+                        try:
+                            await self._persist_record_artifacts(
+                                student_id, session.id, record_calls
+                            )
+                        except Exception:
+                            logger.warning(
+                                "record_artifact persist failed for session=%s",
+                                session.id,
+                                exc_info=True,
+                            )
                     yield ("assistant_message", _msg_dict(assistant))
         except Exception as exc:  # pragma: no cover — degraded path
             logger.exception("Discovery stream_message failed for session=%s", session_id)
@@ -927,6 +953,63 @@ class DiscoveryService:
             await self.db.refresh(assistant)
             yield ("error", {"message": str(exc)[:240]})
             yield ("assistant_message", _msg_dict(assistant))
+
+    async def _persist_record_artifacts(
+        self, student_id: UUID, session_id: UUID, calls: list[dict]
+    ) -> None:
+        """Persist the orchestrator's inline ``record_artifact`` captures.
+
+        The extractor is the primary signal path; these are the "obvious claim"
+        artifacts the responder committed mid-turn (the inline "Noticed" chips).
+        ``persist_extraction`` de-dups + gates, so this is idempotent against the
+        extractor and only adds claims it missed. Callers wrap this best-effort so
+        it can never fail the turn.
+        """
+        from unipaith.ai.artifacts import persist_extraction
+        from unipaith.ai.extractor import ExtractedSignals
+
+        goals: list[dict] = []
+        needs: list[dict] = []
+        identity: list[dict] = []
+        personality: list[dict] = []
+        basic: dict = {}
+        conf: dict[str, float] = {}
+        for c in calls or []:
+            if not isinstance(c, dict):
+                continue
+            kind = c.get("type")
+            value = c.get("value")
+            evidence = (c.get("evidence") or "").strip()
+            if not isinstance(value, dict):
+                continue
+            if kind == "goal":
+                goals.append({**value, "evidence": evidence})
+                conf["goals"] = 0.85
+            elif kind == "need":
+                needs.append({**value, "evidence": evidence})
+                conf["needs"] = 0.85
+            elif kind == "identity_claim":
+                identity.append({**value, "evidence": evidence})
+                conf["identity"] = 0.85
+            elif kind == "personality_field":
+                personality.append({**value, "evidence": evidence})
+                conf["personality"] = 0.85
+            elif kind == "basic_field":
+                basic.update(value)
+        if not (goals or needs or identity or personality or basic):
+            return
+        extraction = ExtractedSignals(
+            basic=basic,
+            personality=personality,
+            identity=identity,
+            goals=goals,
+            needs=needs,
+            confidence_per_key={k: Decimal(str(v)) for k, v in conf.items()},
+            raw_response={"record_artifacts": calls},
+        )
+        await persist_extraction(
+            db=self.db, student_id=student_id, session_id=session_id, extraction=extraction
+        )
 
     async def _emit_features_for_completion(self, *, student_id: UUID, snapshot) -> None:
         """Phase B1 — fire the A4 Feature Emitter when a layer/track

@@ -246,7 +246,7 @@ export default function ReadinessRail({
   const refetchAll = () => {
     qc.invalidateQueries({ queryKey: ["intake"] });
     // a signal change can move matches + discovery completion downstream
-    qc.invalidateQueries({ queryKey: ["matching"] });
+    qc.invalidateQueries({ queryKey: ["matches"] });
     qc.invalidateQueries({ queryKey: ["discovery"] });
   };
 
