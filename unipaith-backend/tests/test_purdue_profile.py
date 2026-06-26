@@ -153,7 +153,8 @@ def test_every_program_is_conformant_or_omitted():
 
 
 def test_graduate_tier_tuition_coverage():
-    """REPAIR_BACKLOG #3: master's and professional tiers must carry published tuition."""
+    """REPAIR_BACKLOG #3/#4: master's and professional tiers carry published tuition, and the
+    matcher scalar is the NON-RESIDENT rate while ``cost_data.breakdown`` keeps BOTH rates."""
     from collections import Counter
 
     by_type: dict[str, list[int | None]] = {}
@@ -167,13 +168,30 @@ def test_graduate_tier_tuition_coverage():
     assert all(t == 0 for t in by_type["phd"]), "PhD tier stamps funded tuition=0"
     masters_vals = Counter(t for t in by_type["masters"] if t is not None)
     assert len(masters_vals) >= 3, "master's tier should carry distinct school differentials"
-    assert p._TUITION_GRAD_CSE in masters_vals
+    # The matcher scalar is the NON-RESIDENT rate (#4); the CSE differential proves it.
+    assert p._TUITION_GRAD_CSE_OOS in masters_vals
+    assert p._TUITION_GRAD_CSE not in masters_vals, "resident rate must not be the matcher scalar"
     prof_tuition = {
         p._program_tuition(s)[0]
         for s in p.PROGRAMS
         if s["degree_type"] == "professional"
     }
-    assert p._TUITION_PHARMD_RESIDENT in prof_tuition
+    assert p._TUITION_PHARMD_OOS in prof_tuition
+    assert p._TUITION_PHARMD_RESIDENT not in prof_tuition, "resident rate must not be the scalar"
+
+    # Public-scalar invariant (#4): the matcher scalar equals the breakdown's out-of-state rate,
+    # and the in-state rate is still preserved (BOTH published numbers kept, never a guess).
+    for spec in p.PROGRAMS:
+        scalar, cost = p._program_tuition(spec)
+        if spec["degree_type"] == "phd":
+            continue
+        breakdown = (cost or {}).get("breakdown") or {}
+        assert scalar == breakdown.get("tuition_out_of_state"), (
+            f"{spec['slug']}: matcher scalar must be the non-resident rate"
+        )
+        assert breakdown.get("tuition_in_state") is not None, (
+            f"{spec['slug']}: breakdown must preserve the resident rate"
+        )
 
 
 def test_catalog_has_no_padding_stubs():
