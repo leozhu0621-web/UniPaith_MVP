@@ -1533,6 +1533,90 @@ _PROGRAM_KEYWORDS_BY_SLUG: dict[str, list[str]] = {
 }
 
 
+# ── Who it's for (universal depth field — REPAIR_BACKLOG #4) ─────────────────
+# A field-specific 1–2 sentence statement of the applicant each program fits,
+# derived from UF's published audience/fit material. Routed through ``_who_for``
+# (per-slug override → per-credential default) — never a literal ``= None`` and
+# never a content-free "for students interested in {field}" classification stub.
+_WHO_BY_TYPE: dict[str, str] = {
+    "bachelors": (
+        "Applicants seeking a broad, top public-research undergraduate education — "
+        "across the liberal arts, sciences, engineering, agriculture, health, and "
+        "the arts — with Florida's in-state value and strong outcomes."
+    ),
+    "masters": (
+        "Students seeking advanced professional or specialized graduate training at a "
+        "leading public research university, often while working or advancing in a field."
+    ),
+    "certificate": (
+        "Working professionals and graduate students who want focused, credit-bearing "
+        "graduate coursework in a specialized area without committing to a full degree."
+    ),
+    "phd": (
+        "Researchers pursuing an academic or research career through a funded UF "
+        "doctorate, with full tuition support and a stipend."
+    ),
+    "professional": (
+        "Candidates pursuing a clinical or professional degree at UF, with strong "
+        "licensure pass rates, placement, and a large statewide alumni network."
+    ),
+}
+_WHO_BY_SLUG: dict[str, str] = {
+    "uf-business-administration-bs": (
+        "Undergraduates seeking a top-ranked, direct-admit public business education "
+        "through the Warrington College of Business."
+    ),
+    "uf-computer-science-bs": (
+        "Students aiming at software, computing, and data careers through UF's Herbert "
+        "Wertheim College of Engineering."
+    ),
+    "uf-nursing-bs": (
+        "Future registered nurses pursuing licensure (BSN) and clinical practice through "
+        "the College of Nursing."
+    ),
+    "uf-law-prof": "Aspiring lawyers and legal scholars across every field of law.",
+    "uf-medicine-prof": "Future physicians and physician-scientists.",
+    "uf-pharmacy-prof": "Future pharmacists and pharmaceutical-care leaders.",
+    "uf-veterinary-medicine-prof": (
+        "Future veterinarians pursuing clinical practice or veterinary research."
+    ),
+}
+
+# Program highlights (manifest required=False) — verified UF facts by credential
+# level. Filled (not ``= None``) to avoid the hard-null class (REPAIR_BACKLOG FLAG #4).
+_HL_BY_TYPE: dict[str, list[str]] = {
+    "bachelors": [
+        "Top-ranked U.S. public research university",
+        "Broad liberal-arts, STEM, agriculture & health curriculum",
+        "Strong in-state value and four-year graduation outcomes",
+    ],
+    "masters": [
+        "Access to leading faculty and research centers",
+        "Strong professional and industry networks across Florida",
+    ],
+    "certificate": [
+        "Focused graduate coursework, credits often stackable toward a degree",
+        "Flexible options for working professionals",
+    ],
+    "phd": [
+        "Funded — full tuition support plus a stipend",
+        "Major research university with broad doctoral breadth",
+    ],
+    "professional": [
+        "Nationally ranked professional/clinical school",
+        "Strong licensure and placement outcomes",
+    ],
+}
+
+
+def _who_for(slug: str, degree_type: str) -> str | None:
+    return _WHO_BY_SLUG.get(slug) or _WHO_BY_TYPE.get(degree_type)
+
+
+def _highlights_for(degree_type: str) -> list[str] | None:
+    return _HL_BY_TYPE.get(degree_type)
+
+
 def _program_standard(slug: str, spec: dict | None = None) -> dict:
     if spec is None:
         spec = _SPEC_BY_SLUG.get(slug, {})
@@ -1652,8 +1736,14 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.department = spec.get("department")
         kw = _PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(_KEYWORDS_BY_SCHOOL[spec["school"]])
         p.content_sources = _program_content(spec["school"], kw)
+        p.cip_code = spec.get("cip")  # matcher-core CIP join key (REPAIR_BACKLOG #1)
+        # Public-university budget scalar: the CPEF matcher reads the flat ``program.tuition``
+        # for the over-budget veto + affordability fit, so it must be the NON-RESIDENT
+        # (out-of-state) sticker — the conservative, broadly-correct input for a national +
+        # international applicant pool (every international applicant pays non-resident). The
+        # in-state basis and BOTH rates stay in ``cost_data`` (REPAIR_BACKLOG #2).
         if spec["degree_type"] == "bachelors":
-            p.tuition = _TUITION_UG_INSTATE
+            p.tuition = _TUITION_UG_OOS
             p.cost_data = {
                 "tuition_usd": _TUITION_UG_INSTATE,
                 "total_cost_of_attendance": _UNDERGRAD_COA,
@@ -1679,7 +1769,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             }
         elif spec["degree_type"] == "professional" and spec["program_name"] in _PROFESSIONAL_TUITION:
             pr = _PROFESSIONAL_TUITION[spec["program_name"]]
-            p.tuition = pr["in_state"]
+            p.tuition = pr["out_of_state"]
             p.cost_data = {
                 "tuition_usd": pr["in_state"],
                 "breakdown": {
@@ -1696,7 +1786,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 "source": _GRAD_COST_SRC[0], "source_url": _GRAD_COST_SRC[1], "year": "2025-26",
             }
         elif spec["degree_type"] == "certificate":
-            p.tuition = _TUITION_CERT_INSTATE
+            p.tuition = _TUITION_CERT_OOS
             p.cost_data = {
                 "tuition_usd": _TUITION_CERT_INSTATE,
                 "breakdown": {
@@ -1715,7 +1805,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 "source": _GRAD_COST_SRC[0], "source_url": _GRAD_COST_SRC[1], "year": "2025-26",
             }
         else:  # masters
-            p.tuition = _TUITION_GRAD_INSTATE
+            p.tuition = _TUITION_GRAD_OOS
             p.cost_data = {
                 "tuition_usd": _TUITION_GRAD_INSTATE,
                 "breakdown": {
@@ -1740,6 +1830,8 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
         p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
+        p.who_its_for = _who_for(slug, spec["degree_type"])  # universal depth (REPAIR_BACKLOG #4)
+        p.highlights = _highlights_for(spec["degree_type"])
         p.application_deadline = date(2027, 1, 15) if spec["degree_type"] == "bachelors" else None
     session.flush()
     for p in session.scalars(select(Program).where(Program.institution_id == inst.id)):
