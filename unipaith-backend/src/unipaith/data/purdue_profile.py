@@ -87,11 +87,12 @@ from sqlalchemy.orm import Session
 from unipaith.data.profile_catalog_utils import validate_catalog
 from unipaith.data.purdue_catalog import CATALOG
 from unipaith.data.purdue_reviews_depth import DEPTH_REVIEWS
+from unipaith.data.purdue_who import WHO_BY_SLUG
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Purdue University-Main Campus"
-ENRICHED_AT = "2026-06-20"
+ENRICHED_AT = "2026-06-26"
 
 _TEMPLATE_STUB_RE = re.compile(
     r" — a .+ (undergraduate|graduate|doctoral|certificate|professional|"
@@ -503,6 +504,19 @@ if _catalog_errors:
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 _SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 
+# Matcher-core coverage gates (REPAIR_BACKLOG #3 cip_code, #6 who_its_for): both are knowable
+# for every Purdue program (the CIP rides each spec; who_its_for is derivable from the field),
+# so a missing/stray entry is a build failure — never a silent null catalog-wide.
+_cip_missing = [p["slug"] for p in PROGRAMS if not p.get("cip")]
+if _cip_missing:
+    raise RuntimeError(f"Purdue catalog missing cip on {len(_cip_missing)} rows: {_cip_missing[:5]}")
+_who_missing = [s for s in PROGRAM_SLUGS if s not in WHO_BY_SLUG]
+if _who_missing:
+    raise RuntimeError(f"Purdue who_its_for missing on {len(_who_missing)} rows: {_who_missing[:5]}")
+_who_stray = [s for s in WHO_BY_SLUG if s not in set(PROGRAM_SLUGS)]
+if _who_stray:
+    raise RuntimeError(f"Purdue who_its_for has stray slugs: {_who_stray[:5]}")
+
 _TUITION_UG_INSTATE = 9992
 _TUITION_UG_OOS = 28794
 _UNDERGRAD_COA = 24591
@@ -521,6 +535,18 @@ _TUITION_GRAD_POLY = 10564  # Purdue Polytechnic Institute differential (2024-25
 _TUITION_GRAD_SLP = 11492  # MS Speech Language Pathology differential (2024-25)
 _TUITION_PHARMD_RESIDENT = 23272  # PharmD P1–P3 resident, 2025-26 bursar schedule
 _TUITION_DVM_RESIDENT = 22931  # DVM P1–P3 resident (enrolled Fall 2022+), 2024-25 vet med schedule
+# REPAIR_BACKLOG #4 (public resident-scalar mis-signal): the CPEF budget feature reads the FLAT
+# ``program.tuition`` scalar (not the residency-aware net-price estimator), so for a public the
+# scalar MUST be the NON-RESIDENT (out-of-state) published rate — the in-state rate under-fires
+# the budget veto for the out-of-state + ALL international applicant pool. Each nonresident figure
+# below is Purdue's PUBLISHED 2024-25 bursar rate (a choice between two verified numbers, never a
+# guess); ``cost_data.breakdown`` preserves BOTH the resident and the nonresident rate.
+_TUITION_GRAD_CSE_OOS = 29918  # CSE / engineering masters nonresident
+_TUITION_GRAD_BUSINESS_OOS = 41210  # Daniels School nonresident
+_TUITION_GRAD_POLY_OOS = 29366  # Purdue Polytechnic nonresident
+_TUITION_GRAD_SLP_OOS = 30294  # MS-SLP nonresident
+_TUITION_PHARMD_OOS = 41532  # PharmD P1–P3 nonresident
+_TUITION_DVM_OOS = 47759  # DVM P1–P3 nonresident (enrolled Fall 2022+)
 _GRAD_TUITION_SRC = "Purdue Office of the Bursar — Graduate Tuition and Fees"
 _GRAD_TUITION_SRC_URL = (
     "https://www.purdue.edu/treasurer/finance/bursar-office/tuition/"
@@ -545,11 +571,14 @@ def _grad_cost(
     tuition: int,
     note: str,
     *,
+    oos: int = _TUITION_GRAD_OOS,
     source: str = _GRAD_TUITION_SRC,
     source_url: str = _GRAD_TUITION_SRC_URL,
     year: str = _TUITION_YEAR,
     extra: dict | None = None,
 ) -> dict:
+    # ``tuition_usd`` keeps the Indiana-resident figure as the displayed sticker; the matcher
+    # scalar (the first element returned by ``_program_tuition``) is the nonresident ``oos`` rate.
     out: dict = {
         "tuition_usd": tuition,
         "funded": False,
@@ -559,7 +588,7 @@ def _grad_cost(
         "year": year,
         "breakdown": {
             "tuition_in_state": tuition,
-            "tuition_out_of_state": _TUITION_GRAD_OOS,
+            "tuition_out_of_state": oos,
         },
     }
     out.update(extra or {})
@@ -573,7 +602,9 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
     school = spec["school"]
 
     if dtype == "bachelors":
-        return _TUITION_UG_INSTATE, {
+        # Matcher scalar = NON-RESIDENT sticker (REPAIR_BACKLOG #4); ``tuition_usd`` keeps the
+        # in-state display figure, and the breakdown preserves BOTH rates.
+        return _TUITION_UG_OOS, {
             "tuition_usd": _TUITION_UG_INSTATE,
             "total_cost_of_attendance": _UNDERGRAD_COA,
             "avg_net_price": _AVG_NET_PRICE,
@@ -605,11 +636,13 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
         }
 
     if slug == "purdue-pharmacy-prof":
-        return _TUITION_PHARMD_RESIDENT, _grad_cost(
+        return _TUITION_PHARMD_OOS, _grad_cost(
             _TUITION_PHARMD_RESIDENT,
-            (
-                f"Purdue College of Pharmacy PharmD resident tuition is ${_TUITION_PHARMD_RESIDENT:,} "
-                "for the academic year at a full-time load (Purdue Bursar PharmD schedule, 2025-26)."
+            oos=_TUITION_PHARMD_OOS,
+            note=(
+                f"Purdue College of Pharmacy PharmD tuition is ${_TUITION_PHARMD_RESIDENT:,} for "
+                f"Indiana residents and ${_TUITION_PHARMD_OOS:,} for nonresidents for the academic "
+                "year at a full-time load (Purdue Bursar PharmD schedule, 2025-26)."
             ),
             source="Purdue Office of the Bursar — PharmD Graduate Tuition and Fees",
             source_url=_PHARMD_TUITION_SRC_URL,
@@ -617,12 +650,13 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
         )
 
     if slug == "purdue-veterinary-medicine-prof":
-        return _TUITION_DVM_RESIDENT, _grad_cost(
+        return _TUITION_DVM_OOS, _grad_cost(
             _TUITION_DVM_RESIDENT,
-            (
-                f"Purdue Doctor of Veterinary Medicine resident tuition is ${_TUITION_DVM_RESIDENT:,} "
-                "for the academic year (P1–P3, students enrolled Fall 2022 and after; Purdue Bursar "
-                "Vet Med schedule)."
+            oos=_TUITION_DVM_OOS,
+            note=(
+                f"Purdue Doctor of Veterinary Medicine tuition is ${_TUITION_DVM_RESIDENT:,} for "
+                f"Indiana residents and ${_TUITION_DVM_OOS:,} for nonresidents for the academic year "
+                "(P1–P3, students enrolled Fall 2022 and after; Purdue Bursar Vet Med schedule)."
             ),
             source="Purdue Office of the Bursar — Vet Med Graduate Tuition and Fees",
             source_url=_DVM_TUITION_SRC_URL,
@@ -631,26 +665,29 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
 
     if dtype == "masters":
         if school == ENGINEERING or slug in _CSE_MASTER_SLUGS:
-            rate = _TUITION_GRAD_CSE
+            rate, oos = _TUITION_GRAD_CSE, _TUITION_GRAD_CSE_OOS
             label = "Computer Science & Engineering"
         elif school == BUSINESS:
-            rate = _TUITION_GRAD_BUSINESS
+            rate, oos = _TUITION_GRAD_BUSINESS, _TUITION_GRAD_BUSINESS_OOS
             label = "Daniels School of Business"
         elif school == POLYTECHNIC:
-            rate = _TUITION_GRAD_POLY
+            rate, oos = _TUITION_GRAD_POLY, _TUITION_GRAD_POLY_OOS
             label = "Purdue Polytechnic Institute"
         elif slug in _SLP_MASTER_SLUGS:
-            rate = _TUITION_GRAD_SLP
+            rate, oos = _TUITION_GRAD_SLP, _TUITION_GRAD_SLP_OOS
             label = "Speech Language Pathology (MS-SLP)"
         else:
-            rate = _TUITION_GRAD_RESIDENT
+            rate, oos = _TUITION_GRAD_RESIDENT, _TUITION_GRAD_OOS
             label = "general graduate"
-        return rate, _grad_cost(
+        # Matcher scalar = NON-RESIDENT rate (REPAIR_BACKLOG #4); ``tuition_usd`` + breakdown keep both.
+        return oos, _grad_cost(
             rate,
-            (
-                f"Purdue's published {_TUITION_YEAR} Indiana-resident {label} master's tuition is "
-                f"${rate:,} for the academic year at a full-time load of 8+ credits per semester "
-                f"(Purdue Bursar graduate tuition schedule); nonresidents pay ${_TUITION_GRAD_OOS:,}."
+            oos=oos,
+            note=(
+                f"Purdue's published {_TUITION_YEAR} {label} master's tuition is "
+                f"${rate:,} for Indiana residents and ${oos:,} for nonresidents for the academic "
+                "year at a full-time load of 8+ credits per semester (Purdue Bursar graduate "
+                "tuition schedule)."
             ),
         )
 
@@ -1080,6 +1117,9 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
         p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
+        # Matcher-core CIP join key (REPAIR_BACKLOG #3) + universal who_its_for depth (#6).
+        p.cip_code = spec.get("cip")
+        p.who_its_for = WHO_BY_SLUG.get(slug)
         p.application_deadline = date(2027, 1, 15) if spec["degree_type"] == "bachelors" else None
     session.flush()
     for p in session.scalars(select(Program).where(Program.institution_id == inst.id)):
