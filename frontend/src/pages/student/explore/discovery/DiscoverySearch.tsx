@@ -36,16 +36,13 @@ interface DiscoverySearchProps {
   onToggleFollow?: (institutionId: string) => void
   nextEventByInstitution?: Map<string, { event_name: string; start_time: string }>
   onEventClick?: () => void
-  /** Discover review 2026-06-14 #5 — k-anon peer-cohort count per program_id. */
-  peerCohortByProgram?: Record<string, number>
-  onPeersClick?: () => void
   /** Show a default browse list when idle (no query/chips/filters) instead of a
    *  bare search box — so the Programs tab isn't empty until you search (the
    *  Universities tab already lists everything by default). */
   browseWhenIdle?: boolean
 }
 
-export default function DiscoverySearch({ followedIds, onToggleFollow, nextEventByInstitution, onEventClick, peerCohortByProgram, onPeersClick, browseWhenIdle = false }: DiscoverySearchProps = {}) {
+export default function DiscoverySearch({ followedIds, onToggleFollow, nextEventByInstitution, onEventClick, browseWhenIdle = false }: DiscoverySearchProps = {}) {
   const [params, setParams] = useSearchParams()
   const navigate = useNavigate()
   const qc = useQueryClient()
@@ -376,8 +373,6 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
                       onToggleFollow={onToggleFollow ? () => onToggleFollow(p.institution_id) : undefined}
                       nextEvent={nextEventByInstitution?.get(p.institution_id) ?? null}
                       onEventClick={onEventClick}
-                      peerCount={peerCohortByProgram?.[p.id]}
-                      onPeersClick={onPeersClick}
                       appStatus={appliedMap.get(p.id)}
                     />
                   ))}

@@ -5,7 +5,7 @@ import type { ProgramSummary, MatchResult } from '../../../../types'
 import {
   BellPlus, BellRing, Bookmark, BookmarkCheck, CalendarDays, DollarSign, GraduationCap,
   TrendingUp, Percent, ArrowRightLeft, Briefcase,
-  Clock, Building, Calendar, ArrowRight, Sparkles, Users,
+  Clock, Building, Calendar, ArrowRight, Sparkles,
 } from 'lucide-react'
 import BandBadge from '../../../../components/ui/BandBadge'
 import type { Band } from '../../../../components/ui/BandBadge'
@@ -28,9 +28,6 @@ interface Props {
   /** Spec 2026-06-12 §6.4 — next upcoming event from this school. */
   nextEvent?: { event_name: string; start_time: string } | null
   onEventClick?: () => void
-  /** Discover review 2026-06-14 #5 — k-anonymized count of peers open to connect. */
-  peerCount?: number
-  onPeersClick?: () => void
   /** Discover review 2026-06-19 — real application stage for this program, if any. */
   appStatus?: AppStatus | null
   /** Ship D §4 — real link destination for the card. Defaults to the student
@@ -38,7 +35,7 @@ interface Props {
   viewHref?: string
 }
 
-export default function ProgramCard({ program, saved, match, comparing, onSave, onCompare, onAskCounselor, onView, following, onToggleFollow, nextEvent, onEventClick, peerCount, onPeersClick, appStatus, viewHref }: Props) {
+export default function ProgramCard({ program, saved, match, comparing, onSave, onCompare, onAskCounselor, onView, following, onToggleFollow, nextEvent, onEventClick, appStatus, viewHref }: Props) {
   const abbrev = degreeAbbrev(program.degree_type, program.program_name)
   const href = viewHref ?? `/s/programs/${program.id}`
   // Band label drives the BandBadge below; the fitness/confidence score rings
@@ -112,7 +109,7 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
         {/* Band / event row — only when there's something to show. The degree is
             already conveyed by the monogram tile and the full program name, so no
             separate degree chip here. */}
-        {(bandLabel || nextEvent || (peerCount != null && peerCount > 0) || appStatus) && (
+        {(bandLabel || nextEvent || appStatus) && (
           <div className="flex items-center gap-1.5 mt-3 flex-wrap">
             <AppStatusPill status={appStatus} />
             {bandLabel && <BandBadge band={bandLabel} />}
@@ -125,16 +122,6 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
                 <CalendarDays size={10} />
                 {nextEvent.event_name.length > 18 ? nextEvent.event_name.slice(0, 18) + '…' : nextEvent.event_name} ·{' '}
                 {new Date(nextEvent.start_time).toLocaleDateString('en-US', { weekday: 'short' })}
-              </button>
-            )}
-            {peerCount != null && peerCount > 0 && (
-              <button
-                onClick={e => { e.preventDefault(); e.stopPropagation(); onPeersClick?.() }}
-                className="relative z-10 inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-md bg-secondary/10 text-secondary hover:bg-secondary/20 transition-colors"
-                title="Peers open to connect who are applying here"
-              >
-                <Users size={10} />
-                {peerCount} open to connect
               </button>
             )}
           </div>

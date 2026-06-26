@@ -106,8 +106,6 @@ export default function DataRightsCard() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['data-rights'] })
       qc.invalidateQueries({ queryKey: ['profile'] })
-      qc.invalidateQueries({ queryKey: ['peers-status'] })
-      qc.invalidateQueries({ queryKey: ['peers-discover'] })
       showToast('Saved', 'success')
     },
     onError: () => showToast("Something didn't work. Try again.", 'error'),

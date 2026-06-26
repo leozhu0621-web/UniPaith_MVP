@@ -1,5 +1,5 @@
 // Connect API — Spec 20 (Student Stage 3a). The demand-side of the institution
-// Outreach module: Updates feed, Events, Manage following, and Peers.
+// Outreach module: Updates feed, Events, and Manage following. (Peers dropped.)
 import apiClient from './client'
 import { toArrayData } from './normalize'
 
@@ -91,29 +91,6 @@ export interface FollowDetail {
   can_unfollow: boolean
 }
 
-export type ConnectionState = 'none' | 'requested' | 'incoming' | 'connected' | 'blocked'
-
-export interface PeerCard {
-  peer_id: string
-  display_name: string
-  shared_programs: { id: string; name: string }[]
-  intended_major: string | null
-  region: string | null
-  bio: string | null
-  connection_state: ConnectionState
-}
-
-export interface PeerVisibilityProfile {
-  id: string
-  display_name: string | null
-  use_alias: boolean
-  intended_major: string | null
-  region: string | null
-  bio: string | null
-  share_targets: boolean
-  visible: boolean
-}
-
 // ── Updates feed (§4) ────────────────────────────────────────────────────────
 
 export const getConnectFeed = (
@@ -159,43 +136,3 @@ export const muteFollowing = (institutionId: string, muted: boolean) =>
 
 export const unfollowInstitution = (institutionId: string) =>
   apiClient.delete(`/connect/follows/${institutionId}`)
-
-// ── Peers (§6) — opt-in, privacy-gated ────────────────────────────────────────
-
-export const getPeersStatus = () =>
-  apiClient.get('/connect/peers/status').then(r => r.data as { enabled: boolean; opted_in: boolean })
-
-export const optInPeers = (optedIn: boolean) =>
-  apiClient.post('/connect/peers/opt-in', { opted_in: optedIn }).then(r => r.data as { opted_in: boolean })
-
-export const getMyPeerProfile = () =>
-  apiClient.get('/connect/peers/me').then(r => r.data as PeerVisibilityProfile)
-
-export const updateMyPeerProfile = (data: Partial<PeerVisibilityProfile>) =>
-  apiClient.put('/connect/peers/me', data).then(r => r.data as PeerVisibilityProfile)
-
-export const discoverPeers = (programId?: string) =>
-  apiClient.get('/connect/peers', { params: programId ? { program_id: programId } : {} }).then(r => toArrayData<PeerCard>(r.data))
-
-/** k-anonymized "N peers open to connect" counts per program (Discover review
- *  2026-06-14 #5). Batch — one request per card grid. Returns {} on any failure
- *  or for a non-opted-in viewer (cards just render no chip). */
-export const getPeerCohortCounts = (programIds: string[]): Promise<Record<string, number>> =>
-  programIds.length === 0
-    ? Promise.resolve({})
-    : apiClient
-        .post('/connect/peers/cohort-counts', { program_ids: programIds })
-        .then(r => (r.data as { counts: Record<string, number> }).counts ?? {})
-        .catch(() => ({}))
-
-export const requestPeer = (peerId: string) =>
-  apiClient.post(`/connect/peers/${peerId}/request`).then(r => r.data)
-
-export const respondPeer = (peerId: string, accept: boolean) =>
-  apiClient.post(`/connect/peers/${peerId}/respond`, { accept }).then(r => r.data)
-
-export const blockPeer = (peerId: string) =>
-  apiClient.post(`/connect/peers/${peerId}/block`).then(r => r.data)
-
-export const reportPeer = (peerId: string, reason?: string, detail?: string) =>
-  apiClient.post(`/connect/peers/${peerId}/report`, { reason, detail }).then(r => r.data)

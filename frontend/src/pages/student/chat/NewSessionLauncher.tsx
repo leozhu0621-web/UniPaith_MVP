@@ -29,7 +29,7 @@
 
 import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, ArrowUp, BookOpen, List, Scale, Compass, Flag, Heart, Calendar, Users } from "lucide-react";
+import { Plus, ArrowUp, BookOpen, List, Scale, Compass, Flag, Heart, Calendar } from "lucide-react";
 import { getChatTemplates, type ChatTemplate } from "../../../api/chatTemplates";
 import { createSession, type ChatSession } from "../../../api/chatSessions";
 import { searchPrograms } from "../../../api/programs";
@@ -655,35 +655,6 @@ export default function NewSessionLauncher({ recentSession, onSessionStart }: Pr
               icon={<Compass size={20} strokeWidth={1.7} />}
               title="Credential evaluation"
               onClick={() => startSession("Credential evaluation", "prepare")}
-            />
-          </div>
-        </section>
-
-        {/* Peers — honest action cards. Real peers are privacy-gated and
-            k-anonymized (no photos), so we never fabricate faces here; these
-            open a Connect session that surfaces real, opted-in peers. */}
-        <section className="mb-7" aria-label="Peers">
-          <EyebrowLabel>Peers</EyebrowLabel>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <ActionCard
-              icon={<Users size={20} strokeWidth={1.7} />}
-              title="Peers who share your programs"
-              onClick={() => startSession("Peers who share my programs", "connect")}
-            />
-            <ActionCard
-              icon={<Compass size={20} strokeWidth={1.7} />}
-              title="See who's applying where"
-              onClick={() => startSession("See who's applying where", "connect")}
-            />
-            <ActionCard
-              icon={<BookOpen size={20} strokeWidth={1.7} />}
-              title="Ask a current student"
-              onClick={() => startSession("Ask a current student", "connect")}
-            />
-            <ActionCard
-              icon={<Heart size={20} strokeWidth={1.7} />}
-              title="Find your people"
-              onClick={() => startSession("Find peers like me", "connect")}
             />
           </div>
         </section>

@@ -18,7 +18,6 @@ import {
   CalendarDays,
   ChevronDown,
   Sparkles,
-  Users,
 } from 'lucide-react'
 
 import { DEGREE_LABELS } from '../../../utils/constants'
@@ -41,9 +40,6 @@ interface MatchCardProps {
   /** Spec 2026-06-12 §6.4 — next upcoming event from this school (Handshake pattern). */
   nextEvent?: { event_name: string; start_time: string } | null
   onEventClick?: () => void
-  /** Discover review 2026-06-14 #5 — k-anonymized count of peers open to connect. */
-  peerCount?: number
-  onPeersClick?: () => void
   /** Discover review 2026-06-19 — real application stage for this program, if any. */
   appStatus?: AppStatus | null
 }
@@ -57,8 +53,6 @@ export default function MatchCard({
   onView,
   nextEvent,
   onEventClick,
-  peerCount,
-  onPeersClick,
   appStatus,
 }: MatchCardProps) {
   const [rationaleOpen, setRationaleOpen] = useState(false)
@@ -125,16 +119,6 @@ export default function MatchCard({
                 <CalendarDays size={10} />
                 {nextEvent.event_name.length > 18 ? nextEvent.event_name.slice(0, 18) + '…' : nextEvent.event_name} ·{' '}
                 {new Date(nextEvent.start_time).toLocaleDateString('en-US', { weekday: 'short' })}
-              </button>
-            )}
-            {peerCount != null && peerCount > 0 && (
-              <button
-                onClick={e => { e.stopPropagation(); onPeersClick?.() }}
-                className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-md bg-secondary/10 text-secondary hover:bg-secondary/20 transition-colors"
-                title="Peers open to connect who are applying here"
-              >
-                <Users size={10} />
-                {peerCount} open to connect
               </button>
             )}
           </div>

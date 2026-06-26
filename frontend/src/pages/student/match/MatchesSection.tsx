@@ -33,9 +33,6 @@ interface MatchesSectionProps {
   /** Spec 2026-06-12 §6.4 — next upcoming event per institution, for the card event chips. */
   nextEventByInstitution?: Map<string, { event_name: string; start_time: string }>
   onEventClick?: () => void
-  /** Discover review 2026-06-14 #5 — k-anon peer-cohort count per program_id. */
-  peerCohortByProgram?: Record<string, number>
-  onPeersClick?: () => void
   /** True when the student has an active strategy — drives the strategy→matches
    *  bridge line (the matches are banded off the strategy; refine it to update them). */
   strategyActive?: boolean
@@ -59,7 +56,7 @@ function relativeTime(iso?: string | null): string {
   return `${Math.round(hrs / 24)}d ago`
 }
 
-export default function MatchesSection({ savedIds, onToggleSave, nextEventByInstitution, onEventClick, peerCohortByProgram, onPeersClick, strategyActive }: MatchesSectionProps) {
+export default function MatchesSection({ savedIds, onToggleSave, nextEventByInstitution, onEventClick, strategyActive }: MatchesSectionProps) {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const compareStore = useCompareStore()
@@ -125,8 +122,6 @@ export default function MatchesSection({ savedIds, onToggleSave, nextEventByInst
         onView={() => navigate(`/s/programs/${m.program_id}`)}
         nextEvent={m.institution_id ? nextEventByInstitution?.get(m.institution_id) ?? null : null}
         onEventClick={onEventClick}
-        peerCount={peerCohortByProgram?.[m.program_id]}
-        onPeersClick={onPeersClick}
         appStatus={appliedMap.get(m.program_id)}
       />
     )

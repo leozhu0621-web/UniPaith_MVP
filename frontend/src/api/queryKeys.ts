@@ -86,7 +86,6 @@ export const qk = {
   myFollows: () => ['my-follows'] as const,
   myRsvps: () => ['my-rsvps'] as const,
   calendar: () => ['calendar'] as const,
-  peersDiscover: () => ['peers-discover'] as const,
   notifications: () => ['notifications'] as const,
   notificationsUnread: () => ['notifications', 'unread-count'] as const,
 

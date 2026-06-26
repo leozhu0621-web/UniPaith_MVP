@@ -13,12 +13,10 @@ import type { ConnectFeedItem } from '../api/connect'
 import FeedItemCard from '../pages/student/connect/ConnectCards'
 
 describe('Connect API client', () => {
-  it('exports the full Updates / Events / Follows / Peers contract', () => {
+  it('exports the full Updates / Events / Follows contract', () => {
     const fns = [
       'getConnectFeed', 'getConnectEvents',
       'getFollowing', 'followInstitution', 'muteFollowing', 'unfollowInstitution',
-      'getPeersStatus', 'optInPeers', 'getMyPeerProfile', 'updateMyPeerProfile',
-      'discoverPeers', 'requestPeer', 'respondPeer', 'blockPeer', 'reportPeer',
     ]
     for (const fn of fns) {
       expect(typeof (connectApi as Record<string, unknown>)[fn]).toBe('function')
