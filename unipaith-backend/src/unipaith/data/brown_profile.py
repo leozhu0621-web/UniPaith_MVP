@@ -29,12 +29,20 @@ Tuition (2025-26, SFS): the undergraduate sticker is $71,700 (College); the M.D.
 $73,500. Brown bills general graduate (master's / Sc.M.) tuition PER COURSE ($8,962/course),
 so academic master's rows that have no published flat annual figure record ``tuition`` in
 ``_standard.omitted`` with the per-course rate documented in ``cost_data`` — never the
-undergraduate sticker copied down. Doctoral students are funded (tuition scholarship +
-stipend) within the guarantee period, so PhD rows are funded-omit-with-reason; the published
-doctoral sticker ($71,700, intentionally equal to undergraduate at Brown) is documented.
+undergraduate sticker copied down. The five master's programs all carry a published annual
+tuition (Brown's official Cost of Attendance by Program: per-course rate × the program's
+standard full-time course load), so no master's row is matcher-blind on budget. Doctoral
+students are funded (tuition scholarship + stipend) within the guarantee period, so PhD rows
+are funded-omit-with-reason; the published doctoral sticker ($71,700, intentionally equal to
+undergraduate at Brown) is documented.
 
-Reviews depth (``external_reviews``) is the IN-FLIGHT next slice for Brown and is honestly
-recorded in each program's ``_standard.omitted`` this pass — never synthesized. Per-program
+Matcher-core + universal-depth pass (REPAIR_BACKLOG #1/#3/#4/#5): every program now carries
+its standard IPEDS CIP-2020 ``cip_code`` (the matcher's field join key) and a field-specific
+``who_its_for`` (replacing the prior ``= None`` hard-null). ``external_reviews`` are added for
+the coverable graduate/professional programs with real third-party coverage — the Warren
+Alpert M.D., the Data Science Sc.M., the M.P.H., and the Watson MPA — each GATHERED from
+program-specific official/third-party sources, never synthesized; programs with no
+program-specific third-party coverage keep an honest ``external_reviews`` omission. Per-program
 class profile, tracks, and faculty are likewise recorded as omitted-with-reason where a
 verified per-program figure is not yet captured (the institution-wide Scorecard outcomes are
 attached). No fabricated review, quote, or figure ships.
@@ -53,7 +61,7 @@ from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Brown University"
-ENRICHED_AT = "2026-06-24"
+ENRICHED_AT = "2026-06-26"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -675,8 +683,8 @@ _CATALOG: list[tuple] = [
     # ── Watson School of International and Public Affairs ──
     (
         "Master of Public Affairs", "masters", _WATSON,
-        "Watson School of International and Public Affairs", 24, "brown-public-affairs-mpa", ["MPA", "public affairs"],
-        "The Master of Public Affairs at the Watson School trains policy professionals in economics, quantitative methods, and governance, with a policy-in-action curriculum and a capstone engagement.",
+        "Watson School of International and Public Affairs", 12, "brown-public-affairs-mpa", ["MPA", "public affairs"],
+        "The Master of Public Affairs at the Watson School is a one-year program training policy professionals in economics, quantitative methods, and governance, with a data-driven, policy-in-action curriculum and a real-world client policy project.",
     ),
     # ── School of Engineering — graduate ──
     (
@@ -741,6 +749,12 @@ _SFS_PROF_SRC = (
     "Brown Student Financial Services — 2025-26 Professional Master's tuition and fees",
     "https://sfs.brown.edu/tuition-fees/professional-masters-program-tuition-and-fees",
 )
+# Brown's official per-program cost of attendance — publishes each master's standard
+# full-time annual enrollment (courses/year) and the resulting published annual tuition.
+_GRAD_COA_SRC = (
+    "Brown Graduate Student Funding — Cost of Attendance by Program (2026-27)",
+    "https://gradfunding.brown.edu/cost-attendance-program",
+)
 
 _PER_COURSE_MASTERS = 8962  # Brown bills general graduate master's / Sc.M. tuition per course
 _MED_MD_ANNUAL = 73150  # Warren Alpert M.D. annual tuition
@@ -781,16 +795,60 @@ _COST_BY_SLUG: dict[str, dict] = {
         source=_SFS_PROF_SRC[0],
         source_url=_SFS_PROF_SRC[1],
     ),
+    # Brown bills these master's programs per course, but its official Cost of Attendance by
+    # Program page publishes each one's standard full-time annual enrollment (courses/year)
+    # and the resulting published annual tuition — the matcher's budget input. The per-course
+    # rate × Brown's own published standard course load is Brown's published figure, not a guess.
+    "brown-data-science-scm": _annual_cost(
+        40784,
+        note=(
+            "Sc.M. in Data Science: Brown's published 2026-27 annual tuition is $40,784 — the "
+            "$10,196 per-course rate at the standard full-time enrollment of four courses per "
+            "year (Brown Cost of Attendance by Program); the program runs ~21 months."
+        ),
+        source=_GRAD_COA_SRC[0],
+        source_url=_GRAD_COA_SRC[1],
+        year="2026-27",
+    ),
+    "brown-public-health-mph": _annual_cost(
+        49554,
+        note=(
+            "M.P.H.: Brown's published 2026-27 first-year annual tuition is $49,554 — the $8,259 "
+            "per-course rate at the standard full-time enrollment of six courses (Brown Cost of "
+            "Attendance by Program); a fully online M.P.H. is billed at the same per-course rate."
+        ),
+        source=_GRAD_COA_SRC[0],
+        source_url=_GRAD_COA_SRC[1],
+        year="2026-27",
+    ),
+    "brown-public-affairs-mpa": _annual_cost(
+        87400,
+        note=(
+            "Master of Public Affairs: Brown's published 2026-27 program tuition is $87,400 — the "
+            "$8,740 per-course rate at the standard full-time enrollment of ten courses (Brown "
+            "Cost of Attendance by Program). The Watson MPA is a one-year program, so the annual "
+            "tuition equals the program total."
+        ),
+        source=_GRAD_COA_SRC[0],
+        source_url=_GRAD_COA_SRC[1],
+        year="2026-27",
+    ),
+    "brown-mechanical-engineering-scm": _annual_cost(
+        40892,
+        note=(
+            "Sc.M. in Mechanical Engineering: Brown's published 2026-27 annual tuition is $40,892 "
+            "— the $10,223 per-course School of Engineering rate at the standard full-time "
+            "enrollment of four courses per year (Brown Cost of Attendance by Program)."
+        ),
+        source=_GRAD_COA_SRC[0],
+        source_url=_GRAD_COA_SRC[1],
+        year="2026-27",
+    ),
 }
 
-# Academic master's / Sc.M. programs Brown bills PER COURSE with no published flat annual
-# figure — tuition value omitted-with-reason (the per-course rate is documented in cost_data).
-_PER_COURSE_SLUGS = {
-    "brown-data-science-scm",
-    "brown-public-health-mph",
-    "brown-public-affairs-mpa",
-    "brown-mechanical-engineering-scm",
-}
+# All master's / Sc.M. programs now carry a published annual tuition figure above, so no
+# master's row is left matcher-blind on budget (REPAIR_BACKLOG #3). Empty by design.
+_PER_COURSE_SLUGS: set[str] = set()
 
 
 def _grad_has_verified_tuition(spec: dict) -> bool:
@@ -962,7 +1020,587 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "withdrawal from ranking submission and may be dated."
         ),
     },
+    "brown-data-science-scm": {
+        "summary": (
+            "Brown's Sc.M. in Data Science, run through the Data Science Institute, is a small "
+            "applied program (about 235 graduates since 2017) that converts mathematics, "
+            "statistics, and computing into practical data-science skills with a required capstone. "
+            "Brown's own outcomes reporting is unusually transparent: roughly three-quarters of "
+            "alumni work in finance, technology, or health, or go on to a PhD, with employers "
+            "including Amazon, Google, Microsoft, JPMorgan Chase, Goldman Sachs, and Meta. The "
+            "honest cautions are that early-placement figures vary year to year (about 50–80% "
+            "employed two to three months after the 2022 cohort graduated, rising to roughly "
+            "82–93% a year out for the 2021 cohort), Brown publishes no median-salary figure for "
+            "the program, and independent third-party coverage is thin for a program this new."
+        ),
+        "themes": [
+            {
+                "label": "Applied, capstone-driven curriculum",
+                "sentiment": "positive",
+                "detail": (
+                    "A roughly 21-month program combining mathematics, statistics, computer "
+                    "science, and machine learning with a capstone applying data methods to a real "
+                    "problem, housed in the Data Science Institute."
+                ),
+            },
+            {
+                "label": "Strong industry placement",
+                "sentiment": "positive",
+                "detail": (
+                    "Brown's published outcomes list more than fifty employers — including Amazon, "
+                    "Google, Microsoft, JPMorgan Chase, Goldman Sachs, Meta, and Oracle — across "
+                    "data-scientist, ML-engineer, data-engineer, and quantitative-analyst roles."
+                ),
+            },
+            {
+                "label": "PhD pipeline",
+                "sentiment": "positive",
+                "detail": (
+                    "A notable share of graduates continue to doctoral study across fields such as "
+                    "computer science, physics, biology, and neuroscience."
+                ),
+            },
+            {
+                "label": "Variable early placement",
+                "sentiment": "caution",
+                "detail": (
+                    "Employment two to three months after graduation ran about 50–80% for the 2022 "
+                    "cohort before rising to roughly 82–93% a year out for the 2021 cohort, so "
+                    "placement can take time after the degree."
+                ),
+            },
+            {
+                "label": "No published salary data",
+                "sentiment": "caution",
+                "detail": (
+                    "Brown reports employers and sectors but does not publish a median or average "
+                    "salary for the program, and third-party outcome coverage is limited."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Brown Data Science Institute — Master's career outcomes (official)",
+                "url": "https://dsi.brown.edu/academics/masters-degree/career-outcomes",
+            },
+            {
+                "label": "Brown Graduate Programs — Data Science (Sc.M.)",
+                "url": "https://graduateprograms.brown.edu/graduate-program/data-science-scm",
+            },
+            {
+                "label": "Mastersportal — Data Science M.Sc., Brown University",
+                "url": "https://www.mastersportal.com/studies/325571/data-science.html",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from Brown's official outcomes reporting and public "
+            "program descriptions — not individual verbatim reviews. Employment percentages are "
+            "Brown-reported cohort figures and vary by graduating class."
+        ),
+    },
+    "brown-public-health-mph": {
+        "summary": (
+            "Brown's M.P.H., from the School of Public Health, trains practitioners in "
+            "epidemiology, biostatistics, health policy, and the social and behavioral sciences, "
+            "with on-campus and fully online options. The School of Public Health carries a solid "
+            "national reputation — reported by U.S. News in the high-teens among public-health "
+            "schools in recent years — and Brown's own reporting shows graduates spread across the "
+            "private sector, academia, health care, and government. The most important caution is "
+            "that Brown does not publish an employment rate or a median salary for its own M.P.H. "
+            "graduates: the salary figures on its outcomes page are national role benchmarks, not "
+            "Brown placements, and the small set of third-party student reviews is too few to "
+            "generalize from."
+        ),
+        "themes": [
+            {
+                "label": "Reputable public-health school",
+                "sentiment": "positive",
+                "detail": (
+                    "The School of Public Health has been ranked in the high-teens among "
+                    "U.S. News Best Public Health Schools in recent years (as reported by "
+                    "U.S. News; exact current-edition rank varies)."
+                ),
+            },
+            {
+                "label": "Broad sector placement",
+                "sentiment": "positive",
+                "detail": (
+                    "Brown's outcomes data over the last decade show graduates across the private "
+                    "sector (about 30%), academia (23%), health care (20%), and the public sector "
+                    "(19%)."
+                ),
+            },
+            {
+                "label": "On-campus and fully online options",
+                "sentiment": "positive",
+                "detail": (
+                    "The M.P.H. is offered residentially and as a 100% online degree with optional "
+                    "live sessions, widening access for working professionals."
+                ),
+            },
+            {
+                "label": "No published graduate-outcome aggregates",
+                "sentiment": "caution",
+                "detail": (
+                    "Brown publishes a sector distribution but not an employment rate, a placement "
+                    "timeframe, or named top employers for its own graduates."
+                ),
+            },
+            {
+                "label": "Salary figures are national benchmarks",
+                "sentiment": "caution",
+                "detail": (
+                    "The salaries on Brown's outcomes page are national role benchmarks (for data "
+                    "scientists, health-services managers, epidemiologists, and the like), not "
+                    "measured earnings of Brown M.P.H. graduates."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Brown School of Public Health — M.P.H. graduate outcomes (official)",
+                "url": "https://mph.sph.brown.edu/graduate-outcomes",
+            },
+            {
+                "label": "GradReports — Brown University Master's in Public Health",
+                "url": "https://www.gradreports.com/colleges/brown-university/masters/public-health",
+            },
+            {
+                "label": "U.S. News — Brown University Best Public Health Schools profile",
+                "url": "https://www.usnews.com/best-graduate-schools/top-health-schools/brown-university-217156",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from Brown's official outcomes reporting and public "
+            "third-party sources — not individual verbatim reviews. The U.S. News rank is as "
+            "reported by U.S. News and the exact current-edition figure may differ; salary figures "
+            "cited by Brown are national role benchmarks, not Brown-graduate measurements."
+        ),
+    },
+    "brown-public-affairs-mpa": {
+        "summary": (
+            "Brown's Master of Public Affairs, in the Watson School of International and Public "
+            "Affairs, is marketed as the Ivy League's only one-year residential public-affairs "
+            "master's, built around economics, quantitative methods, and a data-driven, "
+            "policy-in-action curriculum with a real-world client project. U.S. News most recently "
+            "(2021) placed the program around the mid-40s in public affairs overall and in the low "
+            "20s in the public-policy-analysis specialty. Two honest cautions: the program moved "
+            "into the newly launched Watson School in 2025 — so its 2025 'inaugural cohort' is "
+            "inaugural for the new school, not a new program (the MPA has graduated more than ten "
+            "classes over roughly two decades) — and Brown publishes only example employers, not a "
+            "systematic employment rate or salary report."
+        ),
+        "themes": [
+            {
+                "label": "One-year intensive policy degree",
+                "sentiment": "positive",
+                "detail": (
+                    "A full-time one-year program (summer through spring) positioned as the Ivy "
+                    "League's only one-year residential master's in public affairs."
+                ),
+            },
+            {
+                "label": "Data-driven, applied curriculum",
+                "sentiment": "positive",
+                "detail": (
+                    "Economics and quantitative methods paired with a policy-in-action curriculum "
+                    "and a real-world client policy project."
+                ),
+            },
+            {
+                "label": "Public-policy-analysis ranking",
+                "sentiment": "mixed",
+                "detail": (
+                    "In the 2021 U.S. News graduate rankings the program ranked around the mid-40s "
+                    "in public affairs overall and roughly No. 23 in the public-policy-analysis "
+                    "specialty; a more recent figure was not confirmed, so treat it as dated."
+                ),
+            },
+            {
+                "label": "New Watson School, established program",
+                "sentiment": "mixed",
+                "detail": (
+                    "The MPA moved from the Watson Institute into the new Watson School of "
+                    "International and Public Affairs in 2025; the 2025 class is the first admitted "
+                    "by the school, but the program itself rests on a roughly twenty-year history."
+                ),
+            },
+            {
+                "label": "No published aggregate outcomes",
+                "sentiment": "caution",
+                "detail": (
+                    "Watson lists example employers from past cohorts (including U.S. federal "
+                    "departments, policy labs, and consulting firms) but does not publish an "
+                    "employment rate, median salary, or systematic placement report."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Watson School — MPA Class of 2026 cohort profile (Brown, 2025)",
+                "url": "https://home.watson.brown.edu/news/2025-09-11/mpa-cohort-2025",
+            },
+            {
+                "label": "Watson — One-year MPA climbs U.S. News public-affairs rankings (2021)",
+                "url": "https://home.watson.brown.edu/news/2021-04-08/watsons-one-year-mpa-program-climbs-us-news-rankings-graduate-public-affairs",
+            },
+            {
+                "label": "Watson School — MPA career outcomes (official)",
+                "url": "https://home.watson.brown.edu/mpa/careers/outcomes",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from Brown/Watson official sources and public reporting — "
+            "not individual verbatim reviews. The U.S. News figures are from 2021 and may be dated; "
+            "Brown publishes example employers rather than a systematic outcomes dataset."
+        ),
+    },
 }
+
+
+# ── Matcher-core ``cip_code`` (REPAIR_BACKLOG #1) ──────────────────────────────
+# The standard IPEDS CIP-2020 code for each program's field — the join key the CPEF
+# matcher uses to resolve a program to ref_majors + the field-66 vocabulary (the
+# interest/field signal alongside the description_text embedding). A published taxonomy
+# lookup per field, never a guess; Brown's catalog shipped cip_code null fleet-wide.
+_CIP_BY_SLUG: dict[str, str] = {
+    # ── The College — undergraduate ──
+    "brown-computer-science-scb": "11.0701",
+    "brown-economics-ab": "45.0601",
+    "brown-applied-mathematics-scb": "27.0301",
+    "brown-mathematics-scb": "27.0101",
+    "brown-biology-scb": "26.0101",
+    "brown-neuroscience-scb": "26.1501",
+    "brown-cognitive-science-scb": "30.2501",
+    "brown-psychology-ab": "42.0101",
+    "brown-physics-scb": "40.0801",
+    "brown-chemistry-scb": "40.0501",
+    "brown-biochemistry-molecular-biology-scb": "26.0202",
+    "brown-history-ab": "54.0101",
+    "brown-english-ab": "23.0101",
+    "brown-philosophy-ab": "38.0101",
+    "brown-political-science-ab": "45.1001",
+    "brown-sociology-ab": "45.1101",
+    "brown-anthropology-ab": "45.0201",
+    "brown-international-public-affairs-ab": "45.0901",
+    "brown-public-health-ab": "51.2201",
+    "brown-health-human-biology-ab": "30.2701",
+    "brown-engineering-ab": "14.0101",
+    "brown-biomedical-engineering-scb": "14.0501",
+    "brown-mechanical-engineering-scb": "14.1901",
+    "brown-electrical-engineering-scb": "14.1001",
+    "brown-chemical-engineering-scb": "14.0701",
+    "brown-materials-engineering-scb": "14.1801",
+    "brown-modern-culture-media-ab": "50.0601",
+    "brown-africana-studies-ab": "05.0201",
+    "brown-statistics-scb": "27.0501",
+    "brown-comparative-literature-ab": "16.0104",
+    "brown-archaeology-ancient-world-ab": "45.0301",
+    "brown-american-studies-ab": "05.0102",
+    "brown-classics-ab": "16.1200",
+    "brown-east-asian-studies-ab": "05.0104",
+    "brown-earth-planetary-sciences-scb": "40.0601",
+    "brown-linguistics-ab": "16.0102",
+    "brown-music-ab": "50.0901",
+    "brown-religious-studies-ab": "38.0201",
+    "brown-visual-art-ab": "50.0702",
+    "brown-egyptology-assyriology-ab": "30.2202",
+    # ── The Graduate School — research master's + doctoral ──
+    "brown-data-science-scm": "30.7001",
+    "brown-computer-science-phd": "11.0701",
+    "brown-physics-phd": "40.0801",
+    "brown-biology-phd": "26.0101",
+    "brown-economics-phd": "45.0601",
+    "brown-history-phd": "54.0101",
+    "brown-neuroscience-phd": "26.1501",
+    "brown-chemistry-phd": "40.0501",
+    "brown-applied-mathematics-phd": "27.0301",
+    # ── Warren Alpert Medical School ──
+    "brown-medicine-md": "51.1201",
+    # ── School of Public Health ──
+    "brown-public-health-mph": "51.2201",
+    "brown-biostatistics-phd": "26.1102",
+    "brown-epidemiology-phd": "26.1309",
+    # ── Watson School of International and Public Affairs ──
+    "brown-public-affairs-mpa": "44.0501",
+    # ── School of Engineering — graduate ──
+    "brown-biomedical-engineering-phd": "14.0501",
+    "brown-mechanical-engineering-scm": "14.1901",
+    # ── School of Professional Studies ──
+    "brown-healthcare-leadership-ms": "51.0701",
+}
+
+_cip_missing = [s for s in PROGRAM_SLUGS if s not in _CIP_BY_SLUG]
+if _cip_missing:
+    raise RuntimeError(f"Brown cip_code missing on {len(_cip_missing)} rows: {_cip_missing[:5]}")
+_cip_stray = [s for s in _CIP_BY_SLUG if s not in set(PROGRAM_SLUGS)]
+if _cip_stray:
+    raise RuntimeError(f"Brown cip_code has stray slugs: {_cip_stray[:5]}")
+
+
+# ── Universal-depth ``who_its_for`` (REPAIR_BACKLOG #4) ────────────────────────
+# A field-specific 1-2 sentence statement of the applicant each program fits (background,
+# goals, readiness) — derivable for every program from its own audience material. Never a
+# classification stub ("for students interested in {field}"); Brown's apply() hard-set this
+# field to None, shipping it 0% live.
+_WHO_BY_SLUG: dict[str, str] = {
+    "brown-computer-science-scb": (
+        "Students who want to build software and reason rigorously about computation — from "
+        "algorithms and systems to AI and human-computer interaction — and who value pairing "
+        "computer science freely with other fields under Brown's Open Curriculum."
+    ),
+    "brown-economics-ab": (
+        "Students drawn to how markets, incentives, and policy shape the world who want strong "
+        "economic theory plus the econometrics to test it, whether aiming at finance, graduate "
+        "study, or public policy."
+    ),
+    "brown-applied-mathematics-scb": (
+        "Students who like using mathematics to model real physical, biological, and social "
+        "systems and who want computation and probability alongside analysis rather than pure "
+        "abstraction."
+    ),
+    "brown-mathematics-scb": (
+        "Students who enjoy proof-based reasoning across analysis, algebra, geometry, and topology "
+        "and are heading toward research, teaching, or quantitative careers."
+    ),
+    "brown-biology-scb": (
+        "Students fascinated by living systems from molecules to ecosystems who want laboratory "
+        "and field research experience, often on a path to medicine, graduate school, or biotech."
+    ),
+    "brown-neuroscience-scb": (
+        "Students who want to understand the brain and behavior from cells and circuits to "
+        "cognition, with undergraduate research through the Carney Institute, often toward "
+        "medicine or a neuroscience PhD."
+    ),
+    "brown-cognitive-science-scb": (
+        "Students curious about how the mind works across psychology, linguistics, computer "
+        "science, and philosophy who want an interdisciplinary, methods-driven approach to "
+        "perception, language, and reasoning."
+    ),
+    "brown-psychology-ab": (
+        "Students interested in the science of cognition, development, and behavior who want "
+        "laboratory training and a foundation for clinical, research, or applied-psychology work."
+    ),
+    "brown-physics-scb": (
+        "Students who want a deep grounding in the laws governing matter and energy, with "
+        "undergraduate research in condensed-matter, high-energy, or astrophysics, and who may "
+        "pursue physics or engineering graduate study."
+    ),
+    "brown-chemistry-scb": (
+        "Students who enjoy understanding matter at the molecular level through hands-on laboratory "
+        "work, preparing for graduate chemistry, medicine, or the chemical and pharmaceutical "
+        "industries."
+    ),
+    "brown-biochemistry-molecular-biology-scb": (
+        "Students who want to work at the chemistry-biology interface — proteins, nucleic acids, "
+        "metabolism, and gene regulation — typically aiming at biomedical research or medical "
+        "school."
+    ),
+    "brown-history-ab": (
+        "Students who want to research and interpret the past from primary sources across regions "
+        "and eras, building the analytical writing valued in law, policy, journalism, and "
+        "academia."
+    ),
+    "brown-english-ab": (
+        "Students who love close reading and literary analysis across periods and genres and who "
+        "want nonfiction or creative-writing pathways alongside critical theory."
+    ),
+    "brown-philosophy-ab": (
+        "Students drawn to rigorous argument about ethics, knowledge, mind, and reality who want "
+        "training in logic and conceptual analysis useful for law, policy, or graduate philosophy."
+    ),
+    "brown-political-science-ab": (
+        "Students interested in how power, institutions, and policy work across American, "
+        "comparative, and international politics, with empirical methods and ties to the Watson "
+        "Institute."
+    ),
+    "brown-sociology-ab": (
+        "Students who want to study inequality, institutions, and social change with both "
+        "quantitative and qualitative methods, often toward research, policy, or the social "
+        "sector."
+    ),
+    "brown-anthropology-ab": (
+        "Students curious about human societies past and present who want to combine ethnographic "
+        "fieldwork with archaeology to understand culture and material life."
+    ),
+    "brown-international-public-affairs-ab": (
+        "Students aiming at careers in global policy, development, or security who want an "
+        "interdisciplinary grounding in politics, economics, and governance through the Watson "
+        "Institute."
+    ),
+    "brown-public-health-ab": (
+        "Students who want to understand the social and biological determinants of population "
+        "health and the epidemiologic methods behind them, often before an M.P.H., medical "
+        "school, or a health-policy career."
+    ),
+    "brown-health-human-biology-ab": (
+        "Students who want to study human biology in its clinical, behavioral, and social context "
+        "and to design an individualized path toward medicine, public health, or biomedical "
+        "research."
+    ),
+    "brown-engineering-ab": (
+        "Students who want engineering breadth and the foundations of engineering science within a "
+        "liberal-arts framework, rather than committing to a single specialized discipline."
+    ),
+    "brown-biomedical-engineering-scb": (
+        "Students who want to apply engineering to medicine and biology — biomechanics, "
+        "biomaterials, imaging, and instrumentation — often toward biomedical industry or "
+        "graduate research."
+    ),
+    "brown-mechanical-engineering-scb": (
+        "Students who like designing and analyzing physical systems across mechanics, "
+        "thermodynamics, and dynamics, with hands-on capstone work in the Brown Design Workshop."
+    ),
+    "brown-electrical-engineering-scb": (
+        "Students interested in circuits, signals, electromagnetics, and electronic devices who "
+        "want laboratory work in communications, control, and microelectronics."
+    ),
+    "brown-chemical-engineering-scb": (
+        "Students who want to apply chemistry, transport, and reaction engineering to energy, "
+        "materials, and biotechnology at industrial scale."
+    ),
+    "brown-materials-engineering-scb": (
+        "Students interested in how the structure of metals, ceramics, polymers, and electronic "
+        "materials governs their properties, linking processing to mechanical and electronic "
+        "behavior."
+    ),
+    "brown-modern-culture-media-ab": (
+        "Students who want to analyze film, television, and digital media critically while also "
+        "making media, combining theory with hands-on production."
+    ),
+    "brown-africana-studies-ab": (
+        "Students who want to study the histories, politics, and creative expression of African "
+        "and African-diaspora peoples across an interdisciplinary curriculum."
+    ),
+    "brown-statistics-scb": (
+        "Students who want a rigorous foundation in probability, inference, and data analysis with "
+        "computing, applicable across the natural, social, and health sciences."
+    ),
+    "brown-comparative-literature-ab": (
+        "Students who read across languages and national traditions and are drawn to translation, "
+        "world literature, and literary and critical theory."
+    ),
+    "brown-archaeology-ancient-world-ab": (
+        "Students fascinated by ancient civilizations who want hands-on excavation, artifact "
+        "analysis, and the science of the archaeological record through the Joukowsky Institute."
+    ),
+    "brown-american-studies-ab": (
+        "Students who want an interdisciplinary view of U.S. culture, politics, and social "
+        "movements through history, literature, and ethnic studies."
+    ),
+    "brown-classics-ab": (
+        "Students who want to study Greek and Latin alongside the literature, history, and "
+        "archaeology of the ancient Mediterranean world."
+    ),
+    "brown-east-asian-studies-ab": (
+        "Students learning Chinese, Japanese, or Korean who want to pair language mastery with the "
+        "literature, history, and culture of East Asia."
+    ),
+    "brown-earth-planetary-sciences-scb": (
+        "Students drawn to the workings of the Earth and other planets — geology, climate, oceans, "
+        "and remote sensing — who want field and laboratory research."
+    ),
+    "brown-linguistics-ab": (
+        "Students fascinated by how language is structured and processed — phonology, syntax, "
+        "semantics — and its cognitive and computational dimensions."
+    ),
+    "brown-music-ab": (
+        "Students who want to combine theory, history, and composition with performance and "
+        "electronic and computer-music work."
+    ),
+    "brown-religious-studies-ab": (
+        "Students who want to study the texts, histories, and practices of the world's religious "
+        "traditions across the ancient, medieval, and modern periods."
+    ),
+    "brown-visual-art-ab": (
+        "Students who want a studio practice across drawing, painting, sculpture, and digital media "
+        "grounded in critique and contemporary-art theory."
+    ),
+    "brown-egyptology-assyriology-ab": (
+        "Students drawn to the languages and civilizations of ancient Egypt and the Near East who "
+        "want to work directly with hieroglyphic and cuneiform sources."
+    ),
+    "brown-data-science-scm": (
+        "Recent STEM graduates and working professionals with a quantitative background who want to "
+        "convert mathematics, statistics, and computing into applied data-science skills, with a "
+        "capstone and placement across finance, technology, and health."
+    ),
+    "brown-computer-science-phd": (
+        "Students aiming at research careers in academia or industry labs who want funded doctoral "
+        "work across systems, theory, machine learning, graphics, or human-computer interaction."
+    ),
+    "brown-physics-phd": (
+        "Students committed to physics research — condensed-matter, high-energy, astrophysical, or "
+        "biological — who want doctoral training toward academic or research-lab careers."
+    ),
+    "brown-biology-phd": (
+        "Students pursuing doctoral research in molecular, cell, ecological, or computational "
+        "biology who want to lead independent investigation in academia or biotech."
+    ),
+    "brown-economics-phd": (
+        "Students aiming to become academic or research economists who want rigorous training in "
+        "theory and econometrics with applied strength in development, labor, and public "
+        "economics."
+    ),
+    "brown-history-phd": (
+        "Students preparing for scholarly careers who want archive-based doctoral research across "
+        "American, European, and global history."
+    ),
+    "brown-neuroscience-phd": (
+        "Students committed to brain research from molecular to systems and computational "
+        "neuroscience, anchored by the Carney Institute, toward academic or research careers."
+    ),
+    "brown-chemistry-phd": (
+        "Students pursuing doctoral chemistry research across organic, inorganic, physical, and "
+        "chemical-biology areas in funded faculty laboratories."
+    ),
+    "brown-applied-mathematics-phd": (
+        "Students who want doctoral research in dynamical systems, scientific computing, "
+        "probability, or mathematical modeling toward academic or research-lab careers."
+    ),
+    "brown-medicine-md": (
+        "Students committed to becoming physicians who want an integrated, competency-based medical "
+        "education with early clinical experience, a scholarly concentration, and training in "
+        "Providence teaching hospitals."
+    ),
+    "brown-public-health-mph": (
+        "Aspiring public-health practitioners — including clinicians and career-changers — who "
+        "want graduate training in epidemiology, biostatistics, and health policy, with on-campus "
+        "or fully online study."
+    ),
+    "brown-biostatistics-phd": (
+        "Students who want to develop statistical methods for clinical trials, genomics, and "
+        "population health, toward academic, government, or industry research."
+    ),
+    "brown-epidemiology-phd": (
+        "Students aiming at research careers in the distribution and causes of disease who want "
+        "doctoral training in study design and causal inference across chronic and infectious "
+        "disease."
+    ),
+    "brown-public-affairs-mpa": (
+        "Early- and mid-career professionals who want an intensive one-year, data-driven policy "
+        "degree to move into government, nonprofit, or international-development leadership."
+    ),
+    "brown-biomedical-engineering-phd": (
+        "Students pursuing doctoral research at the engineering-medicine interface — biomechanics, "
+        "biomaterials, neuroengineering, and imaging — with clinical and life-science partners."
+    ),
+    "brown-mechanical-engineering-scm": (
+        "Engineering graduates who want advanced coursework and supervised research in mechanics, "
+        "thermal sciences, or design, preparing for industry roles or doctoral study."
+    ),
+    "brown-healthcare-leadership-ms": (
+        "Working health-sector professionals who want an executive, twelve-month master's in "
+        "strategy, finance, and operations to step into healthcare management and leadership."
+    ),
+}
+
+_who_missing = [s for s in PROGRAM_SLUGS if s not in _WHO_BY_SLUG]
+if _who_missing:
+    raise RuntimeError(f"Brown who_its_for missing on {len(_who_missing)} rows: {_who_missing[:5]}")
+_who_stray = [s for s in _WHO_BY_SLUG if s not in set(PROGRAM_SLUGS)]
+if _who_stray:
+    raise RuntimeError(f"Brown who_its_for has stray slugs: {_who_stray[:5]}")
 
 
 def _lead_campus_photo(school_outcomes: dict) -> str | None:
@@ -1178,7 +1816,8 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
         p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
-        p.who_its_for = None
+        p.cip_code = _CIP_BY_SLUG.get(slug)
+        p.who_its_for = _WHO_BY_SLUG.get(slug)
         p.highlights = None
         p.application_deadline = (
             date(2027, 1, 1) if spec["degree_type"] == "bachelors" else None
