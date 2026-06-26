@@ -51,7 +51,8 @@ def _program_snapshot(spec: dict) -> dict:
     # estimate / professional per-term×2 / funded PhD (0).
     if dtype == "bachelors":
         cost = {
-            "tuition_usd": p._TUITION_UG_INSTATE,
+            # PUBLIC scalar = NON-RESIDENT (out-of-state); breakdown keeps BOTH (REPAIR_BACKLOG #4).
+            "tuition_usd": p._TUITION_UG_OOS,
             "total_cost_of_attendance": p._UNDERGRAD_COA,
             "avg_net_price": p._AVG_NET_PRICE,
             "breakdown": {

@@ -4227,7 +4227,10 @@ _GRAD_COST_SRC_URL = "https://grad.ucla.edu/funding/tuition/"
 
 def _undergrad_cost() -> dict:
     return {
-        "tuition_usd": _TUITION_UG_IN_STATE,
+        # PUBLIC scalar = NON-RESIDENT (out-of-state); breakdown keeps BOTH rates so the CPEF
+        # budget veto reads the broadly-correct figure for the national/international pool
+        # (REPAIR_BACKLOG #4 — the in-state scalar under-fired the budget veto 2.5-3.5x).
+        "tuition_usd": _TUITION_UG_OOS,
         "total_cost_of_attendance": _UNDERGRAD_COA,
         "avg_net_price": _AVG_NET_PRICE,
         "breakdown": {
