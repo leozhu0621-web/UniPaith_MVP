@@ -235,8 +235,12 @@ def test_matcher_core_tuition_is_value_correct():
     programs — a VERIFIED BU policy (BU Student Financials + U.S. News for the Questrom MBA),
     so a general full-time graduate row at $69,870 is its real published rate, not a copy-down.
     Invariants:
-      * research doctorates (PhD/DSc) and graduate certificates carry NO flat tuition — they
-        are fully funded / billed per-credit, so they are recorded as honest omissions;
+      * funded research doctorates (PhD/DSc) and per-credit graduate certificates carry NO
+        flat tuition — they are recorded as honest omissions. EXCEPTION: the Goldman SDM
+        postdoctoral / advanced-education clinical specialties (endodontics, periodontology,
+        etc.) publish ONE uniform annual rate ($101,630, BUMC OSFS) across their certificate /
+        master's / clinical-doctorate tiers and are billed (not funded), so they carry that
+        verified published rate (REPAIR_BACKLOG #3) — never the undergrad sticker;
       * schools with a DISTINCT published rate stamp it, never the undergrad sticker;
       * every program with tuition None records cost_data.tuition_usd in _standard.omitted and
         carries a cost_data explanation.
@@ -245,10 +249,17 @@ def test_matcher_core_tuition_is_value_correct():
     for spec in b.PROGRAMS:
         tuition, cost = b._program_tuition(spec)
         dt = spec["degree_type"]
+        is_sdm = spec.get("school_key") == "SDM"
         assert cost and cost.get("note") and cost.get("source"), f"{spec['slug']} cost incomplete"
-        # Funded research doctorates + per-credit certificates ship no flat number.
-        if dt in ("phd", "doctoral") or dt == "certificate":
+        # Funded research doctorates + per-credit certificates ship no flat number — except
+        # the billed Goldman SDM postdoctoral specialties, which publish a flat annual rate.
+        if (dt in ("phd", "doctoral") or dt == "certificate") and not is_sdm:
             assert tuition is None, f"{spec['slug']}: {dt} should be omitted, got {tuition}"
+        if is_sdm and dt != "professional":
+            assert tuition == b._SDM_POSTDOC_TUITION, (
+                f"{spec['slug']}: SDM advanced-education should carry the published "
+                f"postdoctoral rate {b._SDM_POSTDOC_TUITION}, got {tuition}"
+            )
         if tuition is None:
             omitted = b._program_standard(spec["slug"], spec)["omitted"]
             assert "cost_data.tuition_usd" in omitted, f"{spec['slug']} omission not recorded"
@@ -316,3 +327,29 @@ def test_no_credential_combo_names_or_departments():
         or (p.get("department") and bad_token.match(p["department"]))
     ]
     assert not bad, f"credential-combo stub names/departments: {bad}"
+
+
+def test_cip_code_is_complete():
+    """Matcher-core cip_code (REPAIR_BACKLOG #1): every program resolves to a verified NCES
+    CIP family via bu_cip_who (was null fleet-wide → matcher field-blind). No row may ship
+    without a code — the build gate in bu_profile already raises on any uncovered row, so a
+    full assignment here proves 100% coverage from the same source apply() stamps."""
+    uncovered = [s["slug"] for s in b.PROGRAMS if not b._CIP_BY_SLUG.get(s["slug"])]
+    assert not uncovered, f"cip_code uncovered on {len(uncovered)} rows: {uncovered[:8]}"
+    assert len(b._CIP_BY_SLUG) == len(b.PROGRAMS)
+    import re
+
+    bad = [c for c in b._CIP_BY_SLUG.values() if not re.fullmatch(r"\d\d\.\d{2,4}", c)]
+    assert not bad, f"malformed CIP codes: {bad[:8]}"
+
+
+def test_who_its_for_is_complete_and_distinct():
+    """who_its_for (REPAIR_BACKLOG #4a) is a universal depth field — every program carries a
+    field-specific statement, and the set is program-DISTINCT (NOT a one-per-degree-type
+    template). distinct/total must approach 1.0 (Cornell's bar); never collapse to ~0.1."""
+    whos = [b._WHO_BY_SLUG.get(s["slug"]) for s in b.PROGRAMS]
+    assert all(whos), "who_its_for uncovered on some rows"
+    ratio = len(set(whos)) / len(whos)
+    assert ratio >= 0.95, f"who_its_for type-gamed: distinct/total {ratio:.3f} < 0.95"
+    # No machine-splice double-period artifact.
+    assert not [w for w in whos if ".." in w], "double-period '..' artifact in who_its_for"

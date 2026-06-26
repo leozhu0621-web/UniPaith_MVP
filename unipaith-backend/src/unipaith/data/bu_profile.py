@@ -119,6 +119,7 @@ from collections import Counter
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.bu_cip_who import resolve as _resolve_cip_who
 from unipaith.data.bu_field_descriptions import FIELD_DESCRIPTIONS, SLUG_DESCRIPTIONS
 from unipaith.data.profile_catalog_utils import (
     BARE_DEGREE_ABBREVIATIONS,
@@ -2390,6 +2391,32 @@ if _catalog_errors:
     raise RuntimeError(f"Boston University catalog quality gate failed: {_catalog_errors}")
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 
+# Matcher-core cip_code (REPAIR_BACKLOG #1: was null fleet-wide → matcher field-blind)
+# + universal, program-DISTINCT who_its_for (#4a: was shipped 0%), precomputed per slug
+# from bu_cip_who with a build gate so a coverage or distinctness regression fails the
+# build loudly rather than silently shipping a field-blind / type-gamed catalog.
+_CIP_BY_SLUG: dict[str, str] = {}
+_WHO_BY_SLUG: dict[str, str] = {}
+_cipwho_uncovered: list[str] = []
+for _spec in PROGRAMS:
+    _cip, _who = _resolve_cip_who(_spec["program_name"], _spec["degree_type"])
+    if not _cip or not _who:
+        _cipwho_uncovered.append(_spec["program_name"])
+        continue
+    _CIP_BY_SLUG[_spec["slug"]] = _cip
+    _WHO_BY_SLUG[_spec["slug"]] = _who
+if _cipwho_uncovered:
+    raise RuntimeError(
+        f"Boston University cip_code/who_its_for uncovered on {len(_cipwho_uncovered)} "
+        f"rows; bu_cip_who lacks: {_cipwho_uncovered[:12]}"
+    )
+_who_ratio = len(set(_WHO_BY_SLUG.values())) / len(_WHO_BY_SLUG)
+if _who_ratio < 0.9:
+    raise RuntimeError(
+        f"Boston University who_its_for type-gamed: distinct/total {_who_ratio:.2f} < 0.9 "
+        "(field-specific statements required, not a one-per-degree-type template)"
+    )
+
 _WEBSITE_OVERRIDE: dict[str, str] = {}
 for _spec in PROGRAMS:
     _WEBSITE_OVERRIDE[_spec["slug"]] = _spec["catalog_url"]
@@ -2445,6 +2472,13 @@ _CFA_MUSIC_TUITION = 30376  # CFA School of Music graduate programs
 _CFA_OTHER_TUITION = 34984  # CFA MFA / visual arts & theatre graduate programs
 _MD_TUITION = 72626  # Chobanian & Avedisian School of Medicine — MD
 _DMD_TUITION = 99680  # Henry M. Goldman School of Dental Medicine — DMD
+# Goldman SDM advanced-education (postdoctoral) specialty programs — a SINGLE published
+# annual tuition applies uniformly across all specialties (endodontics, periodontology,
+# prosthodontics, pediatric dentistry, operative dentistry, OMFS, oral biology, etc.),
+# 2025-26 (BUMC Office of Student Financial Support — postdoctoral cost of attendance).
+_SDM_POSTDOC_TUITION = 101630
+_SDM_POSTDOC_SRC = "Boston University — BUMC Office of Student Financial Support (GSDM postdoctoral cost of attendance, 2025-26)"
+_SDM_POSTDOC_SRC_URL = "https://www.bumc.bu.edu/osfs/cost-of-attendance-bot/postdoc-coa/"
 
 
 def _pub_tuition_cost(tuition_usd: int, note: str) -> dict:
@@ -2524,16 +2558,18 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
             "School of Dental Medicine). Fees and living expenses are additional.",
         )
 
-    # SDM advanced-education (specialty MS + clinical/research doctorates) — tuition is set
-    # per clinical program and not published as a single annual figure → omit-with-reason.
+    # SDM advanced-education (postdoctoral specialty MS / certificate / clinical doctorate)
+    # — BU publishes ONE uniform annual tuition across all specialty programs (verified
+    # against the BUMC OSFS postdoctoral cost of attendance), so it is the program's real
+    # published rate, not a guess. (The fully-funded MD/PhD path is handled above.)
     if sk == "SDM":
-        return None, _omit_tuition_cost(
-            "Tuition for this BU Henry M. Goldman School of Dental Medicine advanced-education "
-            "specialty program is set per clinical program and is not published as a single "
-            "annual figure; see the program's tuition page for current rates.",
-            source="Boston University Henry M. Goldman School of Dental Medicine",
-            source_url="https://www.bu.edu/dental/",
-        )
+        return _SDM_POSTDOC_TUITION, _pub_tuition_cost(
+            _SDM_POSTDOC_TUITION,
+            "Published annual tuition for Boston University Henry M. Goldman School of Dental "
+            "Medicine postdoctoral / advanced-education specialty programs, 2025-26 (one "
+            "uniform rate across specialties). Program-specific instrument, sterilization, "
+            "and research fees are additional.",
+        ) | {"source": _SDM_POSTDOC_SRC, "source_url": _SDM_POSTDOC_SRC_URL}
 
     # Research doctorates (PhD / DSc) — fully funded; published sticker waived → omit-with-reason.
     if (
@@ -5056,6 +5092,8 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.website_url = _website_for(spec)
         p.delivery_format = spec.get("delivery_format", "on_campus")
         p.tracks = spec.get("tracks")
+        p.cip_code = _CIP_BY_SLUG[slug]
+        p.who_its_for = _WHO_BY_SLUG[slug]
         p.application_requirements = _requirements_for(spec)
         p.tuition, p.cost_data = _program_tuition(spec)
         outcomes = dict(_OUTCOMES_BY_SLUG.get(slug, {}))
