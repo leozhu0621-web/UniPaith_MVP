@@ -56,8 +56,14 @@ def upgrade() -> None:
         select(Institution).where(Institution.name == emory_profile.INSTITUTION_NAME)
     )
     if inst is not None:
+        # Only clear DERIVED rows for UNCLAIMED programs — backfill_program_preferences
+        # skips claimed programs, so deleting a claimed program's row here would strand it
+        # without preference data (authority precedence: never touch first-party rows).
         prog_ids = session.scalars(
-            select(Program.id).where(Program.institution_id == inst.id)
+            select(Program.id).where(
+                Program.institution_id == inst.id,
+                Program.is_claimed.is_(False),
+            )
         ).all()
         if prog_ids:
             session.execute(
