@@ -155,3 +155,45 @@ def test_michigan_catalog_has_no_frame_stripped_shared_body():
         f"Michigan credential siblings share a frame-stripped body on "
         f"{len(shared)} field(s): {shared[:8]}{' …' if len(shared) > 8 else ''}"
     )
+
+
+def test_cip_code_full_coverage():
+    """Matcher-core CIP join key (REPAIR_BACKLOG #1): every program resolves a
+    standard IPEDS CIP-2020 4-digit code — catalog-wide, no guesses, no null."""
+    import re
+
+    missing = [p["slug"] for p in m.PROGRAMS if not p.get("cip")]
+    assert not missing, f"programs missing cip_code: {missing[:10]}"
+    bad = sorted({p["cip"] for p in m.PROGRAMS if not re.fullmatch(r"\d{2}\.\d{4}", p["cip"])})
+    assert not bad, f"non-CIP-2020 codes: {bad}"
+
+
+def test_who_its_for_full_coverage_no_hard_null():
+    """who_its_for is a universal depth field (REPAIR_BACKLOG #4) — filled on every
+    program, never the literal ``= None`` hard-null that regresses on re-apply."""
+    import pathlib
+
+    missing = [p["slug"] for p in m.PROGRAMS if not m._who_for(p["slug"], p["degree_type"])]
+    assert not missing, f"programs with empty who_its_for: {missing[:10]}"
+    src = pathlib.Path(m.__file__).read_text()
+    for field in ("who_its_for", "highlights", "tracks"):
+        assert f"p.{field} = None" not in src, f"hard-null p.{field} = None must be removed"
+
+
+def test_public_tuition_scalar_is_non_resident():
+    """Public-university budget signal (REPAIR_BACKLOG #2): the matcher scalar
+    ``p.tuition`` is the NON-RESIDENT rate while cost_data keeps the resident basis
+    and the breakdown carries BOTH residencies."""
+    for nm in (
+        "Bachelor of Arts in Economics",
+        "Master of Science in Data Science",
+        "Master of Business Administration",
+    ):
+        spec = next((p for p in m.PROGRAMS if p["program_name"] == nm), None)
+        if spec is None:
+            continue
+        scalar, cost = m._program_tuition(spec)
+        bd = cost["breakdown"]
+        assert bd["tuition_in_state"] and bd["tuition_out_of_state"]
+        assert scalar == bd["tuition_out_of_state"], f"{nm}: scalar must be non-resident"
+        assert cost["tuition_usd"] == bd["tuition_in_state"], f"{nm}: cost card resident basis"
