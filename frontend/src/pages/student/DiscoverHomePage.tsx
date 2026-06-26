@@ -36,12 +36,16 @@ interface DiscoverHomePageProps {
    *  Forwarded to UniConversation only in chatTabMode. */
   chatSessionId?: string | null
   conversationSessionId?: string | null
+  /** Launchpad hand-off: the student's first typed message, sent as the opening
+   *  turn in chat-tab mode. Same effect as ?prefill= but passed via props. */
+  initialMessage?: string
 }
 
 export default function DiscoverHomePage({
   chatTabMode = false,
   chatSessionId = null,
   conversationSessionId = null,
+  initialMessage,
 }: DiscoverHomePageProps) {
   const [profileOpen, setProfileOpen] = useState(false)
   const [journeySheetOpen, setJourneySheetOpen] = useState(false)
@@ -53,7 +57,7 @@ export default function DiscoverHomePage({
   // refresh / back-nav doesn't silently re-ask. UniConversation sends it as the
   // opening student turn once the session resolves.
   const [searchParams, setSearchParams] = useSearchParams()
-  const [prefill] = useState(() => searchParams.get('prefill') || undefined)
+  const [prefill] = useState(() => initialMessage || searchParams.get('prefill') || undefined)
   useEffect(() => {
     if (!searchParams.has('prefill')) return
     const next = new URLSearchParams(searchParams)

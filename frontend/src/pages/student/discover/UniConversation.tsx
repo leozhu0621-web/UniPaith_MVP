@@ -433,7 +433,7 @@ export default function UniConversation({
     const q = prefill?.trim()
     if (!q) return
     if (sessionsLoading) return // wait for the active session to resolve
-    if (resolvedSessionId && !detail) return // wait for its messages to load
+    if (!boundToChat && resolvedSessionId && !detail) return // wait for the global thread's messages (bound chat sessions use their own thread, so don't block on it)
     if (streaming || turnMut.isPending) return // don't fight an in-flight turn
     prefillFired.current = true
     openerFired.current = true // Uni answers the question instead of the greeting
@@ -490,7 +490,7 @@ export default function UniConversation({
     if (openerFired.current) return
     if (prefill?.trim() && !prefillFired.current) return // let the prefill drive, not a greeting
     if (sessionsLoading) return // wait for the active session to resolve
-    if (resolvedSessionId && !detail) return // wait for its messages to load
+    if (!boundToChat && resolvedSessionId && !detail) return // wait for the global thread's messages (bound chat sessions use their own thread, so don't block on it)
     if (!isEmpty || streaming || turnMut.isPending) return
     if (!canStream) return // reduced-motion / no-stream → static greeting stands
     openerFired.current = true

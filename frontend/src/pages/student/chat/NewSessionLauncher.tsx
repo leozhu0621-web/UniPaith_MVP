@@ -27,7 +27,7 @@
  * pipeline); this slice only provides the affordance.
  */
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, ArrowUp, BookOpen, List, Scale, Compass, Flag, Heart, Calendar, Users } from "lucide-react";
 import { getChatTemplates, type ChatTemplate } from "../../../api/chatTemplates";
@@ -48,7 +48,7 @@ interface Props {
   /** Called when a session is started (created or re-opened).
    *  originKind and originRef are forwarded for template sessions so the shell
    *  can route to TemplateRunner. */
-  onSessionStart: (sessionId: string, originKind?: string, originRef?: string) => void;
+  onSessionStart: (sessionId: string, originKind?: string, originRef?: string, initialMessage?: string) => void;
 }
 
 // ── Stage labels for template grouping ────────────────────────────────────
@@ -382,12 +382,25 @@ export default function NewSessionLauncher({ recentSession, onSessionStart }: Pr
     .slice(0, 2);
 
   const qc = useQueryClient();
+  // Carries the student's typed message from handleSubmit through the async
+  // createSession into onSuccess, so the opening turn is actually sent — not just
+  // used as the session title. Null for card/template picks (those greet).
+  const pendingMessage = useRef<string | null>(null);
   const createMut = useMutation({
     mutationFn: createSession,
     onSuccess: (s: ChatSession, vars) => {
       // Refresh the rail so the newly named + auto-filed session appears.
       void qc.invalidateQueries({ queryKey: ["chat-tree"] });
-      onSessionStart(s.id, vars.origin_kind, vars.origin_ref ?? undefined);
+      onSessionStart(
+        s.id,
+        vars.origin_kind,
+        vars.origin_ref ?? undefined,
+        pendingMessage.current ?? undefined,
+      );
+      pendingMessage.current = null;
+    },
+    onError: () => {
+      pendingMessage.current = null;
     },
   });
 
@@ -403,6 +416,9 @@ export default function NewSessionLauncher({ recentSession, onSessionStart }: Pr
     const text = inputValue.trim();
     if (!text || createMut.isPending) return;
     setInputValue("");
+    // The typed text is the student's first turn — carry it so the conversation
+    // actually sends it (the session title is derived from it too).
+    pendingMessage.current = text;
     startSession(text);
   }
 

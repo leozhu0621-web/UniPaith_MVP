@@ -34,6 +34,9 @@ interface ActiveSession {
   id: string;
   originKind: string;
   originRef?: string;
+  /** The student's first typed message from the launcher, sent as the opening
+   *  turn once the conversation mounts (not just used as the session title). */
+  initialMessage?: string;
 }
 
 export default function ChatTabShell() {
@@ -98,8 +101,8 @@ export default function ChatTabShell() {
 
   /** Called by NewSessionLauncher — carries origin metadata for template sessions. */
   const handleSessionStart = useCallback(
-    (id: string, originKind?: string, originRef?: string) => {
-      setActiveSession({ id, originKind: originKind ?? "manual", originRef });
+    (id: string, originKind?: string, originRef?: string, initialMessage?: string) => {
+      setActiveSession({ id, originKind: originKind ?? "manual", originRef, initialMessage });
     },
     [],
   );
@@ -161,8 +164,8 @@ export default function ChatTabShell() {
           /* New-session launcher */
           <NewSessionLauncher
             recentSession={recentSession}
-            onSessionStart={(id, originKind, originRef) =>
-              handleSessionStart(id, originKind, originRef)
+            onSessionStart={(id, originKind, originRef, initialMessage) =>
+              handleSessionStart(id, originKind, originRef, initialMessage)
             }
           />
         ) : activeSession.originKind === "template" && activeSession.originRef ? (
@@ -181,6 +184,7 @@ export default function ChatTabShell() {
               chatTabMode
               chatSessionId={activeSession.id}
               conversationSessionId={activeConversationId}
+              initialMessage={activeSession.initialMessage}
             />
           </div>
         )}
