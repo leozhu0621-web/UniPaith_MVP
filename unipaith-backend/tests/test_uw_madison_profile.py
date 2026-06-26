@@ -185,6 +185,40 @@ def test_matcher_core_tuition_is_published_catalog_wide():
     assert covered == len(p.PROGRAMS)
 
 
+def test_matcher_core_cip_code_catalog_wide():
+    """Every program carries the IPEDS CIP join key (REPAIR_BACKLOG #1) — a catalog-wide
+    null starves the matcher's field/interest signal. The matcher resolves on the 2-digit
+    family, for which the verified IPEDS code is exact (no guess)."""
+    missing = [prog["slug"] for prog in p.PROGRAMS if not prog.get("cip")]
+    assert not missing, f"programs missing cip_code: {missing[:8]}"
+
+
+def test_who_its_for_is_program_distinct():
+    """who_its_for filled on every program (universal depth) AND program-DISTINCT, never a
+    degree-type template (REPAIR_BACKLOG #4). Gold field-specific catalogs are ~1.0."""
+    missing = [prog["slug"] for prog in p.PROGRAMS if not (prog.get("who_its_for") or "").strip()]
+    assert not missing, f"programs missing who_its_for: {missing[:8]}"
+    vals = [prog.get("who_its_for") or "" for prog in p.PROGRAMS]
+    ratio = len(set(vals)) / max(len(vals), 1)
+    assert ratio >= 0.9, f"who_its_for type-gamed: distinct/total {ratio:.2f} < 0.9"
+
+
+def test_public_tuition_scalar_is_non_resident():
+    """A public flagship's matcher tuition scalar must be the NON-RESIDENT (out-of-state)
+    rate for the national/international applicant pool, with BOTH rates in the breakdown
+    (REPAIR_BACKLOG #2). The resident rate as the lone scalar under-fires the budget veto."""
+    for spec in p.PROGRAMS:
+        scalar, cost = p._program_tuition(spec)
+        bd = (cost or {}).get("breakdown") or {}
+        oos = bd.get("tuition_out_of_state")
+        ins = bd.get("tuition_in_state")
+        if oos is None or ins is None or oos == ins:
+            continue  # PhD (funded 0), online flat-rate, or single published rate
+        assert scalar == oos, (
+            f"{spec['slug']} scalar {scalar} != out-of-state {oos} (shipped resident rate)"
+        )
+
+
 def test_graduate_tiers_carry_published_tuition():
     """Whole graduate tiers at 0% is matcher starvation — each tier must be filled."""
     from collections import Counter
