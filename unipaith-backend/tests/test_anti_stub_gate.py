@@ -108,6 +108,16 @@ CERTIFIED_CLEAN = [
     #             verified gallery; published 2025-26 tuition (undergrad 100%, JD/MD/MBA/LLM,
     #             McCourt + GSAS per-credit) with per-credit grad rows omitted-with-reason
     #             (georgetownprof1)
+    "uva",  # institution seed (5 empty-desc stubs) → gold + verified 100-program catalog across
+    #             the twelve degree-granting schools (College of Arts & Sciences, Engineering,
+    #             McIntire Commerce, Architecture, Nursing, Education & Human Development, Data
+    #             Science, Batten, Darden, Law, Medicine, Graduate School of Arts & Sciences);
+    #             conferred B.A./B.S./M.B.A./J.D./M.D. names, real owning departments,
+    #             field-specific per-program descriptions, cip_code + who_its_for on every row,
+    #             working UVA school RSS feeds, 5-photo verified gallery, published 2025-26
+    #             tuition per tier (undergrad non-resident scalar, BoV flat grad/professional
+    #             rates, per-credit grad omitted-with-reason, funded PhDs), sourced reviews on
+    #             Darden MBA / JD / MD / McIntire Commerce / Batten MPP / Data Science MS (uvaprof1)
     # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
     # junk; re-added after stanfordprof11 regeneration matching Michigan/UW repair model.
 ]
@@ -180,7 +190,7 @@ _FRAME_STRIPPED_CLEAN = [
     "mit", "rice", "uf", "usc", "uw_madison", "jhu", "uiuc", "uw", "harvard", "nyu",
     "ut_austin", "columbia", "michigan", "duke", "georgia_tech", "ucla", "berkeley",
     "stanford",     "penn", "cornell", "notre_dame", "bu", "vanderbilt", "ucsd",
-    "dartmouth", "georgetown", "washu",
+    "dartmouth", "georgetown", "washu", "uva",
 ]
 
 
@@ -210,7 +220,7 @@ def test_credential_siblings_have_no_frame_stripped_shared_body(name: str):
 _ABS_FLOOR_CLEAN = [
     "nyu", "mit", "columbia", "michigan", "ucla", "jhu", "berkeley", "uf", "stanford",
     "penn", "cornell", "ut_austin", "notre_dame", "bu", "vanderbilt", "ucsd", "dartmouth",
-    "georgetown", "washu",
+    "georgetown", "washu", "uva",
 ]
 
 
