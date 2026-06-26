@@ -15,7 +15,7 @@ import { SkeletonCard } from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { confirmDialog } from '../../stores/confirm-store'
 import { daysUntil, DeadlinePill } from '../../utils/deadline'
-import { UserCheck, Plus, Pencil, Trash2, Send, Mail } from 'lucide-react'
+import { UserCheck, Plus, Pencil, Trash2, Send, Mail, Check } from 'lucide-react'
 import type { RecommendationRequest } from '../../types'
 
 const STATUS_CONFIG: Record<string, { label: string; variant: string }> = {
@@ -228,6 +228,25 @@ export default function RecommendationsPage() {
                         loading={sendMut.isPending}
                       >
                         <Send size={12} className="mr-1" /> Nudge
+                      </Button>
+                    )}
+                    {isOut && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        aria-label={`Mark ${rec.recommender_name}'s letter received`}
+                        onClick={async () => {
+                          const ok = await confirmDialog({
+                            title: 'Mark this letter received?',
+                            body: `Confirm that ${rec.recommender_name}'s recommendation letter is in. This closes the loop and counts toward your readiness.`,
+                            confirmLabel: 'Mark received',
+                          })
+                          if (!ok) return
+                          updateMut.mutate({ id: rec.id, data: { status: 'received' } })
+                        }}
+                        loading={updateMut.isPending}
+                      >
+                        <Check size={12} className="mr-1" /> Mark received
                       </Button>
                     )}
                     <Button size="sm" variant="ghost" aria-label={`Edit request for ${rec.recommender_name}`} onClick={() => { setEditItem(rec); setShowModal(true) }}><Pencil size={12} /></Button>
