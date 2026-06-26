@@ -282,6 +282,11 @@ class ChecklistService:
         resume_status = self._resume_done(resume)
         rec_status = self._recs_done(recs, rec_required)
         doc_types = {d.document_type for d in profile.documents}
+        # Inputs for satisfying institution-named document / test_score items that
+        # the student's coarse upload types can't name (see the override below).
+        uploaded_doc_count = len(profile.documents)
+        doc_seen = 0
+        test_types = {s.test_type for s in profile.test_scores}
 
         if published:
             # Institution-published requirement checklist drives the rest (§5).
@@ -293,6 +298,46 @@ class ChecklistService:
                 status = self._published_status(
                     pi, doc_types, essay_status, resume_status, rec_status
                 )
+                # An institution publishes free-text document / test_score items
+                # ("Statement of Purpose", "GRE Scores"); the student's uploads use
+                # 6 coarse types and `_published_status` only exact-matches those,
+                # so a real upload/score never satisfied a named item and the
+                # student was wrongly told "missing" + blocked from submitting.
+                # Fill those two gaps from what's actually on file.
+                if pi.category == "document" and status != "completed":
+                    slug = pi.item_name.lower().replace(" ", "_")
+                    if not ("resume" in slug or "cv" in slug):
+                        # Credit each generic document requirement from the pool of
+                        # uploaded documents in order — N uploads satisfy the first
+                        # N items (no false-complete-all on a single upload).
+                        status = "completed" if doc_seen < uploaded_doc_count else "not_started"
+                        doc_seen += 1
+                elif pi.category == "test_score":
+                    name_l = (pi.item_name or "").lower()
+                    mentioned = [
+                        t
+                        for t in (
+                            "gre",
+                            "gmat",
+                            "toefl",
+                            "ielts",
+                            "sat",
+                            "act",
+                            "lsat",
+                            "mcat",
+                            "duolingo",
+                        )
+                        if t in name_l
+                    ]
+                    if mentioned:
+                        status = (
+                            "completed"
+                            if any(t in test_types for t in mentioned)
+                            else "not_started"
+                        )
+                    elif test_types:
+                        # Generic "Test Scores" requirement, any score on file.
+                        status = "completed"
                 items.append(
                     self._item(
                         key=f"prog_{pi.id}",
