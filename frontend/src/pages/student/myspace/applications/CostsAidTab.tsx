@@ -132,7 +132,7 @@ export default function CostsAidTab() {
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <Badge variant="neutral">{s.scholarship_type.replace(/_/g, ' ')}</Badge>
-                  <span className="text-sm font-semibold text-foreground">{formatCurrency(s.award_estimate)}</span>
+                  <span className="text-sm font-semibold text-foreground">{s.award_estimate > 0 ? formatCurrency(s.award_estimate) : 'Amount varies'}</span>
                 </div>
               </div>
             ))}

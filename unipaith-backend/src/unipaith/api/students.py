@@ -1503,42 +1503,60 @@ class ScholarshipMatchItem(BaseModel):
     scholarship_type: str
 
 
+def _parse_award_amount(text: str | None) -> float:
+    """External ``award_amount`` is verbatim source text ("$1,000 $5,000", "Up to
+    $10,000", "Varies") — never parsed at ingest (Spec §Data). Pull the largest
+    dollar figure as a ranking estimate; 0 when none parses, in which case the UI
+    shows "Amount varies" rather than "$0"."""
+    if not text:
+        return 0.0
+    import re
+
+    vals: list[float] = []
+    for raw in re.findall(r"\$\s*([\d,]+(?:\.\d{1,2})?)", text):
+        try:
+            v = float(raw.replace(",", ""))
+        except ValueError:
+            continue
+        if v >= 100:  # ignore stray small numbers that aren't award sizes
+            vals.append(v)
+    return max(vals) if vals else 0.0
+
+
 @router.get("/me/scholarships/match", response_model=list[ScholarshipMatchItem])
 async def match_my_scholarships(
     user: User = Depends(require_student),
     db: AsyncSession = Depends(get_db),
     limit: int = Query(20, ge=1, le=100),
 ):
-    """Spec 70 §3 — scholarships this student may qualify for, ranked by award.
+    """Spec 70 §3 — scholarships this student may qualify for, drawn from the
+    seeded external-scholarship catalog and ranked toward the student's field of
+    study + level, then by award size.
 
-    Best-effort: a thin profile still surfaces broadly-eligible awards — an
-    unknown student field doesn't eliminate an award, only a verified mismatch
-    does (see `financial_fit.scholarship_eligibility`). Deterministic; no LLM.
+    Repointed from the structured ``scholarships`` reference table, which has no
+    production writer (only ``external_scholarships`` is seeded — CareerOneStop),
+    so the previous implementation always returned []. ``matches_for_student``
+    already powers the Explore › Resources list and derives the student's field +
+    level, so this also supplies the field relevance the old ctx-builder never
+    did. Deterministic; no LLM.
     """
-    from unipaith.services.financial_fit import FinancialFitService
+    from unipaith.services.scholarship_service import ScholarshipService
 
-    svc = _svc(db)
-    profile = await svc._get_student_profile(user.id)
-    records = await svc.list_academic_records(profile.id)
-    ctx: dict = {}
-    gpas = [float(r.gpa) for r in records if r.gpa is not None]
-    if gpas:
-        ctx["gpa"] = max(gpas)
-    if profile.country_of_residence:
-        ctx["country"] = profile.country_of_residence
-    if records and records[-1].degree_type:
-        ctx["degree_level"] = records[-1].degree_type
-    matches = await FinancialFitService(db).find_scholarships(ctx, limit=limit)
-    return [
+    rows = await ScholarshipService(db).matches_for_student(user.id, limit=limit)
+    items = [
         ScholarshipMatchItem(
-            scholarship_id=str(m.scholarship_id),
-            name=m.name,
-            award_estimate=m.award_estimate,
-            reasons=m.reasons,
-            scholarship_type=m.scholarship_type,
+            scholarship_id=str(s.id),
+            name=s.name,
+            award_estimate=_parse_award_amount(s.award_amount),
+            reasons=[r for r in (s.level_of_study, s.organization) if r],
+            scholarship_type=(s.award_type or "external"),
         )
-        for m in matches
+        for s in rows
     ]
+    # "ranked by award" — biggest parseable awards first; unparseable (0) sink to
+    # the bottom but still surface (the UI labels them "Amount varies").
+    items.sort(key=lambda m: m.award_estimate, reverse=True)
+    return items
 
 
 class ProbabilityBandsResponse(BaseModel):

@@ -51,7 +51,7 @@ export default function ScholarshipsPeek({ className }: { className?: string }) 
               {s.reasons.length > 0 && <p className="truncate text-xs text-muted-foreground">{s.reasons.join(' · ')}</p>}
             </div>
             {s.scholarship_type && <Badge variant="neutral">{formatType(s.scholarship_type)}</Badge>}
-            <span className="shrink-0 text-sm font-semibold text-foreground">{formatCurrency(s.award_estimate)}</span>
+            <span className="shrink-0 text-sm font-semibold text-foreground">{s.award_estimate > 0 ? formatCurrency(s.award_estimate) : 'Amount varies'}</span>
           </button>
         ))}
       </div>

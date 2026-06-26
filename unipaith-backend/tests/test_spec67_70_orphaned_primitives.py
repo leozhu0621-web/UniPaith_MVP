@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.models.institution import Institution, Program
 from unipaith.models.matching import MatchResult
-from unipaith.models.reference import Scholarship
+from unipaith.models.scholarship import Scholarship
 from unipaith.models.student import StudentDataConsent, StudentProfile
 from unipaith.models.user import User, UserRole
 from unipaith.services.learning_loop import LearningLoopService
@@ -61,15 +61,17 @@ async def test_scholarship_match_endpoint_returns_eligible(
     student_client: AsyncClient, db_session: AsyncSession, mock_student_user: User
 ):
     await _profile(db_session, mock_student_user)
+    # The endpoint now draws from the seeded external-scholarship catalog (the
+    # structured `scholarships` reference table has no prod writer), so seed there.
     db_session.add(
         Scholarship(
+            external_id=f"open-{uuid4().hex[:6]}",
             name="Open Award",
-            slug=f"open-{uuid4().hex[:6]}",
-            scholarship_type="external",
-            amount_min=2000,
-            amount_max=4000,
-            eligibility={},  # no restrictions → everyone is eligible
-            status="live",
+            organization="Open Fund",
+            level_of_study="Graduate",
+            award_type="external",
+            award_amount="$3,000",  # verbatim text → parsed to a 3000 estimate
+            source="careeronestop",
         )
     )
     await db_session.commit()
