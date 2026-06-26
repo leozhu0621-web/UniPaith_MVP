@@ -16,6 +16,7 @@ from unipaith.core.exceptions import (
     NotFoundException,
     PaymentRequiredException,
 )
+from unipaith.core.s3 import s3_client
 from unipaith.models.application import (
     Application,
     ApplicationSubmission,
@@ -1771,6 +1772,10 @@ class ApplicationService:
                 }
                 for a in profile.activities
             ],
+            # Only freeze documents whose file actually landed in storage — a
+            # requested-but-never-uploaded slot otherwise enters the submission as
+            # a phantom the institution can't open. head_object is robust (bool,
+            # never raises), so this can't 5xx the submit.
             "documents": [
                 {
                     "document_type": d.document_type,
@@ -1778,6 +1783,7 @@ class ApplicationService:
                     "file_url": d.file_url,
                 }
                 for d in profile.documents
+                if d.file_url and s3_client.head_object(d.file_url)
             ],
             "essays": [
                 {
