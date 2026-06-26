@@ -4564,25 +4564,6 @@ _MASTER_COST_TABLE: list[tuple[str, int, str, str, str, str]] = [
         "UCLA Law — Master of Legal Studies Tuition & Scholarships",
         "https://law.ucla.edu/admissions/master-legal-studies/mls-tuition-and-scholarships",
     ),
-    # — School of Education and Information Studies (academic state-supported master's) —
-    *[
-        (
-            slug, 21_115, "2024-25",
-            f"{label} — standard UCLA academic graduate tuition & fees, California resident "
-            "($21,115/year; 2024-25; SEIS publishes no self-supporting/PDST supplement for this "
-            "academic master's).",
-            "UCLA Graduate Programs — Tuition & Student Fees",
-            "https://grad.ucla.edu/funding/tuition/",
-        )
-        for slug, label in [
-            ("ucla-master-of-education-ms", "Master of Education (M.Ed.)"),
-            ("ucla-education-ms", "Master of Education in Education (M.Ed.)"),
-            (
-                "ucla-master-of-library-and-information-science-ms",
-                "Master of Library and Information Science (M.L.I.S.)",
-            ),
-        ]
-    ],
     # — College of Letters and Science (self-supporting applied master's) —
     (
         "ucla-master-of-applied-chemical-sciences-ms", 39_744, "2025-26",
@@ -4692,6 +4673,22 @@ _PROFESSIONAL_MASTER_RE = re.compile(
 
 def _is_professional_master(spec: dict) -> bool:
     return bool(_PROFESSIONAL_MASTER_RE.search(spec.get("program_name") or ""))
+
+
+# A few academic state-supported master's carry a professional designation (M.Ed. / M.L.I.S.)
+# that ``_PROFESSIONAL_MASTER_RE`` matches, yet SEIS publishes NO self-supporting / PDST
+# supplement for them — they bill at the standard UCLA academic graduate rate (resident
+# $21,115 / non-resident $36,297). They therefore take the academic-graduate cost (the
+# NON-RESIDENT scalar + both-rate breakdown), exactly like a research M.S./M.A., rather than a
+# flat professional override that would pin ``program.tuition`` at the resident rate and
+# under-fire the budget veto for the non-resident / international pool (Codex review on #1181).
+_ACADEMIC_RATE_MASTER_SLUGS = frozenset(
+    {
+        "ucla-master-of-education-ms",
+        "ucla-education-ms",
+        "ucla-master-of-library-and-information-science-ms",
+    }
+)
 
 
 # Self-supporting master's degrees bill on a distinct (often per-course) schedule, NOT the
@@ -5190,7 +5187,10 @@ def _cost_for(spec: dict) -> tuple[int | None, dict]:
         if name.startswith("Doctor of Philosophy") or "(Ph.D.)" in name:
             return 0, _phd_funded_cost()
         return None, _grad_cost_fallback(spec)
-    if dt == "masters" and not _is_professional_master(spec) and not _is_self_supporting_master(spec):
+    if dt == "masters" and (
+        spec.get("slug") in _ACADEMIC_RATE_MASTER_SLUGS
+        or (not _is_professional_master(spec) and not _is_self_supporting_master(spec))
+    ):
         return _TUITION_GRAD_OOS, _grad_academic_cost()
     if dt == "certificate" and spec.get("delivery_format") != "online":
         return _TUITION_GRAD_OOS, _grad_academic_cost()
