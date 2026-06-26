@@ -2558,11 +2558,19 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
             "School of Dental Medicine). Fees and living expenses are additional.",
         )
 
-    # SDM advanced-education (postdoctoral specialty MS / certificate / clinical doctorate)
-    # — BU publishes ONE uniform annual tuition across all specialty programs (verified
-    # against the BUMC OSFS postdoctoral cost of attendance), so it is the program's real
-    # published rate, not a guess. (The fully-funded MD/PhD path is handled above.)
-    if sk == "SDM":
+    # SDM advanced-education specialty MASTER'S (incl. combined CAGS/MSD rows) — BU publishes
+    # ONE uniform annual tuition for postdoctoral specialty study (verified against the BUMC
+    # OSFS postdoctoral cost of attendance), so the billed specialty master's carries its real
+    # published rate, not a guess (clears REPAIR_BACKLOG #3's master's null residual). Scoped
+    # to master's-level study: the master's tier AND the combined CAGS/MSD rows that award an
+    # MSD (Master of Science in Dentistry) but are filed under the certificate bucket (slug
+    # carries "msd"). SDM research doctorates (Oral Biology PhD, DScD) are funded and fall to
+    # the research-doctorate omit below; pure CAGS certificates fall to the per-credit
+    # certificate omit — so a funded/per-credit row is never inflated with the billed rate.
+    if sk == "SDM" and (
+        dtype == "masters"
+        or (dtype == "certificate" and "msd" in spec.get("slug", "").lower())
+    ):
         return _SDM_POSTDOC_TUITION, _pub_tuition_cost(
             _SDM_POSTDOC_TUITION,
             "Published annual tuition for Boston University Henry M. Goldman School of Dental "
