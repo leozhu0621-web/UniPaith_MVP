@@ -313,17 +313,13 @@ class DiscoveryService:
                     extraction=extraction,
                 )
             except ConsentDeniedError:
+                # Best-effort: a consent denial (e.g. analytics off / trial lapsed)
+                # must not crash the turn — skip enrichment, keep the reply. Genuine
+                # provider outages still propagate to the rule_based fallback below.
                 logger.info(
                     "Extractor consent-denied for session=%s — skipping signal "
                     "extraction; the conversation continues normally.",
                     session.id,
-                )
-            except Exception:
-                logger.warning(
-                    "Extractor failed for session=%s — skipping signal extraction; "
-                    "the conversation continues.",
-                    session.id,
-                    exc_info=True,
                 )
 
             # 3. Build snapshot from the session's accumulated extractions.
@@ -776,17 +772,13 @@ class DiscoveryService:
                     extraction=extraction,
                 )
             except ConsentDeniedError:
+                # Best-effort: a consent denial (e.g. analytics off / trial lapsed)
+                # must not crash the turn — skip enrichment, keep the reply. Genuine
+                # provider outages still propagate to the rule_based fallback below.
                 logger.info(
                     "Extractor consent-denied for session=%s — skipping signal "
                     "extraction; the conversation continues normally.",
                     session.id,
-                )
-            except Exception:
-                logger.warning(
-                    "Extractor failed for session=%s — skipping signal extraction; "
-                    "the conversation continues.",
-                    session.id,
-                    exc_info=True,
                 )
 
             history = await self._load_extracted_signals_for_session(session.id)
