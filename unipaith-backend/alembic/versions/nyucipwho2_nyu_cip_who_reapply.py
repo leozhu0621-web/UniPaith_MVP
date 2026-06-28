@@ -1,22 +1,13 @@
-"""NYU matcher-core cip_code + program-distinct who_its_for.
+"""NYU cip/who re-apply after nyucipwho1 migration bug fix.
 
-Re-applies ``nyu_profile.apply()`` after wiring two matcher fields the base NYU catalog
-shipped wrong (REPAIR_BACKLOG #1 + #4a, SKILL miss #2 + miss #8):
+The initial ``nyucipwho1`` migration referenced ``Program.claimed`` (nonexistent) after
+``nyu_profile.apply()``, which raised ``AttributeError`` and caused the deploy entrypoint's
+alembic retry/stamp recovery to mark ``nyucipwho1`` applied WITHOUT running the data write.
+This re-applies ``nyu_profile.apply()`` with the corrected preference backfill (``is_claimed``)
+so all 502 NYU programs receive ``cip_code`` + ``who_its_for`` live.
 
-  * ``cip_code`` — the CIP join key the CPEF matcher resolves to ``ref_majors`` + the
-    field-66 vocabulary. All 502 programs shipped null, scoring field-blind. This stamps
-    the verified NCES CIP family per program from ``nyu_cip_who`` — no code invented.
-  * ``who_its_for`` — a universal depth field, now program-DISTINCT (distinct/total ≈
-    1.0): every program carries a field-specific audience statement grounded in its real
-    field + credential level, replacing the prior hard-null in apply() (#4a).
-
-Because the populated ``cip_code`` / ``who_its_for`` change the program-side match signal,
-the unclaimed ``source="derived"`` ProgramPreference rows are re-derived and any cached
-MatchResult rows for NYU programs are marked stale so GET /me/matches rescores against
-the corrected data. Direct apply (no lock-bounded skip).
-
-Revision ID: nyucipwho1
-Revises: harvardcipwho1
+Revision ID: nyucipwho2
+Revises: nyucipwho1
 Create Date: 2026-06-28
 """
 
@@ -31,8 +22,8 @@ from unipaith.models.institution import Institution, Program, ProgramPreference
 from unipaith.models.matching import MatchResult
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
-revision = "nyucipwho1"
-down_revision = "harvardcipwho1"
+revision = "nyucipwho2"
+down_revision = "nyucipwho1"
 branch_labels = None
 depends_on = None
 
