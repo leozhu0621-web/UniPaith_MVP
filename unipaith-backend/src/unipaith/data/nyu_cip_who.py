@@ -12,6 +12,8 @@ import re
 
 from unipaith.data import bu_cip_who as _bu
 
+# ruff: noqa: E501
+
 LEVEL_TAIL = _bu.LEVEL_TAIL
 
 def _distinguisher(program_name: str) -> str:

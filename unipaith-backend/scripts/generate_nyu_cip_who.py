@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Generate nyu_cip_who.py — run from unipaith-backend with PYTHONPATH=src."""
+# ruff: noqa: E501
 from __future__ import annotations
 
 import json
@@ -634,6 +635,8 @@ and a field-specific, program-DISTINCT ``who_its_for`` on every row.
         "import re",
         "",
         "from unipaith.data import bu_cip_who as _bu",
+        "",
+        "# ruff: noqa: E501",
         "",
         "LEVEL_TAIL = _bu.LEVEL_TAIL",
         "",
