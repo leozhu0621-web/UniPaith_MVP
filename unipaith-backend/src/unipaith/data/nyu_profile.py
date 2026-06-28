@@ -5712,6 +5712,31 @@ _slug_leaks = sum(
 if _slug_leaks:
     raise ValueError(f"NYU catalog has {_slug_leaks} slug-prefixed descriptions")
 
+from unipaith.data import nyu_cip_who as _nyu_cip_who  # noqa: E402
+
+# Matcher-core cip_code (REPAIR_BACKLOG #1) + program-DISTINCT who_its_for (#4a).
+_CIP_BY_SLUG: dict[str, str] = {}
+_WHO_BY_SLUG: dict[str, str] = {}
+_cipwho_uncovered: list[str] = []
+for _spec in PROGRAMS:
+    _cip, _who = _nyu_cip_who.resolve(_spec["program_name"], _spec["degree_type"])
+    if not _cip or not _who:
+        _cipwho_uncovered.append(_spec["program_name"])
+        continue
+    _CIP_BY_SLUG[_spec["slug"]] = _cip
+    _WHO_BY_SLUG[_spec["slug"]] = _who
+if _cipwho_uncovered:
+    raise RuntimeError(
+        f"New York University cip_code/who_its_for uncovered on {len(_cipwho_uncovered)} "
+        f"rows; nyu_cip_who lacks: {_cipwho_uncovered[:12]}"
+    )
+_who_ratio = len(set(_WHO_BY_SLUG.values())) / len(_WHO_BY_SLUG)
+if _who_ratio < 0.9:
+    raise RuntimeError(
+        f"New York University who_its_for type-gamed: distinct/total {_who_ratio:.2f} < 0.9 "
+        "(field-specific statements required, not a one-per-degree-type template)"
+    )
+
 # Anti-stub gate: certified via tests/test_anti_stub_gate.py (CERTIFIED_CLEAN registry).
 
 # Per-program keywords (program/department-naming terms) so the shared school channel is filtered
@@ -6743,7 +6768,8 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
         p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
-        p.who_its_for = None
+        p.cip_code = _CIP_BY_SLUG[slug]
+        p.who_its_for = _WHO_BY_SLUG[slug]
         p.highlights = None
         p.application_deadline = None
     session.flush()

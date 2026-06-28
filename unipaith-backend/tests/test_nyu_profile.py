@@ -66,6 +66,8 @@ def _program_snapshot(spec: dict) -> dict:
         "description_text": spec["description"],
         "website_url": spec["website"],
         "department": spec.get("department"),
+        "cip_code": n._CIP_BY_SLUG.get(slug),
+        "who_its_for": n._WHO_BY_SLUG.get(slug),
         "tracks": None,
         "application_requirements": n._requirements_for(spec),
         "cost_data": cost,
