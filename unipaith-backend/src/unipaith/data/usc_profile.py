@@ -6221,6 +6221,31 @@ def _assert_anti_stub_clean(programs: list[dict]) -> None:
 
 _assert_anti_stub_clean(PROGRAMS)
 
+from unipaith.data import usc_cip_who as _usc_cip_who  # noqa: E402
+
+# Matcher-core cip_code (REPAIR_BACKLOG #1) + program-DISTINCT who_its_for (#4a).
+_CIP_BY_SLUG: dict[str, str] = {}
+_WHO_BY_SLUG: dict[str, str] = {}
+_cipwho_uncovered: list[str] = []
+for _spec in PROGRAMS:
+    _cip, _who = _usc_cip_who.resolve(_spec["program_name"], _spec["degree_type"])
+    if not _cip or not _who:
+        _cipwho_uncovered.append(_spec["program_name"])
+        continue
+    _CIP_BY_SLUG[_spec["slug"]] = _cip
+    _WHO_BY_SLUG[_spec["slug"]] = _who
+if _cipwho_uncovered:
+    raise RuntimeError(
+        f"University of Southern California cip_code/who_its_for uncovered on "
+        f"{len(_cipwho_uncovered)} rows; usc_cip_who lacks: {_cipwho_uncovered[:12]}"
+    )
+_who_ratio = len(set(_WHO_BY_SLUG.values())) / len(_WHO_BY_SLUG)
+if _who_ratio < 0.9:
+    raise RuntimeError(
+        f"University of Southern California who_its_for type-gamed: distinct/total "
+        f"{_who_ratio:.2f} < 0.9 (field-specific statements required, not a one-per-degree-type template)"
+    )
+
 _WEBSITE_OVERRIDE: dict[str, str] = {
     "usc-full-time-mba-program-mba": "https://www.marshall.usc.edu/programs/graduate-programs/mba-programs/full-time-mba",
     "usc-law-jd": "https://gould.usc.edu/academics/degrees/jd/",
@@ -7136,7 +7161,8 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
         p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
-        p.who_its_for = None
+        p.cip_code = _CIP_BY_SLUG[slug]
+        p.who_its_for = _WHO_BY_SLUG[slug]
         p.highlights = None
         p.application_deadline = None
     session.flush()
