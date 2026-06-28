@@ -214,6 +214,27 @@ def test_graduate_tiers_carry_published_tuition():
     assert null_by_dt["diploma"] == 1
 
 
+def test_cip_code_is_complete():
+    """Matcher-core cip_code (REPAIR_BACKLOG #1): every program resolves to a verified NCES
+    CIP family via usc_cip_who (was null fleet-wide → matcher field-blind)."""
+    import re
+
+    uncovered = [s["slug"] for s in u.PROGRAMS if not u._CIP_BY_SLUG.get(s["slug"])]
+    assert not uncovered, f"cip_code uncovered on {len(uncovered)} rows: {uncovered[:8]}"
+    assert len(u._CIP_BY_SLUG) == len(u.PROGRAMS)
+    bad = [c for c in u._CIP_BY_SLUG.values() if not re.fullmatch(r"\d\d\.\d{2,4}", c)]
+    assert not bad, f"malformed CIP codes: {bad[:8]}"
+
+
+def test_who_its_for_is_complete_and_distinct():
+    """who_its_for (REPAIR_BACKLOG #4a) — field-specific, program-DISTINCT audience statements."""
+    whos = [u._WHO_BY_SLUG.get(s["slug"]) for s in u.PROGRAMS]
+    assert all(whos), "who_its_for uncovered on some rows"
+    ratio = len(set(whos)) / len(whos)
+    assert ratio >= 0.95, f"who_its_for type-gamed: distinct/total {ratio:.3f} < 0.95"
+    assert not [w for w in whos if ".." in w], "double-period '..' artifact in who_its_for"
+
+
 def test_professional_tiers_carry_distinct_published_rates():
     """Professional degrees must not all carry the general flat graduate sticker."""
     prof_rates = {
