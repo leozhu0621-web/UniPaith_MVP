@@ -64,6 +64,7 @@ from unipaith.data.profile_catalog_utils import (
     disambiguate_program_name,
     validate_catalog,
 )
+from unipaith.data.yale_cip6 import CIP6_BY_SLUG
 from unipaith.data.yale_field_descriptions import (
     FIELD_ALIASES,
     FIELD_DESCRIPTIONS,
@@ -71,6 +72,7 @@ from unipaith.data.yale_field_descriptions import (
     SLUG_DESCRIPTIONS,
 )
 from unipaith.data.yale_reviews_depth import DEPTH_REVIEWS
+from unipaith.data.yale_who import WHO_BY_SLUG
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
@@ -1813,6 +1815,25 @@ for _p in PROGRAMS:
 
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 
+# ── Matcher-core coverage gates (REPAIR_BACKLOG #1 + #4) ────────────────────
+# Every program must carry a real NCES CIP-2020 code (the field-66 join key the CPEF
+# matcher reads) and a universal, program-DISTINCT who_its_for (never a degree-type
+# template). Fail the build loudly if either is missing, or if who_its_for collapses
+# below ~0.9 distinct/total — the type-gaming guard (gold field-specific catalogs ≈ 1.0).
+_cip_missing = [s for s in PROGRAM_SLUGS if s not in CIP6_BY_SLUG]
+if _cip_missing:
+    raise RuntimeError(f"Yale cip_code missing on {len(_cip_missing)} rows: {_cip_missing[:5]}")
+_who_missing = [s for s in PROGRAM_SLUGS if s not in WHO_BY_SLUG]
+if _who_missing:
+    raise RuntimeError(f"Yale who_its_for missing on {len(_who_missing)} rows: {_who_missing[:5]}")
+_who_vals = [WHO_BY_SLUG[s] for s in PROGRAM_SLUGS]
+_who_ratio = len(set(_who_vals)) / max(len(_who_vals), 1)
+if _who_ratio < 0.9:
+    raise RuntimeError(
+        f"Yale who_its_for type-gamed: distinct/total {_who_ratio:.2f} < 0.9 "
+        "(must be program-distinct)"
+    )
+
 # Full official program names (program-page title).
 _FULL_NAME_BY_SLUG: dict[str, str] = {p["slug"]: p["program_name"] for p in PROGRAMS}
 _SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
@@ -1841,34 +1862,13 @@ _WEBSITE_BY_SLUG: dict[str, str] = {
     "yale-music-mm": "https://music.yale.edu/academics",
 }
 
-# ── Who-it's-for + highlights (catalog baselines) ──────────────────────────
-_WHO_BASELINE = (
-    "Academically exceptional students seeking a research-rich education at a university "
-    "with a famously close undergraduate college, full-need financial aid met without "
-    "loans, and the depth of a major research university."
-)
+# ── Highlights (catalog baselines) ─────────────────────────────────────────
+# ``who_its_for`` is now sourced from the program-DISTINCT WHO_BY_SLUG module
+# (REPAIR_BACKLOG #4 / SKILL miss #8 — universal, field-specific, distinct/total ≈ 1.0),
+# wired in ``_apply_programs``; only the highlights baselines remain here.
 _HL_BASELINE = ["Ivy League", "5:1 student-faculty ratio", "Need-met, no-loan aid"]
-_WHO_GRAD_BASELINE = (
-    "Graduate and professional students seeking a top-ranked Yale degree with the "
-    "resources of a major research university and an internationally recognized faculty."
-)
 _HL_GRAD_BASELINE = ["Top-ranked Yale graduate degree", "World-class faculty", "Ivy League"]
 
-_WHO_BY_SLUG = {
-    "yale-computer-science-bs": (
-        "Technically strong students who want a rigorous computer science education — "
-        "offered as the B.S. or the B.A., with four combined majors — inside Yale's "
-        "liberal-arts college."
-    ),
-    "yale-mba": (
-        "Aspiring leaders seeking an integrated, multidisciplinary two-year MBA that "
-        "bridges business and the broader university and society."
-    ),
-    "yale-music-mm": (
-        "Conservatory-level musicians seeking a tuition-free graduate performance or "
-        "composition degree within a research university."
-    ),
-}
 _HL_BY_SLUG = {
     "yale-computer-science-bs": [
         "B.S. & B.A. tracks",
@@ -2274,11 +2274,43 @@ _COST_BY_SLUG.update({
         ),
         "year": "2025-26",
     },
+    # School of Medicine — Master of Health Science (M.H.S.): published annual budget
+    "yale-master-of-health-science-mhs-ms": {
+        "tuition_usd": 51100,
+        "funded": False,
+        "note": (
+            "Master of Health Science tuition and fees, charged per year (the M.H.S. is a "
+            "two-year research master's; many candidates are funded through their clinical "
+            "or research training programs)."
+        ),
+        "source": "Yale School of Medicine — M.H.S. Degree Student Budget",
+        "source_url": "https://medicine.yale.edu/edu/mhs-degree/financial-aid/budget/",
+        "year": "2025-26",
+    },
+    # School of Public Health — research M.S. pays the GSAS rate: the YSPH catalog states
+    # "M.S. students are required to pay two full years of tuition to the Graduate School
+    # of Arts and Sciences," so the figure is the standard $50,900 full-time GSAS tuition.
+    "yale-master-of-science-in-public-health-ms-ms": {
+        "tuition_usd": _GSAS_MASTERS_TUITION,
+        "funded": False,
+        "note": (
+            "The two-year research M.S. in Public Health is billed at the Graduate School "
+            "of Arts and Sciences full-time rate per the YSPH catalog; research M.S. "
+            "students are commonly supported through assistantships and faculty grants."
+        ),
+        "source": "Yale University Catalog — School of Public Health, Tuition Rates",
+        "source_url": "https://catalog.yale.edu/ysph/tuition-expenses-financial-aid/tuition-rates/",
+        "year": "2025-26",
+    },
     # NOTE: the MBA for Executives (EMBA) is intentionally OMITTED-with-reason — Yale
-    # publishes it as a multi-term total PROGRAM FEE ($224,500 first year / $216,840
-    # second), not a standard annual tuition, so stamping the program fee as one year's
-    # tuition would overstate the annual budget the matcher scores. yale-mba-for-
-    # executives-emba-ms therefore keeps tuition_usd in _standard.omitted (never guessed).
+    # publishes it as a multi-term total PROGRAM FEE ($228,990 total, ~$114,495/yr for the
+    # July-2026 cohort) bundling tuition, materials, meals and residency lodging, not a
+    # standard annual tuition, so stamping the program fee as one year's tuition would
+    # overstate the annual budget the matcher scores. yale-mba-for-executives-emba-ms
+    # therefore keeps tuition_usd in _standard.omitted (never guessed).
+    # NOTE: the M.A.S. in Global Affairs (mid-career, ineligible for Jackson aid) publishes
+    # no single annual tuition figure on any Yale source we could verify, so it likewise
+    # stays OMITTED-with-reason rather than assuming the M.P.P. sticker (never guessed).
     # David Geffen School of Drama — tuition-free since 2021-22
     "yale-master-of-fine-arts-in-drama-mfa-ms": _tuition_free_cost(
         "The David Geffen School of Drama at Yale", *_DRAMA_FREE_SRC
@@ -3267,11 +3299,13 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             outcomes = dict(_OUTCOMES_INSTITUTION)
         outcomes["_standard"] = _program_standard(slug)
         p.outcomes_data = outcomes
+        # Matcher-core: the CIP join key (field-66 / ref_majors) and the universal,
+        # program-DISTINCT who_its_for, both gated to 100% coverage at import time.
+        p.cip_code = CIP6_BY_SLUG[slug]
+        p.who_its_for = WHO_BY_SLUG[slug]
         if spec["degree_type"] == "masters":
-            p.who_its_for = _WHO_BY_SLUG.get(slug) or _WHO_GRAD_BASELINE
             p.highlights = _HL_BY_SLUG.get(slug) or _HL_GRAD_BASELINE
         else:
-            p.who_its_for = _WHO_BY_SLUG.get(slug) or _WHO_BASELINE
             p.highlights = _HL_BY_SLUG.get(slug) or _HL_BASELINE
         # Always assign so a stale value on a pre-existing row is cleared (tracks is
         # recorded as omitted where unverified, and match_service reads program.tracks).

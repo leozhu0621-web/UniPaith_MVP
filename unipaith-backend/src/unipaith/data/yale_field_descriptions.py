@@ -429,8 +429,9 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "work and the Yale School of Architecture's urban-design studios."
     ),
     "Women's, Gender, and Sexuality Studies": (
-        "Yale WGSS examines gender, sexuality, and feminist theory across history, literature, "
-        "and the social sciences with the Women's, Gender, and Sexuality Studies faculty."
+        "Yale WGSS majors complete a 12-course plan, build an individual area of focus, "
+        "and write a senior essay while studying gender and sexuality across intersectional, "
+        "international, and transnational questions."
     ),
 }
 
@@ -595,8 +596,9 @@ GRADUATE_FIELD_DESCRIPTIONS: dict[str, str] = {
         "Science Center."
     ),
     "Women's, Gender, and Sexuality Studies": (
-        "Yale's WGSS Ph.D. supports doctoral research on gender, sexuality, and feminist theory "
-        "across history, literature, and the social sciences."
+        "Yale's combined WGSS Ph.D. pairs doctoral work in Black Studies, American Studies, "
+        "Anthropology, English, or Sociology with WGSS theory, methods, and affiliated-faculty "
+        "committee requirements."
     ),
 }
 
