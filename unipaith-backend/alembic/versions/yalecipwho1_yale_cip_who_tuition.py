@@ -23,7 +23,7 @@ cached MatchResult rows for Yale programs are marked stale so GET /me/matches re
 against the corrected data. Direct apply (no lock-bounded skip); verify-live on content.
 
 Revision ID: yalecipwho1
-Revises: harvardcipwho1
+Revises: usccipwho1
 Create Date: 2026-06-26
 """
 
@@ -39,7 +39,7 @@ from unipaith.models.matching import MatchResult
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "yalecipwho1"
-down_revision = "harvardcipwho1"
+down_revision = "usccipwho1"
 branch_labels = None
 depends_on = None
 
