@@ -1859,6 +1859,1110 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
 }
 
 
+# ── Depth-pass reviews (2026-06-12): coverable programs across SCS, Robotics, ──
+# ── Engineering/INI, Heinz, Tepper, and CFA. Aggregated + cited; never quoted. ─
+_DISC = (
+    "Aggregated and paraphrased from public third-party sources — not individual "
+    "verbatim reviews."
+)
+_SRC_USNEWS_GRAD_2026 = {
+    "label": "U.S. News — CMU No. 1 in six 2026 Best Graduate Schools categories",
+    "url": (
+        "https://www.cmu.edu/news/stories/archives/2026/april/"
+        "cmu-ranks-no-1-in-2026-us-news-graduate-rankings"
+    ),
+}
+_SRC_CSD_GRAD = {
+    "label": "CMU Computer Science Department — tops U.S. News graduate CS rankings",
+    "url": "https://www.csd.cs.cmu.edu/news/cmu-tops-us-news-graduate-cs-rankings",
+}
+_SRC_USNEWS_UG_2025 = {
+    "label": "U.S. News — CMU No. 1 in five undergraduate specialties (2025 Best Colleges)",
+    "url": (
+        "https://www.cmu.edu/news/stories/archives/2024/september/"
+        "us-news-and-world-report-ranks-carnegie-mellon-university-"
+        "no-1-in-5-categories-21st-among-national"
+    ),
+}
+_SRC_HEINZ_RANK = {
+    "label": "Heinz College — Rankings & Reputation",
+    "url": "https://heinz.cmu.edu/about/rankings",
+}
+_SRC_NICHE_GRAD = {
+    "label": "Niche — Carnegie Mellon University graduate student reviews",
+    "url": "https://www.niche.com/graduate-schools/carnegie-mellon-university/reviews/",
+}
+_SRC_NICHE_CMU = {
+    "label": "Niche — Carnegie Mellon University",
+    "url": "https://www.niche.com/colleges/carnegie-mellon-university/",
+}
+_SRC_RI_EDU = {
+    "label": "CMU Robotics Institute — academic programs",
+    "url": "https://www.ri.cmu.edu/ri-education/",
+}
+
+
+def _rev(summary: str, themes: list[dict], sources: list[dict]) -> dict:
+    return {"summary": summary, "themes": themes, "sources": sources, "disclaimer": _DISC}
+
+
+_REVIEWS_BY_SLUG.update(
+    {
+        # ── School of Computer Science (No. 1 graduate CS, tied MIT/Stanford) ──
+        "cmu-mcds": _rev(
+            "Third-party guides and student reviews describe CMU's Master of "
+            "Computational Data Science as a rigorous, systems-heavy data program "
+            "housed in the nation's top-ranked computer science school, with deep "
+            "engineering content and strong tech placement; common cautions are an "
+            "intense workload, a high cost of attendance, and a more engineering- "
+            "than-statistics orientation that suits builders more than pure analysts.",
+            [
+                {
+                    "label": "Top-ranked CS school",
+                    "sentiment": "positive",
+                    "detail": (
+                        "U.S. News ranks CMU No. 1 for graduate computer science "
+                        "(tied with MIT and Stanford) and No. 1 in AI and systems."
+                    ),
+                },
+                {
+                    "label": "Systems + data engineering",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Coursework emphasizes large-scale data systems, cloud, and "
+                        "machine learning over pure statistics."
+                    ),
+                },
+                {
+                    "label": "Tech placement",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Recruiters know the SCS brand; graduates place into data "
+                        "engineering and ML roles at major technology firms."
+                    ),
+                },
+                {
+                    "label": "Heavy workload",
+                    "sentiment": "caution",
+                    "detail": (
+                        "Reviewers consistently flag tight deadlines and a fast, "
+                        "demanding pace."
+                    ),
+                },
+                {
+                    "label": "Cost",
+                    "sentiment": "caution",
+                    "detail": (
+                        "A high total cost of attendance is a recurring consideration "
+                        "for prospective students."
+                    ),
+                },
+            ],
+            [_SRC_CSD_GRAD, _SRC_USNEWS_GRAD_2026, _SRC_NICHE_GRAD],
+        ),
+        "cmu-msaii": _rev(
+            "Students and third-party coverage view the MS in Artificial "
+            "Intelligence and Innovation as a practitioner-focused SCS degree that "
+            "pairs CMU's top-ranked AI faculty with applied, product-oriented "
+            "capstones; cautions center on its demanding pace and a self-directed "
+            "structure that rewards students who already have strong CS foundations.",
+            [
+                {
+                    "label": "No. 1 AI faculty",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Built on the School of Computer Science, which U.S. News "
+                        "ranks No. 1 for graduate artificial intelligence."
+                    ),
+                },
+                {
+                    "label": "Applied + product focus",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Emphasizes deploying AI into real products through team "
+                        "capstones rather than research alone."
+                    ),
+                },
+                {
+                    "label": "Strong recruiting",
+                    "sentiment": "positive",
+                    "detail": "Graduates are sought for applied-ML and AI engineering roles.",
+                },
+                {
+                    "label": "Prerequisite-heavy",
+                    "sentiment": "caution",
+                    "detail": (
+                        "Best suited to applicants with solid programming and math "
+                        "preparation; the curriculum moves quickly."
+                    ),
+                },
+            ],
+            [_SRC_CSD_GRAD, _SRC_USNEWS_GRAD_2026, _SRC_NICHE_GRAD],
+        ),
+        "cmu-mscv": _rev(
+            "CMU's MS in Computer Vision, run out of the Robotics Institute, is "
+            "described by program pages and student reviews as a short, intensive, "
+            "industry-oriented degree concentrating on recognition and geometry; "
+            "cautions are its narrow specialization and a compressed 16-month "
+            "timeline that leaves little slack.",
+            [
+                {
+                    "label": "Robotics Institute pedigree",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Taught within CMU's Robotics Institute, a global leader in "
+                        "perception and vision research."
+                    ),
+                },
+                {
+                    "label": "Industry placement",
+                    "sentiment": "positive",
+                    "detail": (
+                        "A project-based, applied focus aimed at vision roles in "
+                        "industry and applied labs."
+                    ),
+                },
+                {
+                    "label": "Narrow specialization",
+                    "sentiment": "caution",
+                    "detail": (
+                        "Deeply focused on computer vision rather than broad CS, which "
+                        "may not fit students wanting flexibility."
+                    ),
+                },
+                {
+                    "label": "Compressed timeline",
+                    "sentiment": "caution",
+                    "detail": "A 16-month structure packs coursework and a group project tightly.",
+                },
+            ],
+            [_SRC_RI_EDU, _SRC_USNEWS_GRAD_2026],
+        ),
+        "cmu-mlt": _rev(
+            "The MS in Language Technologies, from CMU's Language Technologies "
+            "Institute, is regarded by students and guides as a rigorous, "
+            "research-adjacent NLP degree with access to leading faculty and a "
+            "common PhD pipeline; cautions are a heavy research expectation and a "
+            "demanding, fast-moving curriculum.",
+            [
+                {
+                    "label": "Leading NLP faculty",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Part of the No. 1-ranked School of Computer Science, with "
+                        "deep strength in natural language processing."
+                    ),
+                },
+                {
+                    "label": "Research access",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Strong thesis and lab opportunities; a recognized feeder to "
+                        "top PhD programs and research roles."
+                    ),
+                },
+                {
+                    "label": "Research-heavy",
+                    "sentiment": "caution",
+                    "detail": (
+                        "Best for students who want a research orientation rather than "
+                        "a purely course-based professional track."
+                    ),
+                },
+                {
+                    "label": "Rigor",
+                    "sentiment": "caution",
+                    "detail": "A demanding workload and high expectations are recurring themes.",
+                },
+            ],
+            [_SRC_CSD_GRAD, _SRC_USNEWS_GRAD_2026, _SRC_NICHE_GRAD],
+        ),
+        "cmu-mse": _rev(
+            "CMU's Master of Software Engineering is widely cited as a flagship of "
+            "the discipline — U.S. News ranks CMU No. 1 in software engineering — "
+            "praised for a practice-based, team-project pedagogy from the Software "
+            "Engineering Institute lineage; cautions are its cost and a curriculum "
+            "geared toward experienced engineers rather than career-changers.",
+            [
+                {
+                    "label": "No. 1 in software engineering",
+                    "sentiment": "positive",
+                    "detail": (
+                        "U.S. News has ranked CMU No. 1 in software engineering at "
+                        "both graduate and undergraduate levels."
+                    ),
+                },
+                {
+                    "label": "Practice-based studios",
+                    "sentiment": "positive",
+                    "detail": (
+                        "A studio/project model with real clients develops engineering "
+                        "leadership, not just coding."
+                    ),
+                },
+                {
+                    "label": "Industry credibility",
+                    "sentiment": "positive",
+                    "detail": "A long-recognized brand in software-engineering practice.",
+                },
+                {
+                    "label": "Built for experienced engineers",
+                    "sentiment": "caution",
+                    "detail": (
+                        "Several tracks expect prior professional experience; not a "
+                        "first-coding-job program."
+                    ),
+                },
+                {
+                    "label": "Cost",
+                    "sentiment": "caution",
+                    "detail": "A high cost of attendance is a recurring consideration.",
+                },
+            ],
+            [_SRC_CSD_GRAD, _SRC_USNEWS_UG_2025, _SRC_USNEWS_GRAD_2026],
+        ),
+        "cmu-mse-online": _rev(
+            "The online MS in Software Engineering applies CMU's top-ranked "
+            "software-engineering curriculum to a part-time, distance format aimed "
+            "at working professionals; cautions are the self-discipline required "
+            "for remote study and a cost comparable to on-campus study.",
+            [
+                {
+                    "label": "Top-ranked curriculum",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Built on CMU's U.S. News No. 1 software-engineering "
+                        "discipline strength."
+                    ),
+                },
+                {
+                    "label": "Flexible for professionals",
+                    "sentiment": "positive",
+                    "detail": "A part-time online format lets engineers study while working.",
+                },
+                {
+                    "label": "Self-directed",
+                    "sentiment": "caution",
+                    "detail": (
+                        "Remote delivery rewards strong time management and intrinsic "
+                        "motivation."
+                    ),
+                },
+            ],
+            [_SRC_CSD_GRAD, _SRC_USNEWS_UG_2025],
+        ),
+        "cmu-ms-se-sv": _rev(
+            "The Silicon Valley MS in Software Engineering co-locates CMU's "
+            "software-engineering program with the Bay Area tech ecosystem, valued "
+            "by students for proximity to employers; cautions are a high cost of "
+            "living and a curriculum oriented to experienced engineers.",
+            [
+                {
+                    "label": "Bay Area access",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Located at CMU's Silicon Valley campus, close to major "
+                        "technology employers."
+                    ),
+                },
+                {
+                    "label": "Top-ranked discipline",
+                    "sentiment": "positive",
+                    "detail": "Carries CMU's No. 1 software-engineering reputation.",
+                },
+                {
+                    "label": "Cost of living",
+                    "sentiment": "caution",
+                    "detail": "Silicon Valley living costs add to an already high tuition.",
+                },
+            ],
+            [_SRC_CSD_GRAD, _SRC_USNEWS_UG_2025],
+        ),
+        "cmu-miis": _rev(
+            "The MS in Intelligent Information Systems, from the Language "
+            "Technologies Institute, is described as a project-driven SCS degree "
+            "blending NLP, machine learning, and information retrieval; cautions are "
+            "a heavy workload and a breadth that demands strong CS fundamentals.",
+            [
+                {
+                    "label": "SCS / LTI faculty",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Taught within the No. 1-ranked School of Computer Science's "
+                        "Language Technologies Institute."
+                    ),
+                },
+                {
+                    "label": "Applied ML + IR",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Combines machine learning, NLP, and information retrieval in "
+                        "directed-study projects."
+                    ),
+                },
+                {
+                    "label": "Workload",
+                    "sentiment": "caution",
+                    "detail": "Reviewers cite an intense, deadline-driven pace.",
+                },
+            ],
+            [_SRC_CSD_GRAD, _SRC_NICHE_GRAD],
+        ),
+        # ── Robotics Institute ─────────────────────────────────────────────────
+        "cmu-msr": _rev(
+            "CMU's MS in Robotics, run by the Robotics Institute, is described by "
+            "program pages and students as a research-oriented, thesis-based degree "
+            "with access to one of the world's largest robotics faculties; cautions "
+            "are its research expectation and a competitive lab-placement process.",
+            [
+                {
+                    "label": "World-leading robotics",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Housed in CMU's Robotics Institute, a pioneer in robotics "
+                        "education and research."
+                    ),
+                },
+                {
+                    "label": "Research + thesis",
+                    "sentiment": "positive",
+                    "detail": (
+                        "A 24-month coursework-and-thesis structure aimed at applied "
+                        "research careers."
+                    ),
+                },
+                {
+                    "label": "Research-first fit",
+                    "sentiment": "caution",
+                    "detail": (
+                        "Better suited to research-minded students than those wanting "
+                        "a purely course-based path."
+                    ),
+                },
+                {
+                    "label": "Lab placement",
+                    "sentiment": "caution",
+                    "detail": "Securing a desired lab/advisor can be competitive.",
+                },
+            ],
+            [_SRC_RI_EDU, _SRC_USNEWS_GRAD_2026],
+        ),
+        "cmu-mrsd": _rev(
+            "The MS in Robotic Systems Development is reviewed as an industry- "
+            "focused, systems-and-business robotics degree whose hallmark is a "
+            "year-long team project; alumni report strong placement at robotics and "
+            "tech firms (Amazon, NVIDIA, Microsoft and others), while cautions are a "
+            "demanding 21-month pace and a practitioner rather than research focus.",
+            [
+                {
+                    "label": "Systems + business blend",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Pairs robotics engineering with product development and "
+                        "project-management training."
+                    ),
+                },
+                {
+                    "label": "Hands-on team project",
+                    "sentiment": "positive",
+                    "detail": (
+                        "A signature multi-semester project builds production-ready "
+                        "systems experience."
+                    ),
+                },
+                {
+                    "label": "Strong industry placement",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Alumni are recruited by major robotics and technology "
+                        "employers per the program's placement data."
+                    ),
+                },
+                {
+                    "label": "Intense pace",
+                    "sentiment": "caution",
+                    "detail": "A 180-unit, 21-month schedule is demanding.",
+                },
+                {
+                    "label": "Practitioner, not research",
+                    "sentiment": "caution",
+                    "detail": (
+                        "Geared to industry roles rather than a research/PhD "
+                        "trajectory."
+                    ),
+                },
+            ],
+            [
+                {
+                    "label": "CMU MRSD — about the program",
+                    "url": "https://mrsd.ri.cmu.edu/about-mrsd/",
+                },
+                {
+                    "label": "CMU MRSD — career placement",
+                    "url": "https://mrsd.ri.cmu.edu/program-statistics/career-placement/",
+                },
+                _SRC_RI_EDU,
+            ],
+        ),
+        "cmu-robotics-bs": _rev(
+            "CMU's undergraduate robotics offering draws on the Robotics Institute "
+            "and the No. 1-ranked School of Computer Science, praised for hands-on "
+            "labs and research access; cautions mirror CMU broadly — an intense "
+            "workload and a highly competitive environment.",
+            [
+                {
+                    "label": "Robotics Institute access",
+                    "sentiment": "positive",
+                    "detail": "Undergraduates tap a world-leading robotics research community.",
+                },
+                {
+                    "label": "Hands-on learning",
+                    "sentiment": "positive",
+                    "detail": "Strong lab, project, and research opportunities.",
+                },
+                {
+                    "label": "Workload & competition",
+                    "sentiment": "caution",
+                    "detail": (
+                        "A demanding curriculum and competitive peer culture are "
+                        "recurring themes for CMU undergrads."
+                    ),
+                },
+            ],
+            [_SRC_RI_EDU, _SRC_NICHE_CMU],
+        ),
+        # ── College of Engineering / Information Networking Institute ──────────
+        "cmu-ms-ece": _rev(
+            "The MS in Electrical & Computer Engineering is described as a flexible, "
+            "rigorous degree letting students draw on CMU's No. 4 (U.S. News) "
+            "computer-engineering strength and adjacent CS courses; cautions are a "
+            "self-directed course-selection model and a demanding workload.",
+            [
+                {
+                    "label": "Top-ranked computer engineering",
+                    "sentiment": "positive",
+                    "detail": "U.S. News ranks CMU No. 4 in computer engineering (2026).",
+                },
+                {
+                    "label": "Curricular flexibility",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Students customize across hardware, systems, ML, and "
+                        "security with cross-listed CS courses."
+                    ),
+                },
+                {
+                    "label": "Self-directed",
+                    "sentiment": "caution",
+                    "detail": (
+                        "Light hand-holding; students must plan their own course of "
+                        "study."
+                    ),
+                },
+                {
+                    "label": "Workload",
+                    "sentiment": "caution",
+                    "detail": "A rigorous, fast-paced curriculum.",
+                },
+            ],
+            [_SRC_USNEWS_GRAD_2026, _SRC_NICHE_GRAD],
+        ),
+        "cmu-msin": _rev(
+            "The Information Networking Institute's flagship MS in Information "
+            "Networking (founded 1989) is reviewed as a rigorous, security- and "
+            "systems-heavy degree with strong tech placement under the CMU brand; "
+            "the most common caution, echoed by alumni, is that the INI is "
+            "relatively unknown outside CMU, though the university's name and the "
+            "program's difficulty compensate.",
+            [
+                {
+                    "label": "Systems + security depth",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Combines networking, software, distributed systems, and "
+                        "information security with business and policy context."
+                    ),
+                },
+                {
+                    "label": "Strong placement",
+                    "sentiment": "positive",
+                    "detail": "Alumni become engineers and leaders across the tech industry.",
+                },
+                {
+                    "label": "Rigorous courses",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Pittsburgh residency gives access to highly regarded CMU "
+                        "systems and security courses."
+                    ),
+                },
+                {
+                    "label": "Lower name recognition",
+                    "sentiment": "caution",
+                    "detail": (
+                        "Alumni note the INI is relatively unknown outside CMU, with "
+                        "the CMU brand making up for it."
+                    ),
+                },
+            ],
+            [
+                {
+                    "label": "CMU INI — Master of Science in Information Networking",
+                    "url": "https://www.cmu.edu/ini/academics/msin/index.html",
+                },
+                {
+                    "label": "Quora — how good is MSIN at CMU INI (alumni discussion)",
+                    "url": "https://www.quora.com/How-good-is-MSIN-at-Carnegie-Mellon-INI",
+                },
+            ],
+        ),
+        "cmu-msis": _rev(
+            "The MS in Information Security (INI) is regarded as a deeply technical "
+            "security degree backed by CMU's U.S. News No. 1 cybersecurity "
+            "reputation, with rigorous coursework and strong recruiting; cautions "
+            "match MSIN — a lesser-known department offset by the CMU brand and a "
+            "heavy workload.",
+            [
+                {
+                    "label": "Top cybersecurity reputation",
+                    "sentiment": "positive",
+                    "detail": "CMU is ranked No. 1 in cybersecurity by U.S. News.",
+                },
+                {
+                    "label": "Technical rigor",
+                    "sentiment": "positive",
+                    "detail": (
+                        "A demanding curriculum spanning systems, cryptography, and "
+                        "applied security."
+                    ),
+                },
+                {
+                    "label": "Strong recruiting",
+                    "sentiment": "positive",
+                    "detail": "Graduates are competitive for security engineering roles.",
+                },
+                {
+                    "label": "Department visibility",
+                    "sentiment": "caution",
+                    "detail": (
+                        "Like MSIN, the INI is less known outside CMU; the brand and "
+                        "rigor compensate."
+                    ),
+                },
+            ],
+            [_SRC_USNEWS_UG_2025, _SRC_HEINZ_RANK],
+        ),
+        "cmu-ece-bs": _rev(
+            "CMU's undergraduate Electrical and Computer Engineering is praised for "
+            "world-class faculty, deep ties to the No. 1 CS school, and strong tech "
+            "placement; U.S. News ranks CMU No. 1 in cybersecurity and mobile/web "
+            "applications. Cautions are an intense workload and a highly competitive "
+            "culture.",
+            [
+                {
+                    "label": "Elite engineering + CS ties",
+                    "sentiment": "positive",
+                    "detail": (
+                        "ECE students leverage CMU's top-ranked computing ecosystem "
+                        "across hardware and software."
+                    ),
+                },
+                {
+                    "label": "Top specialty rankings",
+                    "sentiment": "positive",
+                    "detail": (
+                        "U.S. News ranks CMU No. 1 in cybersecurity and mobile/web "
+                        "applications among undergraduate specialties."
+                    ),
+                },
+                {
+                    "label": "Strong placement",
+                    "sentiment": "positive",
+                    "detail": "Graduates place into top technology and hardware firms.",
+                },
+                {
+                    "label": "Workload & competition",
+                    "sentiment": "caution",
+                    "detail": "A demanding, fast-paced, competitive environment.",
+                },
+            ],
+            [_SRC_USNEWS_UG_2025, _SRC_NICHE_CMU],
+        ),
+        "cmu-meche-bs": _rev(
+            "Undergraduate Mechanical Engineering at CMU earns a U.S. News top "
+            "specialty ranking and is valued for hands-on design, robotics, and "
+            "mechatronics tied to the wider CMU engineering and CS ecosystem; "
+            "cautions are the broad workload and competitive culture common across "
+            "CMU.",
+            [
+                {
+                    "label": "Ranked specialty",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Mechanical engineering is among CMU's U.S. News top-five "
+                        "undergraduate specialties."
+                    ),
+                },
+                {
+                    "label": "Interdisciplinary design",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Strong in mechatronics and robotics, drawing on CMU's "
+                        "computing strengths."
+                    ),
+                },
+                {
+                    "label": "Workload",
+                    "sentiment": "caution",
+                    "detail": "A demanding curriculum and competitive peers are recurring themes.",
+                },
+            ],
+            [_SRC_USNEWS_UG_2025, _SRC_NICHE_CMU],
+        ),
+        # ── Heinz College of Information Systems and Public Policy ─────────────
+        "cmu-msppm": _rev(
+            "Heinz College's MS in Public Policy & Management is described as a "
+            "uniquely analytics-forward policy degree — U.S. News ranks Heinz No. 8 "
+            "in public policy analysis and No. 1 in information & technology "
+            "management — that fuses statistics, economics, and management; cautions "
+            "are a quant-heavy core some policy-focused applicants find demanding and "
+            "a required internship.",
+            [
+                {
+                    "label": "Analytics-forward policy",
+                    "sentiment": "positive",
+                    "detail": (
+                        "A STEM-designated curriculum infusing statistics, economics, "
+                        "and finance into policy analysis."
+                    ),
+                },
+                {
+                    "label": "Top rankings",
+                    "sentiment": "positive",
+                    "detail": (
+                        "U.S. News ranks Heinz No. 8 in public policy analysis and "
+                        "No. 1 in information & technology management."
+                    ),
+                },
+                {
+                    "label": "Career flexibility",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Data skills open roles across government, consulting, and "
+                        "the private sector."
+                    ),
+                },
+                {
+                    "label": "Quant-heavy",
+                    "sentiment": "caution",
+                    "detail": (
+                        "The statistics and optimization core is demanding for "
+                        "applicants seeking a purely qualitative policy program."
+                    ),
+                },
+            ],
+            [
+                {
+                    "label": "Heinz College — MS in Public Policy & Management",
+                    "url": "https://www.heinz.cmu.edu/programs/public-policy-management-master/",
+                },
+                _SRC_HEINZ_RANK,
+            ],
+        ),
+        "cmu-mpm": _rev(
+            "The Master of Public Management is a part-time Heinz degree built for "
+            "working professionals in the Pittsburgh region, applying the school's "
+            "evidence-based, analytics-driven approach to leadership; cautions are "
+            "its regional, part-time orientation and the same quantitative rigor "
+            "Heinz is known for.",
+            [
+                {
+                    "label": "Built for working professionals",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Evening/flexible classes let employed students continue "
+                        "working while they study."
+                    ),
+                },
+                {
+                    "label": "Evidence-based leadership",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Applies Heinz's data and management toolkit to public-sector "
+                        "leadership."
+                    ),
+                },
+                {
+                    "label": "Regional focus",
+                    "sentiment": "caution",
+                    "detail": (
+                        "Oriented to Western Pennsylvania professionals rather than a "
+                        "national full-time cohort."
+                    ),
+                },
+            ],
+            [
+                {
+                    "label": "Heinz College — Master of Public Management",
+                    "url": "https://www.heinz.cmu.edu/programs/public-management-master/right-for-me",
+                },
+                _SRC_HEINZ_RANK,
+            ],
+        ),
+        "cmu-mits": _rev(
+            "The MS in Information Technology Strategy bridges Heinz College, the "
+            "School of Computer Science, and the College of Engineering, valued for "
+            "its interdisciplinary tech-and-management positioning under CMU's No. 1 "
+            "information-systems reputation; cautions are a broad scope and the "
+            "rigor of spanning three colleges.",
+            [
+                {
+                    "label": "Interdisciplinary",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Joint Heinz/SCS/Engineering curriculum across technology, "
+                        "policy, and management."
+                    ),
+                },
+                {
+                    "label": "Top information-systems brand",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Heinz is ranked No. 1 in information systems and information "
+                        "& technology management by U.S. News."
+                    ),
+                },
+                {
+                    "label": "Broad scope",
+                    "sentiment": "caution",
+                    "detail": (
+                        "The cross-college breadth demands focus to convert into a "
+                        "clear specialization."
+                    ),
+                },
+            ],
+            [_SRC_HEINZ_RANK, _SRC_USNEWS_GRAD_2026],
+        ),
+        "cmu-msispm": _rev(
+            "The MS in Information Security Policy & Management sits at Heinz "
+            "College's intersection of cybersecurity and policy, backed by CMU's "
+            "No. 1 cybersecurity standing; reviewers value the technical-plus-policy "
+            "blend, while cautions are that it is less purely technical than the "
+            "INI security degrees.",
+            [
+                {
+                    "label": "Security + policy blend",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Combines technical security with governance, risk, and "
+                        "management."
+                    ),
+                },
+                {
+                    "label": "Top cybersecurity reputation",
+                    "sentiment": "positive",
+                    "detail": "CMU is ranked No. 1 in cybersecurity by U.S. News.",
+                },
+                {
+                    "label": "Less deeply technical",
+                    "sentiment": "caution",
+                    "detail": (
+                        "Applicants wanting a pure engineering track may prefer the "
+                        "INI's MSIS."
+                    ),
+                },
+            ],
+            [_SRC_HEINZ_RANK, _SRC_USNEWS_UG_2025],
+        ),
+        # ── Tepper School of Business ──────────────────────────────────────────
+        "cmu-mba-online": _rev(
+            "Tepper's Online Hybrid MBA is consistently top-ranked among online "
+            "programs — U.S. News No. 3 and Poets&Quants No. 7 for 2025, with its "
+            "online business-analytics specialty No. 1 for five straight years — and "
+            "praised for delivering the same STEM-designated, analytics-forward "
+            "curriculum and faculty as the full-time MBA; the standout caution is "
+            "cost, as it is among the most expensive online MBAs.",
+            [
+                {
+                    "label": "Top-ranked online MBA",
+                    "sentiment": "positive",
+                    "detail": (
+                        "U.S. News ranked Tepper's online MBA No. 3 and P&Q No. 7 for "
+                        "2025; its online MSBA specialty is No. 1."
+                    ),
+                },
+                {
+                    "label": "Same rigor as full-time",
+                    "sentiment": "positive",
+                    "detail": (
+                        "A STEM-designated, analytics-heavy curriculum taught by the "
+                        "same faculty as the residential MBA."
+                    ),
+                },
+                {
+                    "label": "Strong outcomes",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Online-hybrid graduates report competitive salaries and "
+                        "signing bonuses in Tepper's outcomes data."
+                    ),
+                },
+                {
+                    "label": "High cost",
+                    "sentiment": "caution",
+                    "detail": (
+                        "At roughly $149K it ranked as the most expensive program in "
+                        "the 2025 P&Q online-MBA ranking."
+                    ),
+                },
+                {
+                    "label": "Self-paced demands",
+                    "sentiment": "caution",
+                    "detail": "A hybrid format rewards disciplined, self-directed learners.",
+                },
+            ],
+            [
+                {
+                    "label": "Poets&Quants — best online MBA programs for 2025",
+                    "url": (
+                        "https://poetsandquants.com/2024/12/15/"
+                        "best-online-mba-programs-in-the-u-s-for-2025/"
+                    ),
+                },
+                {
+                    "label": "Tepper School — 2025 U.S. News online rankings",
+                    "url": "https://www.cmu.edu/tepper/news/stories/2025/0121-online-rankings",
+                },
+            ],
+        ),
+        "cmu-msm": _rev(
+            "Tepper's MS in Management is described as a one-year, STEM-designated "
+            "business master's that gives recent graduates the analytical and "
+            "leadership grounding of the MBA core; cautions are that it is an early- "
+            "career degree without the work-experience cohort or full recruiting "
+            "depth of the MBA.",
+            [
+                {
+                    "label": "Analytics-forward core",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Delivers Tepper's quantitative, STEM-designated business "
+                        "foundation in a compact year."
+                    ),
+                },
+                {
+                    "label": "Early-career launch",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Targets recent graduates seeking a business credential before "
+                        "extensive work experience."
+                    ),
+                },
+                {
+                    "label": "Not an MBA substitute",
+                    "sentiment": "caution",
+                    "detail": (
+                        "Lacks the experienced-cohort network and recruiting breadth "
+                        "of the full-time MBA."
+                    ),
+                },
+            ],
+            [_SRC_USNEWS_GRAD_2026, _SRC_NICHE_GRAD],
+        ),
+        # ── College of Fine Arts ───────────────────────────────────────────────
+        "cmu-drama-bfa": _rev(
+            "CMU's School of Drama — the oldest degree-granting drama program in the "
+            "U.S. — is repeatedly ranked among the world's best (No. 4 in The "
+            "Hollywood Reporter's 2025 list), with alumni holding 66 Tony Awards and "
+            "the school named the Tony Awards' first higher-education partner; "
+            "cautions are an extremely selective, conservatory-intensive experience "
+            "and the inherent uncertainty of arts careers.",
+            [
+                {
+                    "label": "Among the world's best",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Ranked No. 4 by The Hollywood Reporter (2025); the first U.S. "
+                        "degree-granting drama program."
+                    ),
+                },
+                {
+                    "label": "Exceptional alumni record",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Alumni have won 66 Tony Awards; CMU is the Tony Awards' first "
+                        "exclusive higher-education partner."
+                    ),
+                },
+                {
+                    "label": "Industry showcases",
+                    "sentiment": "positive",
+                    "detail": (
+                        "NYC and LA showcases connect graduating students with "
+                        "industry professionals."
+                    ),
+                },
+                {
+                    "label": "Highly selective + intense",
+                    "sentiment": "caution",
+                    "detail": (
+                        "Conservatory training is rigorous and admission is extremely "
+                        "competitive."
+                    ),
+                },
+                {
+                    "label": "Career uncertainty",
+                    "sentiment": "caution",
+                    "detail": "Outcomes depend on the unpredictable performing-arts market.",
+                },
+            ],
+            [
+                {
+                    "label": "Hollywood Reporter ranking coverage (OnStage Pittsburgh, 2025)",
+                    "url": (
+                        "https://onstagepittsburgh.com/2025/06/24/"
+                        "cmu-ranked-near-the-top-in-hollywood-reporters-best-drama-schools-list/"
+                    ),
+                },
+                {
+                    "label": "CMU — alumni Tony nominations and 66 wins (2026)",
+                    "url": (
+                        "https://www.cmu.edu/news/stories/archives/2026/may/"
+                        "10-cmu-alumni-earn-record-breaking-15-tony-nominations"
+                    ),
+                },
+            ],
+        ),
+        "cmu-design-bdes": _rev(
+            "The School of Design is described as among the oldest and most "
+            "respected design programs in North America — U.S. News has ranked it a "
+            "top-five design school for over a decade — distinguished by a "
+            "systems/interaction-design orientation within a top research "
+            "university; cautions are an intense studio workload and a competitive "
+            "admissions process.",
+            [
+                {
+                    "label": "Top-five design school",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Recognized by U.S. News as a top-five design program for "
+                        "over a decade."
+                    ),
+                },
+                {
+                    "label": "Interaction + systems focus",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Strong in communication, product, and interaction design "
+                        "with a systems-thinking approach."
+                    ),
+                },
+                {
+                    "label": "Studio intensity",
+                    "sentiment": "caution",
+                    "detail": "A demanding studio culture with heavy time commitments.",
+                },
+            ],
+            [
+                {
+                    "label": "CMU College of Fine Arts — School of Design",
+                    "url": "https://cfa.cmu.edu/schools-and-academic-programs/school-of-design",
+                },
+                _SRC_NICHE_CMU,
+            ],
+        ),
+        # ── Flagship undergraduate majors ──────────────────────────────────────
+        "cmu-ai-bs": _rev(
+            "CMU's undergraduate Artificial Intelligence degree — the first of its "
+            "kind in the U.S. (launched 2018) — is built on the No. 1-ranked School "
+            "of Computer Science and praised for a deep ML, math, and ethics "
+            "curriculum with elite research access; cautions are CMU's hallmark "
+            "intensity and a highly competitive, prerequisite-heavy path.",
+            [
+                {
+                    "label": "First U.S. AI bachelor's",
+                    "sentiment": "positive",
+                    "detail": (
+                        "CMU launched the nation's first undergraduate AI degree in "
+                        "2018, within its top-ranked SCS."
+                    ),
+                },
+                {
+                    "label": "Rigorous, ethics-aware curriculum",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Spans machine learning, math, statistics, and courses on "
+                        "ethics and societal impact."
+                    ),
+                },
+                {
+                    "label": "Elite research access",
+                    "sentiment": "positive",
+                    "detail": "Undergraduates work alongside leading AI faculty and labs.",
+                },
+                {
+                    "label": "Intensity & competition",
+                    "sentiment": "caution",
+                    "detail": (
+                        "A heavy workload and competitive culture are recurring CMU "
+                        "themes."
+                    ),
+                },
+            ],
+            [
+                {
+                    "label": "CMU SCS — launch of the undergraduate AI degree",
+                    "url": (
+                        "https://www.cs.cmu.edu/news/2018/"
+                        "carnegie-mellon-launches-undergraduate-degree-artificial-intelligence"
+                    ),
+                },
+                _SRC_USNEWS_UG_2025,
+            ],
+        ),
+        "cmu-information-systems-bs": _rev(
+            "CMU's undergraduate Information Systems program (Dietrich College / "
+            "Heinz ecosystem) is ranked U.S. News No. 1 in management information "
+            "systems and valued for blending computing, business, and human-centered "
+            "design with strong tech and consulting placement; cautions are a broad "
+            "curriculum and CMU's demanding pace.",
+            [
+                {
+                    "label": "No. 1 in MIS",
+                    "sentiment": "positive",
+                    "detail": (
+                        "U.S. News ranks CMU No. 1 in management information systems "
+                        "among undergraduate specialties."
+                    ),
+                },
+                {
+                    "label": "Tech + business + design",
+                    "sentiment": "positive",
+                    "detail": (
+                        "Combines software, data, and user-centered design with "
+                        "business context."
+                    ),
+                },
+                {
+                    "label": "Strong placement",
+                    "sentiment": "positive",
+                    "detail": "Graduates enter product, consulting, and software roles.",
+                },
+                {
+                    "label": "Breadth & pace",
+                    "sentiment": "caution",
+                    "detail": (
+                        "A wide-ranging curriculum and CMU's intensity demand strong "
+                        "time management."
+                    ),
+                },
+            ],
+            [_SRC_USNEWS_UG_2025, _SRC_NICHE_CMU],
+        ),
+    }
+)
+
+
 # Built at import (after Tepper/Heinz specs are appended): the canonical program list.
 def _description_for(spec: dict) -> str:
     """Field-specific description — never the degree-type classification stub."""
