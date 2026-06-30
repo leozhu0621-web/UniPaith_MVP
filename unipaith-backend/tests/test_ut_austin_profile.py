@@ -8,6 +8,8 @@ passes when it is gold OR every remaining required gap is recorded in that node'
 ``_standard.omitted``.
 """
 
+from pathlib import Path
+
 from unipaith.data import ut_austin_profile as u
 from unipaith.profile_standard import STANDARD_VERSION, check_conformance
 from unipaith.profile_standard.manifest import MANIFEST
@@ -51,8 +53,10 @@ def _school_snapshot(m: dict) -> dict:
 
 def _program_snapshot(spec: dict) -> dict:
     slug = spec["slug"]
-    # cost_data mirrors what apply() writes (per-credential published tuition, or the
-    # grad fallback for the three professional doctorates whose rate is omitted).
+    # cost_data mirrors what apply() writes (per-credential published tuition; AuD bills at
+    # the standard graduate rate, DNP carries its published program total, and only the
+    # Pharm.D. annual scalar is omitted — its rate is published solely in a non-machine-
+    # readable Box PDF).
     _tuition, cost = u._program_tuition(spec)
     outcomes = dict(u._OUTCOMES_BY_SLUG.get(slug, {}))
     outcomes["_standard"] = u._program_standard(slug, spec)
@@ -73,7 +77,34 @@ def _program_snapshot(spec: dict) -> dict:
         "faculty_contacts": u._FACULTY_BY_SLUG.get(slug),
         "external_reviews": u._REVIEWS_BY_SLUG.get(slug),
         "content_sources": u._program_content(spec["school"], kw),
+        "who_its_for": u._WHO_BY_SLUG.get(slug),
     }
+
+
+# Connectives that may stay lowercase mid-name; everything else must be title-cased
+# (REPAIR_BACKLOG #4b name-casing gate).
+_NAME_CONNECTIVES = {
+    "and", "of", "the", "in", "for", "to", "a", "an", "or", "on",
+    "with", "at", "by", "as", "vs",
+}
+
+
+def _sentence_cased_words(name: str) -> list[str]:
+    """Mid-name content words shipped lowercase (sentence-casing defect), with the run-94
+    carve-outs: a leading word, a connective, a parenthetical qualifier, and a token with an
+    interior capital (acronym / slash form / possessive) are all legitimate."""
+    bad: list[str] = []
+    for i, w in enumerate(name.split(" ")):
+        if not w or i == 0 or w.startswith("("):
+            continue
+        if any(c.isupper() for c in w[1:]):  # acronym / mixed-case / slash form
+            continue
+        if w.lower() in _NAME_CONNECTIVES:
+            continue
+        first = next((c for c in w if c.isalpha()), "")
+        if first and first.islower():
+            bad.append(w)
+    return bad
 
 
 def test_catalog_breadth_and_shape():
@@ -144,3 +175,61 @@ def test_flagship_programs_carry_reviews_and_outcomes():
     for slug in ("ut-austin-business-administration-mba", "ut-austin-law-jd"):
         o = u._OUTCOMES_BY_SLUG[slug]
         assert o["employment_rate"] and o["conditions"] and o["source"]
+
+
+def test_who_its_for_is_complete_and_program_distinct():
+    """`who_its_for` is a UNIVERSAL depth field: filled on EVERY program (no 0% / hard-null,
+    REPAIR_BACKLOG #3a) AND program-DISTINCT, never a degree-type template (#3b). Gold-bar:
+    distinct/total approaches 1.0; the type-gaming FAIL threshold is well under ~0.5."""
+    vals = [u._WHO_BY_SLUG.get(s) for s in u.PROGRAM_SLUGS]
+    assert all(isinstance(v, str) and v.strip() for v in vals), (
+        "who_its_for must be filled on every program"
+    )
+    # No program hard-nulls the field in apply() (a literal `p.who_its_for = None` code line).
+    module = Path(__file__).resolve().parents[1] / "src/unipaith/data/ut_austin_profile.py"
+    code_lines = {
+        ln.strip() for ln in module.read_text().splitlines() if not ln.lstrip().startswith("#")
+    }
+    assert "p.who_its_for = None" not in code_lines, (
+        "who_its_for must not be hard-nulled in apply()"
+    )
+    distinct_ratio = len(set(vals)) / len(vals)
+    assert distinct_ratio >= 0.9, (
+        f"who_its_for type-gamed: distinct/total={distinct_ratio:.2f} (gold ~1.0)"
+    )
+
+
+def test_program_names_are_title_cased():
+    """Every program_name (and department) carries UT Austin's published title case — no
+    mid-name lowercase content word (REPAIR_BACKLOG #4b sentence-casing defect)."""
+    offenders = []
+    for p in u.PROGRAMS:
+        for field in (p["program_name"], p.get("department") or ""):
+            bad = _sentence_cased_words(field)
+            if bad:
+                offenders.append((field, bad))
+    assert not offenders, f"sentence-cased names: {offenders[:5]}"
+
+
+def test_professional_and_masters_tuition_filled_or_omitted_with_reason():
+    """The matcher-core master's/professional tuition tier is filled with a published rate
+    or recorded in `_standard.omitted` — never a silent null (REPAIR_BACKLOG #1)."""
+    for spec in u.PROGRAMS:
+        if spec["degree_type"] not in ("masters", "professional"):
+            continue
+        scalar, _cost = u._program_tuition(spec)
+        if scalar is None:
+            omitted = u._program_standard(spec["slug"], spec)["omitted"]
+            assert "cost_data.tuition_usd" in omitted, (
+                f"{spec['slug']} has null tuition not recorded in _standard.omitted"
+            )
+    # AuD (standard graduate rate), DNP (published program total), and the academic MS in
+    # Accounting (standard graduate rate) are now FILLED, not omitted.
+    for slug in (
+        "ut-austin-audiology-aud",
+        "ut-austin-nursing-dnp",
+        "ut-austin-accounting-ms",
+    ):
+        spec = next(s for s in u.PROGRAMS if s["slug"] == slug)
+        scalar, _cost = u._program_tuition(spec)
+        assert scalar and scalar > 0, f"{slug} should carry a published tuition scalar"
