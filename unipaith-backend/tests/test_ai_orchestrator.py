@@ -152,6 +152,36 @@ def test_parse_response_text_only() -> None:
     assert response.requested_layer_advance is False
 
 
+def test_parse_response_recovers_and_strips_text_tool_calls() -> None:
+    """Open-model fallback: when the model writes a tool call as TEXT instead of
+    a structured tool_use block, the parser recovers the suggest_replies options
+    AND strips every tool-call-shaped span so nothing leaks into the reply."""
+    orch = Orchestrator(client=_mock_client())
+
+    class _StubResponse:
+        cost_usd = 0.0
+        latency_ms = 10
+        content_blocks = [
+            {
+                "type": "text",
+                "text": (
+                    "Where are you currently based?\n\n"
+                    '`suggest_replies(options=["Southern California", '
+                    '"Midwest, small town", "Outside the US - India"])`'
+                ),
+            },
+        ]
+
+    response = orch._parse_response(_StubResponse())
+    assert response.text == "Where are you currently based?"
+    assert "suggest_replies" not in response.text
+    assert response.suggested_options == [
+        "Southern California",
+        "Midwest, small town",
+        "Outside the US - India",
+    ]
+
+
 def test_respond_in_mock_mode_returns_orchestrator_response() -> None:
     """Smoke test: the full call path runs in mock mode without errors.
     The mock client returns a canned text-only response; we verify the

@@ -35,6 +35,7 @@ import NoticedCard from './NoticedCard'
 import { attachRefs, noticedItemsFromSignals } from './noticed'
 import ProfileDrawer from './ProfileDrawer'
 import { useJourneyState } from './useJourneyState'
+import { stripToolCalls } from './sanitize'
 
 function UniBubble({
   message,
@@ -61,7 +62,7 @@ function UniBubble({
     <div className="flex gap-2.5 justify-start">
       <UniOrb state={orbState} className="mt-0.5" />
       <div className="pt-0.5 text-sm whitespace-pre-wrap break-words max-w-[80%] leading-relaxed text-foreground">
-        {message.content}
+        {stripToolCalls(message.content)}
       </div>
     </div>
   )
@@ -541,7 +542,7 @@ export default function UniConversation({
           <div className="flex justify-start gap-2.5">
             <UniOrb state="responding" className="mt-0.5" />
             <div className="pt-0.5 text-sm whitespace-pre-wrap break-words max-w-[80%] leading-relaxed text-foreground">
-              {streamText}
+              {stripToolCalls(streamText)}
               <span className="ml-0.5 inline-block h-3.5 w-px align-middle bg-secondary motion-safe:animate-pulse" />
             </div>
           </div>
