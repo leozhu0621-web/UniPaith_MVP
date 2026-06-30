@@ -1359,6 +1359,166 @@ _PROGRAM_KEYWORDS_BY_SLUG: dict[str, list[str]] = {
     "notre-dame-global-affairs-ba": ["global affairs", "Keough School", "international"],
 }
 
+# == "Who it's for" (manifest ``who_its_for``) — a field-specific, PROGRAM-DISTINCT fit
+# statement for every program (subject · who it fits · typical next step). This is a
+# UNIVERSAL depth field: a catalog-wide 0% is a depth FAILURE, never a legitimate omission
+# (SKILL.md miss #2 ``who_its_for`` bullet). Each string is derived from the program's own
+# published audience/fit material and is distinct per program (no degree-type template) —
+# a BA, MS, and PhD in one field name different applicants at different stages. Distinctness
+# is asserted at build time below (distinct/total == 1.0, vs the type-gaming the rule forbids).
+_WHO_BY_SLUG: dict[str, str] = {
+    # ── College of Arts and Letters — undergraduate (B.A.) ──
+    "notre-dame-africana-studies-ba": "Students drawn to the histories, politics, and cultures of Africa and the African diaspora who want interdisciplinary study spanning literature, religion, and social science, often toward law, public service, education, or graduate work.",
+    "notre-dame-american-studies-ba": "Students curious about American culture, politics, and identity who want to read history, media, and literature together and are headed for law, journalism, public policy, or the humanities.",
+    "notre-dame-anthropology-ba": "Students fascinated by human cultures, evolution, and societies who want fieldwork and cross-cultural study, preparing for careers in research, global health, development, law, or museums.",
+    "notre-dame-arabic-ba": "Students committed to Arabic language and the cultures of the Middle East who want advanced fluency and regional study toward diplomacy, intelligence, business, or area-studies graduate work.",
+    "notre-dame-art-history-ba": "Students drawn to visual culture, sacred art, and museums who want object-based study and are aiming at curatorial, gallery, conservation, or graduate art-history paths.",
+    "notre-dame-studio-art-ba": "Students who want to make art across painting, sculpture, photography, and ceramics in a studio-intensive program, headed toward professional practice, an M.F.A., or creative careers.",
+    "notre-dame-design-ba": "Visually creative students who want to combine graphic design, visual communication, and industrial design for careers in design studios, branding, or product work.",
+    "notre-dame-chinese-ba": "Students committed to Mandarin fluency and Chinese culture who want language plus history and literature, preparing for careers in business, diplomacy, or East Asian studies.",
+    "notre-dame-japanese-ba": "Students drawn to Japanese language and culture who want advanced fluency alongside literature and history, headed for international business, translation, or area-studies graduate study.",
+    "notre-dame-classics-ba": "Students fascinated by the ancient Greek and Roman world who want Greek and Latin language study with literature and history, often toward law, academia, or the humanities.",
+    "notre-dame-greek-and-roman-civilization-ba": "Students drawn to antiquity who prefer the literature, history, and archaeology of Greece and Rome in translation rather than an intensive language track, toward law, education, or graduate work.",
+    "notre-dame-economics-ba": "Analytically minded students interested in markets, policy, and data who want theory and econometrics for careers in finance, consulting, policy, or graduate economics.",
+    "notre-dame-international-economics-ba": "Students who want economics paired with advanced foreign-language study and a year abroad, preparing for international finance, development, trade, or global policy careers.",
+    "notre-dame-computer-science-ba": "Arts and Letters students who want to study computing, algorithms, and software within a liberal-arts degree, headed for technology careers that join coding with the humanities.",
+    "notre-dame-english-ba": "Strong readers and writers who want to study literature deeply and sharpen critical and creative writing for careers in writing, law, publishing, education, or the humanities.",
+    "notre-dame-film-television-and-theatre-ba": "Students who want both to analyze and to make film, television, and theatre, headed toward production, performance, media industries, or graduate study.",
+    "notre-dame-french-ba": "Students committed to French fluency and Francophone literature and culture who want language and analysis together, toward careers in international work, law, education, or graduate study.",
+    "notre-dame-italian-ba": "Students drawn to Italian language, literature, and culture who want fluency alongside study of art, history, and film, often paired with another major and toward global careers.",
+    "notre-dame-spanish-ba": "Students committed to Spanish fluency and Hispanic literatures and cultures who want language plus analysis for careers in law, health, business, education, or the humanities.",
+    "notre-dame-romance-languages-and-literatures-ba": "Students who want to study two or more Romance languages and their literatures comparatively, preparing for international careers, translation, or graduate study in the humanities.",
+    "notre-dame-german-ba": "Students drawn to German language, philosophy, and literature who want fluency with cultural and intellectual study, toward careers in business, research, or European affairs.",
+    "notre-dame-russian-ba": "Students committed to Russian language and the literature and politics of the Slavic world, preparing for diplomacy, intelligence, area studies, or graduate work.",
+    "notre-dame-gender-studies-ba": "Students interested in how gender and sexuality shape culture, politics, and institutions who want interdisciplinary analysis, often toward law, public policy, health, or advocacy.",
+    "notre-dame-history-ba": "Students who love archives and big-picture context across regions and eras, building research and writing skills for law, education, public history, or graduate work.",
+    "notre-dame-medieval-studies-ba": "Students captivated by the medieval world who want interdisciplinary study of its languages, religion, art, and texts through Notre Dame's Medieval Institute, toward graduate work or the humanities.",
+    "notre-dame-music-ba": "Students who want to study music history, theory, and performance in a liberal-arts setting, preparing for graduate music study, teaching, arts administration, or careers that pair music with another field.",
+    "notre-dame-philosophy-ba": "Students drawn to fundamental questions of knowledge, ethics, and reality who want rigorous argument in a strong Catholic philosophical tradition, often toward law, medicine, or graduate philosophy.",
+    "notre-dame-philosophy-and-theology-ba": "Students who want to study philosophy and theology together, engaging faith and reason in Notre Dame's intellectual tradition, toward ministry, graduate study, law, or reflective careers.",
+    "notre-dame-political-science-ba": "Students interested in government, political theory, and international relations who want analytical and writing skills for law, public service, policy, journalism, or graduate study.",
+    "notre-dame-liberal-studies-ba": "Intellectually curious students who want a great-books, seminar-based education across philosophy, literature, history, and science, building broad analytical skills toward law, education, or the professions.",
+    "notre-dame-psychology-ba": "Students fascinated by mind and behavior who want research methods and breadth across clinical, cognitive, and developmental psychology, toward health professions, counseling, or graduate study.",
+    "notre-dame-sociology-ba": "Students interested in society, inequality, and social institutions who want empirical research skills for careers in social services, law, public policy, or graduate sociology.",
+    "notre-dame-theology-ba": "Students who want serious study of scripture, history, and Christian thought in a leading Catholic theology department, toward ministry, graduate study, law, or service careers.",
+
+    # ── College of Science — undergraduate (B.S.) ──
+    "notre-dame-acms-bs": "Quantitatively strong students who want to apply mathematics, statistics, and computation to real scientific and industry problems, headed for data science, modeling, finance, or graduate study.",
+    "notre-dame-biochemistry-bs": "Students drawn to the chemistry of living systems who want intensive laboratory work, preparing for medical school, biotechnology, or graduate research in biochemistry.",
+    "notre-dame-biological-sciences-bs": "Pre-health and future life-science researchers who want laboratory experience across molecular, cellular, and organismal biology before medical or graduate school.",
+    "notre-dame-chemistry-bs": "Students strong in the physical sciences who want rigorous laboratory training and undergraduate research, preparing for chemistry graduate work, medicine, or industry.",
+    "notre-dame-environmental-sciences-bs": "Students committed to the environment who want to combine biology, chemistry, and earth science with fieldwork, toward careers in conservation, sustainability, or environmental research.",
+    "notre-dame-mathematics-bs": "Students who love abstraction and proof who want a deep foundation in pure and applied mathematics, preparing for graduate study, data and quantitative careers, or teaching.",
+    "notre-dame-neuroscience-and-behavior-bs": "Students fascinated by the brain who want to study the biological basis of behavior across biology, psychology, and chemistry, toward medicine, neuroscience research, or health careers.",
+    "notre-dame-physics-bs": "Students drawn to the fundamental laws of nature who want rigorous theory and experiment plus undergraduate research, preparing for physics graduate study, engineering, or quantitative careers.",
+    "notre-dame-physics-in-medicine-bs": "Pre-health and applied-physics students who want to apply physics to medicine and imaging, preparing for medical school, medical physics, or biomedical careers.",
+    "notre-dame-statistics-bs": "Students who enjoy data and probability who want a rigorous statistics foundation with computing, headed for data science, biostatistics, actuarial work, or graduate study.",
+    "notre-dame-science-computing-bs": "Science students who want to pair a natural-science foundation with substantial computing and modeling skills, toward careers bridging research and software.",
+    "notre-dame-science-education-bs": "Future science teachers and communicators who want a strong science foundation joined with education coursework, preparing for K-12 teaching or science-outreach careers.",
+
+    # ── College of Engineering — undergraduate (B.S.) ──
+    "notre-dame-aerospace-engineering-bs": "Students drawn to flight, propulsion, and space who want aerodynamics, structures, and design experience, preparing for aerospace and defense careers or graduate study.",
+    "notre-dame-mechanical-engineering-bs": "Hands-on problem-solvers who want a broad foundation in mechanics, thermal systems, and design, headed for careers across manufacturing, energy, robotics, or graduate engineering.",
+    "notre-dame-chemical-engineering-bs": "Students who like chemistry and math applied at scale who want process, reaction, and transport engineering, preparing for careers in energy, pharmaceuticals, materials, or graduate study.",
+    "notre-dame-civil-engineering-bs": "Students who want to design and build infrastructure who want structures, geotechnics, and water systems, headed for construction, structural, or environmental engineering careers.",
+    "notre-dame-environmental-engineering-bs": "Engineering students focused on clean water, air, and sustainable systems who want to apply science to environmental problems, toward consulting, public works, or graduate study.",
+    "notre-dame-computer-engineering-bs": "Students who want to bridge hardware and software who want digital systems, embedded design, and computing, preparing for careers in semiconductors, devices, or graduate study.",
+    "notre-dame-computer-science-bs": "Students who want to build software and study algorithms, AI, and systems with an engineering foundation, headed for software engineering, data, or computing research.",
+    "notre-dame-electrical-engineering-bs": "Students drawn to circuits, signals, and electronics who want a rigorous foundation in electrical systems, preparing for careers in devices, communications, energy, or graduate study.",
+
+    # ── Mendoza College of Business — undergraduate (B.B.A.) ──
+    "notre-dame-accountancy-bba": "Detail-oriented students who want a rigorous accounting foundation in a top-ranked program, preparing for public accounting, the C.P.A., consulting, or a fifth-year M.S. in Accountancy.",
+    "notre-dame-business-analytics-bba": "Business students who enjoy data and programming who want to turn analytics into decisions, headed for careers in consulting, operations, or data-driven business roles.",
+    "notre-dame-finance-bba": "Students interested in markets, valuation, and corporate decisions who want quantitative finance training, preparing for investment banking, asset management, corporate finance, or consulting.",
+    "notre-dame-marketing-bba": "Students who want to understand consumer behavior, brands, and analytics who want strategy and creativity together, headed for careers in marketing, product, or brand management.",
+    "notre-dame-strategic-management-bba": "Students drawn to how firms compete and grow who want general-management and entrepreneurship grounding, toward consulting, startups, or leadership tracks.",
+
+    # ── School of Architecture / Keough — undergraduate ──
+    "notre-dame-architecture-barch": "Students committed to becoming architects who want a five-year accredited professional degree grounded in classical and traditional design, including a required year in Rome, toward licensure and practice.",
+    "notre-dame-global-affairs-ba": "Students focused on international development, peace, and human dignity who want fieldwork and policy study through the Keough School, preparing for global service, diplomacy, NGOs, or graduate work.",
+
+    # ── College of Engineering — graduate ──
+    "notre-dame-aerospace-mechanical-engineering-phd": "Researchers pursuing fluid dynamics, propulsion, robotics, or materials who want funded doctoral study and a faculty or industry-research career in aerospace and mechanical engineering.",
+    "notre-dame-aerospace-mechanical-engineering-ms": "Engineers who want advanced coursework and a research or design project in aerospace or mechanical engineering to deepen technical expertise before industry or a Ph.D.",
+    "notre-dame-bioengineering-phd": "Researchers at the interface of engineering and the life sciences who want funded doctoral work in biomechanics, biomaterials, or medical devices, toward academic or biomedical-industry careers.",
+    "notre-dame-chemical-engineering-phd": "Researchers in catalysis, energy, materials, or transport who want a funded chemical-engineering doctorate and a path into academia, national labs, or industrial R&D.",
+    "notre-dame-civil-environmental-engineering-phd": "Researchers in structures, geomechanics, water, or environmental systems who want funded doctoral study toward faculty, government, or consulting research careers.",
+    "notre-dame-civil-environmental-engineering-ms": "Engineers who want advanced study in structural, geotechnical, water, or environmental engineering through coursework and a research or design project before professional practice or a Ph.D.",
+    "notre-dame-computer-science-engineering-phd": "Researchers in AI, systems, networks, or theory who want funded doctoral study and a research career in academia, national labs, or industry research.",
+    "notre-dame-computer-science-engineering-ms": "Computing professionals and graduates who want advanced coursework and research in software, AI, or systems to deepen expertise before industry or doctoral study.",
+    "notre-dame-electrical-engineering-phd": "Researchers in nanoelectronics, photonics, signals, or communications who want funded doctoral study toward faculty or advanced-industry research careers.",
+    "notre-dame-electrical-engineering-ms": "Engineers who want advanced electrical-engineering coursework and a research project in areas such as devices, signals, or communications before industry or a Ph.D.",
+    "notre-dame-data-science-ms": "Graduates and professionals who want rigorous applied training in machine learning, statistics, and data engineering to move into data-science and analytics careers.",
+    "notre-dame-esteem-ms": "Science and engineering graduates with an entrepreneurial drive who want a one-year master's in technology commercialization and a thesis launching a real venture or product.",
+
+    # ── College of Science — graduate ──
+    "notre-dame-acms-phd": "Researchers in applied math, computational science, or statistics who want funded doctoral study solving scientific and data problems, toward academic, lab, or quantitative-industry careers.",
+    "notre-dame-acms-ms": "Quantitatively strong graduates who want advanced training in applied and computational mathematics and statistics for data-intensive careers or further doctoral study.",
+    "notre-dame-biochemistry-phd": "Researchers drawn to the molecular machinery of life who want funded doctoral study in biochemistry and structural biology, toward academic or biotech research careers.",
+    "notre-dame-biological-sciences-phd": "Researchers in molecular, cellular, or organismal biology — including vector-borne disease and ecology — who want funded doctoral study toward faculty or research careers.",
+    "notre-dame-biophysics-phd": "Quantitative researchers who want to study living systems with the tools of physics, pursuing funded doctoral work toward biophysics, medicine, or research careers.",
+    "notre-dame-chemistry-phd": "Researchers in organic, inorganic, physical, or analytical chemistry who want funded doctoral study and a path into academic, government, or industrial research.",
+    "notre-dame-mathematics-phd": "Mathematicians pursuing algebra, analysis, geometry, topology, or logic who want funded doctoral study toward research and faculty careers.",
+    "notre-dame-mathematics-ms": "Mathematically strong graduates who want advanced coursework in pure or applied mathematics to prepare for doctoral study, teaching, or quantitative careers.",
+    "notre-dame-physics-phd": "Researchers in nuclear, astrophysics, particle, or condensed-matter physics who want funded doctoral study, including work at Notre Dame's accelerators, toward research careers.",
+    "notre-dame-integrated-biomedical-sciences-phd": "Researchers aiming at human disease who want funded doctoral training across cancer biology, immunology, and physiology, toward biomedical-research and academic careers.",
+
+    # ── College of Arts and Letters — graduate ──
+    "notre-dame-anthropology-phd": "Researchers committed to ethnographic and archaeological fieldwork who want funded doctoral study of human societies, toward academic, museum, or applied-research careers.",
+    "notre-dame-classics-ma": "Students of the ancient Mediterranean who want advanced Greek and Latin and scholarly training as preparation for doctoral work or teaching in classics.",
+    "notre-dame-early-christian-studies-ma": "Students drawn to the first centuries of Christianity who want languages, history, and theology together, often as a bridge toward doctoral work in Notre Dame's distinctive program.",
+    "notre-dame-english-phd": "Scholars of literature who want funded doctoral research and teaching across literary history and theory, preparing for academic careers.",
+    "notre-dame-english-ma": "Advanced readers and writers who want graduate literary study to prepare for doctoral work, teaching, or careers in writing and publishing.",
+    "notre-dame-creative-writing-mfa": "Serious poets and fiction writers who want a funded, intensive workshop-based M.F.A. with time to complete a book-length manuscript, toward writing and teaching careers.",
+    "notre-dame-french-francophone-studies-ma": "Advanced students of French who want graduate study of Francophone literature and culture, preparing for doctoral work, teaching, or international careers.",
+    "notre-dame-history-phd": "Researchers who want funded doctoral study in fields such as medieval, early modern, American, or history of science, toward faculty and scholarly careers.",
+    "notre-dame-history-philosophy-science-phd": "Scholars who want to study how science develops in its philosophical and historical context, pursuing funded doctoral research toward academic careers.",
+    "notre-dame-medieval-studies-ma": "Students immersed in the medieval world who want interdisciplinary languages, paleography, and texts through the Medieval Institute, as a foundation for doctoral work.",
+    "notre-dame-philosophy-phd": "Philosophers who want funded doctoral study in a department strong in metaphysics, ethics, and the Catholic philosophical tradition, toward research and teaching careers.",
+    "notre-dame-political-science-phd": "Researchers in political theory, comparative politics, international relations, or American politics who want funded doctoral study toward academic and policy-research careers.",
+    "notre-dame-psychology-phd": "Researchers in developmental, cognitive, or quantitative psychology who want funded doctoral training and mentored research toward academic or applied-science careers.",
+    "notre-dame-sociology-phd": "Researchers in religion, social networks, inequality, or global development who want funded doctoral study and rigorous methods toward academic careers.",
+    "notre-dame-theology-phd": "Scholars who want funded doctoral study across scripture, history of Christianity, systematic, and moral theology in a leading Catholic department, toward academic and teaching careers.",
+    "notre-dame-economics-phd": "Researchers who want funded doctoral study in microeconomics, macroeconomics, and econometrics, toward academic, policy, or research careers.",
+    "notre-dame-design-mfa": "Designers who want an intensive terminal M.F.A. building a professional portfolio across visual communication and design research, toward practice or teaching.",
+    "notre-dame-sacred-music-msm": "Musicians and church-music leaders who want graduate training in organ, choral conducting, or liturgical music, preparing for careers in sacred music and worship.",
+    "notre-dame-sacred-music-dma": "Accomplished church musicians who want the terminal doctoral degree in performance or conducting within sacred music, toward leadership in liturgical music and teaching.",
+
+    # ── Keough — graduate ──
+    "notre-dame-global-affairs-mga": "Early-career professionals committed to international development, peace, and human dignity who want a two-year policy and fieldwork master's through the Keough School, toward careers in NGOs, government, and global organizations.",
+    "notre-dame-peace-studies-phd": "Scholars committed to the study of conflict, justice, and peacebuilding who want funded interdisciplinary doctoral research through the Kroc Institute, toward academic and policy careers.",
+
+    # ── Mendoza — graduate ──
+    "notre-dame-mba": "Early-career professionals who want a values-driven, two-year M.B.A. with strong recruiting in consulting, finance, and management, and who value Mendoza's ethics-centered approach to leadership.",
+    "notre-dame-finance-ms": "Quantitatively strong graduates who want a specialized one-year master's in finance to move into investment, corporate finance, or fintech careers.",
+    "notre-dame-business-analytics-ms": "Professionals and graduates who want to turn data into business decisions through a focused analytics master's, headed for careers in consulting, operations, and data-driven roles.",
+    "notre-dame-accountancy-ms": "Accounting students, often continuing from the B.B.A., who want a fifth-year master's to meet C.P.A. requirements and specialize in assurance or tax before public accounting careers.",
+    "notre-dame-analytics-phd": "Researchers in analytics, information systems, or management science who want funded doctoral study toward business-school faculty and research careers.",
+
+    # ── School of Architecture — graduate ──
+    "notre-dame-march": "Graduates seeking the accredited path to licensure who want a Master of Architecture grounded in classical and traditional design, including study in Rome, toward professional practice.",
+    "notre-dame-madu": "Architects and designers who want post-professional study in traditional urbanism and town planning, toward practice in walkable, classically informed community design.",
+
+    # ── Notre Dame Law School ──
+    "notre-dame-jd": "Students preparing to practice law who want a rigorous J.D. in a community that joins legal excellence with ethical and service commitments, toward careers in firms, public service, clerkships, and the judiciary.",
+    "notre-dame-llm": "Lawyers, often internationally trained, who want a one-year advanced law degree to deepen expertise or prepare for U.S. bar eligibility and global legal careers.",
+    "notre-dame-jsd": "Accomplished legal scholars who want the doctoral research degree in law to produce original scholarship, toward careers in legal academia.",
+}
+
+# Build-time ``who_its_for`` gate — every program covered (a catalog-wide 0% is the depth
+# FAILURE this repair fixes) AND every statement program-DISTINCT (distinct/total == 1.0,
+# the bar that rejects the degree-type templating the rule forbids; SKILL.md miss #2).
+_who_missing = [s for s in PROGRAM_SLUGS if not _WHO_BY_SLUG.get(s)]
+if _who_missing:
+    raise RuntimeError(f"Notre Dame who_its_for missing on {len(_who_missing)} rows: {_who_missing[:5]}")
+_who_stray = [s for s in _WHO_BY_SLUG if s not in set(PROGRAM_SLUGS)]
+if _who_stray:
+    raise RuntimeError(f"Notre Dame who_its_for stray slugs: {_who_stray[:5]}")
+_who_vals = list(_WHO_BY_SLUG.values())
+if len(set(_who_vals)) != len(_who_vals):
+    _who_dups = [v for v in set(_who_vals) if _who_vals.count(v) > 1]
+    raise RuntimeError(f"Notre Dame who_its_for not program-distinct (type-gamed): {_who_dups[:3]}")
+
 
 def _program_standard(slug: str, spec: dict) -> dict:
     omitted: list[str] = [
@@ -1519,6 +1679,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
         p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
+        p.who_its_for = _WHO_BY_SLUG.get(slug)
         p.application_deadline = date(2027, 1, 1) if spec["degree_type"] == "bachelors" else None
     session.flush()
     for p in session.scalars(select(Program).where(Program.institution_id == inst.id)):
