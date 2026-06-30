@@ -36,10 +36,12 @@ tuition+fees: $16,774 (CA) / $50,974 (non-CA), IPEDS 2024-25 (UNITID 110644). Ac
 master's carry the UC systemwide non-resident graduate-academic tuition + Student Services
 Fee ($29,532, UCOP 2025-26; campus-based fees additional). Professional degrees carry each
 school's published non-resident tuition + fees where one could be verified (J.D. $72,115;
-M.D. $60,525; D.V.M. $42,695; LL.M. $65,879); programs whose exact all-in figure could not
-be verified this session (the M.B.A., M.P.H., M.P.V.M., the nursing master's/doctorates, the
-Ed.D.) record the verified UCOP Professional Degree Supplemental Tuition in an
-omit-with-reason note rather than a guessed total. Funded research doctorates carry
+M.D. $60,525; D.V.M. $42,695; LL.M. $65,879; full-time M.B.A. $63,542; M.P.H. $42,205 — the
+last two read off each program's own published tuition page, resident + non-resident in the
+breakdown). The remaining professional master's whose exact all-in tuition+fees could not be
+isolated from a published page this session (the M.P.V.M., the nursing master's, the Ed.D.)
+record the verified UCOP Professional Degree Supplemental Tuition in an omit-with-reason note
+rather than a guessed total. Funded research doctorates carry
 funded=True / tuition=None (UC research Ph.D.s are supported by fellowship/TA/GSR
 appointments with fee remission).
 """
@@ -56,7 +58,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of California-Davis"
 
-ENRICHED_AT = "2026-06-26"
+ENRICHED_AT = "2026-06-30"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -643,16 +645,36 @@ _DVM_SRC = (
 # Professional degrees whose exact all-in non-resident total could not be verified this
 # session record the verified UCOP Professional Degree Supplemental Tuition (PDST) instead of
 # a guessed total.
-_OMIT_MBA = (
-    "A verified all-in annual tuition figure is omitted rather than estimated: UC Davis's "
-    "2025-26 M.B.A. Professional Degree Supplemental Tuition is $32,880 (UCOP), charged on "
-    "top of base graduate tuition and fees; see the Graduate School of Management's tuition "
-    "page for the current total."
+# Professional master's whose all-in tuition & fees ARE published on the program's own cost
+# page (verified 2026-06-30, same first-party basis as the J.D./M.D./D.V.M. professional rates
+# above). ``program.tuition`` carries the NON-RESIDENT figure (the matcher's budget scalar for
+# the out-of-state + international pool, REPAIR_BACKLOG #2); ``cost_data.breakdown`` preserves
+# BOTH the California-resident and non-resident rates. The non-resident rate is the published
+# resident tuition & fees plus the $12,245 professional-program nonresident supplemental tuition.
+_MBA_INSTATE = 51297  # full-time M.B.A. annual tuition & fees, CA resident (entering), 2025-26
+_MBA_OOS = 63542  # resident $51,297 + nonresident supplemental tuition $12,245
+_MBA_SRC = (
+    "UC Davis Graduate School of Management — Full-Time M.B.A. Tuition & Financial Aid (2025-26)",
+    "https://gsm.ucdavis.edu/full-time-mba/tuition-financial-aid",
 )
-_OMIT_MPH = (
-    "A verified all-in annual tuition figure is omitted rather than estimated: UC Davis's "
-    "2025-26 M.P.H. Professional Degree Supplemental Tuition is $10,356 (UCOP), charged on "
-    "top of base graduate tuition and fees; see the School of Medicine's cost page."
+_MBA_NOTE = (
+    "Full-time M.B.A. annual tuition & fees: California residents $51,297; non-residents "
+    "$63,542 (the resident total plus the $12,245 nonresident supplemental tuition). Both "
+    "rates ship in the breakdown; the cost card shows the resident basis while the matcher's "
+    "budget signal (program.tuition) uses the non-resident rate for the out-of-state + "
+    "international pool."
+)
+_MPH_INSTATE = 29960  # M.P.H. annual tuition & fees, CA resident, 2026-27
+_MPH_OOS = 42205  # resident $29,960 + nonresident supplemental tuition $12,245
+_MPH_SRC = (
+    "UC Davis Health — M.P.H. Cost of Attendance (2026-27, tuition & fees)",
+    "https://health.ucdavis.edu/financialaid/coa-mph.html",
+)
+_MPH_NOTE = (
+    "M.P.H. annual tuition & fees: California residents $29,960; non-residents $42,205 (the "
+    "resident total plus the $12,245 nonresident supplemental tuition). Both rates ship in "
+    "the breakdown; the cost card shows the resident basis while the matcher's budget signal "
+    "(program.tuition) uses the non-resident rate for the out-of-state + international pool."
 )
 _OMIT_MPVM = (
     "A verified all-in annual tuition figure is omitted rather than estimated: UC Davis's "
@@ -2658,7 +2680,9 @@ _CATALOG: list[dict] = [
         slug="ucdavis-mba", school=_GSM, degree_type="masters",
         program_name="Master of Business Administration",
         department="Graduate School of Management", cip="52.0201", duration_months=24,
-        keywords=["MBA", "business", "management"], omit_tuition_reason=_OMIT_MBA,
+        keywords=["MBA", "business", "management"], tuition=_MBA_OOS,
+        cost_breakdown={"tuition_in_state": _MBA_INSTATE, "tuition_out_of_state": _MBA_OOS},
+        cost_note=_MBA_NOTE, cost_source=_MBA_SRC,
         description=(
             "The full-time M.B.A. develops general management skill across finance, "
             "marketing, strategy, and operations, with UC Davis's strengths in technology, "
@@ -2745,7 +2769,9 @@ _CATALOG: list[dict] = [
         slug="ucdavis-master-of-public-health-mph", school=_MED, degree_type="masters",
         program_name="Master of Public Health",
         department="Department of Public Health Sciences", cip="51.2201", duration_months=24,
-        keywords=["Public Health", "MPH", "epidemiology"], omit_tuition_reason=_OMIT_MPH,
+        keywords=["Public Health", "MPH", "epidemiology"], tuition=_MPH_OOS,
+        cost_breakdown={"tuition_in_state": _MPH_INSTATE, "tuition_out_of_state": _MPH_OOS},
+        cost_note=_MPH_NOTE, cost_source=_MPH_SRC, cost_year="2026-27",
         description=(
             "The M.P.H. trains public-health practitioners in epidemiology, biostatistics, "
             "and prevention, with concentrations in general public health and epidemiology."
@@ -2895,6 +2921,8 @@ PROGRAMS: list[dict] = [
         "funded": r.get("funded", False),
         "cost_note": r.get("cost_note"),
         "cost_source": r.get("cost_source"),
+        "cost_breakdown": r.get("cost_breakdown"),
+        "cost_year": r.get("cost_year"),
         "omit_tuition_reason": r.get("omit_tuition_reason"),
     }
     for r in _CATALOG
@@ -3453,8 +3481,10 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 "note": spec.get("cost_note") or _GRAD_ACADEMIC_NOTE,
                 "source": (spec.get("cost_source") or _UCOP_SRC)[0],
                 "source_url": (spec.get("cost_source") or _UCOP_SRC)[1],
-                "year": "2025-26",
+                "year": spec.get("cost_year") or "2025-26",
             }
+            if spec.get("cost_breakdown"):
+                p.cost_data["breakdown"] = spec["cost_breakdown"]
         elif spec.get("funded"):
             p.tuition = None
             p.cost_data = {
