@@ -7763,3 +7763,108 @@ Postgres + a project venv the grader env lacks (no `.venv/bin/pytest`); this gra
 skill markdown files (SKILL.md + REPAIR_BACKLOG; CHANGELOG appended) — no code, no data, no migration — so
 backend CI is unaffected. Single-head status on `origin/main` is governed post-merge by CI (FLAG #8) and is
 not affected by this migration-free PR.
+
+---
+
+## 2026-06-30 — Run 92 (FULL-FLEET sweep of all 300 live + all 40 catalogs · enricher CLEARED a large matcher-core slice since run 91 · headline = the cip_code/public-scalar/feed clears · 1 rule change = possessive-mint carve-out)
+
+**Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`.**
+Per catalog I fully paginated the program list (all 40 program-bearing catalogs = 8,024 programs; the other
+260 are bare institution-level stubs) and computed a description-NON-EMPTINESS scan, an exact-duplicate
+`(program_name, degree_type)` scan, a name-FABRICATION scan (CIP-rollup title / "…and Related
+Sciences/Services" / ", General/Other" / `(CIP NN.NN)` / possessive "Bachelor's in" / bare-abbreviation),
+a degree-TYPE-noun placeholder scan ("{DegreeType} program in {field}"), a name-CASING scan (mid-name
+lowercase content word), a heading-doubling + template-classification description scan, and a
+per-`degree_type` tuition COVERAGE measure. Over 20 program DETAILS/catalog (`GET /programs/{id}`,
+deterministic id-sorted sample = ~800 detail fetches) I probed `cip_code` / `who_its_for` (coverage AND
+distinctness) / `external_reviews` coverage and the public bachelor `tuition`-scalar-vs-`cost_data.breakdown`
+resident/non-resident axis. Over all 300 institutions I fetched campus-photo count + posts-feed count
+(`?page_size` is capped at 50 on `/institutions/search`, 100 on `/programs`; the posts endpoint returns a
+LIST and ignores `page_size`, so a 0 is a direct list-length read).
+
+**Merged since run 91 (grader PR #1203):** the enricher worked the backlog HARD — **#1202 Stanford**,
+**#1205 Cornell** (cip + who + real professional NAMES, clearing the run-91 placeholder), **#1206 BU**,
+**#1209 Harvard**, **#1211 NYU**, **#1212 USC**, **#1210 Yale** (each landing matcher-core `cip_code` +
+program-distinct `who_its_for`, several + master's tuition), plus **5597e14** (public non-resident scalar +
+UCSD who), **purduephd1 / purduefeedimg1** (Purdue phd tuition + feed), **uvarev1** (UVA feed/review),
+**#1214 budescslug1** (BU slug-filler descriptions), **harvfeed1 / nyuamfeed1** (Harvard + NYU events feeds).
+All carry `backfill_program_preferences(...)` (verified in the migrations) so the program→student match
+direction stays covered.
+
+**Net live deltas (the big story is PROGRESS):**
+- **`cip_code` starvation 7→0** — BU · Cornell · Harvard · NYU · Stanford · USC · Yale all now 100%
+  in-sample; only gold MIT (the description control) remains null (entry #2).
+- **PUBLIC in-state scalar mis-signal 1→0** — UCSD repaired to oos 50,958; all 15 publics ship the
+  non-resident scalar (verified live). Entry retired.
+- **`who_its_for` 0% 8→4** — BU · NYU · USC · UCSD cleared (now distinct ≈1.0); Georgia Tech · UT-Austin ·
+  Notre Dame · UW-Seattle remain (entry #3a). Type-gamed 13→9 (Stanford · Yale · USC cleared).
+- **Cornell "Professional program in {field}" placeholder CLEARED (#1205)** — only Penn's 2 remain (#4a).
+- **UC-Irvine DEAD FEED RECOVERED** — posts now populate; every program-bearing node reads a live feed.
+  FLAG #9 stands down (no node stranded).
+
+**HEADLINE rule change (1 of ≤3, evidence-backed, NEW class): a possessive-mint CARVE-OUT.** The name
+FABRICATION scan flagged Georgia Tech's 3 **"Professional Master's in {field}"** rows ("Professional
+Master's in Applied Systems Engineering" / PMASE, "… Manufacturing Leadership", "… Occupational Safety and
+Health") under the possessive "Master's in" tell — but a WebSearch against the GT catalog + the INCOSE
+equivalency confirms these are GT's REAL, branded, conferred professional degrees, NOT IPEDS mint. A blunt
+"Master's in" SUBSTRING scan (the form the FLAG-#3 CI metric or an over-zealous repair would run) FALSE-FLAGS
+them. So I added a CARVE-OUT to the possessive-mint DESIGNATION bullet (miss #2 name-realness list): the tell
+is the BARE LEADING possessive form as the WHOLE designation; a verified institution-conferred designation
+that legitimately CONTAINS the possessive token as part of a fuller real name ("Professional Master's in
+{field}", "Professional Bachelor's", "Professional Doctorate") is REAL and must NEVER be flagged or "resolved"
+away — omit-never-guess in REVERSE. This mirrors the run-77 comma-and carve-out (which exists precisely
+because a blunt scan false-flags gold MIT's real "Science, Technology, and Society" major). TIGHTENS toward
+no-fabrication (removes a false-positive that would mangle a verified real degree); loosens NOTHING. Evidence:
+GT 3 rows, PMASE verified against the GT catalog + INCOSE. NOT a backlog repair — GT's names are CORRECT.
+
+**Findings (with live evidence) — everything else is a COMPLIANCE GAP against an existing rule (default
+flipped → queued + logged, NOT re-added):**
+- **Rule EXISTS (run 74): master's/professional-tier tuition residual.** Georgetown master's 73/79 + prof
+  7/17 is by far the worst; UC-Irvine masters 11/21 + prof 1/4 · UVA masters 8/16 · WashU masters 6/10 ·
+  UC-Davis masters 4/19; professional-tier-only nulls Columbia 2/8 · UT-Austin 3/5 · NYU 2/6 · Cornell 1/4.
+  PhD + per-credit certificate nulls EXCLUDED (funded / per-credit → legit omit-with-reason). Entry #1 (HIGH).
+- **Rule EXISTS (run 82): `cip_code` — MIT only.** 65 MIT programs scored field-blind; the 7 prior catalogs
+  cleared. Entry #2 (HIGH). Durable lever FLAG #2.
+- **Rule EXISTS (run 84/86 + run 89): `who_its_for` 0% (4) + type-gamed (9).** 0% on Georgia Tech · UT-Austin
+  · Notre Dame · UW-Seattle. Type-gamed (distinct < 0.5) on Princeton/Berkeley/Penn 0.05 · Columbia/Chicago
+  0.10 · Caltech 0.11 · Michigan 0.15 · UF 0.20 · MIT 0.30. Entry #3. Durable lever FLAG #4.
+- **Rules EXIST (placeholder run 91; casing run 90): name-realness.** Penn 2 "Professional program in {field}"
+  (Cornell's cleared); UT-Austin 70/338 sentence-cased. Entry #4. Durable lever FLAG #3.
+- **DEPTH-pass (miss #8): `external_reviews` sparse.** 0/20 on Georgetown · Georgia Tech · NYU · UT-Austin ·
+  UC-Irvine · UCLA · UF · Michigan · UNC · UW-Seattle · WashU; richest Yale 11/20 · Rice 10/20. Coverage-gated
+  (gold MIT 8/20) → calibrated depth-pass priority (entry #5), NOT a fabrication mandate.
+- **Diagnosed NOT-a-defect:** GT "Professional Master's in {field}" verified REAL (carve-out, above);
+  heading-doubling 8/8,024 (noise on gold catalogs CMU/Cornell/MIT, natural phrasing, not systemic);
+  template-classification descriptions 0 (the 2 regex hits are real field-specific content). Descriptions /
+  exact-dups / name-fabrication / tuition-copy-down / photos / feeds all gold-clean fleet-wide.
+
+**Rule change (1 of ≤3, bounded, evidence-backed, not a duplicate):** the possessive-mint carve-out (above).
+No OTHER rule warranted — after the full-fleet sweep every other live defect is a VIOLATION of an existing
+rule (master's tuition → run 74; cip_code → run 82; who_its_for 0% + type-gaming → run 84/86 + 89; Penn
+placeholder → run 91; UT-Austin casing → run 90), so per the default-flipped doctrine they are queued +
+logged, not re-added (anti-churn). Exactly one genuinely new, now-measurable gap-class existed (a verified
+real-name FALSE-POSITIVE of an existing tell); inventing more to "not stop at one" would breach
+no-edit-without-NEW-evidence. Post-edit re-read confirms `enrich-profile/SKILL.md` reads coherently (the
+carve-out sits at the end of miss #2's possessive-mint DESIGNATION bullet, before the degree-TYPE-noun
+bullet; no numbered miss renumbered; no invariant touched — it ADDS a no-fabrication-protecting carve-out,
+loosens nothing).
+
+**Flags (code/workflow, not grader-editable):** carried 1–8; **FLAG #3 EXTENDED** — the name-realness metric a
+human should add must, in its possessive-mint sub-check, key on the BARE LEADING form and CARVE OUT a verified
+"Professional Master's in {field}" branded credential (else it false-flags GT). **FLAG #9 RESOLVED** —
+UC-Irvine feed recovered; no node currently stranded (a durable "content_sources set but post count 0 for N
+days" alert is still worth adding).
+
+**Backlog delta:** rewritten worst-first, full-fleet. HIGH = master's/prof tuition residual (#1, Georgetown
+worst) · `cip_code` MIT-only (#2, was 7+MIT). MEDIUM = `who_its_for` 0%+type-gamed (#3) · name-realness Penn
+placeholder + UT-Austin casing (#4) · reviews depth (#5) · ~254 bulk seeds incl. 33 zero-photo (#6). CLEARED
+since run 91: BU · Cornell · Harvard · NYU · Stanford · USC · Yale (cip) · UCSD (scalar+who) · BU/NYU/USC
+(who) · Cornell (placeholder) · UC-Irvine (feed).
+
+**Invariants:** all intact; the SKILL.md edit ADDS a name-realness CARVE-OUT (no-fabrication strengthened —
+it forbids mangling a verified real degree name; verify-rendered-output reinforced; enrichment-only,
+merge-mandatory, workshop-feedback-only all untouched). **Health check:** the full `pytest` suite needs a live
+Postgres + a project venv the grader env lacks (no `.venv/bin/pytest`); this grader PR changes only the three
+skill markdown files (SKILL.md + REPAIR_BACKLOG; CHANGELOG appended) — no code, no data, no migration — so
+backend CI is unaffected. Single-head status on `origin/main` is governed post-merge by CI (FLAG #8) and is
+not affected by this migration-free PR.
