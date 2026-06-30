@@ -76,6 +76,19 @@ $86,596 · Law J.D. $84,722 · D.V.M. $66,604 non-resident · Weill M.D. $76,486
 the $71,266 endowed undergraduate sticker copied onto research master's / PhD rows.
 Fully-funded research doctorates omit matcher ``tuition`` with the published sticker in
 the note; executive / per-credit online programs remain honestly omitted.
+
+Graduate-tier tuition residual (2026-06-30, cornellgradtui1, REPAIR_BACKLOG run 94 #1):
+re-verified the seven graduate rows that previously shipped ``tuition`` null. Two PUBLISH
+a fillable annual/doctoral rate and are now FILLED — the professional M.Arch I (residential,
+billed per academic year at the endowed-Ithaca / Professional Tier 1 rate $71,266; AAP +
+Bursar) and the D.M.A. (a fully-funded Graduate-School doctoral degree → research-doctoral
+sticker $20,800 with ``funded=True``, mirroring the PhD treatment; Music Dept funding
+guarantee). The five executive / online degrees (EMBA Americas, Executive M.H.A.,
+Executive M.P.A., online M.S.L.S., hybrid M.Eng. Engineering Management) are billed as a
+fixed multi-month TOTAL or PER-CREDIT with no annual full-time basis, so the annual matcher
+scalar stays honestly omitted while the verified total / per-credit rate is preserved in
+cost_data — never a multi-year total stuffed into the annual scalar (which would over-fire
+the budget veto).
 """
 
 from __future__ import annotations
@@ -2654,6 +2667,10 @@ _TUI_SRC_MED_URL = (
 )
 _PHD_FUNDING_SRC = "Cornell University Graduate School — Tuition Rates"
 _PHD_FUNDING_URL = "https://gradschool.cornell.edu/financial-support/tuition-rates/"
+_AAP_TUI_SRC = "Cornell AAP — Graduate Tuition and Funding Resources (2025-26)"
+_AAP_TUI_SRC_URL = "https://aap.cornell.edu/admissions/graduate/tuition"
+_DMA_FUNDING_SRC = "Cornell Department of Music — Graduate Program Funding"
+_DMA_FUNDING_URL = "https://music.cornell.edu/graduate-program-composition"
 
 _TUITION_UG_ENDOWED = 71266
 _TUITION_UG_STATUTORY_NY = 48010
@@ -2673,13 +2690,15 @@ _TUITION_MD = 76486
 # tuition (non-residents pay the endowed rate).
 _STATUTORY_SCHOOLS = {_CALS, _DYSON, _HUMAN_ECOLOGY, _ILR, _BROOKS}
 
-# Professional Tier 1 (M.Eng, select M.P.S./M.M.H.) — catalog Professional Degree Tier 1.
+# Professional Tier 1 (M.Eng, select M.P.S./M.M.H., professional M.Arch I) — catalog
+# Professional Degree Tier 1 / endowed-Ithaca professional rate.
 _TIER1_SLUGS = frozenset({
     "cornell-meng-ms",
     "cornell-business-administration-ms",
     "cornell-real-estate-ms",
     "cornell-hospitality-administration-management-ms",
     "cornell-management-sciences-and-quantitative-methods-ms",
+    "cornell-march",
 })
 
 # Professional Tier 2 (M.P.A., M.I.L.R., M.L.A., M.R.P., M.P.H., M.P.S. in contract
@@ -2694,17 +2713,80 @@ _TIER2_SLUGS = frozenset({
     "cornell-veterinary-biomedical-and-clinical-sciences-ms",
 })
 
-# Executive / per-credit / total-program-cost degrees with no single citable annual rate.
+# Executive / per-credit / total-program-cost degrees with NO single citable ANNUAL rate
+# (the matcher reads ``program.tuition`` as an annual figure — putting a multi-year cohort
+# TOTAL or a per-credit rate into it would over-fire the budget veto, so the annual scalar
+# is honestly omitted and the verified TOTAL / per-credit rate is preserved in cost_data).
+# REPAIR_BACKLOG run 94 #1: cornell-march (a residential professional M.Arch billed per
+# academic year → Tier 1) and cornell-music-prof (a fully-funded Graduate-School D.M.A. on
+# the research-doctoral schedule) were re-verified to PUBLISH an annual/doctoral rate and
+# are now FILLED, not omitted.
 _TUITION_OMIT_SLUGS = frozenset({
     "cornell-legal-studies-ms-online",
     "cornell-emba-americas",
     "cornell-emha-online",
     "cornell-empa-online",
     "cornell-engineering-management-meng-online",
-    "cornell-march",
     "cornell-legal-research-and-advanced-professional-studies-prof",
-    "cornell-music-prof",
 })
+
+# Per-slug omit DETAIL for the executive / online degrees above: a precise reason plus the
+# verified published TOTAL (or per-credit rate) kept in cost_data so the editorial page
+# shows a real cost even though no annual matcher scalar exists. Each figure first-party.
+_TUITION_OMIT_DETAIL: dict[str, dict] = {
+    "cornell-emba-americas": {
+        "note": (
+            "The Executive MBA Americas is billed as a single fixed program fee of $198,234 "
+            "(five installments across the 17-month cohort), not an annual tuition, so no "
+            "per-year matcher rate is stated; the verified total program cost is recorded below."
+        ),
+        "source": "Cornell Johnson — Executive MBA Americas, Tuition & Financing",
+        "source_url": "https://www.johnson.cornell.edu/programs/emba/americas/tuition-financing/",
+        "extra": {"total_program_tuition": 198234, "tuition_period": "total_program"},
+    },
+    "cornell-emha-online": {
+        "note": (
+            "The Executive M.H.A. is billed as a flat program fee of $93,316 for the 18-month "
+            "degree (new students starting Summer 2026), not an annual tuition, so no per-year "
+            "matcher rate is stated; the verified total program cost is recorded below."
+        ),
+        "source": "Cornell Brooks School — Executive M.H.A., Costs and Aid",
+        "source_url": "https://publicpolicy.cornell.edu/masters/sloan/emha/costs-and-aid/",
+        "extra": {"total_program_tuition": 93316, "tuition_period": "total_program"},
+    },
+    "cornell-empa-online": {
+        "note": (
+            "The Executive M.P.A. is billed as a flat program fee of $93,316 for the 18-month "
+            "degree (new students starting Summer 2026), not an annual tuition, so no per-year "
+            "matcher rate is stated; the verified total program cost is recorded below."
+        ),
+        "source": "Cornell Brooks School — Executive M.P.A., Costs and Aid",
+        "source_url": "https://publicpolicy.cornell.edu/masters/mpa/empa/costs-and-aid/",
+        "extra": {"total_program_tuition": 93316, "tuition_period": "total_program"},
+    },
+    "cornell-legal-studies-ms-online": {
+        "note": (
+            "Cornell Law's online M.S.L.S. is billed per credit ($2,265/credit; 30 credits "
+            "across five part-time terms ≈ $67,950 total), with no annual full-time basis, so "
+            "no per-year matcher rate is stated; the verified per-credit rate is recorded below."
+        ),
+        "source": "Cornell Law School — M.S.L.S. Admissions",
+        "source_url": "https://www.lawschool.cornell.edu/admissions/msls-program/",
+        "extra": {"tuition_per_credit": 2265, "total_program_tuition": 67950,
+                  "tuition_period": "per_credit"},
+    },
+    "cornell-engineering-management-meng-online": {
+        "note": (
+            "The hybrid/distance M.Eng. in Engineering Management is billed per credit "
+            "($2,465/credit; 30+ credits across two to three years), with no annual full-time "
+            "basis, so no per-year matcher rate is stated; the verified per-credit rate is "
+            "recorded below."
+        ),
+        "source": "Cornell Duffield Engineering — Paying for Your M.Eng. Degree",
+        "source_url": "https://www.duffield.cornell.edu/meng/paying-for-your-meng-degree/",
+        "extra": {"tuition_per_credit": 2465, "tuition_period": "per_credit"},
+    },
+}
 
 _INTL_VISA = {
     "types": ["F-1", "J-1"],
@@ -2856,6 +2938,13 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
         return cost.get("tuition_usd"), cost
 
     if slug in _TUITION_OMIT_SLUGS:
+        detail = _TUITION_OMIT_DETAIL.get(slug)
+        if detail:
+            cost = _omit_tuition_cost(
+                detail["note"], source=detail.get("source"), source_url=detail.get("source_url")
+            )
+            cost.update(detail.get("extra") or {})
+            return None, cost
         return None, _omit_tuition_cost(
             "Cornell does not publish a single citable annual tuition for this degree on a "
             "public page (executive / per-credit / total-program-cost billing); see the "
@@ -2929,6 +3018,28 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
                 source=_TUI_SRC_MED,
                 source_url=_TUI_SRC_MED_URL,
             )
+        if slug == "cornell-music-prof":
+            # The D.M.A. is a Graduate-School DOCTORAL degree on the research-doctoral tuition
+            # schedule, NOT a self-pay professional program: every admitted student receives
+            # four guaranteed years of full funding (two Sage fellowships + two teaching
+            # assistantships covering full tuition + student health insurance). So the matcher
+            # budget input is the published doctoral sticker with funded=True — never 0 (which
+            # the CPEF reads as "free") and never the undergraduate sticker copied down. Mirrors
+            # the PhD treatment (funding is a SEPARATE ``funded`` signal).
+            return _TUITION_PHD, _pub_tuition_cost(
+                _TUITION_PHD,
+                (
+                    "Published research-doctoral tuition sticker for the Cornell Graduate "
+                    f"School, 2025-26 (${_TUITION_PHD:,} per year before aid). The D.M.A. is a "
+                    "fully-funded Graduate-School doctoral degree — every admitted student "
+                    "receives four guaranteed years of support (two Sage fellowships + two "
+                    "teaching assistantships) covering full tuition and student health "
+                    "insurance, so most pay no out-of-pocket tuition."
+                ),
+                source=_DMA_FUNDING_SRC,
+                source_url=_DMA_FUNDING_URL,
+                funded=True,
+            )
         return None, _omit_tuition_cost(
             "Cornell does not publish a single citable annual tuition for this professional "
             "degree on a public page; see the program website for current rates.",
@@ -2936,6 +3047,21 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
         )
 
     if dtype == "masters":
+        if slug == "cornell-march":
+            # The professional Master of Architecture (M.Arch I) is a full-time RESIDENTIAL
+            # degree billed PER ACADEMIC YEAR at Cornell's endowed-Ithaca / Professional
+            # Degree Tier 1 rate (AAP and the Bursar both list the professional M.Arch at the
+            # same endowed-Ithaca professional rate as the M.Eng tier). Re-verified run 94 —
+            # previously (and wrongly) bucketed with the executive/per-credit omits.
+            return _TUITION_PROF_TIER1, _pub_tuition_cost(
+                _TUITION_PROF_TIER1,
+                "Published 2025-26 annual tuition for the professional Master of Architecture "
+                "(M.Arch I) — Cornell's endowed-Ithaca / Professional Degree Tier 1 rate "
+                "(the AAP graduate tuition schedule lists the professional M.Arch at the same "
+                "endowed-Ithaca professional rate as the M.Eng tier).",
+                source=_AAP_TUI_SRC,
+                source_url=_AAP_TUI_SRC_URL,
+            )
         if slug in _TIER1_SLUGS:
             return _TUITION_PROF_TIER1, _pub_tuition_cost(
                 _TUITION_PROF_TIER1,
