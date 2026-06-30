@@ -58,6 +58,14 @@ function SchoolRow({ match }: { match: MatchResultDual }) {
   // fitness_score word for institution/cached payloads that still carry it.
   const fit = match.fit_label ?? fitWord(match.fitness_score)
   const odds = oddsWord(match.band_label)
+  const affordWord =
+    match.affordability_band === 'affordable'
+      ? 'Under budget'
+      : match.affordability_band === 'stretch'
+        ? 'Stretch'
+        : match.affordability_band === 'out_of_reach'
+          ? 'Over budget'
+          : null
   // The same plain-language counselor read Discover shows (#969). It encodes fit
   // vs odds in prose; fall back to any stored rationale when no band is served.
   const fitness = Number(match.fitness_score)
@@ -68,7 +76,7 @@ function SchoolRow({ match }: { match: MatchResultDual }) {
     <div className="rounded-md border border-border bg-card p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0 text-sm font-medium text-foreground">{matchName(match)}</div>
-        {(fit || odds) && (
+        {(fit || odds || affordWord) && (
           <div className="flex shrink-0 items-center gap-1.5">
             {fit && (
               <span className="rounded-full bg-secondary/10 px-2 py-0.5 text-xs font-medium text-secondary">
@@ -76,6 +84,20 @@ function SchoolRow({ match }: { match: MatchResultDual }) {
               </span>
             )}
             {odds && <WordTag label="Odds" word={odds} tone="odds" />}
+            {affordWord && (
+              <span
+                className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                  affordWord === 'Under budget'
+                    ? 'bg-secondary/10 text-secondary'
+                    : affordWord === 'Over budget'
+                      ? 'bg-error/10 text-error'
+                      : 'bg-muted text-foreground'
+                }`}
+                title="Estimated net price after aid vs your budget"
+              >
+                {affordWord}
+              </span>
+            )}
           </div>
         )}
       </div>
