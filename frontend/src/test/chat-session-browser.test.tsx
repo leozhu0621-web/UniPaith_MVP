@@ -56,7 +56,7 @@ vi.mock("../stores/toast-store", () => ({ showToast: vi.fn() }));
 vi.mock("../api/connect", () => ({ getUnseenCount: vi.fn().mockResolvedValue(0) }));
 vi.mock("../api/inbox", () => ({ getThreads: vi.fn().mockResolvedValue([]) }));
 
-import { getChatTree } from "../api/chatSessions";
+import { getChatTree, updateSession } from "../api/chatSessions";
 import SessionBrowser from "../pages/student/chat/SessionBrowser";
 import ChatTabShell from "../pages/student/chat/ChatTabShell";
 
@@ -173,6 +173,23 @@ describe("SessionBrowser", () => {
         .getAllByRole("button")
         .find((b) => b.getAttribute("aria-label") === "Goals folder options");
       expect(optionsBtn).toBeDefined();
+    });
+  });
+
+  it("moves a session into another folder via the Move-to-folder submenu", async () => {
+    renderBrowser();
+    const storyRow = (await screen.findByText("Your story")).closest(
+      "[role='option']",
+    ) as HTMLElement;
+    // Open the session ⋯ menu, then drill into "Move to folder".
+    fireEvent.click(storyRow.querySelector("[aria-label='Session options']")!);
+    fireEvent.click(await screen.findByRole("menuitem", { name: /move to folder/i }));
+    // The submenu lists other folders; pick the custom "Reach schools".
+    fireEvent.click(await screen.findByRole("menuitem", { name: /reach schools/i }));
+    await waitFor(() => {
+      expect(vi.mocked(updateSession)).toHaveBeenCalledWith("s-3", {
+        folder_id: "f-custom-1",
+      });
     });
   });
 

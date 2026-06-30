@@ -37,6 +37,9 @@ import {
   Pencil,
   CheckCheck,
   EyeOff,
+  FolderInput,
+  Folder,
+  ChevronLeft,
 } from "lucide-react";
 import type { FolderNode, ChatSession, ChatTreeResponse } from "../../../api/chatSessions";
 import {
@@ -105,6 +108,8 @@ interface MenuItem {
   label: string;
   icon?: React.ReactNode;
   danger?: boolean;
+  /** Keep the menu open after click (used for submenu navigation). */
+  keepOpen?: boolean;
   onClick: () => void;
 }
 
@@ -138,7 +143,7 @@ function ContextMenu({
             <button
               key={i}
               role="menuitem"
-              onClick={() => { item.onClick(); onClose(); }}
+              onClick={() => { item.onClick(); if (!item.keepOpen) onClose(); }}
               className={`flex w-full items-center gap-2.5 px-3 py-2 text-[13px] font-semibold text-left rounded-lg mx-0.5 transition-colors hover:bg-muted ${
                 item.danger ? "text-destructive" : "text-foreground"
               }`}
@@ -161,6 +166,8 @@ function SessionRow({
   onRename,
   onPin,
   onDelete,
+  moveTargets,
+  onMove,
   onDragStart,
   onDragOver,
   onDrop,
@@ -174,6 +181,10 @@ function SessionRow({
   onRename: (title: string) => void;
   onPin: () => void;
   onDelete: () => void;
+  /** Folders this session can be moved into (excludes its current folder). */
+  moveTargets?: { id: string; name: string }[];
+  /** Move this session into the given folder id. */
+  onMove?: (folderId: string) => void;
   // Drag-reorder (within a folder only). When onDragStart is set the row is
   // draggable; pinned rows omit these and stay non-draggable.
   onDragStart?: () => void;
@@ -184,10 +195,12 @@ function SessionRow({
   dropTarget?: boolean;
 }) {
   const [menu, setMenu] = useState(false);
+  const [menuView, setMenuView] = useState<"main" | "move">("main");
   const [renaming, setRenaming] = useState(false);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
 
-  const menuItems: MenuItem[] = [
+  const canMove = !!onMove && !!moveTargets && moveTargets.length > 0;
+  const mainMenuItems: MenuItem[] = [
     {
       label: "Rename",
       icon: <Pencil size={13} />,
@@ -198,6 +211,16 @@ function SessionRow({
       icon: <Pin size={13} />,
       onClick: onPin,
     },
+    ...(canMove
+      ? [
+          {
+            label: "Move to folder",
+            icon: <FolderInput size={13} />,
+            keepOpen: true,
+            onClick: () => setMenuView("move"),
+          },
+        ]
+      : []),
     { label: "__divider__", onClick: () => {} },
     {
       label: "Delete",
@@ -206,6 +229,21 @@ function SessionRow({
       onClick: onDelete,
     },
   ];
+  const moveMenuItems: MenuItem[] = [
+    {
+      label: "Back",
+      icon: <ChevronLeft size={13} />,
+      keepOpen: true,
+      onClick: () => setMenuView("main"),
+    },
+    { label: "__divider__", onClick: () => {} },
+    ...(moveTargets ?? []).map((t) => ({
+      label: t.name,
+      icon: <Folder size={13} />,
+      onClick: () => onMove?.(t.id),
+    })),
+  ];
+  const menuItems = menuView === "move" ? moveMenuItems : mainMenuItems;
 
   return (
     <div
@@ -275,7 +313,14 @@ function SessionRow({
         <button
           ref={menuBtnRef}
           aria-label="Session options"
-          onClick={(e) => { e.stopPropagation(); setMenu((v) => !v); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            setMenu((v) => {
+              const next = !v;
+              if (next) setMenuView("main");
+              return next;
+            });
+          }}
           className="opacity-0 group-hover:opacity-70 hover:!opacity-100 p-0.5 rounded text-muted-foreground transition-opacity"
         >
           <MoreHorizontal size={14} />
@@ -283,7 +328,7 @@ function SessionRow({
         {menu && (
           <ContextMenu
             items={menuItems}
-            onClose={() => setMenu(false)}
+            onClose={() => { setMenu(false); setMenuView("main"); }}
           />
         )}
       </div>
@@ -299,6 +344,8 @@ function FolderBlock({
   onRenameSession,
   onPinSession,
   onDeleteSession,
+  moveTargets,
+  onMoveSession,
   onNewSessionHere,
   onRenameFolder,
   onDeleteFolder,
@@ -312,6 +359,10 @@ function FolderBlock({
   onRenameSession: (id: string, title: string) => void;
   onPinSession: (id: string, pinned: boolean) => void;
   onDeleteSession: (id: string) => void;
+  /** Folders a session can be moved into (the full folder list). */
+  moveTargets?: { id: string; name: string }[];
+  /** Move a session to a folder. */
+  onMoveSession?: (sessionId: string, folderId: string) => void;
   onNewSessionHere: (folderId: string, topicKey: string | null) => void;
   onRenameFolder: (id: string, name: string) => void;
   onDeleteFolder: (id: string) => void;
@@ -499,6 +550,8 @@ function FolderBlock({
               onRename={(title) => onRenameSession(s.id, title)}
               onPin={() => onPinSession(s.id, !s.pinned)}
               onDelete={() => onDeleteSession(s.id)}
+              moveTargets={(moveTargets ?? []).filter((t) => t.id !== node.id)}
+              onMove={(folderId) => onMoveSession?.(s.id, folderId)}
               onDragStart={() => setDragId(s.id)}
               onDragOver={() => setOverId(s.id)}
               onDrop={() => dropOnto(s.id)}
@@ -706,6 +759,12 @@ export default function SessionBrowser({
     (f) => f.kind === "preset" && !presetVisible(f),
   );
 
+  // Move targets: every folder (custom + preset) by id + name. Moving a session
+  // into a hidden/empty preset reveals it (it becomes non-empty on next fetch).
+  const moveFolders = folders.map((f) => ({ id: f.id, name: f.name }));
+  const moveSession = (sessionId: string, folderId: string) =>
+    updateSessionMut.mutate({ id: sessionId, patch: { folder_id: folderId } });
+
   // ── actions ───────────────────────────────────────────────────────────────
   function handleNewFolder() {
     const name = newFolderName.trim();
@@ -837,6 +896,8 @@ export default function SessionBrowser({
                   updateSessionMut.mutate({ id: s.id, patch: { pinned: false } })
                 }
                 onDelete={() => deleteSessionMut.mutate(s.id)}
+                moveTargets={moveFolders.filter((t) => t.id !== s.folder_id)}
+                onMove={(folderId) => moveSession(s.id, folderId)}
               />
             ))}
           </section>
@@ -861,6 +922,8 @@ export default function SessionBrowser({
                   updateSessionMut.mutate({ id, patch: { pinned } })
                 }
                 onDeleteSession={(id) => deleteSessionMut.mutate(id)}
+                moveTargets={moveFolders}
+                onMoveSession={moveSession}
                 onNewSessionHere={() => onNewSession?.()}
                 onRenameFolder={(id, name) =>
                   updateFolderMut.mutate({ id, patch: { name } })
@@ -915,6 +978,8 @@ export default function SessionBrowser({
                       updateSessionMut.mutate({ id, patch: { pinned } })
                     }
                     onDeleteSession={(id) => deleteSessionMut.mutate(id)}
+                    moveTargets={moveFolders}
+                    onMoveSession={moveSession}
                     onNewSessionHere={() => onNewSession?.()}
                     onRenameFolder={() => {}} // preset: no rename
                     onDeleteFolder={() => {}} // preset: no delete
