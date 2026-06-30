@@ -71,7 +71,11 @@ jobs:
       - name: Invalidate CloudFront
         run: |
           DIST_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Aliases.Items[?contains(@,'app.unipaith.co')]].Id" --output text)
+          # Only index.html needs busting: every other asset is content-hashed and
+          # uploaded "immutable", and the JSON manifests are already served no-cache.
+          # Invalidating "/*" re-fetched the whole tree on every deploy (slower, and
+          # billable past 1k paths/mo) for zero benefit.
           aws cloudfront create-invalidation \
             --distribution-id $DIST_ID \
-            --paths "/*"
+            --paths "/index.html"
           echo "CloudFront cache invalidated!"
