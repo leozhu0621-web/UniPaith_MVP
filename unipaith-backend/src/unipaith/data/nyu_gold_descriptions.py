@@ -320,6 +320,25 @@ _HUMANITIES: dict[str, str] = {
     ),
 }
 
+# ── American Studies — shared Bulletin body split after de-boilerplate ──
+_AMERICAN_STUDIES: dict[str, str] = {
+    "nyu-american-studies-ba": (
+        "American Studies at NYU is an interdisciplinary College of Arts and Science "
+        "major housed in the Department of Social and Cultural Analysis. Students study "
+        "United States society in national, hemispheric, and global frameworks, drawing "
+        "on history, area studies, literature and film, gender studies, critical ethnic "
+        "studies, political economy, and urban and environmental studies."
+    ),
+    "nyu-american-studies-phd": (
+        "The PhD in American Studies at NYU uses the Department of Social and Cultural "
+        "Analysis's interdisciplinary approach to United States society in national, "
+        "hemispheric, and global frameworks. Doctoral work draws on methods such as "
+        "ethnography, textual analysis, archival research, and cultural studies across "
+        "fields including history, literature and film, gender studies, and political "
+        "economy."
+    ),
+}
+
 # ── Professional / other distinct programs sharing a base blurb ──
 _OTHER: dict[str, str] = {
     "nyu-biochemistry-ba": (
@@ -377,6 +396,7 @@ GOLD_DESCRIPTIONS: dict[str, str] = {
     **_GPH,
     **_URBAN,
     **_HUMANITIES,
+    **_AMERICAN_STUDIES,
     **_OTHER,
 }
 

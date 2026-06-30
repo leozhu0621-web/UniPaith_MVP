@@ -36,8 +36,9 @@ coverable programs with substantial third-party coverage; this is a genuinely la
 deep fields) in their ``_standard.omitted`` pending a depth pass on a future repair-first run.
 NYU's official news site (Adobe Experience Manager) is captcha-gated and exposes no verified
 university RSS endpoint; ``content_sources`` uses the verified Washington Square News RSS
-(``nyunews.com/feed/``, NYU's independent student newspaper since 1973) plus official social
-handles + keywords on every node so the daily ingest can populate Updates.
+(``nyunews.com/feed/``, NYU's independent student newspaper since 1973), NYU's official
+LiveWhale events iCal feed, and official social handles + keywords on every node so the daily
+ingest can populate Updates.
 
 Slug-leak repair (2026-06-19, nyuslugfix1): cross-field disambiguation had prefixed 41
 programme descriptions with a raw kebab-case bulletin slug
@@ -828,6 +829,7 @@ _ABOUT_OMITTED: dict[str, list[str]] = {
 # 2026-06-17 to return live RSS items with media enclosures for cover images.
 _NYU_NEWS_URL = "https://www.nyu.edu/about/news-publications/news.html"
 _NYU_NEWS_RSS = "https://nyunews.com/feed/"
+_NYU_EVENTS_ICAL = "https://events.nyu.edu/live/ical/events"
 
 # Official university social handles (verified 2026-06-13).
 _SOCIAL_NYU = {
@@ -866,6 +868,7 @@ def _school_content(name: str) -> dict:
     return {
         "news_url": _SCHOOL_WEBSITE.get(name, _NYU_NEWS_URL),
         "news_rss": _NYU_NEWS_RSS,
+        "events_feed": {"url": _NYU_EVENTS_ICAL, "type": "ical"},
         "news_curated": False,
         "keywords": list(_SCHOOL_FEED_SPEC[name]),
         "social": _SOCIAL_NYU,
@@ -883,6 +886,7 @@ def _program_content(school_name: str, keywords: list[str]) -> dict:
 _INSTITUTION_CONTENT: dict = {
     "news_url": _NYU_NEWS_URL,
     "news_rss": _NYU_NEWS_RSS,
+    "events_feed": {"url": _NYU_EVENTS_ICAL, "type": "ical"},
     "news_curated": True,
     "social": _SOCIAL_NYU,
 }
@@ -1441,8 +1445,7 @@ _LEVEL_SUFFIX: dict[str, str] = {
         "undergraduate research or internships in New York City."
     ),
     "masters": (
-        " Graduate students complete advanced seminars, practica, and a thesis or "
-        "capstone project."
+        " Graduate students complete advanced seminars, practica, and a thesis or capstone project."
     ),
     "phd": (
         " Doctoral students conduct original dissertation research with faculty "
@@ -1570,7 +1573,9 @@ def _deboilerplate_description(spec: dict, clause: str) -> str:
     if m:
         return f"Doctoral training in {field} at NYU GSAS emphasizes {clause[m.end() :]}"
 
-    dnp_boilerplate = "Students who complete the Doctor of Nursing Practice (DNP) Program at NYU Meyers"
+    dnp_boilerplate = (
+        "Students who complete the Doctor of Nursing Practice (DNP) Program at NYU Meyers"
+    )
     if clause.startswith(dnp_boilerplate):
         return f"The {pname} at NYU Rory Meyers College of Nursing: {clause}"
 
@@ -1591,9 +1596,7 @@ _ANTI_STUB_REWRITES: tuple[tuple[re.Pattern[str], str], ...] = (
     (re.compile(r"\bis a Master's degree in\b", re.I), "delivers the Master's degree in"),
     (re.compile(r"\bis a master's degree\b", re.I), "combines graduate-level"),
     (
-        re.compile(
-            r"\bis a master's program with a global track at NYU Shanghai, and\b", re.I
-        ),
+        re.compile(r"\bis a master's program with a global track at NYU Shanghai, and\b", re.I),
         "runs on NYU Shanghai's global track and",
     ),
 )
@@ -1696,7 +1699,6 @@ def _strip_slug_leak_prefix(text: str) -> str:
     if _SLUG_LEAK_RE.match(stripped):
         return _SLUG_LEAK_RE.sub("", stripped, count=1).lstrip()
     return text
-
 
 
 # ── The program catalog ────────────────────────────────────────────────────
@@ -5618,9 +5620,7 @@ def _disambiguate_catalog_descriptions(programs: list[dict]) -> None:
         if len(body) < _SHARED_BODY_MIN_CHARS:
             continue
         fld = field_of(spec["program_name"])
-        normalized = (
-            re.sub(re.escape(fld), "{FIELD}", body, flags=re.IGNORECASE) if fld else body
-        )
+        normalized = re.sub(re.escape(fld), "{FIELD}", body, flags=re.IGNORECASE) if fld else body
         head_to_specs[normalized[: _SHARED_BODY_MIN_CHARS * 2]].append(spec)
 
     for specs in head_to_specs.values():
@@ -5706,9 +5706,7 @@ _catalog_errors = validate_catalog(PROGRAMS)
 if _catalog_errors:
     raise ValueError(f"NYU catalog validation failed: {_catalog_errors}")
 
-_slug_leaks = sum(
-    1 for p in PROGRAMS if _SLUG_LEAK_RE.match((p.get("description") or "").strip())
-)
+_slug_leaks = sum(1 for p in PROGRAMS if _SLUG_LEAK_RE.match((p.get("description") or "").strip()))
 if _slug_leaks:
     raise ValueError(f"NYU catalog has {_slug_leaks} slug-prefixed descriptions")
 
@@ -5774,9 +5772,13 @@ _FT_CREDITS_PER_YEAR = 24
 
 # Published 2026-27 full-time undergraduate direct cost (tuition + registration/services fees),
 # uniform across majors WITHIN a school (NYU Bursar / Bulletins Cost of Attendance, two semesters).
-_UG_TUITION_SRC = "NYU Bursar / Bulletins — 2026-27 Cost of Attendance (undergraduate tuition and fees)"
+_UG_TUITION_SRC = (
+    "NYU Bursar / Bulletins — 2026-27 Cost of Attendance (undergraduate tuition and fees)"
+)
 _UG_TUITION_SRC_URL = "https://bulletins.nyu.edu/nyu/cost-attendance/"
-_UG_TUITION_DEFAULT = 68576  # CAS, Gallatin, Liberal Studies, Nursing, SPS, Silver, Steinhardt, Tandon
+_UG_TUITION_DEFAULT = (
+    68576  # CAS, Gallatin, Liberal Studies, Nursing, SPS, Silver, Steinhardt, Tandon
+)
 _UG_TUITION_BY_SCHOOL: dict[str, int] = {
     _STERN: 70464,
     _TISCH: 75326,
@@ -5786,24 +5788,33 @@ _UG_TUITION_BY_SCHOOL: dict[str, int] = {
 # Annualized at _FT_CREDITS_PER_YEAR. Each rate is the school's own published per-credit figure.
 _GRAD_PER_CREDIT: dict[str, tuple[int, str, str, str]] = {
     _STEINHARDT: (
-        2363, "2026-27", "NYU Steinhardt — Graduate Study Tuition and Fees",
+        2363,
+        "2026-27",
+        "NYU Steinhardt — Graduate Study Tuition and Fees",
         "https://steinhardt.nyu.edu/admissions/tuition-and-student-charges/graduate-study-tuition-and-fees",
     ),
     _TANDON: (
-        2525, "2026-27", "NYU Tandon School of Engineering — Graduate Tuition and Financial Aid",
+        2525,
+        "2026-27",
+        "NYU Tandon School of Engineering — Graduate Tuition and Financial Aid",
         "https://engineering.nyu.edu/admissions/graduate/tuition-and-financial-aid",
     ),
     _GSAS: (
-        2391, "2024-25",
+        2391,
+        "2024-25",
         "NYU Graduate School of Arts and Science / Institute of Fine Arts — Tuition (per point)",
         "https://ifa.nyu.edu/study/tuition.html",
     ),
     _GPH: (
-        2272, "2025-26", "NYU School of Global Public Health — Funding Your Degree",
+        2272,
+        "2025-26",
+        "NYU School of Global Public Health — Funding Your Degree",
         "https://publichealth.nyu.edu/admissions/financial-aid",
     ),
     _SPS: (
-        2785, "2025-26", "NYU School of Professional Studies — Graduate Tuition and Financial Aid",
+        2785,
+        "2025-26",
+        "NYU School of Professional Studies — Graduate Tuition and Financial Aid",
         "https://www.sps.nyu.edu/join/graduate-admissions/tuition-and-financial-aid.html",
     ),
     # REPAIR_BACKLOG #3 — master's-tier tuition residual. NYU bills graduate tuition per credit
@@ -5811,17 +5822,20 @@ _GRAD_PER_CREDIT: dict[str, tuple[int, str, str, str]] = {
     # annualized at _FT_CREDITS_PER_YEAR (24 = NYU's 12-points/semester full-time standard).
     # Each per-credit figure is the school's row in the NYU Bursar 2025-26 Tuition and Fee Rates.
     _WAGNER: (
-        2491, "2025-26",
+        2491,
+        "2025-26",
         "NYU Bursar — 2025-26 Tuition and Fee Rates (Robert F. Wagner Graduate School per point)",
         "https://www.nyu.edu/students/student-information-and-resources/bills-payments-and-refunds/tuition-and-fee-rates.html",
     ),
     _NURSING: (
-        2496, "2025-26",
+        2496,
+        "2025-26",
         "NYU Bursar — 2025-26 Tuition and Fee Rates (Rory Meyers College of Nursing per point)",
         "https://bulletins.nyu.edu/graduate/nursing/cost-attendance/tuition-fees/",
     ),
     _GALLATIN: (
-        2333, "2025-26",
+        2333,
+        "2025-26",
         "NYU Bursar — 2025-26 Tuition and Fee Rates (Gallatin School of Individualized Study per point)",
         "https://www.nyu.edu/students/student-information-and-resources/bills-payments-and-refunds/tuition-and-fee-rates.html",
     ),
@@ -5831,7 +5845,8 @@ _GRAD_PER_CREDIT: dict[str, tuple[int, str, str, str]] = {
 _GRAD_FLAT_BY_SCHOOL: dict[str, tuple[int, str, str, str]] = {
     # Tisch charges a flat $41,451/semester for 12–18 credits (full-time), i.e. $82,902/year.
     _TISCH: (
-        82902, "2025-26",
+        82902,
+        "2025-26",
         "NYU Tisch School of the Arts — Graduate Tuition and Fees (flat $41,451/semester, 12–18 credits)",
         "https://tisch.nyu.edu/admissions/graduate-admissions/graduate-tuition-and-fees.html",
     ),
@@ -5839,7 +5854,8 @@ _GRAD_FLAT_BY_SCHOOL: dict[str, tuple[int, str, str, str]] = {
     # published full-time annual figure: $41,994 at 9 credits/semester (18 credits/year),
     # 2025-26 (REPAIR_BACKLOG #3). The D.D.S. is billed separately by slug above.
     _DENTISTRY: (
-        41994, "2025-26",
+        41994,
+        "2025-26",
         "NYU College of Dentistry — Cost of Attendance, M.S. tuition (9 credits/semester)",
         "https://bulletins.nyu.edu/graduate/dentistry/cost-attendance/",
     ),
@@ -5847,7 +5863,8 @@ _GRAD_FLAT_BY_SCHOOL: dict[str, tuple[int, str, str, str]] = {
     # (the 65-credit degree over two years), NOT NYU's generic 24, so the full-time-year tuition
     # is $1,718 × 33 ≈ $56,694 — using the 24-credit standard understated it by ~$15k (Codex P2b).
     _SILVER: (
-        56694, "2025-26",
+        56694,
+        "2025-26",
         "NYU Silver School of Social Work — M.S.W. ($1,718/credit × ~33 credits in a full-time "
         "pathway year; the 65-credit degree over two years)",
         "https://socialwork.nyu.edu/prospective-students/paying-for-your-education/msw/tuition-and-fees.html",
@@ -5856,8 +5873,12 @@ _GRAD_FLAT_BY_SCHOOL: dict[str, tuple[int, str, str, str]] = {
 
 # School of Law: the LL.M. / specialized-master's slate bills per credit; full-time = 24 credits/year.
 _LAW_LLM_PER_CREDIT = 3498  # NYU Law LL.M. per credit (2025-26)
-_JD_ANNUAL = 83952          # NYU Law J.D. full-time annual tuition (Bulletins Law Cost of Attendance, 2026-27)
-_DDS_ANNUAL = 106962        # NYU College of Dentistry D.D.S. annual tuition (Bulletins Dentistry COA, 2026-27)
+_JD_ANNUAL = (
+    83952  # NYU Law J.D. full-time annual tuition (Bulletins Law Cost of Attendance, 2026-27)
+)
+_DDS_ANNUAL = (
+    106962  # NYU College of Dentistry D.D.S. annual tuition (Bulletins Dentistry COA, 2026-27)
+)
 _LAW_TUITION_SRC = "NYU School of Law — Cost of Attendance / Tuition and Fees (Bulletins)"
 _LAW_TUITION_SRC_URL = "https://bulletins.nyu.edu/graduate/law/cost-attendance/"
 _DENT_TUITION_SRC = "NYU College of Dentistry — Cost of Attendance (Bulletins)"
@@ -6024,8 +6045,16 @@ _STERN_COST_BY_SLUG: dict[str, tuple[int, str, str, str, str]] = {
 }
 
 
-def _cost(tuition: int | None, note: str, *, source: str, source_url: str, year: str,
-          funded: bool = False, extra: dict | None = None) -> dict:
+def _cost(
+    tuition: int | None,
+    note: str,
+    *,
+    source: str,
+    source_url: str,
+    year: str,
+    funded: bool = False,
+    extra: dict | None = None,
+) -> dict:
     out: dict = {
         "funded": funded,
         "note": note,
@@ -6084,14 +6113,18 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
             _JD_ANNUAL,
             f"NYU School of Law J.D. full-time tuition is ${_JD_ANNUAL:,} for the year "
             "(NYU Law Cost of Attendance, Bulletins).",
-            source=_LAW_TUITION_SRC, source_url=_LAW_TUITION_SRC_URL, year="2026-27",
+            source=_LAW_TUITION_SRC,
+            source_url=_LAW_TUITION_SRC_URL,
+            year="2026-27",
         )
     if slug == "nyu-dentistry-dds":
         return _DDS_ANNUAL, _cost(
             _DDS_ANNUAL,
             f"NYU College of Dentistry D.D.S. tuition is ${_DDS_ANNUAL:,} for the year "
             "(NYU Dentistry Cost of Attendance, Bulletins).",
-            source=_DENT_TUITION_SRC, source_url=_DENT_TUITION_SRC_URL, year="2026-27",
+            source=_DENT_TUITION_SRC,
+            source_url=_DENT_TUITION_SRC_URL,
+            year="2026-27",
         )
     # Combined 7-year B.A./D.D.S. is entered and billed as a CAS undergraduate for the early years.
     if slug == "nyu-biology-dentistry-ba-dds":
@@ -6101,7 +6134,9 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
             f"This combined 7-year degree is entered as a College of Arts and Science undergraduate "
             f"(published 2026-27 tuition and fees ${rate:,}); the later dental years bill at the "
             f"College of Dentistry D.D.S. rate (${_DDS_ANNUAL:,}).",
-            source=_UG_TUITION_SRC, source_url=_UG_TUITION_SRC_URL, year="2026-27",
+            source=_UG_TUITION_SRC,
+            source_url=_UG_TUITION_SRC_URL,
+            year="2026-27",
         )
 
     # Undergraduate: per-school published direct cost (tuition + fees).
@@ -6118,7 +6153,9 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
             "out-of-pocket annual tuition figure to state; tuition is omitted-with-reason (funded) "
             "rather than guessed. Funding is a separate matcher signal from sticker tuition.",
             source="NYU graduate funding (school fellowship/assistantship policy)",
-            source_url=spec["website"], year="2025-26", funded=True,
+            source_url=spec["website"],
+            year="2025-26",
+            funded=True,
         )
 
     # NYU Stern programs are priced per program (cohort / flat / per-credit), keyed by slug.
@@ -6128,14 +6165,18 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
         return tuition, _cost(tuition, note, source=src, source_url=url, year=year)
 
     # Master's by school.
-    if school == _LAW:  # LL.M. / specialized law master's — per-credit, full-time = 24 credits/year.
+    if (
+        school == _LAW
+    ):  # LL.M. / specialized law master's — per-credit, full-time = 24 credits/year.
         annual = _LAW_LLM_PER_CREDIT * _FT_CREDITS_PER_YEAR
         return annual, _cost(
             annual,
             f"NYU Law master's (LL.M./M.S.) tuition is ${_LAW_LLM_PER_CREDIT:,} per credit; "
             f"${annual:,} at a full-time load of {_FT_CREDITS_PER_YEAR} credits/year "
             "(NYU Law tuition schedule, 2025-26).",
-            source=_LAW_TUITION_SRC, source_url=_LAW_TUITION_SRC_URL, year="2025-26",
+            source=_LAW_TUITION_SRC,
+            source_url=_LAW_TUITION_SRC_URL,
+            year="2025-26",
         )
 
     if school in _GRAD_FLAT_BY_SCHOOL:
@@ -6143,7 +6184,9 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
         return annual, _cost(
             annual,
             f"NYU {school} charges a flat full-time graduate tuition of ${annual:,} per year ({year}).",
-            source=src, source_url=url, year=year,
+            source=src,
+            source_url=url,
+            year=year,
         )
 
     if school in _GRAD_PER_CREDIT:
@@ -6154,7 +6197,9 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
             f"NYU {school} graduate tuition is ${per_credit:,} per credit ({year}); ${annual:,} at a "
             f"full-time load of {_FT_CREDITS_PER_YEAR} credits/year (NYU's full-time standard of 12 "
             "points/semester).",
-            source=src, source_url=url, year=year,
+            source=src,
+            source_url=url,
+            year=year,
         )
 
     # Omit-with-reason schools (program-specific cohort/per-credit pricing, or funded research master's).
@@ -6165,7 +6210,10 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
         "than guessed — see the program's tuition page.",
     )
     return None, _cost(
-        None, reason, source="NYU Bursar / program tuition page", source_url=spec["website"],
+        None,
+        reason,
+        source="NYU Bursar / program tuition page",
+        source_url=spec["website"],
         year="2025-26",
     )
 

@@ -92,6 +92,28 @@ def test_catalog_breadth_and_shape():
     assert not validate_catalog(n.PROGRAMS)
 
 
+def test_content_sources_include_current_events_feed():
+    assert n._INSTITUTION_CONTENT["news_rss"] == "https://nyunews.com/feed/"
+    assert n._INSTITUTION_CONTENT["events_feed"] == {
+        "url": "https://events.nyu.edu/live/ical/events",
+        "type": "ical",
+    }
+    rendered = repr(n._INSTITUTION_CONTENT)
+    rendered += repr([n._school_content(spec["name"]) for spec in n.SCHOOLS])
+    rendered += repr([_program_snapshot(p)["content_sources"] for p in n.PROGRAMS])
+    assert "events.nyu.edu/calendar.ics" not in rendered
+    assert "https://events.nyu.edu/live/ical/events" in rendered
+
+
+def test_american_studies_descriptions_are_not_generic_bulletin_fallbacks():
+    by_slug = {p["slug"]: p["description"] for p in n.PROGRAMS}
+    for slug in ("nyu-american-studies-ba", "nyu-american-studies-phd"):
+        desc = by_slug[slug]
+        assert "official bulletin" not in desc
+        assert "Department of Social and Cultural Analysis" in desc
+        assert "national, hemispheric, and global frameworks" in desc
+
+
 def test_program_names_are_not_scrape_mangled():
     """The bulletin scrape dropped conjunctions, commas, and grade-band dashes from
     multi-field / teacher-certification titles, producing space-mashed names
