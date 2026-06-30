@@ -2,8 +2,8 @@
  * Uni chat-tab sessions API client — /students/me/chat/*
  *
  * Mirrors unipaith-backend/src/unipaith/api/chat_sessions.py.
- * The backend owns auto-categorisation; the frontend never moves a session
- * across folders — it only reorders sessions within a folder.
+ * The backend auto-files a new session into a folder on create; the user can
+ * then move it to any folder (updateSession with folder_id) or reorder within.
  */
 import apiClient from "./client";
 
@@ -72,13 +72,15 @@ export async function createSession(params: {
   return data;
 }
 
-/** PATCH /students/me/chat/sessions/{id} — rename / pin / reorder a session. */
+/** PATCH /students/me/chat/sessions/{id} — rename / pin / reorder / move a session. */
 export async function updateSession(
   id: string,
   patch: {
     title?: string;
     pinned?: boolean;
     sort_order?: number;
+    /** Move the session into this folder (custom or preset). */
+    folder_id?: string;
     conversation_session_id?: string | null;
   },
 ): Promise<ChatSession> {

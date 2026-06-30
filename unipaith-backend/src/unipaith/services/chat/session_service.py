@@ -1,8 +1,9 @@
 """ChatSessionService — the chat-tab session/folder organization layer.
 
 Owns the spec invariants: preset folders are un-deletable / un-renamable; a
-session is auto-filed into a folder and never user-moved across folders; pin +
-within-folder/group reorder are user-controlled.
+session is auto-filed into a folder on create, but the user can move it to any
+owned folder afterward (update_session(folder_id)); pin + within-folder/group
+reorder are user-controlled.
 """
 
 from __future__ import annotations
@@ -161,6 +162,7 @@ class ChatSessionService:
         title: str | None = None,
         pinned: bool | None = None,
         sort_order: int | None = None,
+        folder_id: UUID | None = None,
         agent_session_id: str | None = None,
     ) -> ChatSession:
         s = await self._get_owned_session(student_id, session_id)
@@ -170,6 +172,22 @@ class ChatSessionService:
             s.pinned = pinned
         if sort_order is not None:
             s.sort_order = sort_order
+        # Move into another owned folder (custom or preset). Validated for
+        # ownership, then appended to the end of the target folder so it lands
+        # predictably; within-folder order stays user-controlled via reorder.
+        if folder_id is not None and folder_id != s.folder_id:
+            folder = await self._get_owned_folder(student_id, folder_id)
+            existing = (
+                (
+                    await self.db.execute(
+                        select(ChatSession).where(ChatSession.folder_id == folder.id)
+                    )
+                )
+                .scalars()
+                .all()
+            )
+            s.folder_id = folder.id
+            s.sort_order = len(existing)
         # Bind to a conversation thread (set once on first turn; never cleared).
         if agent_session_id is not None:
             s.agent_session_id = agent_session_id[:64]

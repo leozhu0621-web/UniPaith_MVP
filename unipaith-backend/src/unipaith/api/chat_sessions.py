@@ -67,6 +67,9 @@ class SessionPatch(BaseModel):
     title: str | None = None
     pinned: bool | None = None
     sort_order: int | None = None
+    # Move this session into another folder (custom or preset). Validated for
+    # ownership; the session is appended to the end of the target folder.
+    folder_id: UUID | None = None
     # Bind this session to its discovery/conversation thread (set once, on the
     # first turn). Only ever set non-null; never cleared.
     conversation_session_id: str | None = None
@@ -197,9 +200,11 @@ async def patch_session(
         title=body.title,
         pinned=body.pinned,
         sort_order=body.sort_order,
+        folder_id=body.folder_id,
         agent_session_id=body.conversation_session_id,
     )
-    return _session(s)
+    await db.refresh(s, ["folder"])
+    return _session(s, s.folder)
 
 
 @router.delete("/sessions/{session_id}")

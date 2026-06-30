@@ -131,3 +131,37 @@ async def test_delete_session(db_session, mock_student_user):
         await db_session.execute(select(ChatSession).where(ChatSession.id == s.id))
     ).scalar_one_or_none()
     assert gone is None
+
+
+@pytest.mark.asyncio
+async def test_move_session_to_another_folder(db_session, mock_student_user):
+    """A session auto-files into a preset on create, but the user can move it to
+    any owned folder afterward (the user-organize / Cowork-style move)."""
+    await ensure_profile(db_session, mock_student_user)
+    pid = await _pid(db_session, mock_student_user)
+    svc = ChatSessionService(db_session)
+    s = await svc.create_session(pid, title="How do I pay for this?")  # → needs
+    custom = await svc.create_folder(pid, name="Funding ideas")
+    assert s.folder_id != custom.id
+
+    moved = await svc.update_session(pid, s.id, folder_id=custom.id)
+    assert moved.folder_id == custom.id
+    # Persisted on re-fetch, and appended at the end of the target folder.
+    again = await svc._get_owned_session(pid, s.id)
+    assert again.folder_id == custom.id
+    assert again.sort_order == 0
+
+
+@pytest.mark.asyncio
+async def test_move_session_to_unowned_folder_rejected(db_session, mock_student_user):
+    """Moving into a folder the student doesn't own raises (ownership-checked)."""
+    from uuid import uuid4
+
+    from unipaith.core.exceptions import NotFoundException
+
+    await ensure_profile(db_session, mock_student_user)
+    pid = await _pid(db_session, mock_student_user)
+    svc = ChatSessionService(db_session)
+    s = await svc.create_session(pid, title="my goals")
+    with pytest.raises(NotFoundException):
+        await svc.update_session(pid, s.id, folder_id=uuid4())
