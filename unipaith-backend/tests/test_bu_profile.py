@@ -205,9 +205,7 @@ def test_no_identical_across_credential_levels():
 
     desc_counts = Counter(prog.get("description") for prog in b.PROGRAMS)
     shared = sum(c for c in desc_counts.values() if c >= 2)
-    assert shared == 0, (
-        f"{shared} programs share a description verbatim with a credential sibling"
-    )
+    assert shared == 0, f"{shared} programs share a description verbatim with a credential sibling"
 
 
 def test_catalog_is_anti_stub_clean():
@@ -222,10 +220,23 @@ def test_catalog_is_anti_stub_clean():
     assert report.is_clean, f"anti-stub not clean: {report.summary()}"
     shared = frame_stripped_shared_body(b.PROGRAMS, abs_chars=150)
     assert not shared, (
-        f"credential siblings share a 150+-char body on "
-        f"{len(shared)} field(s): {shared[:8]}"
+        f"credential siblings share a 150+-char body on {len(shared)} field(s): {shared[:8]}"
     )
     assert not scrape_debris(b.PROGRAMS), "un-terminated or debris descriptions"
+
+
+def test_catalog_has_no_rendered_catalog_slug_filler():
+    bad_markers = (
+        "degree listing",
+        "program-specific requirements",
+        "official catalog listing",
+    )
+    hits = [
+        (prog["slug"], prog["program_name"], prog.get("description"))
+        for prog in b.PROGRAMS
+        if any(marker in (prog.get("description") or "") for marker in bad_markers)
+    ]
+    assert not hits, f"BU descriptions still render catalog-slug filler: {hits[:6]}"
 
 
 def test_matcher_core_tuition_is_value_correct():
@@ -273,8 +284,7 @@ def test_matcher_core_tuition_is_value_correct():
     copydown = [
         p["slug"]
         for p in b.PROGRAMS
-        if p["degree_type"] in ("certificate", "phd", "doctoral")
-        and b._program_tuition(p)[0] == ug
+        if p["degree_type"] in ("certificate", "phd", "doctoral") and b._program_tuition(p)[0] == ug
     ]
     assert not copydown, f"undergrad sticker copied onto funded/per-credit rows: {copydown[:8]}"
     # Professional doctorates carry their own published rates (distinct from the UG sticker).
