@@ -7,6 +7,7 @@ import Coachmark from '../../components/ui/Coachmark'
 import { PageContainer } from '../../components/student/density'
 import usePageTitle from '../../hooks/usePageTitle'
 import { searchAllInstitutions, getFeaturedPromotions, recordPromotionClick } from '../../api/institutions'
+import { getPreferences } from '../../api/students'
 import { listSaved, saveProgram, unsaveProgram } from '../../api/saved-lists'
 import { qk } from '../../api/queryKeys'
 import { getConnectEvents, getFollowing, followInstitution, unfollowInstitution } from '../../api/connect'
@@ -215,9 +216,21 @@ export default function ExplorePage() {
   // Recently-viewed programs (localStorage). Re-entry shortcut on For-you.
   const [recentPrograms] = useState<RecentProgram[]>(() => getRecentPrograms())
 
+  // The student's intended degree level, so featured picks fit (a CS bachelor's
+  // student shouldn't see MBA / LL.M. / grad promos on their home tab).
+  const { data: prefs } = useQuery({
+    queryKey: ['preferences', 'explore'],
+    queryFn: getPreferences,
+    staleTime: 5 * 60 * 1000,
+    enabled: tab === 'foryou',
+  })
+  const studentDegree: string | undefined =
+    (prefs as { target_degree_level?: string } | undefined)?.target_degree_level || undefined
+
   const { data: featuredPromos } = useQuery({
-    queryKey: ['featured-promotions', 'explore'],
-    queryFn: () => getFeaturedPromotions(),
+    queryKey: ['featured-promotions', 'explore', studentDegree ?? 'any'],
+    queryFn: () =>
+      getFeaturedPromotions(studentDegree ? { degree_type: studentDegree } : undefined),
     staleTime: 5 * 60 * 1000,
     enabled: tab === 'foryou',
   })

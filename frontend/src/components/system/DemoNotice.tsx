@@ -47,7 +47,7 @@ export default function DemoNotice() {
     <Modal
       isOpen
       onClose={dismiss}
-      title="Welcome — this is a live demo"
+      title="Welcome to UniPaith"
       size="sm"
       footer={
         <div className="flex justify-end">
@@ -58,7 +58,10 @@ export default function DemoNotice() {
       }
     >
       <div className="space-y-2 text-sm text-muted-foreground">
-        <p>Try everything — your data resets each time you sign in.</p>
+        <p>
+          Tell Uni what you want to study and your matches build as you go. Your profile
+          and progress are saved automatically — you can pick up right where you left off.
+        </p>
       </div>
     </Modal>
   )
