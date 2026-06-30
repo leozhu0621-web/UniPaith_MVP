@@ -459,6 +459,10 @@ _MBA_FT = 70250  # Olin Full-Time MBA
 _MD = 67968  # School of Medicine M.D. (fixed across four years)
 _JD = 72792  # School of Law J.D.
 _MSW = 49210  # Brown School Master of Social Work
+_MARCH = 60975  # Sam Fox Master of Architecture (2025-26 published annual rate)
+_MFA = 50680  # Sam Fox Master of Fine Arts (2025-26 published annual rate)
+_MPH = 43710  # Brown School Master of Public Health (2025-26 published annual rate)
+_LLM = 72792  # School of Law LL.M. (2025-26, grouped with J.D./J.S.D./M.L.S.)
 _GRAD_SRC = (
     "WashU — 2025-26 graduate/professional tuition (The Source)",
     "https://source.washu.edu/2025/03/2025-26-tuition-housing-meal-plans-fees-announced/",
@@ -1166,11 +1170,11 @@ _CATALOG: list[dict] = [
             "Students and clinicians pursuing careers in public health, epidemiology, or "
             "health policy."
         ),
-        omit_tuition_reason=(
-            "Brown School MPH tuition is billed by program and is not separately stated in "
-            "the university tuition release, so it is omitted rather than estimated; see "
-            "the Brown School tuition page."
+        tuition=_MPH, cost_note=(
+            f"Brown School Master of Public Health tuition (${_MPH:,}; 2025-26 published "
+            "annual rate stated in WashU's 'The Source' tuition release)."
         ),
+        cost_source=_GRAD_SRC,
     ),
     # ───────────── School of Law ─────────────
     dict(
@@ -1205,10 +1209,12 @@ _CATALOG: list[dict] = [
             "Practicing and international lawyers seeking advanced specialization in a "
             "focused area of law."
         ),
-        omit_tuition_reason=(
-            "LL.M. tuition is billed per credit by program and is not separately stated in "
-            "the university tuition release, so it is omitted rather than estimated."
+        tuition=_LLM, cost_note=(
+            f"WashU School of Law full-time LL.M. tuition (${_LLM:,}; 2025-26 published "
+            "annual rate — the School of Law J.D., J.S.D., LL.M., and M.L.S. share one "
+            "flat full-time rate in WashU's 'The Source' tuition release)."
         ),
+        cost_source=_LAW_SRC,
     ),
     # ───────────── School of Medicine ─────────────
     dict(
@@ -1358,11 +1364,11 @@ _CATALOG: list[dict] = [
             "Students pursuing the professional architecture credential and a career in "
             "architectural practice or research."
         ),
-        omit_tuition_reason=(
-            "Sam Fox graduate tuition is billed by program and is not separately stated in "
-            "the university tuition release, so it is omitted rather than estimated; see "
-            "the Sam Fox program page."
+        tuition=_MARCH, cost_note=(
+            f"Sam Fox School Master of Architecture tuition (${_MARCH:,}; 2025-26 published "
+            "annual rate stated in WashU's 'The Source' tuition release)."
         ),
+        cost_source=_GRAD_SRC,
     ),
     dict(
         slug="washu-visual-art-mfa", school=_SAMFOX, degree_type="masters",
@@ -1378,11 +1384,11 @@ _CATALOG: list[dict] = [
             "Practicing artists pursuing a terminal studio degree toward exhibiting "
             "careers or teaching."
         ),
-        omit_tuition_reason=(
-            "Sam Fox graduate tuition is billed by program and is not separately stated in "
-            "the university tuition release, so it is omitted rather than estimated; see "
-            "the Sam Fox program page."
+        tuition=_MFA, cost_note=(
+            f"Sam Fox School Master of Fine Arts in Visual Art tuition (${_MFA:,}; 2025-26 "
+            "published annual rate stated in WashU's 'The Source' tuition release)."
         ),
+        cost_source=_GRAD_SRC,
     ),
     # ───────────── McKelvey — graduate ─────────────
     dict(
