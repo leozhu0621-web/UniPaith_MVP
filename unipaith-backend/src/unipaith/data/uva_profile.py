@@ -25,7 +25,7 @@ of Medicine, and the Graduate School of Arts & Sciences.
 Every program carries a researched, field-specific ``description_text`` (anti-stub clean,
 gold contrast), a ``who_its_for`` statement, a real owning ``department``, a ``cip_code``
 (from the IPEDS/Scorecard CIP list for UNITID 234076), a verified ``delivery_format``,
-published tuition per credential level, working UVA news feeds, and sourced
+published tuition per credential level, working UVA RSS/events feeds, and sourced
 ``external_reviews`` on the obviously-coverable flagships (Darden MBA, the J.D., the M.D.,
 the McIntire Commerce undergraduate degree, the Batten M.P.P., and the Data Science M.S.).
 Nothing is padded.
@@ -404,19 +404,21 @@ SCHOOLS: list[dict] = [
 ]
 
 # ── Content feeds (REQUIRED on institution + every school + every program) ──
-# UVA's central newsroom (news.virginia.edu / UVA Today) exposes no machine-readable RSS
-# (it runs on a Cludo-powered search index), so the institution and the schools without
-# their own feed use the verified-working University of Virginia School of Engineering RSS
-# (10 live items) as the best working source — real UVA stories, never a dead/empty feed
-# (run-86 miss #9 verify-output rule). The Darden, Law, and Architecture schools have their
-# OWN verified-working /rss.xml feeds, so they use those.
-_UVA_NEWS_RSS = "https://engineering.virginia.edu/rss.xml"
+# UVA Today exposes no verified public RSS endpoint. UVA's official Trumba calendar
+# does expose RSS + iCal with live university events, so it is the common machine-readable
+# content source for the institution and schools without their own currently-fetchable RSS.
+# Darden and Architecture expose their own verified /rss.xml feeds; Engineering and Law
+# do not currently return fetchable RSS, so they fall back to the common UVA calendar feed.
+_UVA_EVENTS_RSS = "https://www.trumba.com/calendars/university-of-virginia-events.rss"
+_UVA_EVENTS_ICS = {
+    "url": "https://www.trumba.com/calendars/university-of-virginia-events.ics",
+    "type": "ical",
+}
 _UVA_NEWS_URL = "https://news.virginia.edu/"
+_UVA_EVENTS_URL = "https://www.virginia.edu/calendar/"
 
 _SCHOOL_OWN_FEED: dict[str, str] = {
-    _SEAS: "https://engineering.virginia.edu/rss.xml",
     _DARDEN: "https://www.darden.virginia.edu/rss.xml",
-    _LAW: "https://www.law.virginia.edu/rss.xml",
     _ARCH: "https://www.arch.virginia.edu/rss.xml",
 }
 
@@ -429,9 +431,10 @@ _SOCIAL_UVA = {
 }
 
 _INSTITUTION_CONTENT: dict = {
-    "news_rss": _UVA_NEWS_RSS,
-    "news_url": _UVA_NEWS_URL,
+    "news_rss": _UVA_EVENTS_RSS,
+    "news_url": _UVA_EVENTS_URL,
     "news_curated": False,
+    "events_feed": dict(_UVA_EVENTS_ICS),
     "social": dict(_SOCIAL_UVA),
 }
 
@@ -454,22 +457,24 @@ _SCHOOL_KEYWORDS: dict[str, list[str]] = {
 def _school_content(name: str) -> dict:
     """A school's content_sources: its own working feed when it has one, else the
     institution feed, filtered by school-naming keywords."""
-    feed = _SCHOOL_OWN_FEED.get(name, _UVA_NEWS_RSS)
+    feed = _SCHOOL_OWN_FEED.get(name, _UVA_EVENTS_RSS)
     return {
         "news_rss": feed,
         "news_url": _SCHOOL_WEBSITE.get(name, _UVA_NEWS_URL),
         "news_curated": False,
+        "events_feed": dict(_UVA_EVENTS_ICS),
         "keywords": list(_SCHOOL_KEYWORDS.get(name, [])),
         "social": dict(_SOCIAL_UVA),
     }
 
 
 def _program_content(school_name: str, keywords: list[str]) -> dict:
-    feed = _SCHOOL_OWN_FEED.get(school_name, _UVA_NEWS_RSS)
+    feed = _SCHOOL_OWN_FEED.get(school_name, _UVA_EVENTS_RSS)
     return {
         "news_rss": feed,
         "news_url": _SCHOOL_WEBSITE.get(school_name, _UVA_NEWS_URL),
         "news_curated": False,
+        "events_feed": dict(_UVA_EVENTS_ICS),
         "keywords": list(keywords),
         "social": dict(_SOCIAL_UVA),
     }
@@ -577,24 +582,36 @@ _MT = 36610
 
 # Per-credit-billed graduate programs publish no flat annual figure, so the annual scalar is
 # omitted with reason and the verified non-resident per-credit rate recorded.
-_PC_ENG = "Billed per credit hour; UVA's 2025-26 non-resident graduate engineering rate is " \
+_PC_ENG = (
+    "Billed per credit hour; UVA's 2025-26 non-resident graduate engineering rate is "
     "$1,935 per credit ($2,218 for Computer Science). No flat annual tuition is published."
-_PC_GSAS = "Billed per credit hour; UVA's 2025-26 non-resident Graduate Arts & Sciences " \
+)
+_PC_GSAS = (
+    "Billed per credit hour; UVA's 2025-26 non-resident Graduate Arts & Sciences "
     "master's rate is $1,553 per credit. No flat annual tuition is published."
-_PC_ARCH = "Billed per credit hour; UVA's 2025-26 non-resident graduate Architecture " \
+)
+_PC_ARCH = (
+    "Billed per credit hour; UVA's 2025-26 non-resident graduate Architecture "
     "master's rate is $1,530 per credit. No flat annual tuition is published."
-_PC_MSN = "Billed per credit hour; UVA's 2025-26 non-resident graduate Nursing rate is " \
+)
+_PC_MSN = (
+    "Billed per credit hour; UVA's 2025-26 non-resident graduate Nursing rate is "
     "$1,493 per credit. No flat annual tuition is published."
+)
 
 _A = _ARTSCI
 
 _CATALOG: list[dict] = [
     # ───────────── College of Arts & Sciences (undergraduate) ─────────────
     dict(
-        slug="uva-african-american-african-studies-ba", school=_A, degree_type="bachelors",
+        slug="uva-african-american-african-studies-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in African American and African Studies",
         department="Carter G. Woodson Institute for African-American and African Studies",
-        cip="05.02", duration_months=48, keywords=["African American studies", "Africa"],
+        cip="05.02",
+        duration_months=48,
+        keywords=["African American studies", "Africa"],
         description=(
             "African American and African studies examines the history, politics, "
             "literature, and arts of Africa and its diaspora through the interdisciplinary "
@@ -607,9 +624,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-american-studies-ba", school=_A, degree_type="bachelors",
+        slug="uva-american-studies-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in American Studies",
-        department="Program in American Studies", cip="05.01", duration_months=48,
+        department="Program in American Studies",
+        cip="05.01",
+        duration_months=48,
         keywords=["American studies"],
         description=(
             "American studies reads the United States across literature, history, art, and "
@@ -622,9 +643,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-anthropology-ba", school=_A, degree_type="bachelors",
+        slug="uva-anthropology-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Anthropology",
-        department="Department of Anthropology", cip="45.02", duration_months=48,
+        department="Department of Anthropology",
+        cip="45.02",
+        duration_months=48,
         keywords=["anthropology"],
         description=(
             "Anthropology studies human societies and cultures across ethnographic, "
@@ -637,9 +662,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-archaeology-ba", school=_A, degree_type="bachelors",
+        slug="uva-archaeology-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Archaeology",
-        department="Interdepartmental Program in Archaeology", cip="45.03", duration_months=48,
+        department="Interdepartmental Program in Archaeology",
+        cip="45.03",
+        duration_months=48,
         keywords=["archaeology"],
         description=(
             "Archaeology reconstructs past human societies from their material remains, "
@@ -652,9 +681,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-art-history-ba", school=_A, degree_type="bachelors",
+        slug="uva-art-history-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Art History",
-        department="Department of Art", cip="50.07", duration_months=48,
+        department="Department of Art",
+        cip="50.07",
+        duration_months=48,
         keywords=["art history"],
         description=(
             "Art history studies painting, sculpture, architecture, and visual culture "
@@ -667,9 +700,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-studio-art-ba", school=_A, degree_type="bachelors",
+        slug="uva-studio-art-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Studio Art",
-        department="Department of Art", cip="50.07", duration_months=48,
+        department="Department of Art",
+        cip="50.07",
+        duration_months=48,
         keywords=["studio art", "art"],
         description=(
             "Studio art develops practice across drawing, painting, sculpture, "
@@ -682,9 +719,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-astronomy-ba", school=_A, degree_type="bachelors",
+        slug="uva-astronomy-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Astronomy",
-        department="Department of Astronomy", cip="40.02", duration_months=48,
+        department="Department of Astronomy",
+        cip="40.02",
+        duration_months=48,
         keywords=["astronomy"],
         description=(
             "Astronomy studies stars, galaxies, and the structure and evolution of the "
@@ -697,9 +738,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-astronomy-physics-bs", school=_A, degree_type="bachelors",
+        slug="uva-astronomy-physics-bs",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Science in Astronomy-Physics",
-        department="Department of Astronomy", cip="40.02", duration_months=48,
+        department="Department of Astronomy",
+        cip="40.02",
+        duration_months=48,
         keywords=["astrophysics", "physics"],
         description=(
             "Astronomy-physics is a research-intensive joint degree combining the full "
@@ -712,9 +757,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-biology-bs", school=_A, degree_type="bachelors",
+        slug="uva-biology-bs",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Science in Biology",
-        department="Department of Biology", cip="26.01", duration_months=48,
+        department="Department of Biology",
+        cip="26.01",
+        duration_months=48,
         keywords=["biology"],
         description=(
             "Biology spans molecular, cellular, organismal, and ecological scales, with "
@@ -727,9 +776,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-chemistry-bs", school=_A, degree_type="bachelors",
+        slug="uva-chemistry-bs",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Science in Chemistry",
-        department="Department of Chemistry", cip="40.05", duration_months=48,
+        department="Department of Chemistry",
+        cip="40.05",
+        duration_months=48,
         keywords=["chemistry", "biochemistry"],
         description=(
             "Chemistry covers organic, inorganic, physical, and analytical chemistry with "
@@ -742,10 +795,14 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-chinese-ba", school=_A, degree_type="bachelors",
+        slug="uva-chinese-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Chinese Language and Literature",
         department="Department of East Asian Languages, Literatures and Cultures",
-        cip="16.03", duration_months=48, keywords=["Chinese", "language"],
+        cip="16.03",
+        duration_months=48,
+        keywords=["Chinese", "language"],
         description=(
             "Chinese language and literature builds advanced proficiency in Mandarin "
             "alongside the study of Chinese literature, film, and culture from the "
@@ -757,9 +814,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-classics-ba", school=_A, degree_type="bachelors",
+        slug="uva-classics-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Classics",
-        department="Department of Classics", cip="16.12", duration_months=48,
+        department="Department of Classics",
+        cip="16.12",
+        duration_months=48,
         keywords=["classics", "Greek", "Latin"],
         description=(
             "Classics combines Greek and Latin with the literature, history, and "
@@ -772,10 +833,14 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-cognitive-science-ba", school=_A, degree_type="bachelors",
+        slug="uva-cognitive-science-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Cognitive Science",
-        department="Interdisciplinary Program in Cognitive Science", cip="30.25",
-        duration_months=48, keywords=["cognitive science"],
+        department="Interdisciplinary Program in Cognitive Science",
+        cip="30.25",
+        duration_months=48,
+        keywords=["cognitive science"],
         description=(
             "Cognitive science studies the mind across psychology, neuroscience, "
             "linguistics, philosophy, and computer science, with concentrations from "
@@ -787,9 +852,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-computer-science-ba", school=_A, degree_type="bachelors",
+        slug="uva-computer-science-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Computer Science",
-        department="Department of Computer Science", cip="11.01", duration_months=48,
+        department="Department of Computer Science",
+        cip="11.01",
+        duration_months=48,
         keywords=["computer science", "CS"],
         description=(
             "The B.A. in computer science pairs the computing core — algorithms, systems, "
@@ -802,9 +871,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-drama-ba", school=_A, degree_type="bachelors",
+        slug="uva-drama-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Drama",
-        department="Department of Drama", cip="50.05", duration_months=48,
+        department="Department of Drama",
+        cip="50.05",
+        duration_months=48,
         keywords=["drama", "theatre"],
         description=(
             "Drama integrates acting, directing, design, and dramatic literature with "
@@ -817,10 +890,14 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-east-asian-studies-ba", school=_A, degree_type="bachelors",
+        slug="uva-east-asian-studies-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in East Asian Studies",
         department="Department of East Asian Languages, Literatures and Cultures",
-        cip="05.01", duration_months=48, keywords=["East Asia", "area studies"],
+        cip="05.01",
+        duration_months=48,
+        keywords=["East Asia", "area studies"],
         description=(
             "East Asian studies combines language study with the history, religion, "
             "literature, and politics of China, Japan, and Korea in an interdisciplinary "
@@ -832,9 +909,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-economics-ba", school=_A, degree_type="bachelors",
+        slug="uva-economics-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Economics",
-        department="Department of Economics", cip="45.06", duration_months=48,
+        department="Department of Economics",
+        cip="45.06",
+        duration_months=48,
         keywords=["economics"],
         description=(
             "Economics grounds students in micro and macroeconomic theory and "
@@ -847,9 +928,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-english-ba", school=_A, degree_type="bachelors",
+        slug="uva-english-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in English",
-        department="Department of English", cip="23.01", duration_months=48,
+        department="Department of English",
+        cip="23.01",
+        duration_months=48,
         keywords=["English", "literature", "writing"],
         description=(
             "English studies literature in English from the medieval period to the "
@@ -862,9 +947,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-environmental-sciences-bs", school=_A, degree_type="bachelors",
+        slug="uva-environmental-sciences-bs",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Science in Environmental Sciences",
-        department="Department of Environmental Sciences", cip="03.01", duration_months=48,
+        department="Department of Environmental Sciences",
+        cip="03.01",
+        duration_months=48,
         keywords=["environmental science"],
         description=(
             "Environmental sciences studies the atmosphere, hydrology, ecology, and "
@@ -877,10 +966,14 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-environmental-thought-practice-ba", school=_A, degree_type="bachelors",
+        slug="uva-environmental-thought-practice-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Environmental Thought and Practice",
-        department="Program in Environmental Thought and Practice", cip="30.99",
-        duration_months=48, keywords=["environment", "sustainability"],
+        department="Program in Environmental Thought and Practice",
+        cip="30.99",
+        duration_months=48,
+        keywords=["environment", "sustainability"],
         description=(
             "Environmental thought and practice approaches sustainability through the "
             "humanities and social sciences — ethics, policy, economics, and culture — "
@@ -892,9 +985,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-french-ba", school=_A, degree_type="bachelors",
+        slug="uva-french-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in French",
-        department="Department of French", cip="16.09", duration_months=48,
+        department="Department of French",
+        cip="16.09",
+        duration_months=48,
         keywords=["French", "language"],
         description=(
             "French develops advanced language proficiency alongside the study of French "
@@ -907,10 +1004,14 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-german-ba", school=_A, degree_type="bachelors",
+        slug="uva-german-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in German Language, Literature, and Culture",
-        department="Department of Germanic Languages and Literatures", cip="16.05",
-        duration_months=48, keywords=["German", "language"],
+        department="Department of Germanic Languages and Literatures",
+        cip="16.05",
+        duration_months=48,
+        keywords=["German", "language"],
         description=(
             "German language, literature, and culture builds proficiency in German "
             "alongside the study of German-language literature, philosophy, and film from "
@@ -922,9 +1023,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-global-studies-ba", school=_A, degree_type="bachelors",
+        slug="uva-global-studies-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Global Studies",
-        department="Program in Global Studies", cip="30.20", duration_months=48,
+        department="Program in Global Studies",
+        cip="30.20",
+        duration_months=48,
         keywords=["global studies", "international"],
         description=(
             "Global studies examines globalization through interdisciplinary tracks — "
@@ -938,9 +1043,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-history-ba", school=_A, degree_type="bachelors",
+        slug="uva-history-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in History",
-        department="Corcoran Department of History", cip="54.01", duration_months=48,
+        department="Corcoran Department of History",
+        cip="54.01",
+        duration_months=48,
         keywords=["history"],
         description=(
             "History studies the human past across regions and eras, teaching research "
@@ -953,10 +1062,14 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-human-biology-ba", school=_A, degree_type="bachelors",
+        slug="uva-human-biology-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Human Biology",
-        department="Interdisciplinary Program in Human Biology", cip="26.01",
-        duration_months=48, keywords=["human biology", "pre-health"],
+        department="Interdisciplinary Program in Human Biology",
+        cip="26.01",
+        duration_months=48,
+        keywords=["human biology", "pre-health"],
         description=(
             "Human biology integrates biology, anthropology, and the social sciences to "
             "study human health, evolution, and disease, an interdisciplinary path "
@@ -968,10 +1081,14 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-italian-studies-ba", school=_A, degree_type="bachelors",
+        slug="uva-italian-studies-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Italian Studies",
-        department="Department of Spanish, Italian, and Portuguese", cip="16.09",
-        duration_months=48, keywords=["Italian", "language"],
+        department="Department of Spanish, Italian, and Portuguese",
+        cip="16.09",
+        duration_months=48,
+        keywords=["Italian", "language"],
         description=(
             "Italian studies builds proficiency in Italian alongside the study of Italian "
             "literature, cinema, and art from Dante to the present."
@@ -982,10 +1099,14 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-japanese-ba", school=_A, degree_type="bachelors",
+        slug="uva-japanese-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Japanese Language and Literature",
         department="Department of East Asian Languages, Literatures and Cultures",
-        cip="16.03", duration_months=48, keywords=["Japanese", "language"],
+        cip="16.03",
+        duration_months=48,
+        keywords=["Japanese", "language"],
         description=(
             "Japanese language and literature builds advanced proficiency in Japanese "
             "alongside the study of Japanese literature, film, and culture across "
@@ -997,9 +1118,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-jewish-studies-ba", school=_A, degree_type="bachelors",
+        slug="uva-jewish-studies-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Jewish Studies",
-        department="Program in Jewish Studies", cip="05.01", duration_months=48,
+        department="Program in Jewish Studies",
+        cip="05.01",
+        duration_months=48,
         keywords=["Jewish studies"],
         description=(
             "Jewish studies examines Jewish history, religion, languages, and culture "
@@ -1012,9 +1137,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-latin-american-studies-ba", school=_A, degree_type="bachelors",
+        slug="uva-latin-american-studies-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Latin American Studies",
-        department="Program in Latin American Studies", cip="05.01", duration_months=48,
+        department="Program in Latin American Studies",
+        cip="05.01",
+        duration_months=48,
         keywords=["Latin America", "area studies"],
         description=(
             "Latin American studies combines Spanish or Portuguese with the history, "
@@ -1027,9 +1156,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-linguistics-ba", school=_A, degree_type="bachelors",
+        slug="uva-linguistics-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Linguistics",
-        department="Interdepartmental Program in Linguistics", cip="16.01", duration_months=48,
+        department="Interdepartmental Program in Linguistics",
+        cip="16.01",
+        duration_months=48,
         keywords=["linguistics"],
         description=(
             "Linguistics studies the structure of human language — sound, form, meaning, "
@@ -1042,9 +1175,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-mathematics-ba", school=_A, degree_type="bachelors",
+        slug="uva-mathematics-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Mathematics",
-        department="Department of Mathematics", cip="27.01", duration_months=48,
+        department="Department of Mathematics",
+        cip="27.01",
+        duration_months=48,
         keywords=["mathematics"],
         description=(
             "Mathematics develops rigor in analysis, algebra, and geometry with options "
@@ -1057,9 +1194,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-media-studies-ba", school=_A, degree_type="bachelors",
+        slug="uva-media-studies-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Media Studies",
-        department="Department of Media Studies", cip="09.01", duration_months=48,
+        department="Department of Media Studies",
+        cip="09.01",
+        duration_months=48,
         keywords=["media studies"],
         description=(
             "Media studies analyzes film, television, digital platforms, and journalism — "
@@ -1072,9 +1213,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-medieval-studies-ba", school=_A, degree_type="bachelors",
+        slug="uva-medieval-studies-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Medieval Studies",
-        department="Program in Medieval Studies", cip="30.13", duration_months=48,
+        department="Program in Medieval Studies",
+        cip="30.13",
+        duration_months=48,
         keywords=["medieval studies"],
         description=(
             "Medieval studies examines the literature, history, art, and religion of the "
@@ -1086,10 +1231,14 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-mesalc-ba", school=_A, degree_type="bachelors",
+        slug="uva-mesalc-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Middle Eastern and South Asian Languages and Cultures",
         department="Department of Middle Eastern and South Asian Languages and Cultures",
-        cip="16.11", duration_months=48, keywords=["Middle East", "South Asia", "language"],
+        cip="16.11",
+        duration_months=48,
+        keywords=["Middle East", "South Asia", "language"],
         description=(
             "This major builds proficiency in languages such as Arabic, Persian, Hebrew, "
             "Hindi-Urdu, Sanskrit, or Tibetan alongside the literatures and cultures of "
@@ -1101,9 +1250,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-music-ba", school=_A, degree_type="bachelors",
+        slug="uva-music-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Music",
-        department="Department of Music", cip="50.09", duration_months=48,
+        department="Department of Music",
+        cip="50.09",
+        duration_months=48,
         keywords=["music"],
         description=(
             "Music joins performance and composition with music history, theory, and "
@@ -1116,9 +1269,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-neuroscience-ba", school=_A, degree_type="bachelors",
+        slug="uva-neuroscience-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Neuroscience",
-        department="Interdisciplinary Major in Neuroscience", cip="26.15", duration_months=48,
+        department="Interdisciplinary Major in Neuroscience",
+        cip="26.15",
+        duration_months=48,
         keywords=["neuroscience"],
         description=(
             "Neuroscience studies the nervous system from molecules and cells to behavior "
@@ -1131,9 +1288,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-philosophy-ba", school=_A, degree_type="bachelors",
+        slug="uva-philosophy-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Philosophy",
-        department="Corcoran Department of Philosophy", cip="38.01", duration_months=48,
+        department="Corcoran Department of Philosophy",
+        cip="38.01",
+        duration_months=48,
         keywords=["philosophy"],
         description=(
             "Philosophy examines fundamental questions of knowledge, ethics, mind, and "
@@ -1146,9 +1307,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-physics-bs", school=_A, degree_type="bachelors",
+        slug="uva-physics-bs",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Science in Physics",
-        department="Department of Physics", cip="40.08", duration_months=48,
+        department="Department of Physics",
+        cip="40.08",
+        duration_months=48,
         keywords=["physics"],
         description=(
             "Physics builds from classical mechanics and electromagnetism through quantum "
@@ -1161,9 +1326,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-political-social-thought-ba", school=_A, degree_type="bachelors",
+        slug="uva-political-social-thought-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Political and Social Thought",
-        department="Program in Political and Social Thought", cip="30.99", duration_months=48,
+        department="Program in Political and Social Thought",
+        cip="30.99",
+        duration_months=48,
         keywords=["political and social thought"],
         description=(
             "Political and social thought is a selective interdisciplinary major in which "
@@ -1176,10 +1345,14 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-ppl-ba", school=_A, degree_type="bachelors",
+        slug="uva-ppl-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Political Philosophy, Policy, and Law",
-        department="Program in Political Philosophy, Policy, and Law", cip="30.99",
-        duration_months=48, keywords=["political philosophy", "law", "policy"],
+        department="Program in Political Philosophy, Policy, and Law",
+        cip="30.99",
+        duration_months=48,
+        keywords=["political philosophy", "law", "policy"],
         description=(
             "Political philosophy, policy, and law is a selective interdisciplinary major "
             "joining political theory, ethics, economics, and law to examine how societies "
@@ -1191,9 +1364,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-politics-ba", school=_A, degree_type="bachelors",
+        slug="uva-politics-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Politics",
-        department="Woodrow Wilson Department of Politics", cip="45.10", duration_months=48,
+        department="Woodrow Wilson Department of Politics",
+        cip="45.10",
+        duration_months=48,
         keywords=["politics", "political science"],
         description=(
             "Politics studies government, political behavior, and international relations, "
@@ -1206,9 +1383,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-psychology-ba", school=_A, degree_type="bachelors",
+        slug="uva-psychology-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Psychology",
-        department="Department of Psychology", cip="42.01", duration_months=48,
+        department="Department of Psychology",
+        cip="42.01",
+        duration_months=48,
         keywords=["psychology"],
         description=(
             "Psychology studies mind and behavior across cognitive, developmental, "
@@ -1221,9 +1402,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-religious-studies-ba", school=_A, degree_type="bachelors",
+        slug="uva-religious-studies-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Religious Studies",
-        department="Department of Religious Studies", cip="38.02", duration_months=48,
+        department="Department of Religious Studies",
+        cip="38.02",
+        duration_months=48,
         keywords=["religious studies"],
         description=(
             "Religious studies examines the world's religious traditions — their texts, "
@@ -1236,10 +1421,14 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-slavic-ba", school=_A, degree_type="bachelors",
+        slug="uva-slavic-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Slavic Languages and Literatures",
-        department="Department of Slavic Languages and Literatures", cip="16.04",
-        duration_months=48, keywords=["Russian", "Slavic", "language"],
+        department="Department of Slavic Languages and Literatures",
+        cip="16.04",
+        duration_months=48,
+        keywords=["Russian", "Slavic", "language"],
         description=(
             "Slavic languages and literatures centers on Russian language and literature "
             "alongside the cultures of the Slavic world, from Tolstoy and Dostoevsky to "
@@ -1251,9 +1440,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-sociology-ba", school=_A, degree_type="bachelors",
+        slug="uva-sociology-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Sociology",
-        department="Department of Sociology", cip="45.11", duration_months=48,
+        department="Department of Sociology",
+        cip="45.11",
+        duration_months=48,
         keywords=["sociology"],
         description=(
             "Sociology studies social structure, inequality, institutions, and group "
@@ -1266,9 +1459,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-south-asian-studies-ba", school=_A, degree_type="bachelors",
+        slug="uva-south-asian-studies-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in South Asian Studies",
-        department="Program in South Asian Studies", cip="05.01", duration_months=48,
+        department="Program in South Asian Studies",
+        cip="05.01",
+        duration_months=48,
         keywords=["South Asia", "area studies"],
         description=(
             "South Asian studies combines language study with the history, religion, "
@@ -1281,10 +1478,14 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-spanish-ba", school=_A, degree_type="bachelors",
+        slug="uva-spanish-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Spanish",
-        department="Department of Spanish, Italian, and Portuguese", cip="16.09",
-        duration_months=48, keywords=["Spanish", "language"],
+        department="Department of Spanish, Italian, and Portuguese",
+        cip="16.09",
+        duration_months=48,
+        keywords=["Spanish", "language"],
         description=(
             "Spanish develops advanced proficiency alongside the study of the literature "
             "and cultures of Spain and Latin America, with options in linguistics and "
@@ -1296,9 +1497,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-statistics-bs", school=_A, degree_type="bachelors",
+        slug="uva-statistics-bs",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Science in Statistics",
-        department="Department of Statistics", cip="27.05", duration_months=48,
+        department="Department of Statistics",
+        cip="27.05",
+        duration_months=48,
         keywords=["statistics", "data"],
         description=(
             "Statistics trains students in probability, statistical inference, and data "
@@ -1311,10 +1516,14 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-women-gender-sexuality-ba", school=_A, degree_type="bachelors",
+        slug="uva-women-gender-sexuality-ba",
+        school=_A,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Women, Gender, and Sexuality",
-        department="Department of Women, Gender, and Sexuality", cip="05.02",
-        duration_months=48, keywords=["gender studies"],
+        department="Department of Women, Gender, and Sexuality",
+        cip="05.02",
+        duration_months=48,
+        keywords=["gender studies"],
         description=(
             "Women, gender, and sexuality examines how gender and sexuality shape "
             "societies, cultures, and knowledge, drawing on history, literature, and the "
@@ -1327,10 +1536,14 @@ _CATALOG: list[dict] = [
     ),
     # ───────────── School of Engineering and Applied Science (undergraduate) ─────────────
     dict(
-        slug="uva-aerospace-engineering-bs", school=_SEAS, degree_type="bachelors",
+        slug="uva-aerospace-engineering-bs",
+        school=_SEAS,
+        degree_type="bachelors",
         program_name="Bachelor of Science in Aerospace Engineering",
-        department="Department of Mechanical and Aerospace Engineering", cip="14.02",
-        duration_months=48, keywords=["aerospace engineering"],
+        department="Department of Mechanical and Aerospace Engineering",
+        cip="14.02",
+        duration_months=48,
+        keywords=["aerospace engineering"],
         description=(
             "Aerospace engineering applies aerodynamics, propulsion, structures, and "
             "control to the design of aircraft and spacecraft, with laboratory and "
@@ -1342,9 +1555,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-biomedical-engineering-bs", school=_SEAS, degree_type="bachelors",
+        slug="uva-biomedical-engineering-bs",
+        school=_SEAS,
+        degree_type="bachelors",
         program_name="Bachelor of Science in Biomedical Engineering",
-        department="Department of Biomedical Engineering", cip="14.05", duration_months=48,
+        department="Department of Biomedical Engineering",
+        cip="14.05",
+        duration_months=48,
         keywords=["biomedical engineering"],
         description=(
             "Biomedical engineering applies engineering to medicine and biology — imaging, "
@@ -1357,9 +1574,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-chemical-engineering-bs", school=_SEAS, degree_type="bachelors",
+        slug="uva-chemical-engineering-bs",
+        school=_SEAS,
+        degree_type="bachelors",
         program_name="Bachelor of Science in Chemical Engineering",
-        department="Department of Chemical Engineering", cip="14.07", duration_months=48,
+        department="Department of Chemical Engineering",
+        cip="14.07",
+        duration_months=48,
         keywords=["chemical engineering"],
         description=(
             "Chemical engineering applies chemistry, thermodynamics, and transport "
@@ -1372,10 +1593,14 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-civil-engineering-bs", school=_SEAS, degree_type="bachelors",
+        slug="uva-civil-engineering-bs",
+        school=_SEAS,
+        degree_type="bachelors",
         program_name="Bachelor of Science in Civil Engineering",
-        department="Department of Civil and Environmental Engineering", cip="14.08",
-        duration_months=48, keywords=["civil engineering"],
+        department="Department of Civil and Environmental Engineering",
+        cip="14.08",
+        duration_months=48,
+        keywords=["civil engineering"],
         description=(
             "Civil engineering designs and builds infrastructure — structures, "
             "transportation, water resources, and the built environment — with an "
@@ -1387,10 +1612,14 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-computer-engineering-bs", school=_SEAS, degree_type="bachelors",
+        slug="uva-computer-engineering-bs",
+        school=_SEAS,
+        degree_type="bachelors",
         program_name="Bachelor of Science in Computer Engineering",
-        department="Department of Electrical and Computer Engineering", cip="14.09",
-        duration_months=48, keywords=["computer engineering"],
+        department="Department of Electrical and Computer Engineering",
+        cip="14.09",
+        duration_months=48,
+        keywords=["computer engineering"],
         description=(
             "Computer engineering spans the hardware-software boundary — digital systems, "
             "embedded computing, and computer architecture — joining electrical "
@@ -1402,9 +1631,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-computer-science-bs", school=_SEAS, degree_type="bachelors",
+        slug="uva-computer-science-bs",
+        school=_SEAS,
+        degree_type="bachelors",
         program_name="Bachelor of Science in Computer Science",
-        department="Department of Computer Science", cip="11.07", duration_months=48,
+        department="Department of Computer Science",
+        cip="11.07",
+        duration_months=48,
         keywords=["computer science", "CS"],
         description=(
             "The B.S. in computer science is the engineering-school computing degree, "
@@ -1417,10 +1650,14 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-electrical-engineering-bs", school=_SEAS, degree_type="bachelors",
+        slug="uva-electrical-engineering-bs",
+        school=_SEAS,
+        degree_type="bachelors",
         program_name="Bachelor of Science in Electrical Engineering",
-        department="Department of Electrical and Computer Engineering", cip="14.10",
-        duration_months=48, keywords=["electrical engineering"],
+        department="Department of Electrical and Computer Engineering",
+        cip="14.10",
+        duration_months=48,
+        keywords=["electrical engineering"],
         description=(
             "Electrical engineering covers circuits, signals, electromagnetics, and "
             "devices, from microelectronics and photonics to communications and power "
@@ -1432,10 +1669,14 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-engineering-science-bs", school=_SEAS, degree_type="bachelors",
+        slug="uva-engineering-science-bs",
+        school=_SEAS,
+        degree_type="bachelors",
         program_name="Bachelor of Science in Engineering Science",
-        department="Department of Materials Science and Engineering", cip="14.01",
-        duration_months=48, keywords=["engineering science"],
+        department="Department of Materials Science and Engineering",
+        cip="14.01",
+        duration_months=48,
+        keywords=["engineering science"],
         description=(
             "Engineering science is a flexible, interdisciplinary degree that combines a "
             "strong engineering and science core with a concentration the student designs "
@@ -1447,10 +1688,14 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-materials-science-engineering-bs", school=_SEAS, degree_type="bachelors",
+        slug="uva-materials-science-engineering-bs",
+        school=_SEAS,
+        degree_type="bachelors",
         program_name="Bachelor of Science in Materials Science and Engineering",
-        department="Department of Materials Science and Engineering", cip="14.18",
-        duration_months=48, keywords=["materials science"],
+        department="Department of Materials Science and Engineering",
+        cip="14.18",
+        duration_months=48,
+        keywords=["materials science"],
         description=(
             "Materials science and engineering studies the structure, properties, and "
             "processing of metals, ceramics, polymers, and semiconductors that enable new "
@@ -1462,10 +1707,14 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-mechanical-engineering-bs", school=_SEAS, degree_type="bachelors",
+        slug="uva-mechanical-engineering-bs",
+        school=_SEAS,
+        degree_type="bachelors",
         program_name="Bachelor of Science in Mechanical Engineering",
-        department="Department of Mechanical and Aerospace Engineering", cip="14.19",
-        duration_months=48, keywords=["mechanical engineering"],
+        department="Department of Mechanical and Aerospace Engineering",
+        cip="14.19",
+        duration_months=48,
+        keywords=["mechanical engineering"],
         description=(
             "Mechanical engineering applies mechanics, thermodynamics, and design to "
             "machines and energy systems, from robotics and manufacturing to fluid and "
@@ -1477,10 +1726,14 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-systems-engineering-bs", school=_SEAS, degree_type="bachelors",
+        slug="uva-systems-engineering-bs",
+        school=_SEAS,
+        degree_type="bachelors",
         program_name="Bachelor of Science in Systems Engineering",
-        department="Department of Systems and Information Engineering", cip="14.27",
-        duration_months=48, keywords=["systems engineering"],
+        department="Department of Systems and Information Engineering",
+        cip="14.27",
+        duration_months=48,
+        keywords=["systems engineering"],
         description=(
             "Systems engineering applies optimization, probability, and data analytics to "
             "design and manage complex systems — in healthcare, transportation, and "
@@ -1494,9 +1747,13 @@ _CATALOG: list[dict] = [
     ),
     # ───────────── McIntire School of Commerce (undergraduate) ─────────────
     dict(
-        slug="uva-commerce-bs", school=_MCINTIRE, degree_type="bachelors",
+        slug="uva-commerce-bs",
+        school=_MCINTIRE,
+        degree_type="bachelors",
         program_name="Bachelor of Science in Commerce",
-        department="McIntire School of Commerce", cip="52.01", duration_months=48,
+        department="McIntire School of Commerce",
+        cip="52.01",
+        duration_months=48,
         keywords=["commerce", "business", "finance"],
         description=(
             "The B.S. in Commerce is McIntire's selective undergraduate business degree, "
@@ -1510,9 +1767,13 @@ _CATALOG: list[dict] = [
     ),
     # ───────────── School of Architecture (undergraduate) ─────────────
     dict(
-        slug="uva-architecture-bs", school=_ARCH, degree_type="bachelors",
+        slug="uva-architecture-bs",
+        school=_ARCH,
+        degree_type="bachelors",
         program_name="Bachelor of Science in Architecture",
-        department="Department of Architecture", cip="04.02", duration_months=48,
+        department="Department of Architecture",
+        cip="04.02",
+        duration_months=48,
         keywords=["architecture", "design"],
         description=(
             "The undergraduate architecture degree joins design studios with the history "
@@ -1525,10 +1786,14 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-urban-environmental-planning-bup", school=_ARCH, degree_type="bachelors",
+        slug="uva-urban-environmental-planning-bup",
+        school=_ARCH,
+        degree_type="bachelors",
         program_name="Bachelor of Urban and Environmental Planning",
-        department="Department of Urban and Environmental Planning", cip="04.03",
-        duration_months=48, keywords=["urban planning", "environmental planning"],
+        department="Department of Urban and Environmental Planning",
+        cip="04.03",
+        duration_months=48,
+        keywords=["urban planning", "environmental planning"],
         description=(
             "Urban and environmental planning studies how cities and regions grow and "
             "change, joining design, policy, and environmental analysis to shape "
@@ -1540,9 +1805,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-architectural-history-ba", school=_ARCH, degree_type="bachelors",
+        slug="uva-architectural-history-ba",
+        school=_ARCH,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Architectural History",
-        department="Department of Architectural History", cip="04.08", duration_months=48,
+        department="Department of Architectural History",
+        cip="04.08",
+        duration_months=48,
         keywords=["architectural history"],
         description=(
             "Architectural history studies buildings, landscapes, and cities as cultural "
@@ -1556,9 +1825,13 @@ _CATALOG: list[dict] = [
     ),
     # ───────────── School of Nursing (undergraduate) ─────────────
     dict(
-        slug="uva-nursing-bsn", school=_NURSING, degree_type="bachelors",
+        slug="uva-nursing-bsn",
+        school=_NURSING,
+        degree_type="bachelors",
         program_name="Bachelor of Science in Nursing",
-        department="School of Nursing", cip="51.38", duration_months=48,
+        department="School of Nursing",
+        cip="51.38",
+        duration_months=48,
         keywords=["nursing", "BSN"],
         description=(
             "The Bachelor of Science in Nursing prepares students for registered-nurse "
@@ -1572,9 +1845,13 @@ _CATALOG: list[dict] = [
     ),
     # ───────────── School of Education and Human Development (undergraduate) ─────────────
     dict(
-        slug="uva-kinesiology-bsed", school=_EDUC, degree_type="bachelors",
+        slug="uva-kinesiology-bsed",
+        school=_EDUC,
+        degree_type="bachelors",
         program_name="Bachelor of Science in Education in Kinesiology",
-        department="Department of Kinesiology", cip="31.05", duration_months=48,
+        department="Department of Kinesiology",
+        cip="31.05",
+        duration_months=48,
         keywords=["kinesiology", "exercise science"],
         description=(
             "Kinesiology studies human movement, exercise physiology, and biomechanics, "
@@ -1587,9 +1864,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-youth-social-innovation-bsed", school=_EDUC, degree_type="bachelors",
+        slug="uva-youth-social-innovation-bsed",
+        school=_EDUC,
+        degree_type="bachelors",
         program_name="Bachelor of Science in Education in Youth and Social Innovation",
-        department="Department of Human Services", cip="19.07", duration_months=48,
+        department="Department of Human Services",
+        cip="19.07",
+        duration_months=48,
         keywords=["youth", "social innovation"],
         description=(
             "Youth and social innovation studies child and adolescent development and the "
@@ -1602,9 +1883,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-speech-communication-disorders-bsed", school=_EDUC, degree_type="bachelors",
+        slug="uva-speech-communication-disorders-bsed",
+        school=_EDUC,
+        degree_type="bachelors",
         program_name="Bachelor of Science in Education in Speech Communication Disorders",
-        department="Department of Human Services", cip="51.02", duration_months=48,
+        department="Department of Human Services",
+        cip="51.02",
+        duration_months=48,
         keywords=["speech", "communication disorders"],
         description=(
             "Speech communication disorders introduces the science of human communication "
@@ -1618,9 +1903,13 @@ _CATALOG: list[dict] = [
     ),
     # ───────────── School of Data Science (undergraduate) ─────────────
     dict(
-        slug="uva-data-science-bs", school=_DATASCI, degree_type="bachelors",
+        slug="uva-data-science-bs",
+        school=_DATASCI,
+        degree_type="bachelors",
         program_name="Bachelor of Science in Data Science",
-        department="School of Data Science", cip="30.70", duration_months=48,
+        department="School of Data Science",
+        cip="30.70",
+        duration_months=48,
         keywords=["data science"],
         description=(
             "The B.S. in Data Science combines statistics, computing, and machine learning "
@@ -1634,10 +1923,14 @@ _CATALOG: list[dict] = [
     ),
     # ───────────── Frank Batten School (undergraduate) ─────────────
     dict(
-        slug="uva-public-policy-leadership-ba", school=_BATTEN, degree_type="bachelors",
+        slug="uva-public-policy-leadership-ba",
+        school=_BATTEN,
+        degree_type="bachelors",
         program_name="Bachelor of Arts in Public Policy and Leadership",
-        department="Frank Batten School of Leadership and Public Policy", cip="44.05",
-        duration_months=48, keywords=["public policy", "leadership"],
+        department="Frank Batten School of Leadership and Public Policy",
+        cip="44.05",
+        duration_months=48,
+        keywords=["public policy", "leadership"],
         description=(
             "Public policy and leadership trains students to analyze policy with economics, "
             "statistics, and ethics and to lead in the public interest, in Batten's "
@@ -1651,10 +1944,15 @@ _CATALOG: list[dict] = [
     # ═════════════ GRADUATE & PROFESSIONAL ═════════════
     # ── Darden School of Business ──
     dict(
-        slug="uva-darden-mba", school=_DARDEN, degree_type="masters",
+        slug="uva-darden-mba",
+        school=_DARDEN,
+        degree_type="masters",
         program_name="Master of Business Administration",
-        department="Darden School of Business", cip="52.02", duration_months=21,
-        keywords=["MBA", "Darden", "business"], tuition=_MBA,
+        department="Darden School of Business",
+        cip="52.02",
+        duration_months=21,
+        keywords=["MBA", "Darden", "business"],
+        tuition=_MBA,
         cost_source=_BOV_SRC,
         cost_note=(
             "2025-26 Darden Full-Time M.B.A. non-resident annual tuition (Board of "
@@ -1671,10 +1969,15 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-mcintire-ms-commerce", school=_MCINTIRE, degree_type="masters",
+        slug="uva-mcintire-ms-commerce",
+        school=_MCINTIRE,
+        degree_type="masters",
         program_name="Master of Science in Commerce",
-        department="McIntire School of Commerce", cip="52.01", duration_months=10,
-        keywords=["commerce", "business", "specialized master's"], tuition=_MS_COMMERCE,
+        department="McIntire School of Commerce",
+        cip="52.01",
+        duration_months=10,
+        keywords=["commerce", "business", "specialized master's"],
+        tuition=_MS_COMMERCE,
         cost_source=_BOV_SRC,
         cost_note=(
             "2025-26 M.S. in Commerce non-resident annual tuition (Board of Visitors); "
@@ -1691,10 +1994,16 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-mcintire-ms-business-analytics", school=_MCINTIRE, degree_type="masters",
+        slug="uva-mcintire-ms-business-analytics",
+        school=_MCINTIRE,
+        degree_type="masters",
         program_name="Master of Science in Business Analytics",
-        department="McIntire School of Commerce", cip="52.13", duration_months=12,
-        keywords=["business analytics", "data"], tuition=_MSBA,
+        department="McIntire School of Commerce",
+        cip="52.13",
+        duration_months=12,
+        keywords=["business analytics", "data"],
+        tuition=_MSBA,
+        part_time=True,
         cost_source=_BOV_SRC,
         cost_note=(
             "2025-26 M.S. in Business Analytics program tuition (McIntire-Darden joint "
@@ -1712,10 +2021,15 @@ _CATALOG: list[dict] = [
     ),
     # ── School of Law ──
     dict(
-        slug="uva-juris-doctor-jd", school=_LAW, degree_type="professional",
+        slug="uva-juris-doctor-jd",
+        school=_LAW,
+        degree_type="professional",
         program_name="Juris Doctor",
-        department="School of Law", cip="22.01", duration_months=36,
-        keywords=["law", "JD", "juris doctor"], tuition=_JD,
+        department="School of Law",
+        cip="22.01",
+        duration_months=36,
+        keywords=["law", "JD", "juris doctor"],
+        tuition=_JD,
         cost_source=_BOV_SRC,
         cost_note=(
             "2025-26 J.D. non-resident annual tuition (Board of Visitors); Virginia "
@@ -1732,10 +2046,15 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-master-of-laws-llm", school=_LAW, degree_type="masters",
+        slug="uva-master-of-laws-llm",
+        school=_LAW,
+        degree_type="masters",
         program_name="Master of Laws",
-        department="School of Law", cip="22.02", duration_months=9,
-        keywords=["LLM", "law"], tuition=_LLM,
+        department="School of Law",
+        cip="22.02",
+        duration_months=9,
+        keywords=["LLM", "law"],
+        tuition=_LLM,
         cost_source=_BOV_SRC,
         cost_note=(
             "2025-26 LL.M. non-resident annual tuition (Board of Visitors); Virginia "
@@ -1753,10 +2072,15 @@ _CATALOG: list[dict] = [
     ),
     # ── School of Medicine ──
     dict(
-        slug="uva-doctor-of-medicine-md", school=_MEDICINE, degree_type="professional",
+        slug="uva-doctor-of-medicine-md",
+        school=_MEDICINE,
+        degree_type="professional",
         program_name="Doctor of Medicine",
-        department="School of Medicine", cip="51.12", duration_months=48,
-        keywords=["medicine", "MD", "medical school"], tuition=_MD,
+        department="School of Medicine",
+        cip="51.12",
+        duration_months=48,
+        keywords=["medicine", "MD", "medical school"],
+        tuition=_MD,
         cost_source=_BOV_SRC,
         cost_note=(
             "2025-26 M.D. first-year non-resident tuition (Board of Visitors); tuition "
@@ -1773,10 +2097,15 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-master-of-public-health-mph", school=_MEDICINE, degree_type="masters",
+        slug="uva-master-of-public-health-mph",
+        school=_MEDICINE,
+        degree_type="masters",
         program_name="Master of Public Health",
-        department="Department of Public Health Sciences", cip="51.22", duration_months=24,
-        keywords=["public health", "MPH"], tuition=_MPH,
+        department="Department of Public Health Sciences",
+        cip="51.22",
+        duration_months=24,
+        keywords=["public health", "MPH"],
+        tuition=_MPH,
         cost_source=_BOV_SRC,
         cost_note=(
             "2025-26 M.P.H. non-resident annual tuition (Board of Visitors); Virginia "
@@ -1794,10 +2123,15 @@ _CATALOG: list[dict] = [
     ),
     # ── Frank Batten School ──
     dict(
-        slug="uva-master-of-public-policy-mpp", school=_BATTEN, degree_type="masters",
+        slug="uva-master-of-public-policy-mpp",
+        school=_BATTEN,
+        degree_type="masters",
         program_name="Master of Public Policy",
-        department="Frank Batten School of Leadership and Public Policy", cip="44.05",
-        duration_months=24, keywords=["public policy", "MPP"], tuition=_MPP,
+        department="Frank Batten School of Leadership and Public Policy",
+        cip="44.05",
+        duration_months=24,
+        keywords=["public policy", "MPP"],
+        tuition=_MPP,
         cost_source=_BOV_SRC,
         cost_note=(
             "2025-26 Batten graduate non-resident annual tuition (Board of Visitors); "
@@ -1815,31 +2149,67 @@ _CATALOG: list[dict] = [
     ),
     # ── School of Data Science ──
     dict(
-        slug="uva-ms-data-science", school=_DATASCI, degree_type="masters",
+        slug="uva-ms-data-science",
+        school=_DATASCI,
+        degree_type="masters",
         program_name="Master of Science in Data Science",
-        department="School of Data Science", cip="30.70", duration_months=12,
-        keywords=["data science", "MSDS"], tuition=_MSDS,
+        department="School of Data Science",
+        cip="30.70",
+        duration_months=12,
+        keywords=["data science", "MSDS"],
+        tuition=_MSDS,
         cost_source=_BOV_SRC,
         cost_note=(
             "2025-26 residential M.S. in Data Science non-resident annual tuition (Board of "
-            "Visitors); Virginia residents pay $39,159; a fully online format is also "
-            "offered at $1,467 per credit."
+            "Visitors); Virginia residents pay $39,159."
         ),
         description=(
-            "The M.S. in Data Science is a one-year professional degree in statistics, "
-            "machine learning, computing, and data ethics, offered in residential and "
-            "fully online formats with strong career outcomes."
+            "The residential M.S. in Data Science is a one-year, full-time on-Grounds degree "
+            "in statistics, machine learning, computing, and data ethics, with a capstone "
+            "and strong career outcomes."
         ),
         who_its_for=(
-            "Graduates and working professionals who want to move into data-science and "
-            "machine-learning roles, in person or online."
+            "Graduates who want a full-time, in-person year to move into data-science and "
+            "machine-learning roles."
         ),
     ),
     dict(
-        slug="uva-phd-data-science", school=_DATASCI, degree_type="phd",
+        slug="uva-ms-data-science-online",
+        school=_DATASCI,
+        degree_type="masters",
+        program_name="Master of Science in Data Science (Online)",
+        department="School of Data Science",
+        cip="30.70",
+        duration_months=20,
+        keywords=["data science", "MSDS", "online"],
+        delivery_format="online",
+        part_time=True,
+        omit_tuition_reason=(
+            "The fully online M.S. in Data Science is billed per credit hour at UVA's "
+            "2025-26 rate of $1,467 (resident and non-resident alike); no flat annual "
+            "tuition is published."
+        ),
+        description=(
+            "The online M.S. in Data Science delivers the same statistics, machine "
+            "learning, computing, and data-ethics curriculum in a 100% online, part-time "
+            "format completed in about 20 months across five terms, built for working "
+            "professionals."
+        ),
+        who_its_for=(
+            "Working professionals who want to move into data science without leaving "
+            "their jobs, studying fully online on a part-time schedule."
+        ),
+    ),
+    dict(
+        slug="uva-phd-data-science",
+        school=_DATASCI,
+        degree_type="phd",
         program_name="Doctor of Philosophy in Data Science",
-        department="School of Data Science", cip="30.70", duration_months=60,
-        keywords=["data science", "PhD", "research"], funded=True,
+        department="School of Data Science",
+        cip="30.70",
+        duration_months=60,
+        keywords=["data science", "PhD", "research"],
+        funded=True,
         description=(
             "The Ph.D. in Data Science supports original research in the methods and "
             "foundations of data science — machine learning, statistics, and responsible "
@@ -1852,9 +2222,13 @@ _CATALOG: list[dict] = [
     ),
     # ── School of Engineering (graduate) ──
     dict(
-        slug="uva-ms-computer-science", school=_SEAS, degree_type="masters",
+        slug="uva-ms-computer-science",
+        school=_SEAS,
+        degree_type="masters",
         program_name="Master of Science in Computer Science",
-        department="Department of Computer Science", cip="11.07", duration_months=24,
+        department="Department of Computer Science",
+        cip="11.07",
+        duration_months=24,
         keywords=["computer science", "CS", "graduate"],
         omit_tuition_reason=_PC_ENG,
         description=(
@@ -1868,10 +2242,14 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-ms-systems-engineering", school=_SEAS, degree_type="masters",
+        slug="uva-ms-systems-engineering",
+        school=_SEAS,
+        degree_type="masters",
         program_name="Master of Science in Systems Engineering",
-        department="Department of Systems and Information Engineering", cip="14.27",
-        duration_months=24, keywords=["systems engineering", "graduate"],
+        department="Department of Systems and Information Engineering",
+        cip="14.27",
+        duration_months=24,
+        keywords=["systems engineering", "graduate"],
         omit_tuition_reason=_PC_ENG,
         description=(
             "The M.S. in Systems Engineering advances optimization, data analytics, and "
@@ -1884,9 +2262,13 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-ms-biomedical-engineering", school=_SEAS, degree_type="masters",
+        slug="uva-ms-biomedical-engineering",
+        school=_SEAS,
+        degree_type="masters",
         program_name="Master of Science in Biomedical Engineering",
-        department="Department of Biomedical Engineering", cip="14.05", duration_months=24,
+        department="Department of Biomedical Engineering",
+        cip="14.05",
+        duration_months=24,
         keywords=["biomedical engineering", "graduate"],
         omit_tuition_reason=_PC_ENG,
         description=(
@@ -1900,10 +2282,15 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-phd-computer-science", school=_SEAS, degree_type="phd",
+        slug="uva-phd-computer-science",
+        school=_SEAS,
+        degree_type="phd",
         program_name="Doctor of Philosophy in Computer Science",
-        department="Department of Computer Science", cip="11.07", duration_months=60,
-        keywords=["computer science", "PhD", "research"], funded=True,
+        department="Department of Computer Science",
+        cip="11.07",
+        duration_months=60,
+        keywords=["computer science", "PhD", "research"],
+        funded=True,
         description=(
             "The Ph.D. in Computer Science supports original research across systems, "
             "theory, artificial intelligence, security, and human-computer interaction, "
@@ -1915,10 +2302,15 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-phd-systems-engineering", school=_SEAS, degree_type="phd",
+        slug="uva-phd-systems-engineering",
+        school=_SEAS,
+        degree_type="phd",
         program_name="Doctor of Philosophy in Systems Engineering",
-        department="Department of Systems and Information Engineering", cip="14.27",
-        duration_months=60, keywords=["systems engineering", "PhD", "research"], funded=True,
+        department="Department of Systems and Information Engineering",
+        cip="14.27",
+        duration_months=60,
+        keywords=["systems engineering", "PhD", "research"],
+        funded=True,
         description=(
             "The Ph.D. in Systems Engineering supports research in optimization, data "
             "analytics, and the modeling of complex sociotechnical systems across "
@@ -1930,10 +2322,15 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-phd-biomedical-engineering", school=_SEAS, degree_type="phd",
+        slug="uva-phd-biomedical-engineering",
+        school=_SEAS,
+        degree_type="phd",
         program_name="Doctor of Philosophy in Biomedical Engineering",
-        department="Department of Biomedical Engineering", cip="14.05", duration_months=60,
-        keywords=["biomedical engineering", "PhD", "research"], funded=True,
+        department="Department of Biomedical Engineering",
+        cip="14.05",
+        duration_months=60,
+        keywords=["biomedical engineering", "PhD", "research"],
+        funded=True,
         description=(
             "The Ph.D. in Biomedical Engineering supports research in imaging, "
             "biomechanics, biomaterials, and medical devices, jointly mentored across the "
@@ -1946,10 +2343,15 @@ _CATALOG: list[dict] = [
     ),
     # ── Graduate School of Arts & Sciences (PhD) ──
     dict(
-        slug="uva-phd-economics", school=_GRAD, degree_type="phd",
+        slug="uva-phd-economics",
+        school=_GRAD,
+        degree_type="phd",
         program_name="Doctor of Philosophy in Economics",
-        department="Department of Economics", cip="45.06", duration_months=60,
-        keywords=["economics", "PhD", "research"], funded=True,
+        department="Department of Economics",
+        cip="45.06",
+        duration_months=60,
+        keywords=["economics", "PhD", "research"],
+        funded=True,
         description=(
             "The Ph.D. in Economics trains research economists in microeconomic and "
             "macroeconomic theory and econometrics, with fields from public and labor "
@@ -1961,10 +2363,15 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-phd-english", school=_GRAD, degree_type="phd",
+        slug="uva-phd-english",
+        school=_GRAD,
+        degree_type="phd",
         program_name="Doctor of Philosophy in English",
-        department="Department of English", cip="23.01", duration_months=60,
-        keywords=["English", "literature", "PhD"], funded=True,
+        department="Department of English",
+        cip="23.01",
+        duration_months=60,
+        keywords=["English", "literature", "PhD"],
+        funded=True,
         description=(
             "The Ph.D. in English supports advanced research in literature in English "
             "across periods, with departmental strengths in American literature, "
@@ -1976,10 +2383,15 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-phd-history", school=_GRAD, degree_type="phd",
+        slug="uva-phd-history",
+        school=_GRAD,
+        degree_type="phd",
         program_name="Doctor of Philosophy in History",
-        department="Corcoran Department of History", cip="54.01", duration_months=60,
-        keywords=["history", "PhD", "research"], funded=True,
+        department="Corcoran Department of History",
+        cip="54.01",
+        duration_months=60,
+        keywords=["history", "PhD", "research"],
+        funded=True,
         description=(
             "The Ph.D. in History trains historians through archival research and "
             "field-defining scholarship across American, European, and global history."
@@ -1990,10 +2402,15 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-phd-psychology", school=_GRAD, degree_type="phd",
+        slug="uva-phd-psychology",
+        school=_GRAD,
+        degree_type="phd",
         program_name="Doctor of Philosophy in Psychology",
-        department="Department of Psychology", cip="42.01", duration_months=60,
-        keywords=["psychology", "PhD", "research"], funded=True,
+        department="Department of Psychology",
+        cip="42.01",
+        duration_months=60,
+        keywords=["psychology", "PhD", "research"],
+        funded=True,
         description=(
             "The Ph.D. in Psychology supports research across cognitive, developmental, "
             "clinical, social, and quantitative psychology, with laboratory training "
@@ -2005,10 +2422,15 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-phd-physics", school=_GRAD, degree_type="phd",
+        slug="uva-phd-physics",
+        school=_GRAD,
+        degree_type="phd",
         program_name="Doctor of Philosophy in Physics",
-        department="Department of Physics", cip="40.08", duration_months=60,
-        keywords=["physics", "PhD", "research"], funded=True,
+        department="Department of Physics",
+        cip="40.08",
+        duration_months=60,
+        keywords=["physics", "PhD", "research"],
+        funded=True,
         description=(
             "The Ph.D. in Physics supports research in condensed-matter, nuclear, "
             "high-energy, and biological physics, with funded study toward careers in "
@@ -2020,10 +2442,15 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-phd-chemistry", school=_GRAD, degree_type="phd",
+        slug="uva-phd-chemistry",
+        school=_GRAD,
+        degree_type="phd",
         program_name="Doctor of Philosophy in Chemistry",
-        department="Department of Chemistry", cip="40.05", duration_months=60,
-        keywords=["chemistry", "PhD", "research"], funded=True,
+        department="Department of Chemistry",
+        cip="40.05",
+        duration_months=60,
+        keywords=["chemistry", "PhD", "research"],
+        funded=True,
         description=(
             "The Ph.D. in Chemistry supports original research across organic, inorganic, "
             "physical, analytical, and biological chemistry, with funded study and "
@@ -2035,10 +2462,15 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-phd-biology", school=_GRAD, degree_type="phd",
+        slug="uva-phd-biology",
+        school=_GRAD,
+        degree_type="phd",
         program_name="Doctor of Philosophy in Biology",
-        department="Department of Biology", cip="26.01", duration_months=60,
-        keywords=["biology", "PhD", "research"], funded=True,
+        department="Department of Biology",
+        cip="26.01",
+        duration_months=60,
+        keywords=["biology", "PhD", "research"],
+        funded=True,
         description=(
             "The Ph.D. in Biology supports research from molecular and cellular biology to "
             "ecology and evolution, with funded laboratory and field study toward research "
@@ -2051,9 +2483,13 @@ _CATALOG: list[dict] = [
     ),
     # ── School of Nursing (graduate) ──
     dict(
-        slug="uva-msn", school=_NURSING, degree_type="masters",
+        slug="uva-msn",
+        school=_NURSING,
+        degree_type="masters",
         program_name="Master of Science in Nursing",
-        department="School of Nursing", cip="51.38", duration_months=24,
+        department="School of Nursing",
+        cip="51.38",
+        duration_months=24,
         keywords=["nursing", "MSN", "graduate"],
         omit_tuition_reason=_PC_MSN,
         description=(
@@ -2062,15 +2498,19 @@ _CATALOG: list[dict] = [
             "graduate coursework in care and leadership."
         ),
         who_its_for=(
-            "Registered nurses who want to advance into leadership and specialized "
-            "clinical roles."
+            "Registered nurses who want to advance into leadership and specialized clinical roles."
         ),
     ),
     dict(
-        slug="uva-dnp", school=_NURSING, degree_type="phd",
+        slug="uva-dnp",
+        school=_NURSING,
+        degree_type="professional",
         program_name="Doctor of Nursing Practice",
-        department="School of Nursing", cip="51.38", duration_months=36,
-        keywords=["nursing", "DNP", "doctoral"], tuition=_DNP,
+        department="School of Nursing",
+        cip="51.38",
+        duration_months=36,
+        keywords=["nursing", "DNP", "doctoral"],
+        tuition=_DNP,
         cost_source=_BOV_SRC,
         cost_note=(
             "2025-26 Doctor of Nursing Practice non-resident annual tuition (Board of "
@@ -2087,10 +2527,15 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-phd-nursing", school=_NURSING, degree_type="phd",
+        slug="uva-phd-nursing",
+        school=_NURSING,
+        degree_type="phd",
         program_name="Doctor of Philosophy in Nursing",
-        department="School of Nursing", cip="51.38", duration_months=48,
-        keywords=["nursing", "PhD", "research"], funded=True,
+        department="School of Nursing",
+        cip="51.38",
+        duration_months=48,
+        keywords=["nursing", "PhD", "research"],
+        funded=True,
         description=(
             "The Ph.D. in Nursing prepares nurse scientists to lead original research in "
             "areas such as chronic illness, aging, and health equity."
@@ -2102,9 +2547,13 @@ _CATALOG: list[dict] = [
     ),
     # ── School of Architecture (graduate) ──
     dict(
-        slug="uva-march", school=_ARCH, degree_type="masters",
+        slug="uva-march",
+        school=_ARCH,
+        degree_type="masters",
         program_name="Master of Architecture",
-        department="Department of Architecture", cip="04.02", duration_months=36,
+        department="Department of Architecture",
+        cip="04.02",
+        duration_months=36,
         keywords=["architecture", "MArch", "design"],
         omit_tuition_reason=_PC_ARCH,
         description=(
@@ -2118,10 +2567,14 @@ _CATALOG: list[dict] = [
         ),
     ),
     dict(
-        slug="uva-murp", school=_ARCH, degree_type="masters",
+        slug="uva-murp",
+        school=_ARCH,
+        degree_type="masters",
         program_name="Master of Urban and Environmental Planning",
-        department="Department of Urban and Environmental Planning", cip="04.03",
-        duration_months=24, keywords=["urban planning", "environmental planning"],
+        department="Department of Urban and Environmental Planning",
+        cip="04.03",
+        duration_months=24,
+        keywords=["urban planning", "environmental planning"],
         omit_tuition_reason=_PC_ARCH,
         description=(
             "The Master of Urban and Environmental Planning trains planners in land use, "
@@ -2129,14 +2582,17 @@ _CATALOG: list[dict] = [
             "equitable communities."
         ),
         who_its_for=(
-            "Students who want a professional career in city, regional, or environmental "
-            "planning."
+            "Students who want a professional career in city, regional, or environmental planning."
         ),
     ),
     dict(
-        slug="uva-mla", school=_ARCH, degree_type="masters",
+        slug="uva-mla",
+        school=_ARCH,
+        degree_type="masters",
         program_name="Master of Landscape Architecture",
-        department="Department of Landscape Architecture", cip="04.06", duration_months=36,
+        department="Department of Landscape Architecture",
+        cip="04.06",
+        duration_months=36,
         keywords=["landscape architecture", "design"],
         omit_tuition_reason=_PC_ARCH,
         description=(
@@ -2151,11 +2607,16 @@ _CATALOG: list[dict] = [
     ),
     # ── School of Education and Human Development (graduate) ──
     dict(
-        slug="uva-master-of-teaching", school=_EDUC, degree_type="masters",
+        slug="uva-master-of-teaching",
+        school=_EDUC,
+        degree_type="masters",
         program_name="Master of Teaching",
         department="Department of Curriculum, Instruction, and Special Education",
-        cip="13.12", duration_months=12, keywords=["teaching", "teacher education"],
-        tuition=_MT, cost_source=_BOV_SRC,
+        cip="13.12",
+        duration_months=12,
+        keywords=["teaching", "teacher education"],
+        tuition=_MT,
+        cost_source=_BOV_SRC,
         cost_note=(
             "2025-26 Master of Teaching 12-month non-resident tuition (Board of Visitors); "
             "Virginia residents pay $24,810."
@@ -2171,7 +2632,6 @@ _CATALOG: list[dict] = [
         ),
     ),
 ]
-
 
 
 PROGRAMS: list[dict] = [
@@ -2192,6 +2652,7 @@ PROGRAMS: list[dict] = [
         "cost_note": r.get("cost_note"),
         "cost_source": r.get("cost_source"),
         "omit_tuition_reason": r.get("omit_tuition_reason"),
+        "part_time": r.get("part_time"),
     }
     for r in _CATALOG
 ]
@@ -2296,6 +2757,18 @@ _REQ_LAW = {
     "deadlines": {"regular_decision": "Rolling (see admissions site)"},
     "source": "https://www.law.virginia.edu/admissions",
 }
+_REQ_LLM = {
+    "materials": [
+        "Graduate studies application + personal statement",
+        "Law degree from a non-U.S. institution (or equivalent legal training)",
+        "Academic transcripts",
+        "Letters of recommendation",
+        "English-proficiency scores (TOEFL/IELTS) for non-native speakers",
+        "Resume",
+    ],
+    "deadlines": {"note": "See the School of Law graduate studies admissions page."},
+    "source": "https://www.law.virginia.edu/graduatestudies",
+}
 _REQ_MED = {
     "materials": [
         "AMCAS application + UVA secondary",
@@ -2312,7 +2785,9 @@ _REQ_MED = {
 def _requirements_for(spec: dict) -> dict:
     school = spec["school"]
     if school == _LAW:
-        return dict(_REQ_LAW)
+        # The J.D. takes the LSAT/CAS path; the LL.M. (a graduate degree for lawyers
+        # already trained abroad) takes graduate-law requirements, not the J.D. checklist.
+        return dict(_REQ_LAW) if spec["degree_type"] == "professional" else dict(_REQ_LLM)
     if school == _MEDICINE and spec["degree_type"] == "professional":
         return dict(_REQ_MED)
     if spec["slug"] == "uva-darden-mba":
@@ -2839,6 +3314,8 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.is_published = True
         p.catalog_source = "curated"
         p.delivery_format = spec["delivery_format"]
+        if spec.get("part_time") is not None:
+            p.part_time_available = spec["part_time"]
         p.content_sources = _program_content(spec["school"], spec["keywords"])
         if spec["degree_type"] == "bachelors":
             p.tuition = _UG_OOS
@@ -2868,10 +3345,13 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             p.tuition = None
             p.cost_data = {
                 "funded": False,
-                "note": spec.get("omit_tuition_reason", (
-                    "A verified per-program annual tuition figure is omitted here rather "
-                    "than estimated; see the program's official cost page."
-                )),
+                "note": spec.get(
+                    "omit_tuition_reason",
+                    (
+                        "A verified per-program annual tuition figure is omitted here rather "
+                        "than estimated; see the program's official cost page."
+                    ),
+                ),
                 "source": _BOV_SRC[0],
                 "source_url": _BOV_SRC[1],
             }
