@@ -7868,3 +7868,110 @@ Postgres + a project venv the grader env lacks (no `.venv/bin/pytest`); this gra
 skill markdown files (SKILL.md + REPAIR_BACKLOG; CHANGELOG appended) — no code, no data, no migration — so
 backend CI is unaffected. Single-head status on `origin/main` is governed post-merge by CI (FLAG #8) and is
 not affected by this migration-free PR.
+
+---
+
+## 2026-06-30 — Run 93 (FULL-FLEET sweep of all 300 live + all 40 catalogs · state HELD vs run 92, no regressions · 1 rule change = embedded-SLASH carve-out for verified joint/combined/inclusive degrees)
+
+**Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`.**
+Per catalog I fully paginated the program list (all 40 program-bearing catalogs = 8,024 programs; the other
+260 are bare institution-level stubs) and ran: a description-NON-EMPTINESS scan, an exact-duplicate
+`(program_name, degree_type)` scan, a name-FABRICATION scan (CIP-rollup title / "…and Related
+Sciences/Services" / ", General/Other" / `(CIP NN.NN)` / possessive "Bachelor's in" / bare-abbreviation /
+embedded-slash / "{DegreeType} program in {field}" placeholder), a name-CASING scan (mid-name lowercase
+content word), and a per-`degree_type` tuition COVERAGE measure. Over 20 program DETAILS/catalog
+(`GET /programs/{id}`, deterministic id-sorted sample = ~800 detail fetches) I probed `cip_code` /
+`who_its_for` (coverage AND distinctness) / `external_reviews` coverage. Over all 300 institutions I fetched
+campus-photo gallery length (`school_outcomes.campus_photos`) + posts-feed count (read as LIST length).
+
+**Merged since run 92 (grader PR #1217):** no NEW profile-enrichment PRs landed in the window — the enricher
+had not yet picked up the run-92 backlog. So the live state HELD at the run-92 baseline (this is expected
+cadence, not a stall): the grader runs after the enricher's window, and the enricher's next unit clears the
+top backlog entry (Georgetown tuition).
+
+**Net live deltas vs run 92 — STATE HELD, no regressions:**
+- **`cip_code`** — null only on gold MIT (39/40 catalogs 100% in-sample); unchanged.
+- **PUBLIC non-resident scalar** — all 15 publics correct; unchanged.
+- **`who_its_for`** — 0% on the SAME 4 (Georgia Tech · UT-Austin · Notre Dame · UW-Seattle); type-gamed on 9
+  (Berkeley/Penn 0.05 · Columbia/Chicago 0.10 · Caltech 0.11 · Princeton/UF/Michigan 0.15 · MIT 0.25); 25
+  field-specific. Unchanged.
+- **master's/professional tuition** — Georgetown still by far worst (master's 6/79 covered = 73 null + prof 7
+  null); WashU 6 · UVA 8 · UC-Irvine 11 + prof 1 · UC-Davis 4 master's nulls; professional-only Columbia 2 ·
+  UT-Austin 3 · NYU 2. Low-fraction (≤16%) residuals on USC/UW-Seattle/Cornell/Penn/Harvard/Yale/UCSD/NYU/
+  Dartmouth flagged but likely legitimate per-program funded/per-credit omits (re-verify, don't fabricate).
+- **photos / feeds** — every program-bearing node ≥4 photos AND a live feed (UC-Irvine still healthy);
+  33 bulk stubs at 0 photos (unchanged, entry #6).
+- **structure / descriptions / exact-dups / tuition-copy-down** — gold-clean fleet-wide (0/8,024 empty, 0
+  dups, 0 copy-downs). No regression.
+
+**HEADLINE rule change (1 of ≤3, evidence-backed, NEW class): an embedded-SLASH CARVE-OUT.** The name
+FABRICATION scan's broad "any `/` in the field ⇒ rollup" form flagged **62 slash rows across 13 catalogs** —
+but inspection (+ domain verification) shows nearly all are VERIFIED REAL conferred forms a blunt scan would
+mangle: **BU's 19 joint/dual degrees** (MD/PhD, JD/MBA, MSW/MPH, accelerated BA/MS…), **NYU's 8** (combined
+teaching certifications + the Stern/Abu-Dhabi EMBA), **UCLA's 5 combined/double majors** (Mathematics/Economics,
+Chemistry/Materials Science…), and **gender-inclusive Latina/o + Chicana/o ethnic-studies majors verbatim
+across ≥6 catalogs** (UCLA · UT-Austin · UC-Davis · UC-Irvine · UIUC · Michigan). The SKILL.md already lists an
+embedded slash as a CIP-rollup tell (8 places) and has the run-77 comma-and carve-out, but its examples are all
+comma-and forms and it NEVER addresses slashes — most critically the JOINT/DUAL-degree slash, which is not even
+an interdisciplinary single major but literally two conferred degrees. So I added a CARVE-OUT bullet to miss
+#2's name-realness list (right after the run-77 comma-and carve-out): carve out (a) joint/dual degrees, (b)
+combined/double majors, (c) gender-inclusive ethnic-studies names, retaining the run-77 DISCRIMINATOR
+unchanged — the defect is the field part byte-identical to a federal CIP rollup TITLE, NOT the mere presence of
+a slash. This mirrors the run-77 (comma-and) and run-92 (possessive) carve-outs exactly: it TIGHTENS toward
+no-fabrication (removes a false-positive that would mangle verified real degrees) and loosens NOTHING (a
+CIP-rollup-title slash is still a hard FAIL). Evidence: the 62 verified-real slash rows above vs the one true
+CIP-title slash this run — **UW-Madison "Zoology/Animal Biology" ×3** (CIP 26.0701; real degree "Zoology"),
+which stays flagged and is queued (entry #4c).
+
+**Findings (with live evidence) — everything else is a COMPLIANCE GAP against an existing rule (default
+flipped → queued + logged, NOT re-added):**
+- **NEW DATA defect (compliance gap vs miss #2 CIP-title rule, run 92 MISSED it):** UW-Madison ships the
+  CIP-title slash "Zoology/Animal Biology" on 3 rows (cert/bachelor's/master's) — the IPEDS×award-level mint of
+  CIP 26.0701; real degree is "Zoology" (Dept of Integrative Biology). Queued as entry #4c. Rule EXISTS (miss
+  #2 embedded-slash / CIP-title) → COMPLIANCE GAP, not re-added.
+- **Rule EXISTS (run 74): master's/professional-tier tuition residual.** Georgetown master's 73 null + prof 7
+  is by far the worst; WashU 6 · UVA 8 · UC-Irvine 11 + prof 1 · UC-Davis 4; professional-only Columbia 2 ·
+  UT-Austin 3 · NYU 2. PhD + per-credit certificate nulls EXCLUDED (funded / per-credit → legit
+  omit-with-reason). Entry #1 (HIGH).
+- **Rule EXISTS (run 82): `cip_code` — MIT only.** 65 MIT programs scored field-blind. Entry #2 (HIGH).
+- **Rules EXIST (run 84/86 + 89): `who_its_for` 0% (4) + type-gamed (9).** Entry #3.
+- **Rules EXIST (placeholder run 91; casing run 90): name-realness.** Penn 2 placeholder; UT-Austin 70
+  sentence-cased. Entry #4 (a)+(b).
+- **DEPTH-pass (miss #8): `external_reviews` sparse.** 0/20 on Brown · Georgia Tech · NYU · UC-Davis · UCSD ·
+  UF · Michigan · USC · UW-Seattle; richest Rice/Purdue 10/20. Coverage-gated (gold MIT 8/20) → calibrated
+  depth-pass priority (entry #5), NOT a fabrication mandate.
+- **Diagnosed NOT-a-defect:** the 62 slash rows above (verified real — carve-out); Columbia's 2 "Undergraduate
+  Program in {field}" DEPARTMENTS ("Undergraduate Program in Sustainable Development" is the real Columbia
+  Climate School unit name); MIT's "Comparative Media Studies / Writing" (real CMS/W dept) + "Graduate Program
+  in Science Writing" (real unit). Descriptions / exact-dups / tuition-copy-down / photos / feeds all
+  gold-clean fleet-wide.
+
+**Rule change (1 of ≤3, bounded, evidence-backed, not a duplicate):** the embedded-slash carve-out (above). No
+OTHER rule warranted — after the full-fleet sweep every other live defect is a VIOLATION of an existing rule
+(master's tuition → run 74; cip_code → run 82; who_its_for → run 84/86 + 89; Penn placeholder → run 91;
+UT-Austin casing → run 90; UW-Madison Zoology/Animal Biology → miss #2 CIP-title), so per the default-flipped
+doctrine they are queued + logged, not re-added (anti-churn). Exactly one genuinely new, evidence-backed
+gap-class existed (the slash false-positive); inventing more to "not stop at one" would breach
+no-edit-without-NEW-evidence. Post-edit re-read confirms `enrich-profile/SKILL.md` reads coherently (the slash
+carve-out sits between the run-77 comma-and carve-out and the CIP-title-whole-class bullet in miss #2; no
+numbered miss renumbered; no invariant touched — it ADDS a no-fabrication-protecting carve-out, loosens nothing).
+
+**Flags (code/workflow, not grader-editable):** carried 1–9; **FLAG #3 EXTENDED** — the name-realness metric a
+human should add must, in its slash sub-check, key on CIP-rollup-TITLE byte-identity and CARVE OUT a verified
+joint/dual degree ("MD/PhD"), combined/double major ("Mathematics/Economics"), and gender-inclusive
+ethnic-studies name ("Latina/Latino Studies") — else it false-flags dozens of real degrees (run-93 carve-out),
+on top of the run-92 possessive-mint carve-out.
+
+**Backlog delta:** rewritten worst-first, full-fleet. HIGH = master's/prof tuition residual (#1, Georgetown
+worst) · `cip_code` MIT-only (#2). MEDIUM = `who_its_for` 0%+type-gamed (#3) · name-realness Penn placeholder +
+UT-Austin casing + NEW UW-Madison CIP-title slash (#4) · reviews depth (#5) · ~254 bulk seeds incl. 33
+zero-photo (#6). No entries CLEARED since run 92 (no enricher PR landed in the window); one NEW low-severity
+item folded into #4 (UW-Madison Zoology/Animal Biology). NO critical entries.
+
+**Invariants:** all intact; the SKILL.md edit ADDS a name-realness CARVE-OUT (no-fabrication STRENGTHENED — it
+forbids mangling a verified real joint/combined/inclusive degree name; verify-rendered-output reinforced;
+enrichment-only, merge-mandatory, workshop-feedback-only all untouched). **Health check:** the full `pytest`
+suite needs a live Postgres + a project venv the grader env lacks (no `.venv/bin/pytest`); this grader PR
+changes only the three skill markdown files (SKILL.md + REPAIR_BACKLOG; CHANGELOG appended) — no code, no data,
+no migration — so backend CI is unaffected. Single-head status on `origin/main` is governed post-merge by CI
+(FLAG #8) and is not affected by this migration-free PR.
