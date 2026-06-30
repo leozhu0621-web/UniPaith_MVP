@@ -36,6 +36,7 @@ import {
   Trash2,
   Pencil,
   CheckCheck,
+  EyeOff,
 } from "lucide-react";
 import type { FolderNode, ChatSession, ChatTreeResponse } from "../../../api/chatSessions";
 import {
@@ -301,6 +302,7 @@ function FolderBlock({
   onNewSessionHere,
   onRenameFolder,
   onDeleteFolder,
+  onHidePreset,
   onReorder,
   folderDrag,
 }: {
@@ -313,6 +315,8 @@ function FolderBlock({
   onNewSessionHere: (folderId: string, topicKey: string | null) => void;
   onRenameFolder: (id: string, name: string) => void;
   onDeleteFolder: (id: string) => void;
+  /** Preset only: remove a revealed (empty) preset folder back out of the rail. */
+  onHidePreset?: () => void;
   /** Persist a new within-folder session order (auto-categorization still owns
    *  which folder a session lives in — a session is never dragged across folders). */
   onReorder: (folderId: string, orderedIds: string[]) => void;
@@ -358,6 +362,15 @@ function FolderBlock({
       icon: <ChevronRight size={13} />,
       onClick: () => setOpen((v) => !v),
     },
+    ...(onHidePreset
+      ? [
+          {
+            label: "Remove from sidebar",
+            icon: <EyeOff size={13} />,
+            onClick: onHidePreset,
+          },
+        ]
+      : []),
   ];
 
   const customMenuItems: MenuItem[] = [
@@ -514,6 +527,44 @@ export default function SessionBrowser({
   const [newFolderMode, setNewFolderMode] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
 
+  // Preset (white-paper-topic) folders are no longer a fixed scaffold in the
+  // rail. Empty presets are hidden and offered as "Recommended" chips inside the
+  // New-folder panel; revealing one shows it in the rail. Non-empty presets
+  // always show (auto-categorization files sessions into them, so hiding them
+  // would hide real sessions). The revealed set is per-browser (localStorage) so
+  // a chosen folder persists across reloads.
+  const [revealedPresets, setRevealedPresets] = useState<Set<string>>(() => {
+    try {
+      const raw = localStorage.getItem("uni.revealedPresets");
+      return new Set<string>(raw ? JSON.parse(raw) : []);
+    } catch {
+      return new Set<string>();
+    }
+  });
+  const persistRevealed = (next: Set<string>) => {
+    try {
+      localStorage.setItem("uni.revealedPresets", JSON.stringify([...next]));
+    } catch {
+      /* localStorage unavailable — reveal is best-effort, in-memory only */
+    }
+  };
+  const revealPreset = (key: string) => {
+    if (!key) return;
+    setRevealedPresets((prev) => {
+      const next = new Set(prev).add(key);
+      persistRevealed(next);
+      return next;
+    });
+  };
+  const hidePreset = (key: string) => {
+    setRevealedPresets((prev) => {
+      const next = new Set(prev);
+      next.delete(key);
+      persistRevealed(next);
+      return next;
+    });
+  };
+
   const { data, isLoading } = useQuery({
     queryKey: CHAT_TREE_KEY,
     queryFn: getChatTree,
@@ -635,14 +686,24 @@ export default function SessionBrowser({
 
   // Partition folders by kind + stage
   const customFolders = filtered.filter((f) => f.kind === "custom");
+  // A preset shows in the rail only when it holds sessions OR the user revealed
+  // it from the New-folder recommendations. Empty + unrevealed presets stay out
+  // of the rail (no more fixed eight-folder scaffold) and surface as chips.
+  const presetVisible = (f: FolderNode) =>
+    f.sessions.length > 0 || (f.topic_key != null && revealedPresets.has(f.topic_key));
   const discovery = filtered.filter(
-    (f) => f.kind === "preset" && f.stage === "discovery",
+    (f) => f.kind === "preset" && f.stage === "discovery" && presetVisible(f),
   );
   const recommendation = filtered.filter(
-    (f) => f.kind === "preset" && f.stage === "recommendation",
+    (f) => f.kind === "preset" && f.stage === "recommendation" && presetVisible(f),
   );
   const application = filtered.filter(
-    (f) => f.kind === "preset" && f.stage === "application",
+    (f) => f.kind === "preset" && f.stage === "application" && presetVisible(f),
+  );
+  // Presets not currently in the rail → offered as "Recommended" chips in the
+  // New-folder panel. Derived from the full tree (not the search-filtered set).
+  const recommendedPresets = folders.filter(
+    (f) => f.kind === "preset" && !presetVisible(f),
   );
 
   // ── actions ───────────────────────────────────────────────────────────────
@@ -693,28 +754,54 @@ export default function SessionBrowser({
           </button>
         </div>
 
-        {/* New folder inline input */}
+        {/* New folder panel — name a custom folder, or add a recommended one */}
         {newFolderMode && (
-          <div className="mb-4 flex items-center gap-2 px-3 py-2 rounded-[10px] border border-secondary bg-secondary/5">
-            <input
-              autoFocus
-              value={newFolderName}
-              onChange={(e) => setNewFolderName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleNewFolder();
-                if (e.key === "Escape") { setNewFolderMode(false); setNewFolderName(""); }
-              }}
-              placeholder="Folder name"
-              className="flex-1 bg-transparent border-none outline-none text-[13px] text-foreground placeholder:text-muted-foreground"
-            />
-            <button
-              onClick={handleNewFolder}
-              disabled={!newFolderName.trim()}
-              className="text-secondary hover:text-secondary/80 disabled:opacity-40"
-              aria-label="Create folder"
-            >
-              <CheckCheck size={15} />
-            </button>
+          <div className="mb-4 px-3 py-2.5 rounded-[10px] border border-secondary bg-secondary/5 space-y-2.5">
+            <div className="flex items-center gap-2">
+              <input
+                autoFocus
+                value={newFolderName}
+                onChange={(e) => setNewFolderName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleNewFolder();
+                  if (e.key === "Escape") { setNewFolderMode(false); setNewFolderName(""); }
+                }}
+                placeholder="Folder name"
+                className="flex-1 bg-transparent border-none outline-none text-[13px] text-foreground placeholder:text-muted-foreground"
+              />
+              <button
+                onClick={handleNewFolder}
+                disabled={!newFolderName.trim()}
+                className="text-secondary hover:text-secondary/80 disabled:opacity-40"
+                aria-label="Create folder"
+              >
+                <CheckCheck size={15} />
+              </button>
+            </div>
+
+            {/* Recommended folders — the white-paper topics, offered (not fixed).
+                Tap one to add it to your rail; remove it anytime from its menu. */}
+            {recommendedPresets.length > 0 && (
+              <div>
+                <p className="text-[10.5px] font-bold tracking-[0.13em] uppercase text-muted-foreground mb-1.5">
+                  Recommended
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {recommendedPresets.map((f) => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() => revealPreset(f.topic_key ?? "")}
+                      aria-label={`Add ${f.name} folder`}
+                      className="flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-[12px] font-semibold text-foreground hover:border-secondary hover:text-secondary transition-colors"
+                    >
+                      <Plus size={11} strokeWidth={2.5} />
+                      {f.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -831,6 +918,11 @@ export default function SessionBrowser({
                     onNewSessionHere={() => onNewSession?.()}
                     onRenameFolder={() => {}} // preset: no rename
                     onDeleteFolder={() => {}} // preset: no delete
+                    onHidePreset={
+                      f.sessions.length === 0
+                        ? () => hidePreset(f.topic_key ?? "")
+                        : undefined
+                    }
                     onReorder={onReorder}
                   />
                 ))}
