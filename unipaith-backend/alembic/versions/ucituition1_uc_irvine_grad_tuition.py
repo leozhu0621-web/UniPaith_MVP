@@ -60,21 +60,35 @@ depends_on = None
 def upgrade() -> None:
     bind = op.get_bind()
     session = Session(bind=bind)
+    session.execute(text("SET LOCAL lock_timeout = '30s'"))
+    # Stage 1 — the tuition repair, in its OWN savepoint. If it is skipped (lock
+    # contention at boot), bail before touching preferences.
     try:
-        session.execute(text("SET LOCAL lock_timeout = '30s'"))
         with session.begin_nested():
             uci_profile.apply(session)
-            inst = session.scalar(
-                select(Institution).where(
-                    Institution.name == uci_profile.INSTITUTION_NAME
-                )
-            )
-            if inst is not None:
-                backfill_program_preferences(session, institution_id=inst.id)
         session.flush()
     except Exception as exc:  # noqa: BLE001 — never let a data re-apply freeze the deploy
         print(
-            f"  ucituition1: data re-apply skipped "
+            f"  ucituition1: tuition re-apply skipped "
+            f"({type(exc).__name__}: {str(exc)[:140]})"
+        )
+        return
+    # Stage 2 — refresh DERIVED ProgramPreference rows in a SEPARATE savepoint so a
+    # backfill failure can NEVER roll back the already-flushed tuition repair above
+    # (claimed/first-party rows are never touched by the helper).
+    try:
+        inst = session.scalar(
+            select(Institution).where(
+                Institution.name == uci_profile.INSTITUTION_NAME
+            )
+        )
+        if inst is not None:
+            with session.begin_nested():
+                backfill_program_preferences(session, institution_id=inst.id)
+            session.flush()
+    except Exception as exc:  # noqa: BLE001 — preference refresh is best-effort
+        print(
+            f"  ucituition1: preference backfill skipped "
             f"({type(exc).__name__}: {str(exc)[:140]})"
         )
 
