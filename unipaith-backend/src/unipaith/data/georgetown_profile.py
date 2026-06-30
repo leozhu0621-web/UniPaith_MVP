@@ -22,7 +22,7 @@ from unipaith.models import Institution, Program, School
 from unipaith.profile_standard.manifest import STANDARD_VERSION
 
 INSTITUTION_NAME = "Georgetown University"
-ENRICHED_AT = "2026-06-25"
+ENRICHED_AT = "2026-06-30"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -4707,14 +4707,22 @@ _NURSING_SRC = (
     "Georgetown finaid — 2025-26 Graduate Program Cost of Attendance (School of Nursing)",
     "https://finaid.georgetown.edu/graduate/aid-by-program/2025-26-graduate-program-cost-of-attendance/",
 )
+# Graduate Nursing Online (Nursing@Georgetown) bills a single published per-credit rate,
+# distinct from the on-campus School of Nursing rate. Georgetown Student Accounts publishes
+# $2,758/credit for the 2026-27 year (the current incoming-cohort rate).
+_NURSING_ONLINE_PER_CREDIT = 2758  # studentaccounts.georgetown.edu graduate online nursing, 2026-27
+_NURSING_ONLINE_SRC = (
+    "Georgetown Student Accounts — Graduate Nursing Online tuition (2026-27, $2,758/credit)",
+    "https://studentaccounts.georgetown.edu/tuition/onlinenursing/",
+)
 _SCS_RATE_SRC = (
     "Georgetown Student Accounts — School of Continuing Studies tuition rates",
     "https://studentaccounts.georgetown.edu/tuition/scs/",
 )
 
 
-def _per_credit_cost(tuition: int, src: tuple[str, str], note: str) -> dict:
-    return {"tuition_usd": tuition, "src": src, "year": "2025-26", "note": note}
+def _per_credit_cost(tuition: int, src: tuple[str, str], note: str, year: str = "2025-26") -> dict:
+    return {"tuition_usd": tuition, "src": src, "year": year, "note": note}
 
 
 # Walsh School of Foreign Service master's — $2,758/credit × published degree credits
@@ -4998,6 +5006,92 @@ _COST_BY_SLUG["georgetown-arabic-ma"] = {
     "note": "Graduate School $2,652/credit × 36-credit MA in Arabic & Islamic Studies.",
 }
 
+# ── Additional master's/professional tuition fills (matcher budget signal, REPAIR_BACKLOG #1) ──
+# Each is the program's published per-credit rate × its published required credit count (the
+# same convention as the blocks above), every figure read from an official Georgetown page.
+# Programs whose required credit count OR per-credit rate is NOT cleanly published first-party
+# (the SJD research doctorate, the on-campus DNAP, the BSN-to-DNP, the MSN umbrella, and the
+# School of Health executive MS whose cost Georgetown lists as "TBD") stay omit-with-reason
+# below — never the undergraduate sticker copied down, never a guessed total.
+_COST_BY_SLUG.update(
+    {
+        # GSAS academic master's — Graduate School $2,652/credit × published required credits.
+        "georgetown-english-ma": _per_credit_cost(
+            _GSAS_PER_CREDIT * 24,
+            (
+                "Georgetown Department of English — M.A. Program (8 courses / 24 credits, "
+                "plus a 0-credit thesis) + Graduate School $2,652/credit",
+                "https://english.georgetown.edu/graduate-program/ma-program/",
+            ),
+            "Graduate School $2,652/credit × 24-credit (8-course) M.A. in English "
+            "(the thesis research carries 0 credits).",
+        ),
+        "georgetown-spanish-linguistics-ms": _per_credit_cost(
+            _GSAS_PER_CREDIT * 33,
+            (
+                "Georgetown Department of Spanish & Portuguese — M.S. in Spanish Linguistics "
+                "(33 credits) + Graduate School $2,652/credit",
+                "https://spanport.georgetown.edu/phd-in-spanish-linguistics/",
+            ),
+            "Graduate School $2,652/credit × 33-credit M.S. in Spanish Linguistics.",
+        ),
+        # Nursing@Georgetown online — published $2,758/credit × the program's published credits.
+        "georgetown-executive-dnp": _per_credit_cost(
+            _NURSING_ONLINE_PER_CREDIT * 30,
+            _NURSING_ONLINE_SRC,
+            "Graduate Nursing Online $2,758/credit × 30-credit Executive (Post-Master's) DNP.",
+            year="2026-27",
+        ),
+    }
+)
+# McCourt Executive Master of Policy Leadership — a 30-credit cohort billed at term-specific
+# rates: 6 credits at $2,652 (Summer) + 24 credits at $2,758 (Fall/Spring/Summer). The total
+# is the sum of the published per-term rates, not a single per-credit figure, so it is set
+# explicitly rather than via _per_credit_cost.
+_COST_BY_SLUG["georgetown-policy-leadership-empl"] = {
+    "tuition_usd": 6 * 2652 + 24 * 2758,  # $15,912 + $66,192 = $82,104
+    "src": (
+        "Georgetown McCourt — Executive Master of Policy Leadership: Tuition & Curriculum "
+        "(30 credits; 6 cr @ $2,652 Summer + 24 cr @ $2,758)",
+        "https://mccourt.georgetown.edu/new-students/tuition-fees-financial-aid/",
+    ),
+    "year": "2026-27",
+    "note": (
+        "Total program tuition for the 30-credit Executive Master of Policy Leadership: "
+        "6 credits at $2,652 (Summer) + 24 credits at $2,758 (Fall/Spring/Summer)."
+    ),
+}
+
+# Precise omit reasons for the graduate/professional programs whose tuition genuinely cannot
+# be verified first-party (used by _grad_cost in place of the generic per-credit note).
+_OMIT_NOTE_BY_SLUG: dict[str, str] = {
+    "georgetown-sjd": (
+        "The Doctor of Juridical Science is a post-J.D./LL.M. research doctorate billed on "
+        "residency status with no single published annual or total tuition figure, so the "
+        "scalar is omitted rather than estimated. See Georgetown Law's S.J.D. cost page."
+    ),
+    "georgetown-nurse-anesthesia-dnap": (
+        "Georgetown publishes the on-campus graduate per-credit rate but no first-party total "
+        "credit count for the 36-month Doctor of Nurse Anesthesia Practice, so a verified "
+        "program total cannot be computed and the scalar is omitted rather than estimated."
+    ),
+    "georgetown-nursing-dnp": (
+        "The BSN-to-DNP credit requirement varies by nurse-practitioner specialization, so "
+        "Georgetown publishes no single program total; the scalar is omitted rather than "
+        "estimated. See the program's official cost page."
+    ),
+    "georgetown-nursing-ms": (
+        "The Master of Science in Nursing spans multiple nurse-practitioner tracks (40-49 "
+        "credits) with no single published program total, so the scalar is omitted rather "
+        "than estimated. See the program's official cost page."
+    ),
+    "georgetown-clinical-quality-safety-leadership-ms": (
+        "Georgetown's 2025-26 Graduate Program Cost of Attendance lists this executive "
+        "master's tuition as not yet determined (TBD), so the scalar is omitted rather than "
+        "estimated until the published rate is set."
+    ),
+}
+
 # Programs whose tuition is honestly omitted, with the reason class.
 _FUNDED_PHD_NOTE = (
     "Doctoral students at Georgetown are typically funded through fellowships, research, "
@@ -5136,7 +5230,7 @@ def _grad_cost(slug: str, spec: dict) -> dict:
         }
     # omit-with-reason: funded PhD, or per-credit-billed master's/professional
     funded = spec["degree_type"] == "phd"
-    note = _FUNDED_PHD_NOTE if funded else _PER_CREDIT_NOTE
+    note = _OMIT_NOTE_BY_SLUG.get(slug) or (_FUNDED_PHD_NOTE if funded else _PER_CREDIT_NOTE)
     return {
         "tuition_usd": None,
         "funded": funded,
