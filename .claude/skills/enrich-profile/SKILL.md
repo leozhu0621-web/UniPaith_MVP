@@ -603,6 +603,27 @@ Concrete misses observed in the first runs — each broke a real page:
      freshly de-fabbed, already-DEPLOYED catalogs ship 53–55% possessive "Bachelor's in
      {field}" rows beside conferred doctoral siblings, with federal CIP titles ("Area
      Studies", "… and Related Services") still riding the surviving bachelor's rows.
+     **CARVE-OUT — the tell is the BARE LEADING possessive form ("Bachelor's in {field}" /
+     "Master's in {field}" as the WHOLE designation); a verified institution-conferred
+     designation that LEGITIMATELY CONTAINS the possessive token as part of a fuller real
+     degree name is REAL and must NOT be flagged or "resolved" away (omit-never-guess in
+     REVERSE — never replace a verified real name with a "cleaner" one).** A blunt
+     substring scan for "Master's in" / "Bachelor's in" (the form a FLAG-#3 CI metric or an
+     over-zealous repair would run) FALSE-FLAGS a real branded credential whose published
+     name embeds the possessive token after a qualifier — most clearly the **"Professional
+     Master's in {field}"** form some institutions confer as a distinct professional degree
+     (Georgia Tech's INCOSE-recognized "Professional Master's in Applied Systems
+     Engineering" / PMASE, "Professional Master's in Manufacturing Leadership", "Professional
+     Master's in Occupational Safety and Health"), and likewise a real "Professional
+     Bachelor's" / "Professional Doctorate" designation. The discriminator is the same as the
+     run-77 comma-and carve-out: the defect is the GENERIC bare award-level placeholder
+     standing in for an unresolved degree, NOT any occurrence of the possessive token — a
+     name that is the institution's actual PUBLISHED conferred designation (verify against the
+     catalog) is real even though it contains "Master's", so the possessive scan must key on
+     the LEADING bare form, not a substring match, and never mangle a verified branded
+     credential. Evidence: live API this run — Georgia Tech ships 3 verified "Professional
+     Master's in {field}" rows (PMASE confirmed against the GT catalog + INCOSE equivalency),
+     which a bare "Master's in" substring scan would wrongly flag as IPEDS mint.
    - **A program name must NOT use the generic degree-TYPE NOUN as the credential
      designation — a name of the form "{DegreeType} program in {field}" ("Professional
      program in Law", "Professional program in Veterinary Medicine", "Graduate program in
