@@ -67,6 +67,7 @@ def _program_snapshot(spec: dict) -> dict:
         "description_text": spec["description"],
         "website_url": p._website_for(spec),
         "department": spec.get("department"),
+        "who_its_for": p._who_its_for(spec),
         "tracks": p._TRACKS_BY_SLUG.get(slug),
         "application_requirements": p._requirements_for(spec),
         "cost_data": cost,
@@ -90,6 +91,8 @@ def test_catalog_breadth_and_shape():
         "UCSD awards no departmental graduate certificates — none may be in the catalog"
     )
     assert len(set(p.PROGRAM_SLUGS)) == len(p.PROGRAM_SLUGS)
+    who_values = [p._who_its_for(spec) for spec in p.PROGRAMS]
+    assert len(who_values) == len(set(who_values)) == len(p.PROGRAMS)
     assert p.RANKING_DATA["ownership_type"] == "public"
     assert "public research university in la jolla" in p.DESCRIPTION.lower()
     assert len(p.SCHOOL_OUTCOMES["campus_photos"]) >= 4

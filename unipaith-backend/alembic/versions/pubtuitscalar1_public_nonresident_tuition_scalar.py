@@ -37,7 +37,7 @@ rather than a breakdown read — left for a follow-up so this PR stays a pure no
 backfill.
 
 Revision ID: pubtuitscalar1
-Revises: uciprof1
+Revises: yalecipwho1
 Create Date: 2026-06-26
 """
 
@@ -48,7 +48,7 @@ from sqlalchemy import text
 from alembic import op
 
 revision = "pubtuitscalar1"
-down_revision = "uciprof1"
+down_revision = "yalecipwho1"
 branch_labels = None
 depends_on = None
 
