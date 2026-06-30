@@ -341,6 +341,39 @@ def test_research_masters_use_distinct_endowed_rate():
         assert tuition == cu._TUITION_MS_ENDOWED, p["slug"]
 
 
+def test_march_and_dma_graduate_tuition_filled():
+    """REPAIR_BACKLOG run 94 #1: the professional M.Arch I (annual Tier 1 rate) and the
+    fully-funded D.M.A. (research-doctoral sticker + funded) publish a fillable matcher rate
+    and must no longer ship ``tuition`` null."""
+    march = next(p for p in cu.PROGRAMS if p["slug"] == "cornell-march")
+    m_tuition, m_cost = cu._program_tuition(march)
+    assert m_tuition == cu._TUITION_PROF_TIER1
+    assert "cornell-march" not in cu._TUITION_OMIT_SLUGS
+    assert m_cost.get("source_url")
+
+    dma = next(p for p in cu.PROGRAMS if p["slug"] == "cornell-music-prof")
+    d_tuition, d_cost = cu._program_tuition(dma)
+    assert d_tuition == cu._TUITION_PHD
+    assert d_tuition not in (0, cu._TUITION_UG_ENDOWED)
+    assert d_cost.get("funded") is True
+    assert "cornell-music-prof" not in cu._TUITION_OMIT_SLUGS
+
+
+def test_executive_online_tuition_omitted_with_documented_cost():
+    """The five executive / online degrees have no annual full-time basis, so the annual
+    matcher scalar is honestly None — but each carries a verified total / per-credit rate in
+    cost_data, a real reason, and a resolvable source (omit-with-reason, never a blank null)."""
+    for slug in cu._TUITION_OMIT_DETAIL:
+        spec = next(p for p in cu.PROGRAMS if p["slug"] == slug)
+        tuition, cost = cu._program_tuition(spec)
+        assert tuition is None, slug
+        assert cost.get("note") and cost.get("source_url"), slug
+        # A documented per-credit OR total program cost must be present.
+        assert cost.get("total_program_tuition") or cost.get("tuition_per_credit"), slug
+        # The omit is recorded in the program node's _standard.omitted.
+        assert "cost_data.tuition_usd" in cu._program_standard(slug, spec)["omitted"], slug
+
+
 def test_coverable_programs_have_reviews():
     """Thirteen coverable programs carry aggregated external_reviews (not merely omitted)."""
     expected = {
