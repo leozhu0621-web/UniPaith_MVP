@@ -73,7 +73,23 @@ def _program_snapshot(spec: dict) -> dict:
         "faculty_contacts": u._FACULTY_BY_SLUG.get(slug),
         "external_reviews": u._REVIEWS_BY_SLUG.get(slug),
         "content_sources": u._program_content(spec["school"], kw),
+        "who_its_for": u._WHO_BY_SLUG.get(slug),
     }
+
+
+def test_who_its_for_complete_and_program_distinct():
+    # REPAIR_BACKLOG #3 — who_its_for is filled on EVERY program (no hard-null) AND is
+    # PROGRAM-DISTINCT (not a degree-type template): distinct/total ≈ 1.0.
+    missing = [s for s in u.PROGRAM_SLUGS if not (u._WHO_BY_SLUG.get(s) or "").strip()]
+    assert not missing, f"who_its_for missing on {len(missing)} rows: {missing[:5]}"
+    vals = [v.strip() for v in u._WHO_BY_SLUG.values()]
+    ratio = len(set(vals)) / len(vals)
+    assert ratio >= 0.9, f"who_its_for not program-distinct: {ratio:.2f}"
+    # never a hard-null in apply() — the regression that shipped the field 0% live
+    import inspect
+
+    src = inspect.getsource(u.apply) + inspect.getsource(u._apply_programs)
+    assert "who_its_for = None" not in src, "who_its_for must not be hard-nulled in apply()"
 
 
 def test_catalog_breadth_and_shape():
