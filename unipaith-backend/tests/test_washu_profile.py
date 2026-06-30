@@ -26,9 +26,11 @@ from unipaith.profile_standard.anti_stub import (
     template_slot_artifacts,
 )
 
-# The two Olin specialized master's are billed at a flat PROGRAM rate published only on the Olin
-# program pages (no verifiable 2025-26 annual figure), so they stay honestly omitted-with-reason.
-_OLIN_FLAT_RATE_OMITS = {"washu-finance-ms", "washu-business-analytics-ms"}
+# The two Olin specialized master's are billed at a flat PER-PROGRAM rate published on each
+# program's Olin Cost-Aid-Scholarships page; the 2026-06-30 pass researched those pages and
+# now carries their published per-program rate (MS Finance $81,500; MS Business Analytics
+# $67,866), closing the last master's-tier tuition null (REPAIR_BACKLOG entry #1).
+_OLIN_FILLED = {"washu-finance-ms", "washu-business-analytics-ms"}
 
 
 def _missing(level: str, snap: dict) -> list[str]:
@@ -128,9 +130,10 @@ def test_anti_stub_gate_is_gold_clean():
     assert not frame_stripped_shared_body(progs, abs_chars=150)
 
 
-def test_masters_tuition_backfilled_and_olin_omitted():
-    """REPAIR_BACKLOG entry #1: the master's tier must carry the published annual rate (8/10),
-    with only the two Olin flat-program-rate specialized master's omitted-with-reason."""
+def test_masters_tuition_fully_covered():
+    """REPAIR_BACKLOG entry #1: the master's tier carries the published per-program annual
+    rate on EVERY row — the two Olin specialized master's (MS Finance, MS Business Analytics)
+    are now filled from their Olin Cost-Aid-Scholarships pages, closing the last null."""
     cov = defaultdict(lambda: [0, 0])
     for spec in w.PROGRAMS:
         dt = spec["degree_type"]
@@ -140,18 +143,14 @@ def test_masters_tuition_backfilled_and_olin_omitted():
             cov[dt][0] += 1
     # Bachelor's tier is the institution-published sticker → 100%.
     assert cov["bachelors"][0] == cov["bachelors"][1]
-    # Master's tier: 8 of 10 carry the published per-program annual rate after the backfill.
-    assert cov["masters"][0] >= 8, f"masters tuition under-covered: {cov['masters']}"
+    # Master's tier: 100% carry the published per-program annual rate (no null, no estimate).
+    assert cov["masters"][0] == cov["masters"][1], f"masters tuition under-covered: {cov['masters']}"
     # The professional tier carries the published J.D. / M.D. rates.
     assert cov["professional"][0] == cov["professional"][1]
-    # The only remaining master's nulls are the two Olin flat-program-rate specialized master's,
-    # each recorded in _standard.omitted with a reason (verify-or-omit, never estimated).
-    nulls = {
-        spec["slug"]
-        for spec in w.PROGRAMS
-        if spec["degree_type"] == "masters" and _program_cost(spec).get("tuition_usd") is None
-    }
-    assert nulls == _OLIN_FLAT_RATE_OMITS, f"unexpected master's tuition nulls: {nulls}"
-    for slug in _OLIN_FLAT_RATE_OMITS:
+    # The two Olin specialized master's now carry a real per-program rate and are NOT omitted.
+    for slug in _OLIN_FILLED:
         spec = next(s for s in w.PROGRAMS if s["slug"] == slug)
-        assert "cost_data.tuition_usd" in w._program_standard(spec)["omitted"]
+        cost = _program_cost(spec)
+        assert cost.get("tuition_usd") is not None, f"{slug} should carry a published rate"
+        assert cost["tuition_usd"] != w._UG_TUITION
+        assert "cost_data.tuition_usd" not in w._program_standard(spec)["omitted"]
