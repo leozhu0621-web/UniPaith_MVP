@@ -30,6 +30,7 @@ A3 alongside the SSE endpoint upgrade.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -47,6 +48,22 @@ from unipaith.ai.tools import (
 )
 
 PROMPTS_DIR = Path(__file__).parent / "prompts"
+
+# Open-model tool calling (Qwen via Together) is inconsistent: the model
+# sometimes writes a tool call as TEXT (e.g. `suggest_replies(options=[...])`)
+# instead of emitting a structured tool_use block. We recover suggest_replies
+# options from such text and strip every tool-call-shaped span so it never
+# reaches the student. The agent tool names are distinctive enough not to
+# collide with natural counselor prose.
+_TOOLCALL_TEXT_RE = re.compile(
+    r"`{0,3}\s*(?:suggest_replies|record_artifact|request_layer_advance)\s*\(.*?\)\s*`{0,3}",
+    re.IGNORECASE | re.DOTALL,
+)
+_SUGGEST_OPTS_RE = re.compile(
+    r"suggest_replies\s*\(\s*(?:options\s*=\s*)?\[(?P<arr>.*?)\]",
+    re.IGNORECASE | re.DOTALL,
+)
+_QUOTED_RE = re.compile(r"[“”‘’\"']([^“”‘’\"']+)[“”‘’\"']")
 
 
 def _load_prompt(name: str) -> str:
@@ -430,8 +447,21 @@ class Orchestrator:
                             if isinstance(val, str) and val.strip():
                                 suggested_input[label_key] = val.strip()
 
+        text = "".join(text_chunks).strip()
+        # Open-model fallback: Qwen via Together sometimes writes a tool call as
+        # TEXT instead of emitting a structured tool_use block. Recover
+        # suggest_replies options from such text, then strip every tool-call-
+        # shaped span so it never leaks into the student-visible reply.
+        if not suggested_options:
+            _m = _SUGGEST_OPTS_RE.search(text)
+            if _m:
+                _opts = _QUOTED_RE.findall(_m.group("arr"))
+                suggested_options = [o.strip() for o in _opts if o.strip()][:4]
+        text = _TOOLCALL_TEXT_RE.sub("", text)
+        text = re.sub(r"\n{3,}", "\n\n", text).strip()
+
         return OrchestratorResponse(
-            text="".join(text_chunks).strip(),
+            text=text,
             record_artifact_calls=record_calls,
             requested_layer_advance=advance,
             advance_rationale=advance_rationale,
