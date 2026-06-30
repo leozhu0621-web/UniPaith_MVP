@@ -1,0 +1,42 @@
+name: Data-Seeding Guard
+
+# Stops the dual-head migration churn at its source: university data should be
+# seeded via the profile registry (scripts/seed_profiles.py), NOT shipped as a
+# new per-university Alembic migration. Soft (continue-on-error) for now — it
+# annotates the PR; flip to a hard gate once the seeder path is adopted.
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  no-data-in-new-migrations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: New migrations must not ship university data
+        continue-on-error: true
+        run: |
+          base="origin/${{ github.base_ref }}"
+          git fetch -q origin "${{ github.base_ref }}"
+          added=$(git diff --diff-filter=A --name-only "$base"...HEAD \
+            | grep -E '^unipaith-backend/alembic/versions/.*\.py$' || true)
+          [ -z "$added" ] && { echo "No new migrations."; exit 0; }
+
+          flagged=0
+          while read -r f; do
+            [ -z "$f" ] && continue
+            if grep -qE 'unipaith\.data\b|_profile\.apply\(|import +.*_profile' "$f"; then
+              echo "::warning file=$f::New migration ships university data. Update the profile and seed via scripts/seed_profiles.py instead of adding a data migration (docs/DATA_SEEDING.md). This is the main source of Alembic dual-head churn."
+              flagged=1
+            fi
+          done <<< "$added"
+
+          if [ "$flagged" = 0 ]; then
+            echo "OK — no data-shipping migrations added."
+          fi
