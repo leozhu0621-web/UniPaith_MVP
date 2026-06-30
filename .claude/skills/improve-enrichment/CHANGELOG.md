@@ -7975,3 +7975,109 @@ suite needs a live Postgres + a project venv the grader env lacks (no `.venv/bin
 changes only the three skill markdown files (SKILL.md + REPAIR_BACKLOG; CHANGELOG appended) — no code, no data,
 no migration — so backend CI is unaffected. Single-head status on `origin/main` is governed post-merge by CI
 (FLAG #8) and is not affected by this migration-free PR.
+
+## 2026-06-30 — Run 94 (FULL-FLEET sweep of all 300 live + all 40 catalogs · enricher CLEARED the matcher-core tuition worst-case since run 93 · 0 rule changes — one NEW candidate verified-and-REJECTED as immaterial)
+
+**Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`.**
+Per catalog I fully paginated the program list (all 40 program-bearing catalogs = 8,024 programs; the other
+260 are bare institution-level stubs) and ran: a description-NON-EMPTINESS scan, a duplicate-`description_text`
+scan, an exact-duplicate `(program_name, degree_type)` scan, a name-FABRICATION scan (CIP-rollup title / "…and
+Related Sciences/Services" / ", General/Other" / `(CIP NN.NN)` / possessive "Bachelor's in" / bare-abbreviation
+/ embedded-slash / "{DegreeType} program in {field}" placeholder), a name-CASING scan (mid-name lowercase
+content word), and a per-`degree_type` tuition COVERAGE **and VALUE** measure (incl. a flat-rate-vs-copy-down
+discriminator). Over 20 program DETAILS/catalog (`GET /programs/{id}`, deterministic id-sorted sample = ~800
+detail fetches) I probed `cip_code` / `who_its_for` (coverage AND distinctness) / `external_reviews` coverage.
+Over all 300 institutions I fetched campus-photo gallery length (`school_outcomes.campus_photos`) + posts-feed
+count (read as LIST length).
+
+**Merged since run 93 (grader PR #1219):** the enricher worked the top backlog entry HARD — **#1218
+repair(georgetown) master's/professional tuition**, **#1220 repair(washu) master's tuition**, **#1221
+repair(uci) self-supporting/PDST graduate tuition** — all three matcher-budget tuition backfills, and all
+three **verified LIVE this run** by direct crawl. No programs were added (8,024 total, unchanged) → the
+once-backfilled `program_preferences` rows are intact.
+
+**Net live deltas vs run 93 — matcher-core tuition IMPROVED, everything else HELD:**
+- **master's/professional tuition** — the run-93 dominant case is GONE: **Georgetown master's 6/79 → 74/79**
+  (73 null → 5) + prof 13/17; **UC-Irvine master's 10/21 → 21/21 + prof 4/4** (FULLY cleared); **WashU
+  master's 4/10 → 8/10**. NEW worst by FRACTION = **UT-Austin professional 2/5 (3 null = 60%)** + **UVA
+  master's 8/16 (8 null = 50%)**, then Columbia prof 2 · Georgetown prof 4 · UC-Davis 4 · BU prof 5 · WashU 2
+  · Dartmouth 3. Low-fraction master's residuals (USC 12/261 · UW-Seattle 14/152 · Penn 6 · UCSD 5 · Cornell
+  6 · Harvard 5 · NYU 5 · Yale 2 · UCLA 1 · Michigan 1 · Vanderbilt 1) likely legit per-credit/funded omits.
+- **`cip_code`** — null only on gold MIT (39/40 catalogs 100% in-sample); unchanged.
+- **PUBLIC non-resident scalar** — all 15 publics correct; unchanged.
+- **`who_its_for`** — 0% on the SAME 4 (Georgia Tech · UT-Austin · Notre Dame · UW-Seattle); type-gamed on the
+  SAME 9 (Berkeley/Penn 0.05 · Caltech/Columbia/Chicago 0.10 · Princeton/UF/Michigan 0.15 · MIT 0.25); 25
+  field-specific. Unchanged.
+- **name-realness** — Penn 2 placeholder; UT-Austin ~52 sentence-cased; UW-Madison 3 "Zoology/Animal Biology"
+  CIP-title slash. Unchanged (all queued entry #4).
+- **reviews** — sparse on the SAME 9 (0/20: Brown · GT · NYU · UC-Davis · UCSD · UF · Michigan · USC ·
+  UW-Seattle). Unchanged.
+- **photos / feeds** — every program-bearing node ≥4 photos AND a live feed; 33 bulk stubs at 0 photos + 50 at
+  1–3 (unchanged, entry #6).
+- **structure / descriptions / dup-desc / exact-dups** — gold-clean fleet-wide (0/8,024 empty, 0 duplicate
+  descriptions, 0 exact-dup rows). No regression.
+
+**NEW candidate, VERIFIED-AND-REJECTED (the run's headline investigation — why 0 rule changes is correct):**
+a flat-rate-vs-copy-down discriminator surfaced **bulk master's stamped at the undergrad sticker — USC ×135,
+Harvard ×55** (BU/MIT/Princeton ship the same shape but bill a verified FLAT rate, premium exceptions captured,
+so they are not copy-downs). On its face this is a matcher-budget mis-signal (a master's read as cheaper than
+reality). I **web-verified the published standard graduate rates before queueing or ruling**: Harvard GSAS
+2024-25 master's = **$55,656** vs the $57,328 sticker (~3% OVER, not under); USC standard grad ≈ **$71,515** vs
+$73,260 (~2% over). I then listed all 55 Harvard at-sticker rows — **every one is a standard GSAS/SEAS MA/MS
+(Anthropology, Physics, Computer Science, …); NOT one is a premium professional-school master's (HKS/HSPH/HBS)**
+— and confirmed every materially-higher tier WAS individually researched (USC dental $124,923, Harvard $69–79k
+professional master's ×27, BU professional $99,680). So the "copy-down" is the undergrad sticker used as a
+~2–3% proxy for the standard grad rate, with NO premium program masked — a delta below the matcher budget-bin
+granularity → **no material live PROBLEM → no rule** (per "no edit without a concrete live problem" +
+anti-churn). This VALIDATES the run-93 grad==undergrad carve-out and documents WHY it is correct; FLAG #7 is
+refined to record the discriminator (copy-down FAIL only when a school already ships a distinct HIGHER row on
+the same catalog AND the at-sticker tier is below that published higher rate — never `grad==undergrad`
+unconditionally, which false-flags both the flat-rate schools and the proxy-within-3% schools).
+
+**Findings (with live evidence) — everything else is a COMPLIANCE GAP against an existing rule (default
+flipped → queued + logged, NOT re-added):**
+- **Rule EXISTS (run 74): master's/professional-tier tuition residual.** UT-Austin prof 60% + UVA 50% now
+  worst; Georgetown/WashU/UC-Irvine CLEARED. PhD nulls EXCLUDED (ship `tuition=0` — funded convention, uniform
+  fleet-wide → defensible). Entry #1 (HIGH).
+- **Rule EXISTS (run 82): `cip_code` — MIT only.** 65 MIT programs scored field-blind. Entry #2 (HIGH).
+- **Rules EXIST (run 84/86 + 89): `who_its_for` 0% (4) + type-gamed (9).** Entry #3.
+- **Rules EXIST (placeholder run 91; casing run 90; CIP-title slash miss #2): name-realness.** Penn 2
+  placeholder; UT-Austin ~52 sentence-cased; UW-Madison 3 CIP-title slash. Entry #4.
+- **DEPTH-pass (miss #8): `external_reviews` sparse.** 0/20 on 9 catalogs; richest Rice/Purdue 10/20.
+  Coverage-gated (gold MIT 8/20) → calibrated depth-pass priority (entry #5), NOT a fabrication mandate.
+- **Diagnosed NOT-a-defect (run-93/94 carve-outs upheld):** the slash rows (BU/NYU/UCLA/Duke/Cornell joint/dual
+  & combined degrees, Latina/o & Chicana/o majors ≥6 catalogs, UC-Davis "Middle East/South Asia Studies", UCI
+  "Biology/Education", Northwestern/UW-Madison "Radio/Television/Film"); the casing false-positives (Duke
+  "(self-designed major)" / "(online)", NYU "(7-year)", UCLA "Institut d'Etudes", UIUC "(iMBA)", UW-Seattle
+  "(w/Const Mgmt)" — lowercase parentheticals/abbreviations/foreign proper names, NOT casing defects); the
+  USC/Harvard "copy-down" (proxy within 3%); PhD `tuition=0` (funded convention). All descriptions / dup-desc /
+  exact-dups / photos / feeds gold-clean fleet-wide.
+
+**Rule change (0 of ≤3): NONE.** After the full-fleet sweep every live defect is a VIOLATION of an existing rule
+(master's tuition → run 74; cip_code → run 82; who_its_for → run 84/86 + 89; Penn placeholder → run 91;
+UT-Austin casing → run 90; UW-Madison CIP-title slash → miss #2), so per the default-flipped doctrine they are
+queued + logged, not re-added (anti-churn). The single genuinely-new candidate (master's-tier copy-down) was
+verified IMMATERIAL (≈2–3% proxy, no premium program masked) → no concrete live PROBLEM → adding a rule would
+be inventing one to look busy, which the safety rails forbid. "No new gaps" is recorded here AFTER a full-fleet
+sweep, not after a sample. `enrich-profile/SKILL.md` is UNCHANGED this run (no post-edit re-review needed; no
+invariant touched).
+
+**Flags (code/workflow, not grader-editable):** carried 1–9; **FLAG #3 EXTENDED** (the casing sub-metric a
+human should add must carve out a lowercase parenthetical/abbreviation/foreign-proper-name — run-94 note, on
+top of the slash + possessive carve-outs); **FLAG #7 REFINED** (the copy-down FAIL must key on the
+internal-inconsistency tell — a distinct HIGHER row already on the same catalog — never `grad==undergrad`
+unconditionally, which false-flags BU/MIT flat-rate AND USC/Harvard proxy-within-3%).
+
+**Backlog delta:** rewritten worst-first, full-fleet. HIGH = master's/prof tuition residual (#1, re-ranked —
+**Georgetown/WashU/UC-Irvine CLEARED**, UT-Austin prof + UVA now worst) · `cip_code` MIT-only (#2). MEDIUM =
+`who_its_for` 0%+type-gamed (#3) · name-realness Penn placeholder + UT-Austin casing + UW-Madison CIP-title
+slash (#4) · reviews depth (#5) · ~254 bulk seeds incl. 33 zero-photo (#6). **3 entries CLEARED since run 93**
+(Georgetown / WashU / UC-Irvine tuition, verified live). NO critical entries.
+
+**Invariants:** all intact. SKILL.md UNCHANGED (0 rule changes — no new evidence-backed gap-class survived
+verification); no-fabrication / verify-rendered-output / enrichment-only / merge-mandatory /
+workshop-feedback-only all untouched. **Health check:** the full `pytest` suite needs a live Postgres + a
+project venv the grader env lacks (no `.venv/bin/pytest`); this grader PR changes only the two skill markdown
+files (REPAIR_BACKLOG rewritten; CHANGELOG appended) — no code, no data, no migration — so backend CI is
+unaffected. Single-head status on `origin/main` is governed post-merge by CI (FLAG #8) and is not affected by
+this migration-free PR.
