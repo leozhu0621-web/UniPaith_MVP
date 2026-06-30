@@ -4665,6 +4665,339 @@ for _llm in [
         "note": "Published 2025-26 Georgetown Law flat full-time LL.M. tuition.",
     }
 
+# ── Graduate / professional per-credit-billed programs (matcher budget signal) ──
+# The graduate schools that bill per credit hour publish a verified per-credit rate; the
+# matcher reads a single ``tuition`` scalar, so each program carries the published rate ×
+# its published required credit count (the same convention as the McCourt and Graduate-
+# School masters above — MPP = $2,550 × 48, CS-MS = $2,652 × 30). Programs whose required
+# credit count is NOT cleanly published, and funded research doctorates, stay
+# omit-with-reason (never the undergraduate sticker copied down).
+_GSAS_PER_CREDIT = 2652  # Graduate School of Arts & Sciences (finaid 2025-26 COA)
+_SFS_PER_CREDIT = 2758  # Walsh School of Foreign Service per-credit rate (program pages)
+_BGE_PER_CREDIT = 2529  # Biomedical Graduate Education (finaid 2025-26 COA)
+_BGE_BIOTECH_PER_CREDIT = 2539  # BGE Biotechnology rate (finaid 2025-26 COA)
+_HEALTH_PER_CREDIT = 2652  # School of Health (finaid 2025-26 COA)
+_LAW_GRAD_PER_CREDIT = 3596  # Georgetown Law part-time / non-JD graduate per-credit
+_NURSING_ENTRY_PER_CREDIT = 1586  # School of Nursing Entry-to-Nursing (finaid 2025-26 COA)
+
+_SFS_SRC = (
+    "Georgetown Walsh School of Foreign Service — program admissions & tuition pages "
+    "(cost per credit $2,758)",
+    "https://sfs.georgetown.edu/ms-foreign-service/admissions-tuition/",
+)
+_BGE_SRC = (
+    "Georgetown finaid — 2025-26 Graduate Program Cost of Attendance "
+    "(Biomedical Graduate Education $2,529/credit; Biotechnology $2,539/credit)",
+    "https://finaid.georgetown.edu/graduate/aid-by-program/2025-26-graduate-program-cost-of-attendance/",
+)
+_HEALTH_SRC = (
+    "Georgetown finaid — 2025-26 Graduate Program Cost of Attendance "
+    "(School of Health $2,652/credit)",
+    "https://finaid.georgetown.edu/graduate/aid-by-program/2025-26-graduate-program-cost-of-attendance/",
+)
+_BUSINESS_SRC = (
+    "Georgetown finaid — 2025-26 Graduate Program Cost of Attendance (McDonough per-credit rates)",
+    "https://finaid.georgetown.edu/graduate/aid-by-program/2025-26-graduate-program-cost-of-attendance/",
+)
+_LAW_GRAD_SRC = (
+    "Georgetown Law — Tuition & Fees Academic Year 2025-26 (part-time/graduate $3,596/credit)",
+    "https://www.law.georgetown.edu/your-life-career/wp-content/uploads/sites/60/2025/04/Tuition-and-Fees-2025-2026.pdf",
+)
+_NURSING_SRC = (
+    "Georgetown finaid — 2025-26 Graduate Program Cost of Attendance (School of Nursing)",
+    "https://finaid.georgetown.edu/graduate/aid-by-program/2025-26-graduate-program-cost-of-attendance/",
+)
+_SCS_RATE_SRC = (
+    "Georgetown Student Accounts — School of Continuing Studies tuition rates",
+    "https://studentaccounts.georgetown.edu/tuition/scs/",
+)
+
+
+def _per_credit_cost(tuition: int, src: tuple[str, str], note: str) -> dict:
+    return {"tuition_usd": tuition, "src": src, "year": "2025-26", "note": note}
+
+
+# Walsh School of Foreign Service master's — $2,758/credit × published degree credits
+# (EIA is the exception, billed at the $2,652 Graduate School rate over 30 credits).
+_COST_BY_SLUG.update(
+    {
+        "georgetown-foreign-service-ms": _per_credit_cost(
+            _SFS_PER_CREDIT * 48, _SFS_SRC, "SFS published $2,758/credit × 48-credit MSFS degree."
+        ),
+        "georgetown-global-human-development-ma": _per_credit_cost(
+            _SFS_PER_CREDIT * 48, _SFS_SRC, "SFS published $2,758/credit × 48-credit GHD degree."
+        ),
+        "georgetown-arab-studies-ma": _per_credit_cost(
+            _SFS_PER_CREDIT * 36, _SFS_SRC, "SFS published $2,758/credit × 36-credit MAAS degree."
+        ),
+        "georgetown-asian-studies-ma": _per_credit_cost(
+            _SFS_PER_CREDIT * 36, _SFS_SRC, "SFS published $2,758/credit × 36-credit MASIA degree."
+        ),
+        "georgetown-ceres-ma": _per_credit_cost(
+            _SFS_PER_CREDIT * 36, _SFS_SRC, "SFS published $2,758/credit × 36-credit MAERES degree."
+        ),
+        "georgetown-european-studies-ma": _per_credit_cost(
+            _SFS_PER_CREDIT * 42,
+            _SFS_SRC,
+            "SFS published $2,758/credit × 42-credit MA European Studies degree.",
+        ),
+        "georgetown-latin-american-studies-ma": _per_credit_cost(
+            _SFS_PER_CREDIT * 36, _SFS_SRC, "SFS published $2,758/credit × 36-credit MALAS degree."
+        ),
+        "georgetown-migration-refugees-ma": _per_credit_cost(
+            _SFS_PER_CREDIT * 36, _SFS_SRC, "SFS published $2,758/credit × 36-credit MIMR degree."
+        ),
+        "georgetown-security-studies-ma": _per_credit_cost(
+            _SFS_PER_CREDIT * 36, _SFS_SRC, "SFS published $2,758/credit × 36-credit SSP degree."
+        ),
+        "georgetown-environment-international-affairs-ms": _per_credit_cost(
+            _GSAS_PER_CREDIT * 30,
+            (
+                "Georgetown Environment & International Affairs — Tuition & Financial Aid "
+                "($2,652/credit × 30 credits)",
+                "https://eia.georgetown.edu/admissions/tuition-financial-aid-2/",
+            ),
+            "Published Graduate School $2,652/credit × 30-credit EIA degree.",
+        ),
+    }
+)
+
+# Graduate School of Arts & Sciences academic master's — $2,652/credit × published credits.
+# Programs whose total required credits are not cleanly published (Arabic & Islamic Studies,
+# English — coursework + thesis with no stated total, Spanish Linguistics) stay omit-with-reason.
+_COST_BY_SLUG.update(
+    {
+        "georgetown-american-government-ma": _per_credit_cost(
+            _GSAS_PER_CREDIT * 30, _GSAS_SRC, "Graduate School $2,652/credit × 30-credit MA."
+        ),
+        "georgetown-applied-economics-ma": _per_credit_cost(
+            _GSAS_PER_CREDIT * 30, _GSAS_SRC, "Graduate School $2,652/credit × 30-credit MA."
+        ),
+        "georgetown-cct-ma": _per_credit_cost(
+            _GSAS_PER_CREDIT * 36, _GSAS_SRC, "Graduate School $2,652/credit × 36-credit CCT MA."
+        ),
+        "georgetown-conflict-resolution-ma": _per_credit_cost(
+            _GSAS_PER_CREDIT * 34, _GSAS_SRC, "Graduate School $2,652/credit × 34-credit MA."
+        ),
+        "georgetown-german-ma": _per_credit_cost(
+            _GSAS_PER_CREDIT * 36, _GSAS_SRC, "Graduate School $2,652/credit × 36-credit MA."
+        ),
+        "georgetown-history-ma": _per_credit_cost(
+            _GSAS_PER_CREDIT * 30, _GSAS_SRC, "Graduate School $2,652/credit × 30-credit MAGIC MA."
+        ),
+        "georgetown-linguistics-ms": _per_credit_cost(
+            _GSAS_PER_CREDIT * 36, _GSAS_SRC, "Graduate School $2,652/credit × 36-credit MS."
+        ),
+        "georgetown-mathematics-statistics-ms": _per_credit_cost(
+            _GSAS_PER_CREDIT * 30, _GSAS_SRC, "Graduate School $2,652/credit × 30-credit MS."
+        ),
+        "georgetown-physics-ms": _per_credit_cost(
+            _GSAS_PER_CREDIT * 31, _GSAS_SRC, "Graduate School $2,652/credit × 31-credit MS."
+        ),
+        "georgetown-spanish-literature-ms": _per_credit_cost(
+            _GSAS_PER_CREDIT * 33, _GSAS_SRC, "Graduate School $2,652/credit × 33-credit MS."
+        ),
+    }
+)
+
+# McDonough School of Business master's — finaid 2025-26 per-credit rates × published credits
+# (MSBA and MA International Business & Policy bill two year-specific rates).
+_COST_BY_SLUG.update(
+    {
+        "georgetown-finance-ms": _per_credit_cost(
+            2525 * 32, _BUSINESS_SRC, "McDonough MSF $2,525/credit × 32-credit degree."
+        ),
+        "georgetown-business-analytics-ms": _per_credit_cost(
+            18 * 2332 + 12 * 2221,
+            _BUSINESS_SRC,
+            "McDonough MSBA: 18 credits @ $2,332 (yr 1) + 12 @ $2,221 (yr 2).",
+        ),
+        "georgetown-management-ms": _per_credit_cost(
+            2106 * 30, _BUSINESS_SRC, "McDonough MiM $2,106/credit × 30-credit degree."
+        ),
+        "georgetown-international-business-policy-ma": _per_credit_cost(
+            12 * 2728 + 18 * 2714,
+            _BUSINESS_SRC,
+            "McDonough MA-IBP: 12 credits @ $2,728 (yr 1) + 18 @ $2,714 (yr 2).",
+        ),
+        "georgetown-global-real-assets-ms": _per_credit_cost(
+            2500 * 30, _BUSINESS_SRC, "McDonough Global Real Assets $2,500/credit × 30 credits."
+        ),
+        "georgetown-mba-flex": _per_credit_cost(
+            2582 * 54, _BUSINESS_SRC, "McDonough Flex MBA $2,582/credit × 54-credit degree."
+        ),
+        "georgetown-environment-sustainability-management-ms": _per_credit_cost(
+            _GSAS_PER_CREDIT * 30,
+            (
+                "Georgetown Environment & Sustainability Management — Admissions & Financing",
+                "https://esm.georgetown.edu/admissions-financing/",
+            ),
+            "ESM billed at the Graduate School $2,652/credit × 30-credit degree.",
+        ),
+    }
+)
+
+# Georgetown Law non-JD graduate master's — $3,596/credit × published credits.
+# The S.J.D. is billed on residency status (no single annual/total figure), so it is
+# omit-with-reason rather than a stamped scalar.
+_COST_BY_SLUG.update(
+    {
+        "georgetown-mlt": _per_credit_cost(
+            _LAW_GRAD_PER_CREDIT * 24,
+            _LAW_GRAD_SRC,
+            "Georgetown Law $3,596/credit × 24-credit MLT.",
+        ),
+        "georgetown-msl-taxation": _per_credit_cost(
+            _LAW_GRAD_PER_CREDIT * 24,
+            _LAW_GRAD_SRC,
+            "Georgetown Law $3,596/credit × 24 required credits (MSL Taxation).",
+        ),
+    }
+)
+
+# School of Continuing Studies — each program publishes a total program tuition (the rate ×
+# its required credits, "reflects Fall semester of entry"). Standard on-campus MPS run
+# $1,752/credit; online sections and Higher-Ed Administration run lower published rates;
+# Urban & Regional Planning is 42 credits. Totals are the official program-page figures.
+_SCS_PROGRAM_SRC = (
+    "Georgetown SCS — program tuition & financial aid pages (published total program tuition)",
+    "https://scs.georgetown.edu/admissions-aid/tuition-financial-aid/",
+)
+for _scs_slug, _scs_total, _scs_note in [
+    ("georgetown-applied-intelligence-mps", 57816, "SCS published total (33 credits)."),
+    ("georgetown-ai-management-mps", 52560, "SCS published total (30 credits)."),
+    ("georgetown-cybersecurity-mps", 57816, "SCS published total (33 credits, on-campus)."),
+    ("georgetown-design-management-mps", 55605, "SCS published total (33 credits, online rate)."),
+    ("georgetown-emergency-disaster-management-mps", 57816, "SCS published total (33 credits)."),
+    ("georgetown-human-resources-mps", 55605, "SCS published total (33 credits, online rate)."),
+    ("georgetown-it-management-mps", 52560, "SCS published total (30 credits)."),
+    ("georgetown-integrated-marketing-mps", 57816, "SCS published total (33 credits, on-campus)."),
+    ("georgetown-journalism-mps", 52560, "SCS published total (30 credits)."),
+    ("georgetown-project-management-mps", 52560, "SCS published total (30 credits)."),
+    ("georgetown-public-relations-mps", 52560, "SCS published total (30 credits)."),
+    ("georgetown-real-estate-mps", 57816, "SCS published total (33 credits)."),
+    ("georgetown-sports-industry-mps", 52560, "SCS published total (30 credits)."),
+    ("georgetown-supply-chain-mps", 57816, "SCS published total (33 credits)."),
+    ("georgetown-liberal-studies-mals", 40380, "SCS published total program tuition (MALS)."),
+]:
+    _COST_BY_SLUG[_scs_slug] = {
+        "tuition_usd": _scs_total,
+        "src": _SCS_PROGRAM_SRC,
+        "year": "2025-26",
+        "note": _scs_note,
+    }
+
+# SCS programs with a verified program-specific rate / credit exception — cited to the
+# program's own tuition page (spot-verified).
+_COST_BY_SLUG["georgetown-higher-education-mps"] = {
+    "tuition_usd": 40590,
+    "src": (
+        "Georgetown SCS — MPS Higher Education Administration, Tuition & Financial Aid",
+        "https://scs.georgetown.edu/programs/448/master-of-professional-studies-in-higher-education-administration/tuition-financial-aid/",
+    ),
+    "year": "2025-26",
+    "note": "SCS published total program tuition (33 credits at the reduced Higher-Ed rate).",
+}
+_COST_BY_SLUG["georgetown-urban-planning-mps"] = {
+    "tuition_usd": 73584,
+    "src": (
+        "Georgetown SCS — MPS Urban & Regional Planning, Tuition & Financial Aid",
+        "https://scs.georgetown.edu/programs/356/master-of-professional-studies-in-urban-regional-planning/tuition-financial-aid/",
+    ),
+    "year": "2025-26",
+    "note": "SCS published total program tuition (42-credit degree).",
+}
+_COST_BY_SLUG["georgetown-global-sports-mps"] = {
+    "tuition_usd": 76890,
+    "src": (
+        "Georgetown SCS — Executive MPS Global Sports Operations & Strategy, "
+        "Tuition & Financial Aid",
+        "https://scs.georgetown.edu/programs/559/hybrid/executive-masters-in-global-sports-operations-strategy/tuition-financial-aid/",
+    ),
+    "year": "2025-26",
+    "note": "SCS published total program tuition (Executive rate; bundles two residencies).",
+}
+_COST_BY_SLUG["georgetown-liberal-studies-dls"] = {
+    "tuition_usd": 65664,
+    "src": (
+        "Georgetown SCS — Doctor of Liberal Studies, Tuition & Financial Aid",
+        "https://scs.georgetown.edu/programs/43/doctor-of-liberal-studies/tuition-financial-aid/",
+    ),
+    "year": "2025-26",
+    "note": "SCS published total program tuition for the (non-funded) Doctor of Liberal Studies.",
+}
+
+# Biomedical Graduate Education (School of Medicine) master's — $2,529/credit (Biotechnology
+# $2,539) × published required credits.
+for _bge_slug, _bge_credits, _bge_rate in [
+    ("georgetown-biochemistry-molecular-biology-ms", 30, _BGE_PER_CREDIT),
+    ("georgetown-biohazardous-threat-ms", 30, _BGE_PER_CREDIT),
+    ("georgetown-bioinformatics-ms", 30, _BGE_PER_CREDIT),
+    ("georgetown-biostatistics-ms", 32, _BGE_PER_CREDIT),
+    ("georgetown-biotechnology-ms", 30, _BGE_BIOTECH_PER_CREDIT),
+    ("georgetown-clinical-translational-research-ms", 33, _BGE_PER_CREDIT),
+    ("georgetown-health-informatics-ms", 30, _BGE_PER_CREDIT),
+    ("georgetown-integrative-medicine-ms", 35, _BGE_PER_CREDIT),
+    ("georgetown-integrative-neuroscience-ms", 30, _BGE_PER_CREDIT),
+    ("georgetown-microbiology-immunology-ms", 30, _BGE_PER_CREDIT),
+    ("georgetown-pharmacology-ms", 30, _BGE_PER_CREDIT),
+    ("georgetown-physiology-biophysics-ms", 30, _BGE_PER_CREDIT),
+    ("georgetown-physiology-smp-ms", 31, _BGE_PER_CREDIT),
+    ("georgetown-systems-medicine-ms", 32, _BGE_PER_CREDIT),
+    ("georgetown-tumor-biology-ms", 30, _BGE_PER_CREDIT),
+]:
+    _COST_BY_SLUG[_bge_slug] = _per_credit_cost(
+        _bge_rate * _bge_credits,
+        _BGE_SRC,
+        f"Biomedical Graduate Education ${_bge_rate:,}/credit × {_bge_credits}-credit MS.",
+    )
+
+# School of Health master's — $2,652/credit × published required credits.
+for _h_slug, _h_credits in [
+    ("georgetown-addiction-policy-practice-ms", 30),
+    ("georgetown-climate-environment-health-ms", 30),
+    ("georgetown-global-health-ms", 32),
+    ("georgetown-global-infectious-disease-ms", 30),
+    ("georgetown-health-systems-administration-ms", 42),
+]:
+    _COST_BY_SLUG[_h_slug] = _per_credit_cost(
+        _HEALTH_PER_CREDIT * _h_credits,
+        _HEALTH_SRC,
+        f"School of Health $2,652/credit × {_h_credits}-credit MS.",
+    )
+
+# School of Nursing — the accelerated Entry-to-Nursing master's bills $1,586/credit over a
+# verified 67-credit degree. The MSN proper varies by NP track (40-49 credits) with no single
+# published 2025-26 per-credit figure, so it stays omit-with-reason below.
+_COST_BY_SLUG["georgetown-nursing-entry-ms"] = _per_credit_cost(
+    _NURSING_ENTRY_PER_CREDIT * 67,
+    _NURSING_SRC,
+    "School of Nursing $1,586/credit × 67-credit Entry-to-Nursing degree.",
+)
+
+# McCourt Master of Policy Management — McCourt published $2,550/credit × 36-credit degree.
+_COST_BY_SLUG["georgetown-policy-management-mpm"] = {
+    "tuition_usd": _MCCOURT_PER_CREDIT * 36,
+    "src": (
+        "Georgetown McCourt — Master of Policy Management Curriculum (36 credits) + McCourt "
+        "published $2,550/credit rate",
+        "https://mccourt.georgetown.edu/master-of-policy-management/curriculum/",
+    ),
+    "year": "2025-26",
+    "note": "McCourt published $2,550/credit × 36-credit MPM degree.",
+}
+# Arabic & Islamic Studies MA — Graduate School $2,652/credit × 36 credits (AIS handbook).
+_COST_BY_SLUG["georgetown-arabic-ma"] = {
+    "tuition_usd": _GSAS_PER_CREDIT * 36,
+    "src": (
+        "Georgetown Arabic & Islamic Studies Graduate Handbook (M.A. — 36 credits) + Graduate "
+        "School $2,652/credit",
+        "https://sites.google.com/georgetown.edu/ais-graduate-handbook/m-a-in-arabic-and-islamic-studies",
+    ),
+    "year": "2025-26",
+    "note": "Graduate School $2,652/credit × 36-credit MA in Arabic & Islamic Studies.",
+}
+
 # Programs whose tuition is honestly omitted, with the reason class.
 _FUNDED_PHD_NOTE = (
     "Doctoral students at Georgetown are typically funded through fellowships, research, "
