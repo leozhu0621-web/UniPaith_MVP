@@ -1133,6 +1133,45 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
 }
 
 SLUG_DESCRIPTIONS: dict[str, str] = {
+    # BU catalog pages with distinct postdoctoral-dental / Wheelock CAGS prose. These avoid
+    # slug-based duplicate fallbacks while staying anchored to the official BU Academics pages.
+    "bu-academics-sdm-oral-and-maxillofacial-surgery-cags": (
+        "BU's CAGS in Oral & Maxillofacial Surgery integrates clinical training, basic science "
+        "study, and research in hospital and dental-school settings, preparing residents for "
+        "American Board requirements and clinical practice."
+    ),
+    "bu-academics-sdm-oral-and-maxillofacial-surgery-dscd": (
+        "BU's DScD in Oral & Maxillofacial Surgery is a research doctorate for CAGS-trained "
+        "surgeons, building laboratory research, dissertation work, and leadership preparation "
+        "in education, research, and health policy without clinical-care participation."
+    ),
+    "bu-academics-sdm-oral-and-maxillofacial-surgery-msd": (
+        "BU's MSD in Oral & Maxillofacial Surgery is a research master's for candidates who "
+        "have completed a CAGS or equivalent, requiring an oral-and-maxillofacial surgery or "
+        "oral-biology research project and at least 12 months of full-time enrollment."
+    ),
+    "bu-academics-sdm-orthodontics-dentofacial-orthopedics-dscd": (
+        "BU's combined CAGS/DScD in Orthodontics & Dentofacial Orthopedics pairs orthodontic "
+        "clinical training with a major research effort, covering diagnostic imaging, "
+        "malocclusion treatment planning, orthodontic appliances, and dentofacial growth."
+    ),
+    "bu-academics-sdm-prosthodontics-cags-dscd": (
+        "BU's DScD in Prosthodontics requires completion of the CAGS biomedical and clinical "
+        "requirements plus a prosthodontics research project, doctoral thesis, and thesis "
+        "defense."
+    ),
+    "bu-academics-wheelock-english-education-cags": (
+        "BU Wheelock's CAGS in English & Language Arts Education, currently on moratorium in "
+        "the catalog, offers advanced study for master's-prepared or licensed English teachers "
+        "through literature, language-development research, teaching methods, curriculum, and "
+        "service to schools."
+    ),
+    "bu-academics-wheelock-social-studies-education-cags": (
+        "BU Wheelock's CAGS in Social Studies Education, currently on moratorium in the "
+        "catalog, serves master's-prepared educators in history, civics, geography, economics, "
+        "and related social sciences through coursework, supervised field experience, and "
+        "curriculum-development preparation."
+    ),
     # MET's distinct online master's in the Computer Science & IT department (separate degrees,
     # NOT M.S. in CS concentrations). Sources: bu.edu/academics/met/programs/computer-science/*.
     "bu-academics-met-computer-science-ms-in-health-informatics": (
@@ -1705,4 +1744,3 @@ SLUG_DESCRIPTIONS: dict[str, str] = {
         "policy for young children's well-being."
     ),
 }
-
