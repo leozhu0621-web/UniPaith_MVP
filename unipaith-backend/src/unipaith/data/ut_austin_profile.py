@@ -66,7 +66,7 @@ from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "The University of Texas at Austin"
-ENRICHED_AT = "2026-06-20"
+ENRICHED_AT = "2026-06-30"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -3271,6 +3271,49 @@ _DELIVERY_PHRASE = {
 }
 
 
+# Connectives that stay lowercase mid-name when re-casing a sentence-cased field to UT
+# Austin's PUBLISHED title case (REPAIR_BACKLOG #4b). The leading word, any word with an
+# interior capital (acronym like "II"/"LL", a slash form like "Latina/o"), and a lowercase
+# parenthetical qualifier ("(online)") are preserved verbatim.
+_TITLECASE_LOWER = {
+    "and", "of", "the", "in", "for", "to", "a", "an", "or", "on",
+    "with", "at", "by", "as", "vs",
+}
+
+
+def _titlecase_field(field: str) -> str:
+    """Re-case a (possibly sentence-cased) field of study to published title case.
+
+    Capitalizes each content word's first letter; keeps connectives lowercase mid-name;
+    leaves a word that already carries an interior capital (acronym, slash form) or a
+    parenthetical qualifier untouched. Never alters a letter other than a leading capital,
+    so it is idempotent on an already-title-cased field and invents nothing (only its
+    capitalization is corrected, never a word — REPAIR_BACKLOG #4b casing carve-out).
+    """
+    def _cap_segment(s: str) -> str:
+        j = 0
+        while j < len(s) and not s[j].isalpha():
+            j += 1
+        return s[:j] + s[j].upper() + s[j + 1:] if j < len(s) else s
+
+    words = field.split(" ")
+    out: list[str] = []
+    for i, w in enumerate(words):
+        if not w or w.startswith("("):  # empty or lowercase parenthetical qualifier — keep
+            out.append(w)
+            continue
+        if any(c.isupper() for c in w[1:]):  # acronym / mixed-case / slash form — keep verbatim
+            out.append(w)
+            continue
+        if i != 0 and w.lower() in _TITLECASE_LOWER:  # mid-name connective stays lowercase
+            out.append(w.lower())
+            continue
+        # Capitalize each HYPHEN-joined segment ("radio-television-film" →
+        # "Radio-Television-Film"); slashes are left intact so "Latina/o" stays lowercase.
+        out.append("-".join(_cap_segment(seg) for seg in w.split("-")))
+    return " ".join(out)
+
+
 def _derive_program_name(slug: str, field: str, school_key: str, degree_type: str) -> str:
     if slug in _SPECIAL_NAMES:
         return _SPECIAL_NAMES[slug]
@@ -3280,16 +3323,16 @@ def _derive_program_name(slug: str, field: str, school_key: str, degree_type: st
         if slug.endswith(suffix):
             if slug.endswith("-march"):
                 return "Master of Architecture"
-            return f"{prefix} {field}"
+            return f"{prefix} {_titlecase_field(field)}"
     if degree_type == "bachelors":
         prefix = _UG_PREFIX_BY_SCHOOL.get(school_key, "Bachelor of Arts in")
-        return f"{prefix} {field.title() if field.islower() else field}"
+        return f"{prefix} {_titlecase_field(field)}"
     if degree_type == "professional":
         return field
     if degree_type == "phd":
-        return f"Doctor of Philosophy in {field}"
+        return f"Doctor of Philosophy in {_titlecase_field(field)}"
     if degree_type == "masters":
-        return f"Master of Science in {field}"
+        return f"Master of Science in {_titlecase_field(field)}"
     return field
 
 
@@ -3502,6 +3545,30 @@ _DOCTORAL_DESCRIPTION_BY_SLUG: dict[str, str] = {
     ),
 }
 
+# Hand-authored master's descriptions for rows whose verified catalogue body SHARES the
+# field's stamped opening sentence with its bachelor's sibling (miss #8 shared-body), where
+# ``_extract_focus`` cannot derive a clean focus from that long shared anchor and the
+# ``_ut_sibling_body`` fallback would otherwise splice a broken fragment ("...builds advanced
+# expertise in The Bachelor of Arts in ... applies the, ..."). Each is researched, distinct
+# from its siblings (shares no >=80-char run), and opens on the subject, never the credential
+# heading. Sourced from the program's own UT Austin pages.
+_MASTERS_DESCRIPTION_BY_SLUG: dict[str, str] = {
+    "ut-austin-human-dimensions-of-organizations-ma": (
+        "UT Austin's Master of Arts in Human Dimensions of Organizations is a graduate degree "
+        "for working professionals who want to understand people and organizations more "
+        "clearly — applying behavioral science, ethics, and rhetoric to leadership, culture, "
+        "and organizational change. Offered in flexible and distance formats through the "
+        "College of Liberal Arts, it suits managers and consultants deepening their practice."
+    ),
+}
+
+# Any-level hand-authored body overrides consulted by ``_assign_descriptions`` (doctoral +
+# the master's above), keyed by slug.
+_HANDWRITTEN_DESCRIPTION_BY_SLUG: dict[str, str] = {
+    **_DOCTORAL_DESCRIPTION_BY_SLUG,
+    **_MASTERS_DESCRIPTION_BY_SLUG,
+}
+
 
 def _assign_descriptions(programs: list[dict]) -> None:
     """Assign a per-credential description to every program (Harvard / gold-MIT pattern).
@@ -3534,8 +3601,8 @@ def _assign_descriptions(programs: list[dict]) -> None:
         group_bodies: list[str] = []
 
         for spec in ordered:
-            if spec["slug"] in _DOCTORAL_DESCRIPTION_BY_SLUG:
-                body = _DOCTORAL_DESCRIPTION_BY_SLUG[spec["slug"]]
+            if spec["slug"] in _HANDWRITTEN_DESCRIPTION_BY_SLUG:
+                body = _HANDWRITTEN_DESCRIPTION_BY_SLUG[spec["slug"]]
                 group_bodies.append(body)
                 delivery = _DELIVERY_PHRASE.get(spec.get("delivery_format", ""), "")
                 spec["description"] = f"{body}{delivery}"
@@ -3853,6 +3920,1708 @@ PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 
 _assert_anti_stub_clean(PROGRAMS)
 
+
+# == "Who it's for" (manifest `who_its_for`) — a field-specific, PROGRAM-DISTINCT fit
+# statement for EVERY program (subject + who it fits + typical next step), replacing the
+# former hard-null ``p.who_its_for = None`` that shipped the field 0% catalog-wide
+# (REPAIR_BACKLOG #3a). Each is tailored to the credential level (a BA, MA, and PhD in one
+# field read differently), so distinct/total approaches 1.0 — never a degree-type template
+# (#3b). Derived from each program's own field of study and audience; no fabricated facts.
+_WHO_BY_SLUG: dict[str, str] = {
+    'ut-austin-accounting-bba': (
+        'Detail-oriented undergraduates drawn to financial reporting, auditing, and tax, who want '
+        'the technical grounding that leads toward the CPA. Fits future public-accounting '
+        'associates, corporate accountants, and those continuing into a fifth-year accounting '
+        "master's."
+    ),
+    'ut-austin-accounting-mpa': (
+        'Students completing the fifth year of accounting study to meet CPA requirements, '
+        'deepening financial reporting, tax, audit, and assurance. The direct path into public '
+        'accounting, corporate accounting, and advisory roles for CPA-track candidates.'
+    ),
+    'ut-austin-accounting-ms': (
+        'Early-career professionals seeking focused graduate depth in accounting — reporting, '
+        'audit, tax, and analytics — to advance their technical expertise. Suited to those moving '
+        'into senior accounting, assurance, or specialized advisory positions.'
+    ),
+    'ut-austin-accounting-phd': (
+        'Scholars who want to research the role of accounting information in markets, firms, and '
+        'regulation using rigorous empirical and analytical methods. The path to faculty '
+        'positions and academic research careers in accounting.'
+    ),
+    'ut-austin-acting-bfa': (
+        'Actors ready for conservatory training — voice, movement, scene study, and performance '
+        'before audiences — who want a disciplined studio path toward professional stage and '
+        'screen work or graduate theatre study.'
+    ),
+    'ut-austin-advertising-bsadv': (
+        'Undergraduates drawn to brand storytelling and persuasion — campaign strategy, copy, '
+        'creative, and media planning grounded in consumer insight. A foundation for roles in '
+        'account management, creative, media planning, and brand strategy at agencies and brands.'
+    ),
+    'ut-austin-advertising-ma': (
+        'Early-career professionals and graduates who want advanced study of advertising '
+        'strategy, consumer insight, and brand communication. Suited to research-informed roles '
+        'in account planning, brand strategy, and advertising analytics, or further doctoral '
+        'study.'
+    ),
+    'ut-austin-advertising-phd': (
+        'Scholars researching advertising, persuasion, and consumer response through rigorous '
+        'theory and empirical methods. The path to faculty positions and research careers in '
+        'advertising and strategic communication.'
+    ),
+    'ut-austin-aerospace-engineering-bsase': (
+        'Undergraduates drawn to flight and space systems who enjoy aerodynamics, propulsion, '
+        'structures, and orbital mechanics, building toward early-career roles in aerospace, '
+        'defense, or spacecraft engineering, or graduate study.'
+    ),
+    'ut-austin-aerospace-engineering-ms': (
+        'Engineers deepening expertise in a focused area of flight or space, aerodynamics, '
+        'propulsion, controls, or structures, for advanced design and analysis roles in '
+        'aerospace, defense, or space programs.'
+    ),
+    'ut-austin-aerospace-engineering-phd': (
+        'Researchers pursuing original work at the frontier of flight and space, from hypersonics '
+        'to autonomous spacecraft, headed toward faculty positions or advanced R&D in aerospace '
+        'and national labs.'
+    ),
+    'ut-austin-african-and-african-diaspora-studies-ba': (
+        'Undergraduates drawn to the history, culture, politics, and contemporary issues of '
+        'African and African-descended communities who want an interdisciplinary foundation '
+        'before careers in education, public service, law, or graduate study in the field.'
+    ),
+    'ut-austin-african-and-african-diaspora-studies-ma': (
+        'Students with a background in the humanities or social sciences who want advanced, '
+        'specialized study of African and African-descended communities through interdisciplinary '
+        'theory and research. A step toward doctoral study, teaching, or culturally grounded '
+        'professional work.'
+    ),
+    'ut-austin-african-and-african-diaspora-studies-phd': (
+        'Scholars committed to original research on the histories, cultures, and politics of '
+        'African and African-descended peoples who want to develop a dissertation and an '
+        'interdisciplinary scholarly voice. Preparation for a faculty or research career in the '
+        'field.'
+    ),
+    'ut-austin-american-studies-ba': (
+        'Undergraduates who want to read American culture, history, and society together, '
+        'examining everything from politics to media and everyday life. An interdisciplinary '
+        'foundation for careers in writing, public history, education, law, or graduate study.'
+    ),
+    'ut-austin-american-studies-ma': (
+        'Students who want advanced interdisciplinary training in American culture, history, and '
+        'society, building research and critical skills beyond the undergraduate level. A step '
+        'toward doctoral study, public-facing cultural work, or teaching.'
+    ),
+    'ut-austin-american-studies-phd': (
+        'Scholars pursuing original, interdisciplinary research on American culture and society '
+        'who want to write a dissertation and join scholarly debates. Preparation for a faculty '
+        'or research career in American studies and allied fields.'
+    ),
+    'ut-austin-anthropology-ba': (
+        'Undergraduates curious about human cultures, languages, biology, and the past, who want '
+        'fieldwork and comparative thinking across societies. A foundation for work in research, '
+        'museums, public health, or graduate study in anthropology.'
+    ),
+    'ut-austin-anthropology-ma': (
+        'Students with grounding in anthropology who want advanced training in ethnographic, '
+        'archaeological, or biological methods and theory. A step toward doctoral research, '
+        'applied anthropology, or work in museums and the public sector.'
+    ),
+    'ut-austin-anthropology-phd': (
+        "Scholars committed to original fieldwork and research across anthropology's subfields "
+        'who want to develop a dissertation grounded in extended study. Preparation for a '
+        'faculty, research, or applied anthropology career.'
+    ),
+    'ut-austin-applied-movement-science-bskin-and-health': (
+        'Students who want to understand how the body moves and apply it to health, fitness, and '
+        'rehabilitation settings, building a foundation for careers in movement and wellness or '
+        'graduate study in the health professions.'
+    ),
+    'ut-austin-architectural-engineering-bsarche': (
+        'Undergraduates who want to engineer the systems inside buildings, structural, '
+        'mechanical, electrical, and lighting, blending civil rigor with design sense and working '
+        'toward licensure and building-systems practice.'
+    ),
+    'ut-austin-architectural-studies-bsas': (
+        'Undergraduates exploring the design and history of the built environment with breadth, '
+        'building a foundation for graduate architecture study or related fields rather than the '
+        'licensure-track professional degree.'
+    ),
+    'ut-austin-architecture-barch': (
+        'Students committed to becoming architects, learning design studio, structures, history, '
+        'and building technology in an accredited professional program leading toward internship '
+        'and licensure.'
+    ),
+    'ut-austin-architecture-ma': (
+        'Students drawn to the history and theory of architecture as a scholarly subject, '
+        'studying buildings and built environments in cultural context, headed toward research, '
+        'teaching, or doctoral study.'
+    ),
+    'ut-austin-architecture-maad': (
+        'Architects who already hold a professional degree and want to push their design thinking '
+        'further through advanced studio and research, sharpening a specialized design direction.'
+    ),
+    'ut-austin-architecture-march': (
+        'Students pursuing the accredited professional path to becoming a licensed architect, '
+        'developing design, technical, and theoretical skills through studio toward licensure and '
+        'practice.'
+    ),
+    'ut-austin-architecture-ms': (
+        'Designers and professionals focused on energy, climate, and environmental performance in '
+        'buildings, learning sustainable design methods for green-building practice, consulting, '
+        'or research.'
+    ),
+    'ut-austin-architecture-ms-2': (
+        'Students committed to documenting, conserving, and adapting historic buildings and '
+        'places, learning preservation technology and policy, headed toward preservation practice '
+        'in firms, agencies, or nonprofits.'
+    ),
+    'ut-austin-architecture-phd': (
+        'Researchers pursuing original scholarship in architectural history, theory, or '
+        'technology, headed toward faculty positions and advanced research in the built '
+        'environment.'
+    ),
+    'ut-austin-art-education-bfa': (
+        'Future art teachers who want to pair sustained studio practice with how children and '
+        'adolescents learn to make and interpret art, working toward classroom certification to '
+        'lead K-12 art programs.'
+    ),
+    'ut-austin-art-education-ma': (
+        'Practicing and aspiring art educators ready to deepen pedagogy, curriculum, and the '
+        'study of how people learn through art, preparing for advanced classroom roles, museum '
+        'education, or doctoral study.'
+    ),
+    'ut-austin-art-history-ba': (
+        'Students drawn to the close study of art, architecture, and visual culture across '
+        'periods and traditions, building skills in looking, research, and writing. A strong '
+        'undergraduate footing for museum and gallery work or graduate study.'
+    ),
+    'ut-austin-art-history-ma': (
+        'Students ready to move from broad survey into focused scholarly research on a period, '
+        'region, or problem in art history, building the methods and writing for curatorial work '
+        'or doctoral study.'
+    ),
+    'ut-austin-art-history-phd': (
+        'Scholars pursuing original research that reshapes how a field, period, or visual '
+        'tradition is understood, preparing for careers in university teaching, curatorial '
+        'leadership, and academic publishing.'
+    ),
+    'ut-austin-artificial-intelligence-ms': (
+        'Working professionals and graduates ready to build expertise in machine learning, deep '
+        'learning, and intelligent systems through online study. Advanced training for AI and ML '
+        'engineering roles or technical leadership in data-driven organizations.'
+    ),
+    'ut-austin-arts-and-entertainment-technologies-bsaet': (
+        'Students working at the intersection of art and technology — interactive media, game '
+        'design, sound, and digital production — who want to build creative projects with code '
+        'and tools, heading into entertainment, media, and creative-tech careers.'
+    ),
+    'ut-austin-asian-cultures-and-languages-ba': (
+        'Undergraduates drawn to the languages, literatures, and cultures of Asia who want deep '
+        'language study paired with cultural analysis and a pull to study abroad. Preparation for '
+        'translation, education, international work, or graduate study.'
+    ),
+    'ut-austin-asian-studies-asian-cultures-and-languages-ma': (
+        'Students who want advanced training in the languages, literatures, and cultures of Asia, '
+        'working closely with primary texts and cultural theory. A step toward doctoral study, '
+        'translation, or teaching and international work.'
+    ),
+    'ut-austin-asian-studies-asian-cultures-and-languages-phd': (
+        'Scholars pursuing original research on Asian languages, literatures, and cultures who '
+        'want to write a dissertation rooted in deep textual and linguistic expertise. '
+        'Preparation for a faculty or research career in the field.'
+    ),
+    'ut-austin-asian-studies-ba': (
+        'Undergraduates interested in the history, politics, religions, and societies of Asia who '
+        'want an interdisciplinary regional focus and language study. A foundation for '
+        'international work, government, business, or graduate study in the region.'
+    ),
+    'ut-austin-asian-studies-ma': (
+        "Students who want advanced, interdisciplinary study of Asia's histories, religions, "
+        'politics, and societies, deepening regional and language expertise. A step toward '
+        'doctoral study, international work, or policy and cultural careers.'
+    ),
+    'ut-austin-astronomy-ba': (
+        'Undergraduates drawn to stars, galaxies, and the physics of the cosmos who want a '
+        'foundation in observational and theoretical astronomy alongside calculus and physics. A '
+        'path toward graduate study, science communication, or data-heavy technical roles.'
+    ),
+    'ut-austin-astronomy-ma': (
+        'Graduates deepening their grounding in observational and theoretical astrophysics who '
+        'want advanced coursework and research experience. A step toward doctoral study or '
+        'technical and data-intensive scientific work.'
+    ),
+    'ut-austin-astronomy-phd': (
+        'Researchers pursuing original questions about stars, galaxies, and cosmology through '
+        'observation, instrumentation, or theory, aiming for funded doctoral training and careers '
+        'in academic, observatory, or research-institute astronomy.'
+    ),
+    'ut-austin-athletic-training-bsathtrng': (
+        'Students preparing to prevent, evaluate, and rehabilitate athletic injuries through '
+        'hands-on clinical training, working toward certification and careers caring for active '
+        'and athletic populations.'
+    ),
+    'ut-austin-audiology-aud': (
+        'Students pursuing the clinical doctorate required to practice audiology — diagnosing and '
+        'treating hearing and balance disorders across the lifespan. The professional path to '
+        'becoming a licensed clinical audiologist in healthcare and private practice.'
+    ),
+    'ut-austin-behavioral-and-social-data-science-bsbsds': (
+        'Undergraduates who want to study human behavior and society through statistics, coding, '
+        'and data analysis, blending social-science questions with quantitative method. A '
+        'foundation for analyst, research, and UX roles, or graduate work in data or '
+        'computational social science.'
+    ),
+    'ut-austin-biochemistry-bsbioch': (
+        'Students fascinated by the molecular chemistry of living systems, from enzymes to '
+        'metabolic pathways, who want intensive lab grounding. Preparation for medical and health '
+        'professions, biotech, or graduate research.'
+    ),
+    'ut-austin-biochemistry-ma': (
+        'Graduates seeking advanced training in the molecular mechanisms of life, from protein '
+        'structure to metabolic regulation, with hands-on laboratory research. Preparation for '
+        'doctoral study, biotech, or specialized research roles.'
+    ),
+    'ut-austin-biochemistry-phd': (
+        'Researchers investigating original questions in protein function, enzymology, and '
+        'molecular mechanism who want funded doctoral training at the bench, aiming for academic, '
+        'pharmaceutical, or biotech research careers.'
+    ),
+    'ut-austin-biological-sciences-bsenvirsci': (
+        'Undergraduates drawn to how living systems and the environment connect — ecology, '
+        'organismal biology, and field science — who want hands-on lab and field work, headed '
+        'toward conservation, environmental, or health-science careers or graduate study.'
+    ),
+    'ut-austin-biology-bsa': (
+        'Students curious about how living systems work, from cells and genetics to ecosystems, '
+        'who want broad laboratory and field grounding. Strong preparation for health '
+        'professions, graduate research, or careers in biotech and conservation.'
+    ),
+    'ut-austin-biomedical-engineering-bsbiomede': (
+        'Undergraduates who want to apply engineering to medicine, the body, and biological '
+        'systems, learning imaging, biomaterials, and instrumentation, headed toward '
+        'medical-device work, clinical engineering, or medical or graduate school.'
+    ),
+    'ut-austin-biomedical-engineering-ms': (
+        'Engineers specializing in medical technology, imaging, biomaterials, or computational '
+        'modeling of the body, for advanced roles in medical-device firms, hospitals, or '
+        'biotechnology.'
+    ),
+    'ut-austin-biomedical-engineering-phd': (
+        'Researchers investigating fundamental problems at the intersection of engineering and '
+        'biology, from cellular mechanics to diagnostic devices, headed toward academic or '
+        'industrial research careers.'
+    ),
+    'ut-austin-business-administration-bba': (
+        'Undergraduates who want a broad business foundation across accounting, finance, '
+        'marketing, operations, and management before specializing or going general. A flexible '
+        'start for analyst, coordinator, or rotational-program roles, or a launchpad to a focused '
+        'major.'
+    ),
+    'ut-austin-business-administration-mba': (
+        'Experienced professionals ready to step into general management or change industries, '
+        'who want a broad business core plus leadership development across a cohort. Built for a '
+        'step up to leadership, a function switch, or an industry pivot — not a single specialty.'
+    ),
+    'ut-austin-business-analytics-bba': (
+        'Quantitatively-inclined undergraduates who want to turn data into business decisions '
+        'through statistics, modeling, and visualization. A foundation for business-analyst, '
+        'data-analyst, and reporting roles across functions like marketing, operations, and '
+        'finance.'
+    ),
+    'ut-austin-business-analytics-ms': (
+        'Analytically-minded early-career applicants who want to turn data into business '
+        'decisions — modeling, machine learning, and visualization — headed for analyst and '
+        'data-science roles. A focused, role-specific complement to a quantitative or business '
+        'background.'
+    ),
+    'ut-austin-cell-and-molecular-biology-ma': (
+        'Graduates advancing their grounding in cellular processes, gene regulation, and '
+        'molecular biology through coursework and laboratory research. A step toward doctoral '
+        'study or research roles in biotech and life sciences.'
+    ),
+    'ut-austin-cell-and-molecular-biology-phd': (
+        'Researchers pursuing original questions in cellular and molecular biology who want '
+        'funded doctoral training at the bench, aiming for academic, biotech, or '
+        'research-institute careers.'
+    ),
+    'ut-austin-chemical-engineering-bsche': (
+        'Students fascinated by chemical reactions, separations, and the design of processes that '
+        'turn raw inputs into fuels, materials, and pharmaceuticals at scale, headed toward '
+        'process engineering or graduate study.'
+    ),
+    'ut-austin-chemical-engineering-ms': (
+        'Engineers advancing their command of reaction engineering, separations, and process '
+        'design, for specialized roles in energy, materials, pharmaceuticals, or process '
+        'development.'
+    ),
+    'ut-austin-chemical-engineering-phd': (
+        'Researchers pursuing original work in molecular engineering, catalysis, energy, or '
+        'process systems, headed toward faculty positions or advanced industrial research.'
+    ),
+    'ut-austin-chemistry-ba': (
+        'Undergraduates interested in matter, reactions, and molecular structure who want a '
+        'flexible foundation in organic, physical, and analytical chemistry. A starting point for '
+        'health professions, industry lab work, or graduate study.'
+    ),
+    'ut-austin-chemistry-ma': (
+        'Graduates deepening their expertise in synthesis, analysis, and physical chemistry '
+        'through advanced coursework and laboratory research. Preparation for doctoral study or '
+        'specialized roles in chemical industry and research labs.'
+    ),
+    'ut-austin-chemistry-phd': (
+        'Researchers pursuing original questions in synthetic, physical, or analytical chemistry '
+        'who want funded doctoral training in the lab, aiming for academic, industrial R&D, or '
+        'national-laboratory careers.'
+    ),
+    'ut-austin-civics-honors-ba': (
+        'Undergraduates drawn to the foundations of self-government, political thought, and civic '
+        'responsibility who want a rigorous honors curriculum in the great texts and ideas, '
+        'preparing for law, public service, or graduate study.'
+    ),
+    'ut-austin-civil-engineering-bsce': (
+        'Engineers who want to design and analyze the built environment, bridges, water systems, '
+        'foundations, and transportation, building toward professional licensure (P.E.) and '
+        'early-career civil practice.'
+    ),
+    'ut-austin-civil-engineering-ms': (
+        'Engineers specializing in a civil subfield, structures, geotechnical, transportation, '
+        'water, or construction, for advanced practice and a faster path to professional '
+        'licensure and technical leadership.'
+    ),
+    'ut-austin-civil-engineering-phd': (
+        'Researchers tackling fundamental questions in infrastructure, materials, hazards, or '
+        'environmental systems, headed toward faculty roles or research-driven engineering '
+        'leadership.'
+    ),
+    'ut-austin-classical-languages-ba': (
+        'Undergraduates who want rigorous study of Latin and ancient Greek and the literature '
+        'written in them, reading classical texts in the original. Strong preparation for '
+        'teaching, classics scholarship, law, or graduate study.'
+    ),
+    'ut-austin-classical-studies-ba': (
+        'Undergraduates fascinated by the literature, history, art, and thought of ancient Greece '
+        'and Rome who want a broad view of the classical world without heavy language immersion. '
+        'A foundation for teaching, museums, law, or graduate study.'
+    ),
+    'ut-austin-classics-ma': (
+        'Students who want advanced study of the languages, literature, history, and material '
+        'culture of Greece and Rome, strengthening their Latin and Greek. A step toward doctoral '
+        'study, teaching, or work in classics and related fields.'
+    ),
+    'ut-austin-classics-phd': (
+        'Scholars committed to original research on the ancient Greek and Roman world who want to '
+        'develop a dissertation grounded in rigorous philology and historical analysis. '
+        'Preparation for a faculty or research career in classics.'
+    ),
+    'ut-austin-climate-system-science-bsgs': (
+        'Undergraduates who want to understand how the atmosphere, oceans, ice, and land interact '
+        'to drive climate, learning data and modeling, headed toward climate science, '
+        'environmental work, or graduate study.'
+    ),
+    'ut-austin-communication-and-leadership-bscomm-and-lead': (
+        'Undergraduates who want to pair communication skill with leadership — persuasion, group '
+        'dynamics, ethics, and guiding teams and organizations. Suited to people-centered roles '
+        'in management, human resources, advocacy, and organizational leadership.'
+    ),
+    'ut-austin-communication-studies-bscommstds': (
+        'Undergraduates interested in how people connect and persuade — interpersonal, '
+        'organizational, and rhetorical communication. A flexible foundation for careers in human '
+        'resources, sales, training, public affairs, and graduate or professional study.'
+    ),
+    'ut-austin-communication-studies-ma': (
+        'Graduates who want advanced study of human communication — interpersonal, '
+        'organizational, and rhetorical theory and research methods. Suited to careers in '
+        'research, teaching, and applied communication, or a step toward doctoral work.'
+    ),
+    'ut-austin-communication-studies-phd': (
+        'Scholars researching interpersonal, organizational, and rhetorical communication through '
+        'rigorous theory and empirical methods. The path to faculty positions and academic '
+        'research careers in communication studies.'
+    ),
+    'ut-austin-community-and-regional-planning-ms': (
+        'Students who want to shape how cities and regions grow, learning land use, housing, '
+        'transportation, and policy, headed toward professional planning roles in public '
+        'agencies, firms, and nonprofits.'
+    ),
+    'ut-austin-community-and-regional-planning-phd': (
+        'Researchers investigating urban and regional questions, housing, equity, transportation, '
+        'and sustainability, headed toward faculty positions or research roles in policy '
+        'institutions.'
+    ),
+    'ut-austin-comparative-literature-ma': (
+        'Students who want to study literature across languages and national traditions, working '
+        'with theory and texts in more than one language. A step toward doctoral study, '
+        'translation, or teaching and editorial work.'
+    ),
+    'ut-austin-comparative-literature-phd': (
+        'Scholars pursuing original research across literatures and languages who want to write a '
+        'dissertation engaging literary theory and cross-cultural analysis. Preparation for a '
+        'faculty or research career in comparative literature.'
+    ),
+    'ut-austin-composition-bmusic': (
+        'Aspiring composers ready to write for voices, instruments, and ensembles while studying '
+        'theory, orchestration, and the craft of musical structure, building a portfolio toward '
+        'professional composition or graduate study.'
+    ),
+    'ut-austin-computational-engineering-bscompe': (
+        'Students who like to model physical systems with code and mathematics rather than build '
+        'them by hand, learning numerical methods, simulation, and high-performance computing '
+        'toward roles in modeling, software, or research-oriented engineering.'
+    ),
+    'ut-austin-computational-science-engineering-and-mathematics-ms': (
+        'Students who want to apply advanced mathematics, modeling, and high-performance '
+        'computing to scientific and engineering problems, preparing for technical roles in '
+        'research labs, industry, or further doctoral study.'
+    ),
+    'ut-austin-computational-science-engineering-and-mathematics-phd': (
+        'Researchers building expertise in numerical methods, simulation, and computational '
+        'modeling to tackle complex scientific problems, preparing for careers in academia, '
+        'national laboratories, or computational research and development.'
+    ),
+    'ut-austin-computer-science-bsa': (
+        'Students who enjoy algorithms, programming, and computational problem-solving and want a '
+        'rigorous foundation in systems, theory, and software design. Strong preparation for '
+        'software engineering, technical roles, or graduate study.'
+    ),
+    'ut-austin-computer-science-ms': (
+        'Graduates seeking advanced expertise in systems, algorithms, machine learning, or theory '
+        'through rigorous coursework and projects. Preparation for senior engineering and '
+        'research roles or a path toward doctoral study.'
+    ),
+    'ut-austin-computer-science-online-ms': (
+        'Working professionals and graduates strengthening their command of systems, machine '
+        'learning, and algorithms through flexible online study. Advanced preparation for senior '
+        'software engineering and technical roles without leaving the workforce.'
+    ),
+    'ut-austin-computer-science-phd': (
+        'Researchers pursuing original work in areas such as systems, theory, AI, or graphics who '
+        'want funded doctoral training, aiming for faculty positions or research careers in '
+        'industry labs.'
+    ),
+    'ut-austin-curriculum-and-instruction-edd': (
+        'Experienced educators pursuing the practice-oriented doctorate, applying research to '
+        'real problems of curriculum and instruction, preparing for leadership roles in schools '
+        'and districts.'
+    ),
+    'ut-austin-curriculum-and-instruction-ma': (
+        'Educators ready to deepen their understanding of teaching, learning, and curriculum '
+        'through research and advanced coursework, sharpening classroom practice or preparing for '
+        'doctoral study.'
+    ),
+    'ut-austin-curriculum-and-instruction-med': (
+        'Practicing teachers who want advanced, practice-focused study of curriculum and '
+        'instruction to strengthen their classrooms and move into instructional leadership and '
+        'specialist roles.'
+    ),
+    'ut-austin-curriculum-and-instruction-phd': (
+        'Scholars pursuing original research on how teaching and learning happen across subjects '
+        'and settings, preparing for careers in university teaching and educational research.'
+    ),
+    'ut-austin-dance-bfa': (
+        'Dancers committed to daily technique, choreography, and performance across forms, '
+        'building artistry and stamina through studio practice toward professional companies, '
+        'independent work, or graduate study.'
+    ),
+    'ut-austin-data-science-ms': (
+        'Working professionals and graduates building applied skills in statistical modeling, '
+        'machine learning, and data engineering through online study. Advanced preparation for '
+        'data science, analytics, and quantitative roles across industries.'
+    ),
+    'ut-austin-design-ba': (
+        'Students who want to solve problems visually through typography, branding, interaction, '
+        'and communication design, developing a portfolio through studio projects. A foundation '
+        'for design practice or graduate study.'
+    ),
+    'ut-austin-design-ma': (
+        'Designers and design researchers who want to advance their thinking through focused '
+        'study and applied projects, sharpening a specialization for senior practice or continued '
+        'graduate work.'
+    ),
+    'ut-austin-design-mfa': (
+        'Designers ready for the terminal studio degree — sustained, self-directed creative '
+        'research across visual and interaction design — building a defining body of work toward '
+        'leadership in practice or teaching at the college level.'
+    ),
+    'ut-austin-ecology-evolution-and-behavior-ma': (
+        'Graduates deepening their grounding in evolutionary biology, ecology, and animal '
+        'behavior through coursework and field or lab research. A step toward doctoral study or '
+        'work in conservation and environmental science.'
+    ),
+    'ut-austin-ecology-evolution-and-behavior-phd': (
+        'Researchers pursuing original questions in ecology, evolution, and behavior through '
+        'field, lab, and computational study, aiming for funded doctoral training and academic, '
+        'conservation, or research-institute careers.'
+    ),
+    'ut-austin-economics-ba': (
+        'Undergraduates who want to understand how markets, incentives, and policy shape '
+        'behavior, using economic models and data. A versatile foundation for finance, '
+        'consulting, government, or graduate study in economics or business.'
+    ),
+    'ut-austin-economics-ma': (
+        'Students who want advanced training in economic theory, econometrics, and applied '
+        'analysis to deepen their quantitative and policy skills. A step toward doctoral study or '
+        'work as an economist, analyst, or researcher in industry and government.'
+    ),
+    'ut-austin-economics-ms': (
+        "Students who want a quantitatively focused master's in economic theory and econometrics "
+        'aimed at applied research and analysis. Preparation for analyst and economist roles in '
+        'industry, finance, and government, or for doctoral study.'
+    ),
+    'ut-austin-economics-phd': (
+        'Scholars pursuing original research in economic theory and empirical analysis who want '
+        'to build a dissertation and contribute new findings. Preparation for a faculty position '
+        'or research career in academia, government, or industry.'
+    ),
+    'ut-austin-education-bsed': (
+        'Future teachers who want to pair subject knowledge with classroom practice and field '
+        'experience, earning certification to lead a K-12 classroom.'
+    ),
+    'ut-austin-educational-leadership-and-policy-edd': (
+        'Experienced education leaders pursuing the practice-focused doctorate, applying research '
+        'to the leadership and policy challenges of real schools and systems, preparing for '
+        'senior administrative roles.'
+    ),
+    'ut-austin-educational-leadership-and-policy-med': (
+        'Educators ready to step into leadership — principalship, administration, and policy — '
+        'studying how schools and systems are governed and improved, preparing for advanced '
+        'leadership roles.'
+    ),
+    'ut-austin-educational-leadership-and-policy-phd': (
+        'Scholars researching the policies, politics, and organization of education systems, '
+        'building original studies that inform reform, preparing for careers in university '
+        'faculty and research roles.'
+    ),
+    'ut-austin-educational-psychology-ma': (
+        'Students studying how people learn, develop, and are motivated, and how to measure it, '
+        'building research and applied skills toward careers in education, assessment, or '
+        'doctoral study.'
+    ),
+    'ut-austin-educational-psychology-med': (
+        'Educators who want to apply the psychology of learning and development to their '
+        'practice, deepening skills in instruction, counseling, or assessment for advanced roles '
+        'in schools and education settings.'
+    ),
+    'ut-austin-educational-psychology-phd': (
+        'Scholars pursuing original research on learning, development, motivation, and '
+        'measurement, preparing for careers in university teaching, research, and applied '
+        'psychological science.'
+    ),
+    'ut-austin-electrical-and-computer-engineering-bsece': (
+        'Undergraduates who enjoy circuits, signals, embedded systems, and computer hardware, '
+        'working from transistors up to whole devices, headed toward roles in semiconductors, '
+        'hardware, or systems engineering.'
+    ),
+    'ut-austin-electrical-and-computer-engineering-ms': (
+        'Engineers deepening expertise in a focused ECE area, integrated circuits, '
+        'communications, computer architecture, or controls, for advanced roles in '
+        'semiconductors, hardware, or systems firms.'
+    ),
+    'ut-austin-electrical-and-computer-engineering-phd': (
+        'Researchers pursuing original work in areas from nanoelectronics to computing systems '
+        'and signal processing, headed toward faculty positions or advanced industrial R&D.'
+    ),
+    'ut-austin-energy-and-earth-resources-ma': (
+        'Students examining energy and resources through policy, economics, and management '
+        'alongside earth science, headed toward roles in energy, environmental policy, and '
+        'resource decision-making.'
+    ),
+    'ut-austin-energy-and-earth-resources-ms': (
+        'Students integrating earth science with the technical and economic dimensions of energy '
+        'and resources, for advanced analytical roles in the energy sector, consulting, or '
+        'research.'
+    ),
+    'ut-austin-energy-management-ms': (
+        'Early-career and working professionals in or entering the energy sector who want '
+        'graduate grounding in energy markets, finance, operations, and policy. Suited to '
+        'analyst, trading, and management roles across oil, gas, power, and renewables.'
+    ),
+    'ut-austin-engineering-management-ms': (
+        'Practicing engineers who want to lead technical teams and projects, learning operations, '
+        'finance, and decision methods alongside their engineering grounding, headed toward '
+        'management and technical-leadership roles.'
+    ),
+    'ut-austin-engineering-mechanics-ms': (
+        'Engineers strengthening the mechanics foundation, solid mechanics, dynamics, and '
+        'computational analysis, for specialized analysis roles or a bridge into doctoral '
+        'research.'
+    ),
+    'ut-austin-engineering-mechanics-phd': (
+        'Researchers pursuing original work in the mechanics of solids, fluids, and materials, '
+        'from theory to large-scale simulation, headed toward academic or research-laboratory '
+        'careers.'
+    ),
+    'ut-austin-english-ba': (
+        'Undergraduates who love close reading, literature, and writing, and want to analyze '
+        'texts across periods and genres while sharpening their own prose. A foundation for '
+        'publishing, education, law, communications, or graduate study.'
+    ),
+    'ut-austin-english-creative-writing-mfa': (
+        'Writers serious about craft who want intensive workshop training in fiction or poetry, '
+        'time to build a manuscript, and mentorship from working writers. Preparation for a '
+        'writing life, publication, or teaching in creative writing.'
+    ),
+    'ut-austin-english-ma': (
+        'Students who want advanced study of literature in English, building research, critical, '
+        'and writing skills across periods and genres. A step toward doctoral study, teaching, or '
+        'careers in publishing and the humanities.'
+    ),
+    'ut-austin-english-phd': (
+        'Scholars committed to original literary research who want to write a dissertation, '
+        'engage critical theory, and join scholarly conversations in English studies. Preparation '
+        'for a faculty or research career.'
+    ),
+    'ut-austin-environmental-engineering-bsenve': (
+        'Students who want to protect water, air, and soil, learning treatment, contamination '
+        'control, and sustainable systems, building toward environmental consulting, public '
+        'agencies, or graduate research.'
+    ),
+    'ut-austin-ethnic-studies-ba': (
+        'Undergraduates who want to study race, ethnicity, and power across communities through '
+        'history, culture, and social analysis. A foundation for advocacy, education, public '
+        'service, or graduate study in ethnic and area studies.'
+    ),
+    'ut-austin-european-studies-ba': (
+        'Undergraduates interested in the history, politics, languages, and cultures of Europe '
+        'who want an interdisciplinary regional focus and language study, with a pull to study '
+        'abroad. Preparation for international work, policy, or graduate study.'
+    ),
+    'ut-austin-exercise-science-bskin-and-health': (
+        'Students who want to study the physiology of exercise and human performance, building '
+        'the science foundation for careers in fitness, strength, and wellness or graduate study '
+        'in the health professions.'
+    ),
+    'ut-austin-finance-bba': (
+        'Undergraduates who want to understand how capital is raised, invested, and valued — '
+        'corporate finance, markets, and investments. Suited to entry-level roles in investment '
+        'banking, asset management, corporate finance, and financial analysis.'
+    ),
+    'ut-austin-finance-ms': (
+        'Quantitatively strong early-career applicants who want focused depth in valuation, '
+        'markets, investments, and financial modeling. A specialized path into investment '
+        'banking, asset management, corporate finance, and analyst roles — narrower and earlier '
+        'than an MBA.'
+    ),
+    'ut-austin-finance-phd': (
+        'Scholars pursuing rigorous research in asset pricing, corporate finance, and markets '
+        'through advanced theory and econometrics. The path to faculty positions and research '
+        'careers in finance.'
+    ),
+    'ut-austin-french-and-italian-french-ma': (
+        'Students who want advanced study of French language, literature, and culture, working '
+        'closely with texts and theory in French. A step toward doctoral study, translation, or '
+        'teaching and international careers.'
+    ),
+    'ut-austin-french-and-italian-french-phd': (
+        'Scholars pursuing original research on French and Francophone literature and culture who '
+        'want to write a dissertation grounded in deep linguistic and critical expertise. '
+        'Preparation for a faculty or research career.'
+    ),
+    'ut-austin-french-and-italian-italian-studies-ma': (
+        'Students who want advanced study of Italian language, literature, and culture, deepening '
+        'textual and critical expertise in Italian. A step toward doctoral study, translation, or '
+        'teaching and cultural work.'
+    ),
+    'ut-austin-french-and-italian-italian-studies-phd': (
+        'Scholars committed to original research on Italian literature and culture who want to '
+        'develop a dissertation rooted in textual and critical mastery of Italian. Preparation '
+        'for a faculty or research career in the field.'
+    ),
+    'ut-austin-french-studies-ba': (
+        'Undergraduates who want fluency in French alongside the literature, history, and culture '
+        'of the French-speaking world, ideally with time abroad. A foundation for international '
+        'work, translation, education, or graduate study.'
+    ),
+    'ut-austin-general-geology-bsgs': (
+        'Students fascinated by rocks, earth history, and the processes that shape the planet, '
+        'learning fieldwork and analysis, building toward geoscience careers in energy, '
+        'environment, or graduate study.'
+    ),
+    'ut-austin-geographical-sciences-bsenvirsci': (
+        "Undergraduates who want to study the earth's physical systems and human-environment "
+        'interaction using mapping, GIS, and spatial data. A foundation for work in environmental '
+        'analysis, planning, GIS, or graduate study in the geosciences.'
+    ),
+    'ut-austin-geography-ba': (
+        'Undergraduates interested in how people, places, and environments connect, using maps, '
+        'GIS, and spatial reasoning to study cities, regions, and landscapes. A foundation for '
+        'planning, environmental work, GIS, or graduate study.'
+    ),
+    'ut-austin-geography-ma': (
+        'Students who want advanced training in human or physical geography, GIS, and spatial '
+        'analysis to study places, environments, and societies. A step toward doctoral study or '
+        'work in planning, environmental analysis, or GIS.'
+    ),
+    'ut-austin-geography-phd': (
+        'Scholars pursuing original research in human-environment, physical, or spatial geography '
+        'who want to develop a dissertation using fieldwork and analytic methods. Preparation for '
+        'a faculty or research career.'
+    ),
+    'ut-austin-geological-sciences-ma': (
+        'Geoscientists deepening expertise in a focused earth-science area through coursework and '
+        'research, for advanced technical roles or as a step toward doctoral study.'
+    ),
+    'ut-austin-geological-sciences-ms': (
+        'Geoscientists specializing in a research area, from sedimentary systems to tectonics or '
+        'geophysics, for advanced roles in energy, environment, and applied earth science.'
+    ),
+    'ut-austin-geological-sciences-phd': (
+        'Researchers pursuing original work across the earth sciences, from deep-time processes '
+        'to modern earth systems, headed toward faculty positions, surveys, or industry research.'
+    ),
+    'ut-austin-geophysics-bsgs': (
+        "Undergraduates who use physics and math to image the earth's interior, seismic waves, "
+        'gravity, and magnetism, building toward roles in energy exploration, hazards, or '
+        'graduate research.'
+    ),
+    'ut-austin-geosciences-bags': (
+        'Students seeking a broad foundation across earth sciences with flexibility to explore '
+        'geology, environment, and resources, building toward varied geoscience careers, '
+        'teaching, or graduate study.'
+    ),
+    'ut-austin-geosystems-engineering-bsge': (
+        'Students drawn to engineering with the earth itself, the subsurface, groundwater, and '
+        'energy and mineral resources, blending geology with engineering toward roles in '
+        'resources, geotechnical work, or graduate study.'
+    ),
+    'ut-austin-geosystems-engineering-bsge-2': (
+        'Students who pair geology with engineering to study groundwater and subsurface '
+        'resources, learning hydrogeology and resource systems, headed toward roles in water, '
+        'environment, or energy.'
+    ),
+    'ut-austin-german-ba': (
+        'Undergraduates who want fluency in German and a grounding in the literature, history, '
+        'and culture of German-speaking Europe, ideally with study abroad. A foundation for '
+        'international work, translation, education, or graduate study.'
+    ),
+    'ut-austin-germanic-studies-ma': (
+        'Students who want advanced study of German language, literature, and culture, working '
+        'with texts and theory in German. A step toward doctoral study, translation, or teaching '
+        'and international careers.'
+    ),
+    'ut-austin-germanic-studies-phd': (
+        'Scholars committed to original research on German and Germanic literature and culture '
+        'who want to write a dissertation grounded in deep linguistic and critical expertise. '
+        'Preparation for a faculty or research career.'
+    ),
+    'ut-austin-global-policy-studies-mgps': (
+        'Students focused on international affairs, security, trade, and development who want '
+        'quantitative and regional training for careers in diplomacy, global NGOs, multilateral '
+        'institutions, or foreign-policy analysis.'
+    ),
+    'ut-austin-government-ba': (
+        'Undergraduates drawn to politics, institutions, law, and political theory who want to '
+        'analyze how power and policy work in the U.S. and abroad. A versatile foundation for '
+        'law, public service, campaigns, journalism, or graduate study.'
+    ),
+    'ut-austin-government-ma': (
+        'Students who want advanced training in political theory, institutions, and empirical '
+        'methods to deepen their analysis of politics and policy. A step toward doctoral study or '
+        'careers in policy, research, and public service.'
+    ),
+    'ut-austin-government-phd': (
+        'Scholars pursuing original research in political science across theory, American or '
+        'comparative politics, and international relations who want to write a dissertation. '
+        'Preparation for a faculty position or research career in policy and academia.'
+    ),
+    'ut-austin-health-and-society-ba': (
+        'Undergraduates curious about how culture, policy, economics, and inequality shape health '
+        'and medicine, who prefer a social-science lens over a lab one. Good preparation for '
+        'public health, health administration, advocacy, or graduate and professional study in '
+        'health fields.'
+    ),
+    'ut-austin-health-behavior-and-health-education-med': (
+        'Educators and practitioners focused on how to change health behavior through education '
+        'and programs, building applied skills for careers in community health, school health, '
+        'and wellness.'
+    ),
+    'ut-austin-health-behavior-and-health-education-ms': (
+        'Students ready to study the science of health behavior and program design with a '
+        'research emphasis, building methods and analytic skills for careers in public health or '
+        'doctoral study.'
+    ),
+    'ut-austin-health-behavior-and-health-education-phd': (
+        'Scholars conducting original research on the determinants of health behavior and how to '
+        'change it, preparing for careers in university faculty, research, and public health '
+        'leadership.'
+    ),
+    'ut-austin-health-promotion-and-behavioral-science-bskin-and-health': (
+        'Students focused on how behavior shapes health and how to design programs that help '
+        'people live healthier lives, preparing for community health, wellness, and public health '
+        'careers or graduate study.'
+    ),
+    'ut-austin-history-ba': (
+        'Undergraduates who want to investigate the past through primary sources, building skills '
+        'in research, argument, and writing across eras and regions. A foundation for law, '
+        'education, public history, journalism, or graduate study.'
+    ),
+    'ut-austin-history-ma': (
+        'Students who want advanced training in historical research, archival method, and '
+        'argument across regions and eras. A step toward doctoral study, teaching, public '
+        'history, or work in archives and education.'
+    ),
+    'ut-austin-history-phd': (
+        'Scholars committed to original archival research who want to write a dissertation, '
+        'contribute new interpretations of the past, and join historical scholarship. Preparation '
+        'for a faculty or research career.'
+    ),
+    'ut-austin-human-development-and-family-sciences-bsa': (
+        'Undergraduates interested in how individuals and families develop across the lifespan, '
+        'drawing on psychology and social science. A foundation for careers in child and family '
+        'services, education, or graduate study in counseling or development.'
+    ),
+    'ut-austin-human-development-and-family-sciences-ma': (
+        'Graduates advancing their study of development across the lifespan and family dynamics '
+        'through research and applied coursework. Preparation for doctoral study or specialized '
+        'roles in counseling, policy, and human services.'
+    ),
+    'ut-austin-human-development-and-family-sciences-phd': (
+        'Researchers investigating original questions about human development, relationships, and '
+        'family systems across the lifespan, aiming for funded doctoral training and careers in '
+        'academic research, policy, or applied science.'
+    ),
+    'ut-austin-human-dimensions-of-organizations-ba': (
+        'Undergraduates who want to understand how people behave inside organizations, drawing on '
+        'psychology, history, ethics, and rhetoric to read teams and leadership. A grounding for '
+        'management, HR, consulting, or further study in organizational behavior.'
+    ),
+    'ut-austin-human-dimensions-of-organizations-ma': (
+        'Working professionals and others who want to apply behavioral science, ethics, and the '
+        'humanities to leadership and organizational problems. Designed to sharpen judgment for '
+        'management, HR, and consulting roles rather than to lead to doctoral study.'
+    ),
+    'ut-austin-human-ecology-bsa': (
+        'Undergraduates interested in how people interact with their environments, resources, and '
+        'communities across the lifespan. A foundation for work in family services, public '
+        'programs, consumer and community organizations, or graduate study.'
+    ),
+    'ut-austin-humanities-ba': (
+        'Undergraduates who want to build their own interdisciplinary path across literature, '
+        'history, philosophy, and the arts rather than a single major. A broad foundation in '
+        'reading, writing, and analysis for careers in writing, education, law, or graduate '
+        'study.'
+    ),
+    'ut-austin-humanities-health-and-medicine-ma': (
+        'Students and clinicians who want to examine health, illness, and care through history, '
+        'ethics, literature, and cultural analysis. Preparation for work in healthcare, '
+        'bioethics, advocacy, or further professional and graduate study in health humanities.'
+    ),
+    'ut-austin-hydrology-and-water-resources-bsgs': (
+        'Undergraduates focused on water, where it moves, how it is stored, and how to manage it, '
+        'learning surface and groundwater science, building toward water-resource careers or '
+        'graduate study.'
+    ),
+    'ut-austin-iberian-and-latin-american-languages-and-cultures-ma': (
+        'Students who want advanced study of Spanish and Portuguese languages, literatures, and '
+        'cultures across Iberia and Latin America. A step toward doctoral study, translation, or '
+        'teaching and international work.'
+    ),
+    'ut-austin-iberian-and-latin-american-languages-and-cultures-phd': (
+        'Scholars pursuing original research on the literatures and cultures of the Spanish- and '
+        'Portuguese-speaking world who want to write a dissertation grounded in deep linguistic '
+        'and critical expertise. Preparation for a faculty or research career.'
+    ),
+    'ut-austin-informatics-ba': (
+        'Undergraduates who want to study how people, data, and technology intersect, combining '
+        'design, analysis, and human-centered computing for roles in UX research, data, or '
+        'product, or graduate study in information science.'
+    ),
+    'ut-austin-information-risk-and-operations-management-ms': (
+        'Early-career professionals who want graduate depth in operations, information systems, '
+        'and risk analytics — optimizing processes and decisions with data. Suited to roles in '
+        'operations analysis, supply-chain analytics, and information-driven decision support.'
+    ),
+    'ut-austin-information-risk-and-operations-management-phd': (
+        'Scholars researching operations, information systems, and decision sciences using '
+        'quantitative modeling and empirical methods. The path to faculty positions and research '
+        'careers in operations and information management.'
+    ),
+    'ut-austin-information-security-and-privacy-ms': (
+        'Professionals focused on protecting data and digital systems who want technical and '
+        'policy training in cybersecurity, risk, and privacy law for careers as security '
+        'analysts, privacy officers, or compliance leads.'
+    ),
+    'ut-austin-information-studies-ms': (
+        'Students drawn to organizing, preserving, and connecting people to information across '
+        'libraries, archives, data, and digital collections, preparing for careers as librarians, '
+        'archivists, UX researchers, or data curators.'
+    ),
+    'ut-austin-information-studies-phd': (
+        'Scholars investigating how information is created, organized, and used in society, '
+        'developing the research foundation for faculty positions or advanced work in libraries, '
+        'archives, and information policy.'
+    ),
+    'ut-austin-information-technology-and-management-ms': (
+        'Early-career professionals bridging technology and business who want graduate depth in '
+        'IT strategy, systems, and data management. Suited to roles in technology consulting, IT '
+        'management, and product or systems leadership.'
+    ),
+    'ut-austin-interior-design-bsid': (
+        'Undergraduates who shape how interior spaces look, function, and feel, learning spatial '
+        'design, materials, lighting, and human factors, building toward professional '
+        'interior-design practice and certification.'
+    ),
+    'ut-austin-interior-design-mid': (
+        'Students entering interior design at the graduate level, developing spatial design, '
+        'materials, and human-centered methods toward professional practice and certification.'
+    ),
+    'ut-austin-international-business-bba': (
+        'Globally-minded undergraduates who pair a business core with cross-border trade, foreign '
+        'markets, and cultural fluency, often alongside language study. A strong start for roles '
+        'in global operations, trade, or multinational firms with international exposure.'
+    ),
+    'ut-austin-international-relations-and-global-studies-ba': (
+        'Undergraduates drawn to world politics, economics, security, and culture across borders '
+        'who want an interdisciplinary view and the pull to study abroad and learn a language. '
+        'Preparation for foreign service, NGOs, policy, or graduate study in international '
+        'affairs.'
+    ),
+    'ut-austin-italian-studies-ba': (
+        "Undergraduates drawn to the Italian language and to Italy's literature, art, and history "
+        'who want language fluency paired with cultural study and time abroad. Preparation for '
+        'work in the arts, education, international fields, or graduate study.'
+    ),
+    'ut-austin-jazz-bmusic': (
+        'Players committed to the jazz tradition — improvisation, the standards, combo and '
+        'big-band performance — who want intensive ensemble work and individual lessons, '
+        'preparing for performing careers or graduate study.'
+    ),
+    'ut-austin-jewish-studies-ba': (
+        'Undergraduates interested in Jewish history, religion, languages, and culture across '
+        'time and place who want an interdisciplinary lens. A foundation for education, communal '
+        'and nonprofit work, religious leadership, or graduate study.'
+    ),
+    'ut-austin-journalism-and-media-ma': (
+        'Working journalists and graduates who want advanced study of journalism practice and '
+        "media's role in society, with research and reporting depth. Suited to specialized "
+        'reporting, editorial leadership, and media-research roles, or further doctoral study.'
+    ),
+    'ut-austin-journalism-and-media-phd': (
+        'Scholars researching journalism, media systems, and their effects on society through '
+        'rigorous empirical and theoretical methods. The path to faculty positions and research '
+        'careers in journalism and media studies.'
+    ),
+    'ut-austin-journalism-bj': (
+        'Undergraduates committed to reporting and storytelling across print, digital, and '
+        'broadcast — researching, interviewing, writing, and verifying. A foundation for careers '
+        'as reporters, editors, and multimedia journalists in newsrooms and digital outlets.'
+    ),
+    'ut-austin-kinesiology-med': (
+        'Educators and practitioners who want advanced, applied study of human movement, '
+        'exercise, and physical activity, building skills for teaching, coaching, and program '
+        'roles in health and fitness settings.'
+    ),
+    'ut-austin-kinesiology-ms': (
+        'Students ready to study the science of human movement and exercise with a research '
+        'emphasis, building laboratory and analytic skills toward careers in exercise science or '
+        'doctoral study.'
+    ),
+    'ut-austin-kinesiology-phd': (
+        'Scholars pursuing original research on human movement, exercise physiology, and physical '
+        'activity, preparing for careers in university teaching and scientific research.'
+    ),
+    'ut-austin-landscape-architecture-mla': (
+        'Students pursuing the accredited path to becoming a landscape architect, designing '
+        'parks, public spaces, and ecological systems toward licensure and professional practice.'
+    ),
+    'ut-austin-landscape-architecture-ms': (
+        'Designers and scholars focused on the research side of landscape, ecology, climate '
+        'adaptation, and design theory, for advanced or research-oriented landscape work and '
+        'doctoral preparation.'
+    ),
+    'ut-austin-latin-american-studies-ba': (
+        'Undergraduates drawn to the history, politics, languages, and cultures of Latin America '
+        'who want an interdisciplinary regional focus with language study and time abroad. '
+        'Preparation for international work, policy, or graduate study.'
+    ),
+    'ut-austin-latin-american-studies-ma': (
+        "Students who want advanced, interdisciplinary study of Latin America's history, "
+        'politics, economies, and cultures, deepening regional and language expertise. A step '
+        'toward doctoral study, international work, or policy careers.'
+    ),
+    'ut-austin-latin-american-studies-phd': (
+        'Scholars pursuing original, interdisciplinary research on Latin America who want to '
+        'write a dissertation drawing on fieldwork, languages, and regional expertise. '
+        'Preparation for a faculty or research career in Latin American studies.'
+    ),
+    'ut-austin-law-jd': (
+        'Aspiring lawyers ready for rigorous training in legal reasoning, writing, and doctrine '
+        'across three years, preparing to sit for the bar and enter practice, clerkships, or '
+        'public service.'
+    ),
+    'ut-austin-law-llm': (
+        'Practicing and foreign-trained lawyers seeking advanced or specialized legal study who '
+        'want to deepen expertise in a chosen area of law, often to strengthen their practice or '
+        'pursue U.S. bar eligibility.'
+    ),
+    'ut-austin-linguistics-ba': (
+        'Undergraduates fascinated by how language works, studying its sounds, structure, '
+        'meaning, and change with both analytic and experimental methods. A foundation for work '
+        'in language technology, teaching, speech fields, or graduate study.'
+    ),
+    'ut-austin-linguistics-ma': (
+        'Students who want advanced training in the structure of language, working across '
+        'phonology, syntax, semantics, and experimental or computational methods. A step toward '
+        'doctoral study or work in language technology and speech fields.'
+    ),
+    'ut-austin-linguistics-phd': (
+        'Scholars pursuing original research on the nature of language who want to write a '
+        'dissertation using theoretical, experimental, or computational methods. Preparation for '
+        'a faculty or research career in linguistics and language science.'
+    ),
+    'ut-austin-management-bba': (
+        'Undergraduates focused on leading people and organizations — strategy, organizational '
+        'behavior, entrepreneurship, and team leadership. A foundation for management-trainee '
+        'tracks, HR and operations roles, consulting, or building a venture of their own.'
+    ),
+    'ut-austin-management-information-systems-bba': (
+        'Undergraduates at the intersection of business and technology — databases, systems '
+        'design, and how IT drives operations and strategy. Fits future business systems '
+        'analysts, IT consultants, and technology-product roles that bridge users and developers.'
+    ),
+    'ut-austin-management-ms': (
+        'Recent graduates and early-career professionals who want a focused graduate grounding in '
+        'management, strategy, and organizational leadership before significant work experience. '
+        'A role-specific start for analyst, coordinator, and leadership-track positions.'
+    ),
+    'ut-austin-management-phd': (
+        'Scholars researching strategy, organizational behavior, and entrepreneurship through '
+        'theory and empirical study. The path to faculty positions and academic research careers '
+        'in management.'
+    ),
+    'ut-austin-marine-science-ms': (
+        'Graduates studying ocean systems, marine organisms, and coastal processes who want '
+        'advanced coursework and field or lab research. A step toward doctoral study or careers '
+        'in marine resource management and environmental science.'
+    ),
+    'ut-austin-marine-science-phd': (
+        'Researchers pursuing original questions in oceanography, marine biology, and coastal '
+        'ecosystems who want funded doctoral training, aiming for academic, governmental, or '
+        'research-institute careers in marine science.'
+    ),
+    'ut-austin-marketing-bba': (
+        'Undergraduates who want to understand customers and demand — branding, consumer '
+        'behavior, digital marketing, and market research. Suited to entry-level roles in brand '
+        'management, advertising, marketing analytics, and sales.'
+    ),
+    'ut-austin-marketing-ms': (
+        'Early-career applicants who want focused graduate depth in consumer behavior, brand '
+        'strategy, digital marketing, and analytics. Suited to role-specific paths in brand '
+        'management, marketing analytics, and market research, ahead of broad managerial '
+        'experience.'
+    ),
+    'ut-austin-marketing-phd': (
+        'Scholars researching consumer behavior, marketing strategy, and quantitative modeling of '
+        'markets through rigorous empirical methods. The path to faculty positions and research '
+        'careers in marketing.'
+    ),
+    'ut-austin-materials-science-and-engineering-ms': (
+        'Engineers specializing in how the structure of metals, polymers, ceramics, and '
+        'semiconductors shapes their properties, for advanced roles in materials development, '
+        'electronics, or manufacturing.'
+    ),
+    'ut-austin-materials-science-and-engineering-phd': (
+        'Researchers investigating the fundamentals of materials behavior, from atomic structure '
+        'to new functional materials, headed toward faculty positions or industrial research '
+        'labs.'
+    ),
+    'ut-austin-mathematics-ba': (
+        'Undergraduates who enjoy quantitative reasoning and want a flexible grounding in '
+        'calculus, proof, and abstraction across pure and applied areas. Strong preparation for '
+        'graduate study, quantitative roles, or teaching.'
+    ),
+    'ut-austin-mathematics-ma': (
+        'Graduates deepening their command of analysis, algebra, and applied mathematics through '
+        'advanced coursework. Preparation for doctoral study, teaching, or quantitative roles '
+        'that demand rigorous mathematical training.'
+    ),
+    'ut-austin-mathematics-phd': (
+        'Researchers pursuing original work in pure or applied mathematics who want funded '
+        'doctoral training in fields such as analysis, topology, or number theory, aiming for '
+        'faculty positions or research careers.'
+    ),
+    'ut-austin-mechanical-engineering-bsme': (
+        'Students who like to design and analyze machines, mechanisms, and energy systems, '
+        'grounded in mechanics, thermodynamics, and manufacturing, building toward broad '
+        'early-career roles across many industries or graduate study.'
+    ),
+    'ut-austin-mechanical-engineering-ms': (
+        'Engineers deepening expertise in a mechanical focus, thermal systems, dynamics, '
+        'manufacturing, or design, for advanced engineering roles across energy, automotive, and '
+        'product industries.'
+    ),
+    'ut-austin-mechanical-engineering-phd': (
+        'Researchers pursuing original work in areas from heat transfer to robotics and advanced '
+        'manufacturing, headed toward faculty positions or industrial R&D leadership.'
+    ),
+    'ut-austin-medical-laboratory-science-bsmedlabsci': (
+        'Students drawn to diagnostic testing and the laboratory science behind clinical medicine '
+        'who want hands-on training in clinical chemistry, microbiology, and hematology. A path '
+        'toward certification and work as a medical laboratory scientist.'
+    ),
+    'ut-austin-medicine-md': (
+        'Future physicians ready for the full arc of medical training, from foundational science '
+        'to clinical rotations, preparing for licensing exams, residency, and a career in patient '
+        'care across the specialties.'
+    ),
+    'ut-austin-mexican-american-and-latina-o-studies-ba': (
+        'Undergraduates who want to study the history, culture, politics, and experience of '
+        'Mexican American and Latina/o communities through an interdisciplinary lens. A '
+        'foundation for advocacy, education, public service, or graduate study.'
+    ),
+    'ut-austin-mexican-american-and-latina-o-studies-ma': (
+        'Students who want advanced, interdisciplinary study of Mexican American and Latina/o '
+        'histories, cultures, and politics, building research and critical skills. A step toward '
+        'doctoral study, teaching, or community-engaged professional work.'
+    ),
+    'ut-austin-mexican-american-and-latina-o-studies-phd': (
+        'Scholars committed to original research on Mexican American and Latina/o communities who '
+        'want to write a dissertation and shape scholarly debates. Preparation for a faculty or '
+        'research career in the field.'
+    ),
+    'ut-austin-microbiology-ma': (
+        'Graduates advancing their study of bacteria, viruses, and microbial systems through '
+        'coursework and laboratory research. A step toward doctoral study or research roles in '
+        'biotech, clinical, and public health labs.'
+    ),
+    'ut-austin-microbiology-phd': (
+        'Researchers pursuing original questions in microbial genetics, pathogenesis, and '
+        'physiology who want funded doctoral training at the bench, aiming for academic, biotech, '
+        'or public health research careers.'
+    ),
+    'ut-austin-middle-eastern-languages-and-cultures-ma': (
+        'Students who want advanced training in the languages, literatures, and cultures of the '
+        'Middle East, working closely with primary texts. A step toward doctoral study, '
+        'translation, or teaching and international work.'
+    ),
+    'ut-austin-middle-eastern-languages-and-cultures-phd': (
+        'Scholars pursuing original research on Middle Eastern languages, literatures, and '
+        'cultures who want to write a dissertation rooted in deep textual and linguistic '
+        'expertise. Preparation for a faculty or research career.'
+    ),
+    'ut-austin-middle-eastern-studies-ba': (
+        'Undergraduates curious about the Middle East and North Africa who want an '
+        'interdisciplinary, modern lens on the region paired with language study and a pull to '
+        'study abroad. Preparation for international work, policy, journalism, or graduate study.'
+    ),
+    'ut-austin-middle-eastern-studies-ma': (
+        'Students who want advanced, interdisciplinary study of the modern Middle East across '
+        'politics, history, and society, with strong language preparation. A step toward doctoral '
+        'study, policy work, journalism, or international careers.'
+    ),
+    'ut-austin-music-bamusic': (
+        'Students who want a broad, conservatory-grade grounding in performance, theory, and '
+        'history without specializing as narrowly, building musicianship toward performance, '
+        'teaching, or further study.'
+    ),
+    'ut-austin-music-conducting-dma': (
+        'Conductors pursuing the highest professional degree, refining interpretation and '
+        'ensemble leadership at an advanced level, preparing for careers leading orchestras, '
+        'choirs, or bands and teaching conducting.'
+    ),
+    'ut-austin-music-conducting-mm': (
+        'Conductors ready to develop score study, rehearsal technique, and podium command with an '
+        'ensemble, advancing toward professional conducting positions or doctoral study.'
+    ),
+    'ut-austin-music-dma': (
+        'Performers and conductors pursuing the highest professional degree in music, pairing '
+        'artistry at the recital level with scholarly depth, preparing for solo and ensemble '
+        'careers and college-level teaching.'
+    ),
+    'ut-austin-music-mm': (
+        'Musicians ready for advanced study in their concentration — performance, theory, or '
+        "related areas — refining artistry and scholarship beyond the bachelor's, toward "
+        'professional careers or doctoral work.'
+    ),
+    'ut-austin-music-music-and-human-learning-dma': (
+        'Experienced music educators and performers pursuing the highest applied degree in music '
+        'learning, uniting artistry with research on teaching, preparing for leadership in '
+        'schools and college-level instruction.'
+    ),
+    'ut-austin-music-music-and-human-learning-mm': (
+        'Music educators ready to deepen the study of how people learn music, pairing '
+        'musicianship with pedagogy and research methods, preparing for advanced teaching roles '
+        'or doctoral study.'
+    ),
+    'ut-austin-music-music-and-human-learning-phd': (
+        'Scholars researching how music is taught and learned across settings, building original '
+        'studies in music education, preparing for university faculty and research careers.'
+    ),
+    'ut-austin-music-performance-bmusic': (
+        'Performers seeking conservatory-level training on their instrument or voice, ready for '
+        'daily practice, lessons, and ensemble work, headed toward professional performance or '
+        'graduate music study.'
+    ),
+    'ut-austin-music-phd': (
+        "Musicologists and theorists pursuing original scholarly research on music's history, "
+        'structure, and meaning, preparing for careers in university teaching and academic '
+        'research.'
+    ),
+    'ut-austin-music-studies-bmusic': (
+        'Students preparing to teach music in schools, pairing strong musicianship with the '
+        'methods of music education and field experience, working toward classroom certification '
+        'and a K-12 music career.'
+    ),
+    'ut-austin-neuroscience-bsa': (
+        'Undergraduates interested in the brain, nervous system, and the biology of behavior who '
+        'want grounding in molecular, cellular, and systems neuroscience. Preparation for health '
+        'professions, graduate research, or biotech.'
+    ),
+    'ut-austin-neuroscience-ms': (
+        'Graduates deepening their grounding in the molecular, cellular, and systems biology of '
+        'the brain through coursework and laboratory research. Preparation for doctoral study or '
+        'research roles in biotech and the health sciences.'
+    ),
+    'ut-austin-neuroscience-phd': (
+        'Researchers pursuing original questions about how the brain and nervous system work, '
+        'from molecules to circuits to behavior, who want funded doctoral training and academic, '
+        'clinical-research, or biotech careers.'
+    ),
+    'ut-austin-nursing-bsn': (
+        'Students entering professional nursing who want clinical training in patient care across '
+        'the lifespan, preparing to sit for the NCLEX-RN licensure exam and begin practice in '
+        'hospitals, clinics, and community settings.'
+    ),
+    'ut-austin-nursing-dnp': (
+        'Experienced nurses moving into the highest level of clinical practice, building advanced '
+        'expertise to lead patient care, translate evidence into practice, and serve as nurse '
+        'practitioners or clinical leaders.'
+    ),
+    'ut-austin-nursing-ms': (
+        'Registered nurses ready to specialize and lead, deepening clinical and systems expertise '
+        'to advance into roles such as nurse educator, administrator, or specialty practice '
+        'within healthcare organizations.'
+    ),
+    'ut-austin-nursing-phd': (
+        'Nurses pursuing a research career who want training in nursing science and methodology '
+        'to generate evidence on health and care, preparing for faculty positions and funded '
+        'research programs.'
+    ),
+    'ut-austin-nutrition-bsa': (
+        'Students drawn to how food, metabolism, and diet shape health who want grounding in '
+        'biochemistry, physiology, and nutritional science. Preparation for dietetics, health '
+        'professions, food industry roles, or graduate study.'
+    ),
+    'ut-austin-nutritional-sciences-ms': (
+        'Graduates advancing their study of metabolism, diet, and health through research and '
+        'specialized coursework. Preparation for doctoral study, clinical and public health '
+        'nutrition, or research roles in food and health industries.'
+    ),
+    'ut-austin-nutritional-sciences-phd': (
+        'Researchers investigating original questions in metabolism, nutrition, and chronic '
+        'disease who want funded doctoral training, aiming for academic, clinical-research, or '
+        'public health science careers.'
+    ),
+    'ut-austin-operations-research-and-industrial-engineering-ms': (
+        'Students who want to optimize complex systems and decisions, learning optimization, '
+        'probability, and analytics for supply chains, logistics, and operations roles in '
+        'industry and consulting.'
+    ),
+    'ut-austin-operations-research-and-industrial-engineering-phd': (
+        'Researchers developing new theory and methods in optimization, stochastic systems, and '
+        'decision science, headed toward faculty positions or advanced analytics research roles.'
+    ),
+    'ut-austin-petroleum-and-geosystems-engineering-ms': (
+        'Engineers specializing in subsurface energy, reservoir engineering, drilling, and '
+        'increasingly geothermal and carbon storage, for advanced technical roles in the evolving '
+        'energy sector.'
+    ),
+    'ut-austin-petroleum-and-geosystems-engineering-phd': (
+        'Researchers pursuing original work on subsurface flow, reservoir physics, and '
+        'energy-transition technologies like carbon storage, headed toward faculty positions or '
+        'advanced energy R&D.'
+    ),
+    'ut-austin-petroleum-engineering-bspe': (
+        'Undergraduates interested in extracting energy from the subsurface, reservoir behavior, '
+        'drilling, and production systems, building toward roles in energy operators, service '
+        'firms, or graduate study in energy engineering.'
+    ),
+    'ut-austin-pharmaceutical-sciences-ms': (
+        'Students drawn to the science behind drug discovery, formulation, and action who want '
+        'laboratory and research training for careers in the pharmaceutical industry or a path '
+        'toward doctoral study.'
+    ),
+    'ut-austin-pharmaceutical-sciences-phd': (
+        'Researchers committed to understanding how drugs are designed, delivered, and act in the '
+        'body, building the scientific depth for careers in academic research, industry R&D, or '
+        'regulatory science.'
+    ),
+    'ut-austin-pharmacy-pharmd': (
+        'Future pharmacists ready for rigorous training in medications, pharmacology, and patient '
+        'care, preparing for licensure exams and practice in community, hospital, clinical, or '
+        'industry pharmacy settings.'
+    ),
+    'ut-austin-philosophy-ba': (
+        'Undergraduates drawn to questions of knowledge, ethics, logic, and reality who want to '
+        'build rigorous argument and analysis. A versatile foundation for law, policy, technology '
+        'ethics, or graduate study in philosophy.'
+    ),
+    'ut-austin-philosophy-ma': (
+        'Students who want advanced training in philosophical analysis across ethics, logic, '
+        'metaphysics, and the history of thought. A step toward doctoral study or careers in law, '
+        'policy, and fields that reward rigorous reasoning.'
+    ),
+    'ut-austin-philosophy-phd': (
+        'Scholars committed to original philosophical research who want to write a dissertation, '
+        'develop a specialization, and contribute to philosophical debate. Preparation for a '
+        'faculty or research career in philosophy.'
+    ),
+    'ut-austin-physical-culture-and-sports-studies-bskin-and-health': (
+        'Students drawn to the history, culture, and social meaning of sport and physical '
+        'activity, building critical and research skills toward careers in sport, education, '
+        'media, or graduate study.'
+    ),
+    'ut-austin-physics-ba': (
+        'Undergraduates drawn to the fundamental laws governing matter, energy, and motion who '
+        'want a flexible foundation in mechanics, electromagnetism, and quantum theory. A '
+        'starting point for graduate study, engineering, or quantitative careers.'
+    ),
+    'ut-austin-physics-ma': (
+        'Graduates deepening their command of theoretical and experimental physics through '
+        'advanced coursework and research. A step toward doctoral study or technical roles in '
+        'industry, engineering, and quantitative fields.'
+    ),
+    'ut-austin-physics-phd': (
+        'Researchers pursuing original work in fields such as condensed matter, particle, or '
+        'astrophysics who want funded doctoral training, aiming for faculty positions or research '
+        'careers in national labs and industry.'
+    ),
+    'ut-austin-plan-ii-honors-program-ba': (
+        'Intellectually ambitious undergraduates who want a small, cross-disciplinary honors '
+        'curriculum spanning literature, science, philosophy, and the arts, capped by a thesis. A '
+        'foundation for graduate, law, medical, or professional school and demanding careers.'
+    ),
+    'ut-austin-plant-biology-ma': (
+        'Graduates advancing their study of plant physiology, genetics, and ecology through '
+        'coursework and laboratory or field research. A step toward doctoral study or careers in '
+        'agriculture, conservation, and biotech.'
+    ),
+    'ut-austin-plant-biology-phd': (
+        'Researchers pursuing original questions in plant genetics, development, and ecology who '
+        'want funded doctoral training, aiming for academic, agricultural-research, or biotech '
+        'careers.'
+    ),
+    'ut-austin-psychology-ba': (
+        'Undergraduates curious about the mind and behavior who want grounding in research '
+        'methods, statistics, and the science of cognition, development, and social life. A '
+        'foundation for counseling, human services, research, or graduate and professional study.'
+    ),
+    'ut-austin-psychology-ma': (
+        'Students who want advanced training in psychological theory, research design, and '
+        'statistics across cognitive, social, or developmental areas. A step toward doctoral '
+        'study or applied research and assessment roles.'
+    ),
+    'ut-austin-psychology-phd': (
+        'Scholars committed to original research on mind and behavior who want to design studies, '
+        'write a dissertation, and contribute to psychological science. Preparation for a '
+        'faculty, research, or scientific career.'
+    ),
+    'ut-austin-public-affairs-bapubaff': (
+        'Undergraduates curious about how government, policy, and public institutions shape '
+        'everyday life, blending political analysis with ethics and management to prepare for '
+        'entry roles in agencies, campaigns, or nonprofits, or graduate study in policy.'
+    ),
+    'ut-austin-public-affairs-mpaff': (
+        'Career changers and analysts drawn to evidence-based policy who want grounding in '
+        'economics, statistics, and management for leadership roles across government, '
+        'nonprofits, and advocacy organizations.'
+    ),
+    'ut-austin-public-health-bspublichealth': (
+        'Students focused on disease prevention, health behavior, and population well-being who '
+        'want grounding in epidemiology, biostatistics, and health systems. Preparation for '
+        'community health roles, public agencies, or graduate work in public health.'
+    ),
+    'ut-austin-public-leadership-mpl': (
+        'Working professionals already steering teams in government or civic organizations who '
+        'want to sharpen leadership, management, and policy judgment while staying in their roles '
+        'and advancing toward senior public-sector positions.'
+    ),
+    'ut-austin-public-policy-phd': (
+        'Researchers committed to studying how policies are designed, implemented, and evaluated, '
+        'building the methodological depth for careers in academia, think tanks, or high-level '
+        'government research.'
+    ),
+    'ut-austin-public-relations-bspr': (
+        'Undergraduates focused on reputation and messaging — media relations, strategic '
+        'communication, and managing how organizations are perceived. A start for roles in PR '
+        'agencies, corporate communications, and nonprofit or public-affairs communication.'
+    ),
+    'ut-austin-race-indigeneity-and-migration-ba': (
+        'Undergraduates who want to study how race, indigeneity, colonialism, and migration shape '
+        'societies, drawing on history, sociology, and cultural analysis. A foundation for '
+        'advocacy, public policy, education, or graduate study in related fields.'
+    ),
+    'ut-austin-radio-television-film-bsrtf': (
+        'Undergraduates drawn to screen storytelling — production, screenwriting, and the study '
+        'of film, television, and media. A foundation for entry-level roles in production, '
+        'editing, and development across film, TV, and streaming.'
+    ),
+    'ut-austin-radio-television-film-ma': (
+        'Graduates who want advanced study of media history, theory, and criticism across film, '
+        'television, and digital media. Suited to research, teaching, and media-analysis roles, '
+        'or a step toward doctoral work in media studies.'
+    ),
+    'ut-austin-radio-television-film-mfa': (
+        'Artists pursuing the terminal degree in screen production — directing, screenwriting, '
+        'and producing original film and media work. Built for those developing a professional '
+        'creative portfolio toward careers as filmmakers, writers, and producers.'
+    ),
+    'ut-austin-radio-television-film-phd': (
+        'Scholars researching film, television, and media through critical theory, history, and '
+        'cultural analysis. The path to faculty positions and academic research careers in media '
+        'studies.'
+    ),
+    'ut-austin-religious-studies-ba': (
+        "Undergraduates who want to study the world's religious traditions, texts, and practices "
+        'analytically across cultures and history. A foundation for education, nonprofit and '
+        'communal work, law, or graduate study in religion.'
+    ),
+    'ut-austin-religious-studies-ma': (
+        'Students who want advanced, analytic study of religious traditions, texts, and practices '
+        'across cultures and history. A step toward doctoral study, teaching, or careers in '
+        'nonprofit, communal, and public-facing work.'
+    ),
+    'ut-austin-religious-studies-phd': (
+        'Scholars pursuing original research on religious traditions and their texts and contexts '
+        'who want to write a dissertation and join scholarly debates. Preparation for a faculty '
+        'or research career in religious studies.'
+    ),
+    'ut-austin-rhetoric-and-writing-ba': (
+        'Undergraduates who want to understand and practice persuasion, argument, and writing '
+        'across media, analyzing how language shapes audiences. A foundation for careers in '
+        'communications, editing, law, content, or graduate study.'
+    ),
+    'ut-austin-rhetoric-and-writing-studies-ma': (
+        'Students who want advanced study of rhetoric, composition, and the theory and teaching '
+        'of writing across media. A step toward doctoral study, teaching writing, or careers in '
+        'communications and editorial work.'
+    ),
+    'ut-austin-rhetoric-and-writing-studies-phd': (
+        'Scholars pursuing original research in rhetoric and writing studies who want to write a '
+        'dissertation and contribute to the theory and pedagogy of writing. Preparation for a '
+        'faculty or research career, including writing-program leadership.'
+    ),
+    'ut-austin-russian-east-european-and-eurasian-studies-ba': (
+        'Undergraduates interested in the history, politics, languages, and cultures of Russia, '
+        'Eastern Europe, and Eurasia who want an interdisciplinary regional focus with language '
+        'study. Preparation for international work, policy, or graduate study.'
+    ),
+    'ut-austin-russian-east-european-and-eurasian-studies-ma': (
+        'Students who want advanced, interdisciplinary study of Russia, Eastern Europe, and '
+        'Eurasia across history, politics, and culture, with strong language preparation. A step '
+        'toward doctoral study, policy work, or international careers.'
+    ),
+    'ut-austin-science-technology-engineering-and-mathematics-education-ma': (
+        'Educators ready to deepen how STEM subjects are taught and learned, pairing content with '
+        'research on instruction, preparing for advanced teaching roles or doctoral study.'
+    ),
+    'ut-austin-science-technology-engineering-and-mathematics-education-med': (
+        'STEM teachers who want practice-focused study of how to teach science, technology, '
+        'engineering, and mathematics more effectively, building expertise for instructional '
+        'leadership and specialist roles.'
+    ),
+    'ut-austin-science-technology-engineering-and-mathematics-education-phd': (
+        'Scholars conducting original research on how STEM subjects are learned and taught, '
+        'building studies that shape curriculum and practice, preparing for university faculty '
+        'and research careers.'
+    ),
+    'ut-austin-semiconductor-science-and-engineering-ms': (
+        'Engineers focused on the science and fabrication of semiconductor devices, from '
+        'materials and physics to processing, headed toward roles in chip design, fabrication, '
+        'and the semiconductor industry.'
+    ),
+    'ut-austin-social-work-bsw': (
+        'Undergraduates committed to helping individuals, families, and communities through '
+        'direct service and advocacy, building practice and ethics foundations for entry-level '
+        'social work or graduate study toward licensure.'
+    ),
+    'ut-austin-social-work-ms': (
+        'Students preparing for professional social work practice in clinical, community, or '
+        'policy settings, developing the skills and supervised experience needed to pursue '
+        'clinical licensure and serve vulnerable populations.'
+    ),
+    'ut-austin-social-work-phd': (
+        'Scholars studying social problems, interventions, and welfare policy who want research '
+        'and methodological training for faculty careers or leadership in research-driven '
+        'social-service organizations.'
+    ),
+    'ut-austin-sociology-ba': (
+        'Undergraduates who want to study how social structures, institutions, and inequality '
+        'shape human life, using both data and theory. A foundation for research, public policy, '
+        'social services, or graduate study in sociology.'
+    ),
+    'ut-austin-sociology-ma': (
+        'Students who want advanced training in sociological theory and research methods to study '
+        'social structures, institutions, and inequality. A step toward doctoral study or careers '
+        'in research, policy, and social analysis.'
+    ),
+    'ut-austin-sociology-phd': (
+        'Scholars committed to original research on social life and inequality who want to design '
+        'studies, write a dissertation, and contribute to sociological knowledge. Preparation for '
+        'a faculty or research career.'
+    ),
+    'ut-austin-spanish-ba': (
+        'Undergraduates who want fluency in Spanish alongside the literature and cultures of '
+        'Spain and Latin America, ideally with time abroad. A foundation for education, '
+        'international work, translation, or graduate study.'
+    ),
+    'ut-austin-special-education-edd': (
+        'Experienced special educators pursuing the practice-focused doctorate, applying research '
+        'to the real challenges of serving students with disabilities, preparing for leadership '
+        'and specialist roles.'
+    ),
+    'ut-austin-special-education-ma': (
+        'Educators ready to deepen the study of how to teach students with disabilities, pairing '
+        'research with evidence-based practice, preparing for specialist roles or doctoral study.'
+    ),
+    'ut-austin-special-education-med': (
+        'Teachers preparing to serve students with disabilities, building practice-focused '
+        'expertise and, where applicable, certification, to lead inclusive and specialized '
+        'classrooms.'
+    ),
+    'ut-austin-special-education-phd': (
+        'Scholars researching how students with disabilities learn and how to teach them '
+        'effectively, building original studies that shape practice and policy, preparing for '
+        'university faculty and research careers.'
+    ),
+    'ut-austin-speech-language-and-hearing-sciences-bsslh': (
+        'Undergraduates interested in human communication and its disorders — speech, language, '
+        'and hearing across the lifespan. The pre-professional foundation for graduate study '
+        'toward becoming a speech-language pathologist or audiologist.'
+    ),
+    'ut-austin-speech-language-and-hearing-sciences-ms': (
+        'Students pursuing the graduate clinical training required to practice speech-language '
+        'pathology — assessing and treating speech, language, and swallowing disorders. The '
+        'professional path to becoming a licensed, certified speech-language pathologist.'
+    ),
+    'ut-austin-speech-language-and-hearing-sciences-phd': (
+        'Scholars researching the science of human communication and its disorders — speech, '
+        'language, and hearing — through rigorous experimental methods. The path to faculty '
+        'positions and research careers in communication sciences and disorders.'
+    ),
+    'ut-austin-sport-management-bskin-and-health': (
+        'Students who want to run the business side of sport — operations, marketing, finance, '
+        'and event management — building the foundation for careers with teams, athletic '
+        'programs, and sport organizations.'
+    ),
+    'ut-austin-statistics-and-data-science-bssds': (
+        'Students who enjoy working with data, probability, and inference and want grounding in '
+        'statistical modeling, computing, and machine learning. Strong preparation for analyst '
+        'and data science roles or graduate study.'
+    ),
+    'ut-austin-statistics-ms': (
+        'Graduates building advanced skills in statistical theory, modeling, and computation for '
+        'analyzing complex data. Preparation for doctoral study or quantitative roles in '
+        'industry, government, and research.'
+    ),
+    'ut-austin-statistics-phd': (
+        'Researchers pursuing original work in statistical theory and methodology, from inference '
+        'to computation, who want funded doctoral training, aiming for faculty positions or '
+        'research roles in industry and government.'
+    ),
+    'ut-austin-studio-art-ba': (
+        'Makers who want to build a body of work across drawing, painting, sculpture, or new '
+        'media while grounding studio practice in critique and art history. An undergraduate '
+        'foundation for a practicing artist or BFA/MFA study.'
+    ),
+    'ut-austin-studio-art-mfa': (
+        'Artists ready for the terminal studio degree — intensive, self-directed practice and '
+        'critique toward a mature body of work — preparing for an exhibiting career and '
+        'college-level teaching.'
+    ),
+    'ut-austin-supply-chain-management-bba': (
+        'Undergraduates interested in how goods and information move — sourcing, logistics, '
+        'inventory, and operations from supplier to customer. A start for roles in procurement, '
+        'logistics planning, operations analysis, and supply-chain coordination.'
+    ),
+    'ut-austin-sustainability-studies-ba': (
+        'Undergraduates who want to address environmental and social sustainability through an '
+        'interdisciplinary mix of science, policy, and ethics. Good preparation for work in '
+        'environmental nonprofits, corporate sustainability, government, or graduate study.'
+    ),
+    'ut-austin-technology-commercialization-ms': (
+        'Working professionals, engineers, and entrepreneurs who want to turn innovations into '
+        'ventures — intellectual property, business models, and bringing technology to market. '
+        'Suited to roles in startups, corporate innovation, and new-product commercialization.'
+    ),
+    'ut-austin-textiles-and-apparel-bsta': (
+        'Undergraduates interested in fiber science, design, and the apparel industry who want '
+        'grounding in materials, production, and consumer behavior. A foundation for careers in '
+        'product development, merchandising, or textile science.'
+    ),
+    'ut-austin-theatre-and-dance-batd': (
+        'Students who want a broad, hands-on foundation across theatre and dance — performance, '
+        'design, and production — exploring the field before specializing, heading toward '
+        'creative practice or further study.'
+    ),
+    'ut-austin-theatre-and-dance-dance-mfa': (
+        'Dancers and choreographers pursuing the terminal degree in dance, developing a distinct '
+        'artistic voice through sustained creative practice, preparing for professional '
+        'choreography, performance, and college-level teaching.'
+    ),
+    'ut-austin-theatre-and-dance-theatre-ma': (
+        'Students who want to deepen the scholarly and critical study of theatre — its history, '
+        'theory, and practice — building research skills toward teaching, dramaturgy, or doctoral '
+        'study.'
+    ),
+    'ut-austin-theatre-and-dance-theatre-mfa': (
+        'Theatre artists pursuing the terminal degree in their specialization — acting, '
+        'directing, design, or playwriting — building a professional body of work toward careers '
+        'in the field and college-level teaching.'
+    ),
+    'ut-austin-theatre-and-dance-theatre-phd': (
+        'Scholars pursuing original research in theatre history, theory, and performance studies, '
+        'building the academic work for careers in university teaching and scholarship.'
+    ),
+    'ut-austin-theatre-education-bfa': (
+        'Future theatre teachers who want to combine performance and production training with how '
+        'to lead a drama classroom, working toward certification to direct school theatre '
+        'programs.'
+    ),
+    'ut-austin-translational-science-phd': (
+        'Scientists focused on moving discoveries from the laboratory into real-world treatments, '
+        'training in the methods that bridge bench research and patient care for careers in '
+        'translational and clinical research.'
+    ),
+    'ut-austin-urban-design-ms': (
+        'Architects and planners focused on the design of streets, blocks, and public space at '
+        'the scale between buildings and city plans, headed toward urban-design roles in firms '
+        'and agencies.'
+    ),
+    'ut-austin-urban-studies-ba': (
+        'Undergraduates interested in how cities work, drawing on planning, geography, sociology, '
+        'and policy to study housing, transit, and inequality. Good preparation for urban '
+        'planning, local government, community development, or graduate study.'
+    ),
+    'ut-austin-womens-and-gender-studies-ba': (
+        'Undergraduates who want to examine how gender and sexuality shape culture, power, and '
+        'institutions through an interdisciplinary lens. A foundation for advocacy, policy, '
+        'education, law, or graduate study in the field.'
+    ),
+    'ut-austin-womens-and-gender-studies-ma': (
+        'Students who want advanced, interdisciplinary study of how gender and sexuality shape '
+        'culture, power, and institutions, building research and critical skills. A step toward '
+        'doctoral study, advocacy, policy, or teaching.'
+    ),
+    'ut-austin-writing-mfa': (
+        'Emerging writers serious about craft who want concentrated time, workshop critique, and '
+        'mentorship to develop a body of work, preparing for careers in writing, teaching, '
+        'editing, or publishing.'
+    ),
+    'ut-austin-youth-and-community-studies-bsed': (
+        'Students drawn to working with young people outside the traditional classroom — '
+        'community programs, nonprofits, and youth development — building skills to support youth '
+        'in schools, agencies, and community organizations.'
+    ),
+}
+
+_missing_who = [s for s in PROGRAM_SLUGS if s not in _WHO_BY_SLUG]
+if _missing_who:
+    raise ValueError(f"UT Austin who_its_for missing on {len(_missing_who)} rows: {_missing_who[:5]}")
+_stray_who = [s for s in _WHO_BY_SLUG if s not in set(PROGRAM_SLUGS)]
+if _stray_who:
+    raise ValueError(f"UT Austin who_its_for stray slugs: {_stray_who[:5]}")
+
 # Matcher-core CIP coverage gate (REPAIR_BACKLOG #1): every program carries a real IPEDS
 # CIP-2020 code (a genuinely uncodeable field would be omitted-with-reason — none today).
 _cip_missing = [p["slug"] for p in PROGRAMS if not p.get("cip")]
@@ -4049,13 +5818,14 @@ _MASTERS_TOTAL_TUITION: dict[str, dict] = {
     },
 }
 
-# Remaining specialized master's whose program-specific tuition could NOT be verified on
-# an official UT/McCombs page (the MS in Accounting and MS in Management are not separately
-# published; MS Energy Management is not currently admitting and publishes no current
-# tuition; IROM is a McCombs department whose degrees are the MSBA/MSITM above) — the annual
-# scalar is honestly OMITTED rather than guessed.
+# Remaining specialized master's whose program-specific tuition could NOT be verified on an
+# official UT/McCombs page → the annual scalar is honestly OMITTED rather than guessed. (The
+# academic MS in Accounting is offered only within the accounting doctoral program and bills
+# at UT's STANDARD graduate rate, so it is NOT omitted — it falls through to the graduate
+# scalar below.) MS Energy Management is not currently admitting and publishes no current
+# tuition; MS Management has no separately published McCombs rate; IROM is a McCombs department
+# whose marketed degrees are the MSBA/MSITM filled above.
 _PREMIUM_MASTERS_OMIT = {
-    "ut-austin-accounting-ms",
     "ut-austin-energy-management-ms",
     "ut-austin-information-risk-and-operations-management-ms",
     "ut-austin-management-ms",
@@ -4075,11 +5845,32 @@ _PROFESSIONAL_TUITION: dict[str, dict] = {
         "source": "UT Austin Texas One Stop — Dell Medical School Tuition (2025-26)",
         "source_url": "https://onestop.utexas.edu/managing-costs/cost-tuition-rates/tuition-rates/",
     },
+    # The Doctor of Audiology (AuD) sits in Moody College's Dept. of Speech, Language &
+    # Hearing Sciences — a GRADUATE program, NOT a designated professional college (Law,
+    # Medicine, Pharmacy carry separate premium professional rates). UT bills the AuD at its
+    # STANDARD graduate tuition rate with no professional surcharge, so the scalar carries the
+    # published graduate non-resident rate (verified: slhs.utexas.edu + One Stop graduate
+    # tuition table; the AuD pages publish no program-specific tuition and point to the
+    # general graduate rate).
+    "ut-austin-audiology-aud": {
+        "in_state": _TUITION_GRAD_INSTATE,
+        "out_of_state": _TUITION_GRAD_OOS,
+        "source": "UT Austin Texas One Stop — Graduate Tuition Rates (AuD billed at standard graduate rate)",
+        "source_url": "https://onestop.utexas.edu/managing-costs/cost-tuition-rates/tuition-rates/",
+        "note": (
+            "The Doctor of Audiology is billed at UT Austin's standard graduate tuition & "
+            "fees (Texas resident shown; non-residents pay the out-of-state rate in the "
+            "breakdown) — it has no separate professional surcharge, since it is a Moody "
+            "College graduate program, not a designated professional college. The matcher's "
+            "budget signal uses the non-resident rate for the out-of-state + international pool."
+        ),
+    },
 }
-# Professional doctorates that publish a single flat TOTAL program tuition (not an annual
-# rate, and not residency-split). The published total is recorded in
-# ``cost_data.total_program_tuition``; the ANNUAL scalar is omitted (the total spans
-# multiple semesters, so it is not a per-year figure the matcher should read).
+# Professional doctorates that publish a single flat TOTAL program tuition spanning MULTIPLE
+# semesters (not an annual, residency-split rate). ``program.tuition`` is rendered as an
+# ANNUAL figure ("tuition / yr"), so writing the multi-semester total there would mislead;
+# the verified total is kept ONLY in ``cost_data.total_program_tuition`` and the annual scalar
+# is honestly omitted (recorded in ``_standard.omitted``) — never a guessed per-year rate.
 _PROFESSIONAL_TOTAL: dict[str, dict] = {
     "ut-austin-nursing-dnp": {
         "total": 30000,
@@ -4090,19 +5881,23 @@ _PROFESSIONAL_TOTAL: dict[str, dict] = {
         "note": (
             "The post-MSN Doctor of Nursing Practice publishes a single flat program tuition "
             "of $30,000 (45 credit hours over five semesters), the same regardless of "
-            "residency; UT publishes no standard annual figure for it, so the per-year "
-            "scalar is omitted and the verified program total is shown instead."
+            "residency. UT publishes no standard annual figure, and the total spans multiple "
+            "semesters, so the per-year scalar is omitted and the verified program total is "
+            "shown instead (never written into the annual field)."
         ),
     },
 }
 
-# Professional doctorates with no separately-verified figure here (UT routes PharmD and AuD
-# to a tuition calculator / general graduate rates and publishes no program-specific
-# annual or total tuition) → tuition omitted. DNP is handled via _PROFESSIONAL_TOTAL above.
+# The Pharm.D. is a designated professional-college rate that UT publishes ONLY inside a
+# JavaScript-rendered "College of Pharmacy (Professional)" Box PDF / login-gated tuition
+# calculator (not machine-readable); the lone third-party (IPEDS-republisher) figure could
+# not be confirmed against the official UT source or a second independent source, so per the
+# routine's two-source / first-party verify gate the annual scalar is honestly OMITTED rather
+# than ship an unverified number (no-fabrication). AuD now bills at the standard graduate rate
+# (_PROFESSIONAL_TUITION); DNP's multi-semester program total is kept in cost_data with its annual
+# scalar omitted (_PROFESSIONAL_TOTAL), so it never renders as a misleading "$30,000 / yr".
 _TUITION_OMIT_SLUGS = {
     "ut-austin-pharmacy-pharmd",
-    "ut-austin-audiology-aud",
-    "ut-austin-nursing-dnp",
 }
 
 
@@ -4112,15 +5907,19 @@ def _tuition_omitted(slug: str) -> bool:
         slug in _TUITION_OMIT_SLUGS
         or slug in _PREMIUM_MASTERS_OMIT
         or slug in _ONLINE_MASTERS_TOTAL
+        or slug in _PROFESSIONAL_TOTAL  # DNP — multi-semester total, annual scalar omitted
     )
 
 
-def _annual_tuition_cost(in_state: int, out_of_state: int, source: str, url: str) -> dict:
+def _annual_tuition_cost(
+    in_state: int, out_of_state: int, source: str, url: str, note: str | None = None
+) -> dict:
     return {
         "tuition_usd": in_state,
         "breakdown": {"tuition_in_state": in_state, "tuition_out_of_state": out_of_state},
         "funded": False,
-        "note": (
+        "note": note
+        or (
             "Annual tuition & fees (Texas resident); non-residents pay the out-of-state rate "
             "shown in the breakdown. UT Austin bills tuition per semester. The matcher's "
             "budget signal (program.tuition) uses the non-resident rate for the out-of-state "
@@ -4201,9 +6000,9 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
     if dt == "professional" and slug in _PROFESSIONAL_TUITION:
         pr = _PROFESSIONAL_TUITION[slug]
         return pr["out_of_state"], _annual_tuition_cost(
-            pr["in_state"], pr["out_of_state"], pr["source"], pr["source_url"]
+            pr["in_state"], pr["out_of_state"], pr["source"], pr["source_url"], pr.get("note")
         )
-    if slug in _PROFESSIONAL_TOTAL:  # DNP — flat program total, multi-semester → omit annual
+    if slug in _PROFESSIONAL_TOTAL:  # DNP — flat MULTI-semester total, not annual → omit scalar
         pr = _PROFESSIONAL_TOTAL[slug]
         return None, {
             "total_program_tuition": pr["total"],
@@ -5064,7 +6863,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
         p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
-        p.who_its_for = None
+        p.who_its_for = _WHO_BY_SLUG.get(slug)
         p.highlights = None
         p.application_deadline = None
     session.flush()
