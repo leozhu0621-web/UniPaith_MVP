@@ -210,13 +210,12 @@ SCHOOL_OUTCOMES: dict = {
         ],
     },
     "campus_photos": [
-        {"url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Purdue_University%2C_West_Lafayette%2C_Indiana%2C_Estados_Unidos%2C_2012-10-15%2C_DD_03.JPG/1920px-Purdue_University%2C_West_Lafayette%2C_Indiana%2C_Estados_Unidos%2C_2012-10-15%2C_DD_03.JPG", "credit": "Wikimedia Commons / Diego Delso (CC BY-SA 3.0)"},
-        {"url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Hovde_Hall_Purdue.jpg/1920px-Hovde_Hall_Purdue.jpg", "credit": "Wikimedia Commons / Julian Herzog (CC BY 4.0)"},
-        {"url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Physics_Building_Purdue_University.jpg/1920px-Physics_Building_Purdue_University.jpg", "credit": "Wikimedia Commons / Julian Herzog (CC BY 4.0)"},
-        {"url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Purdue_ME_Building.jpg/1920px-Purdue_ME_Building.jpg", "credit": "Wikimedia Commons / Alh225 (CC BY-SA 4.0)"},
-        {"url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Purdue_Extension_entryway.jpg/1920px-Purdue_Extension_entryway.jpg", "credit": "Wikimedia Commons / Jaireeodell (CC BY-SA 4.0)"},
+        {"url": "https://www.purdue.edu/home/wp-content/uploads/2023/09/DSC2463_lowres.jpg", "credit": "Purdue University"},
+        {"url": "https://engineering.purdue.edu/ECE/Wavelinks/2022/facts-and-figures/facts-web.jpg", "credit": "Purdue University College of Engineering"},
+        {"url": "https://commons.wikimedia.org/wiki/Special:FilePath/Purdue%20Bell%20Tower%20Purdue%20University%202016%2001.jpg?width=1200", "credit": "Wikimedia Commons"},
+        {"url": "https://commons.wikimedia.org/wiki/Special:FilePath/Engineering%20Fountain%20Purdue%20University%202016%2001.jpg?width=1200", "credit": "Wikimedia Commons"},
     ],
-    "media_credit": "Wikimedia Commons / Diego Delso (CC BY-SA 3.0)",
+    "media_credit": "Purdue University",
     "flagship": {
         "applicants": 86953,
         "admits": 37770,
@@ -418,7 +417,7 @@ def _school_description(m: dict) -> str:
 
 
 # ── Feeds (content_sources) ────────────────────────────────────────────────
-_NEWS_RSS = "https://www.purdue.edu/home/feed/"
+_NEWS_RSS = "https://stories.purdue.edu/feed/"
 _EVENTS = {"url": "https://events.purdue.edu/calendar.ics", "type": "ical"}
 _SOCIAL = {
     "instagram": "https://www.instagram.com/lifeatpurdue/",
@@ -433,6 +432,13 @@ _INSTITUTION_CONTENT: dict = {
     "news_curated": True,
     "events_feed": dict(_EVENTS),
     "social": _SOCIAL,
+}
+_DEPRECATED_MEDIA_URLS = {
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Purdue_University%2C_West_Lafayette%2C_Indiana%2C_Estados_Unidos%2C_2012-10-15%2C_DD_03.JPG/1920px-Purdue_University%2C_West_Lafayette%2C_Indiana%2C_Estados_Unidos%2C_2012-10-15%2C_DD_03.JPG",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Hovde_Hall_Purdue.jpg/1920px-Hovde_Hall_Purdue.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Physics_Building_Purdue_University.jpg/1920px-Physics_Building_Purdue_University.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Purdue_ME_Building.jpg/1920px-Purdue_ME_Building.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Purdue_Extension_entryway.jpg/1920px-Purdue_Extension_entryway.jpg",
 }
 
 
@@ -1040,7 +1046,11 @@ def apply(session: Session) -> bool:
     if not inst.website_url:
         inst.website_url = "https://www.purdue.edu"
     hero = SCHOOL_OUTCOMES["campus_photos"][0]["url"]
-    _gallery = [u for u in (inst.media_gallery or []) if u != hero]
+    _gallery = [
+        u
+        for u in inst.media_gallery or []
+        if u != hero and u not in _DEPRECATED_MEDIA_URLS
+    ]
     inst.media_gallery = [hero, *_gallery]
     inst.content_sources = _INSTITUTION_CONTENT
     session.flush()
