@@ -613,10 +613,10 @@ export default function UniConversation({
       {limitedMode && (
         <div
           role="status"
-          className="mb-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-muted-foreground"
+          className="mb-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground"
         >
-          Limited mode — Uni is replying from saved guidance for now. Your messages are
-          still saved, and full answers resume automatically.
+          Uni is giving quicker replies for a moment — your messages are saved and your
+          profile and matches keep updating normally.
         </div>
       )}
 
