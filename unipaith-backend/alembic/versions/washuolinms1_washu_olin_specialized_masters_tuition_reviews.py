@@ -86,7 +86,16 @@ def upgrade() -> None:
                 .where(Program.id.in_(all_prog_ids))
                 .values(feature_version=Program.feature_version + 1)
             )
-            session.execute(delete(MatchResult).where(MatchResult.program_id.in_(all_prog_ids)))
+            # Mark cached WashU match rows stale (not delete) so the lazy GET /me/matches
+            # recompute rescores them once against the refreshed tuition — the app's own
+            # canonical invalidation (students.py::_invalidate_matches). Deleting would drop
+            # WashU from a student's cached list until a manual refresh, since the lazy
+            # recompute only fires when _has_stale_matches() finds an is_stale row.
+            session.execute(
+                MatchResult.__table__.update()
+                .where(MatchResult.program_id.in_(all_prog_ids))
+                .values(is_stale=True)
+            )
     session.flush()
 
 

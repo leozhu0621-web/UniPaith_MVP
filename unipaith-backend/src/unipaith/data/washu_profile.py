@@ -1087,7 +1087,7 @@ _CATALOG: list[dict] = [
     dict(
         slug="washu-business-analytics-ms", school=_OLIN, degree_type="masters",
         program_name="Master of Science in Business Analytics",
-        department="Olin Business School", cip="52.13", duration_months=16,
+        department="Olin Business School", cip="52.13", duration_months=18,
         keywords=["business analytics"],
         description=(
             "The MS in Business Analytics trains students in data management, statistical "
