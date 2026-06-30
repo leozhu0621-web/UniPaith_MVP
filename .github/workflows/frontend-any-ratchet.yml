@@ -1,0 +1,36 @@
+name: Frontend any-ratchet
+
+# Type-safety ratchet. `@typescript-eslint/no-explicit-any` is already "warn" in
+# the eslint config, but `eslint src/` doesn't fail on warnings, so `any` creeps
+# in unchecked (339 at baseline). This fails a PR only when the count RISES above
+# the committed baseline — it never forces fixing the existing ones, it just stops
+# new ones. When you remove some, lower frontend/.any-baseline to lock in the win.
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+
+permissions:
+  contents: read
+
+jobs:
+  no-new-any:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fail only if 'any' usage rose above baseline
+        run: |
+          cd frontend
+          baseline=$(tr -dc '0-9' < .any-baseline 2>/dev/null || echo 0)
+          current=$(grep -rIE ' as any|: any\b' src | wc -l | tr -d ' ')
+          echo "frontend 'any' usage — baseline=$baseline current=$current"
+          if [ "$current" -gt "$baseline" ]; then
+            echo "::error::'any' usage rose ($baseline -> $current). Replace 'any' with a real type (see CONTRIBUTING.md). If you genuinely reduced it, set frontend/.any-baseline to $current."
+            exit 1
+          fi
+          if [ "$current" -lt "$baseline" ]; then
+            echo "::notice::'any' dropped to $current (baseline $baseline). Lower frontend/.any-baseline to $current to lock it in."
+          fi
+          echo "OK — no new 'any'."
