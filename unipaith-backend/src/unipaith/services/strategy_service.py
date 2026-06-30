@@ -386,8 +386,16 @@ class StrategyService:
         )
 
         try:
+            import asyncio
+
             agent = get_strategy_agent()
-            agent_result = await agent.generate(input_view=view, db=self.db)
+            # Hard timeout: a slow/hung LLM agent must not exceed the ALB idle
+            # timeout and reach the student as a "Network Error". On timeout we
+            # fall through to the instant rule-based template below.
+            agent_result = await asyncio.wait_for(
+                agent.generate(input_view=view, db=self.db),
+                timeout=25.0,
+            )
         except Exception as e:  # noqa: BLE001
             import logging
 

@@ -41,13 +41,13 @@ def test_confirmed_essentials_are_skipped_then_high_value_surfaces():
 
 def test_ask_before_confirm_within_tier():
     # one essential imported (→confirm), the rest missing (→ask): asks come first
-    state = {"gender": {"value": "f", "confidence": 0.7}}
+    state = {"nationality": {"value": "United States", "confidence": 0.7}}
     items = plan_next(state, limit=10)
     essential_items = [i for i in items if i["tier"] == "essential"]
     actions = [i["action"] for i in essential_items]
     # every "ask" precedes every "confirm"
     assert actions == sorted(actions, key=lambda a: 0 if a == "ask" else 1)
-    assert "confirm" in actions  # the imported gender
+    assert "confirm" in actions  # the imported nationality
 
 
 def test_essentials_present():

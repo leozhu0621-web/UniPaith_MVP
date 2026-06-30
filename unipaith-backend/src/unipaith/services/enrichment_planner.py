@@ -37,11 +37,14 @@ IMPORTED_MIN = 0.50  # okay → confirm (1-tap); below this is inferred/weak →
 CATALOG: list[dict[str, Any]] = [
     # ── essentials (common-sense basics + direction) ──
     {
+        # Gender does NOT feed the matcher, so it must not be tier "essential"
+        # (which is framed to the student as "needed to match"). Kept as an
+        # optional "standard" demographic prompt instead.
         "key": "gender",
         "type": "categorical",
-        "tier": "essential",
+        "tier": "standard",
         "ask_kind": "choice",
-        "question": "Which best describes you?",
+        "question": "Which best describes you? (optional)",
         "options": ["Woman", "Man", "Non-binary", "Another identity", "Prefer not to say"],
     },
     {
