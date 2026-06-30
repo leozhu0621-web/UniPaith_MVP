@@ -5,7 +5,7 @@ Verifies:
 - After ensure_seeded, load() returns exactly len(CATALOG) entries
 - New keys present with correct ask_kind
 - Changed keys reflect their new ask_kind
-- Essentials list is exactly the original 6 keys
+- Essentials list is exactly the 5 matcher keys (gender downgraded to standard)
 """
 
 import pytest
@@ -86,9 +86,12 @@ async def test_changed_fields_reflect_new_ask_kind(db_session):
 
 
 def test_catalog_essentials_constant():
-    """Fast sync check: CATALOG constant has exactly the 6 essential keys, in order."""
+    """Fast sync check: CATALOG constant has exactly the 5 essential keys, in order.
+
+    ``gender`` was downgraded from ``essential`` to ``standard`` (it does not feed the
+    matcher), so the essential set is the five matcher-relevant keys.
+    """
     expected_essentials = [
-        "gender",
         "nationality",
         "date_of_birth",
         "country_of_residence",
@@ -102,10 +105,13 @@ def test_catalog_essentials_constant():
 
 
 @pytest.mark.asyncio
-async def test_essentials_are_exactly_original_six(db_session):
-    """The 6 essential keys must be preserved in the DB-loaded catalog."""
+async def test_essentials_are_exactly_the_matcher_five(db_session):
+    """The 5 essential keys must be preserved in the DB-loaded catalog.
+
+    ``gender`` was downgraded from ``essential`` to ``standard`` (it does not feed the
+    matcher), so the essential set is the five matcher-relevant keys.
+    """
     expected_essentials = [
-        "gender",
         "nationality",
         "date_of_birth",
         "country_of_residence",
@@ -121,4 +127,4 @@ async def test_essentials_are_exactly_original_six(db_session):
     assert set(db_essentials) == set(expected_essentials), (
         f"DB catalog essentials differ: {db_essentials}"
     )
-    assert len(db_essentials) == 6, f"Expected 6 essentials, got {len(db_essentials)}"
+    assert len(db_essentials) == 5, f"Expected 5 essentials, got {len(db_essentials)}"
