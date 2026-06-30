@@ -64,6 +64,18 @@ function labelOf(entry: unknown): string | null {
   return null
 }
 
+/** Turn a raw internal code (snake_case, e.g. `low_income_aid`, `career_services`,
+ *  `near_tech_hubs`) into plain words for display ("Low income aid"). Real prose
+ *  (anything containing a space or capital letter) is returned unchanged, so
+ *  edited goals/needs still read naturally. Display-only — callers keep the raw
+ *  label for matching/edits. */
+export function humanizeLabel(label: string): string {
+  if (/^[a-z0-9]+(_[a-z0-9]+)+$/.test(label)) {
+    return label.replace(/_/g, ' ').replace(/^./, c => c.toUpperCase())
+  }
+  return label
+}
+
 /** Normalize a message's `extracted_signals` JSONB into display items. */
 export function noticedItemsFromSignals(signals: Record<string, unknown> | null): NoticedItem[] {
   if (!signals) return []

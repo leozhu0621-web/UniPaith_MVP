@@ -488,7 +488,7 @@ function BuildMoment({
       ? `${interestCount} field${interestCount === 1 ? '' : 's'} added to matching`
       : 'Interests open — Uni will help you find them',
     degreeLabel ? `Matching ${degreeLabel} programs` : 'Degree level open — Uni will help you pick',
-    answers.intake_term ? `Deadlines tracked for ${answers.intake_term}` : 'Timeline flexible for now',
+    answers.intake_term ? `Target start: ${answers.intake_term}` : 'Timeline flexible for now',
     answers.budget_band || (answers.geos ?? []).length > 0
       ? 'Budget and location saved'
       : 'No constraints set',

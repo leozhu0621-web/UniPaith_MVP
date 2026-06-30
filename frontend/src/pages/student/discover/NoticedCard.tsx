@@ -13,7 +13,7 @@ import { Check, Pencil, X } from 'lucide-react'
 
 import { updateSignal } from '../../../api/livingProfile'
 import { showToast } from '../../../stores/toast-store'
-import { rememberSignalEdit, type NoticedItem } from './noticed'
+import { rememberSignalEdit, humanizeLabel, type NoticedItem } from './noticed'
 
 export function EditableChip({ item }: { item: NoticedItem }) {
   const qc = useQueryClient()
@@ -72,7 +72,7 @@ export function EditableChip({ item }: { item: NoticedItem }) {
 
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-card border border-border px-2.5 py-0.5 text-xs text-foreground">
-      {item.label}
+      {humanizeLabel(item.label)}
       <button
         type="button"
         onClick={() => {
@@ -114,7 +114,7 @@ export default function NoticedCard({
                 key={item.label}
                 className="rounded-full bg-card border border-border px-2.5 py-0.5 text-xs text-foreground"
               >
-                {item.label}
+                {humanizeLabel(item.label)}
               </span>
             ),
           )}

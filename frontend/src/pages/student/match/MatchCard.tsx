@@ -20,7 +20,7 @@ import {
   Sparkles,
 } from 'lucide-react'
 
-import { DEGREE_LABELS } from '../../../utils/constants'
+import { degreeAbbrev } from '../explore/cards/programFormat'
 import { formatCurrency } from '../../../utils/format'
 import BandBadge from '../../../components/ui/BandBadge'
 import type { MatchResultDual } from '../../../types'
@@ -61,7 +61,7 @@ export default function MatchCard({
   // focus, Enter, and cmd/ctrl-click open-in-new-tab work.
   const href = `/s/programs/${match.program_id}`
 
-  const degree = match.degree_type ? DEGREE_LABELS[match.degree_type] ?? match.degree_type : null
+  const degree = match.degree_type ? degreeAbbrev(match.degree_type, match.program_name ?? undefined) : null
   // Strategy→matches storytelling: a one-line counselor read of this band
   // (band-only — the fitness/confidence score rings were dropped to keep it simple).
   const storyline = matchStoryline(match.band_label, 0, false)

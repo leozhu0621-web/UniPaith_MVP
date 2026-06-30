@@ -76,9 +76,13 @@ export const CREDENTIAL_EVAL_STATUS = [
   { value: 'verified', label: 'Verified' },
 ]
 
+// `degree_type` is coarse — it does NOT distinguish a B.A. from a B.S. (or an
+// M.A. from an M.S.), so these labels stay neutral. Where the program NAME is
+// available, use `degreeAbbrev(degree_type, program_name)` instead to show the
+// specific BA/BS/MBA/etc.
 export const DEGREE_LABELS: Record<string, string> = {
-  bachelors: 'B.S.',
-  masters: 'M.S.',
+  bachelors: "Bachelor's",
+  masters: "Master's",
   phd: 'Ph.D.',
   certificate: 'Certificate',
   diploma: 'Diploma',
