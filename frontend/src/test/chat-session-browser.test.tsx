@@ -122,6 +122,7 @@ function renderBrowser(props = {}) {
 
 describe("SessionBrowser", () => {
   beforeEach(() => {
+    localStorage.clear();
     vi.mocked(getChatTree).mockResolvedValue(SAMPLE_TREE);
   });
 
@@ -136,19 +137,43 @@ describe("SessionBrowser", () => {
     renderBrowser();
     // Custom folder
     expect(await screen.findByText("Reach schools")).toBeInTheDocument();
-    // Preset folder (discovery stage)
+    // Non-empty preset folder shows (Profile holds a session)
     expect(screen.getByText("Profile")).toBeInTheDocument();
-    expect(screen.getByText("Goals")).toBeInTheDocument();
-    // Preset folder (recommendation stage)
-    expect(screen.getByText("Schools")).toBeInTheDocument();
+    // Empty presets are no longer fixed in the rail — they're offered as
+    // recommended folders in the New-folder panel instead.
+    expect(screen.queryByText("Goals")).not.toBeInTheDocument();
+    expect(screen.queryByText("Schools")).not.toBeInTheDocument();
   });
 
-  it("renders stage group labels for preset folders", async () => {
+  it("renders a stage label only when that stage has a visible folder", async () => {
     renderBrowser();
+    // Discovery has Profile (non-empty) → its label shows.
     expect(await screen.findByText("Discovery")).toBeInTheDocument();
-    expect(screen.getByText("Recommendation")).toBeInTheDocument();
-    // Application group not in sample, so not rendered
+    // Recommendation's only sample folder (Schools) is empty → hidden by
+    // default, so the stage label is not rendered.
+    expect(screen.queryByText("Recommendation")).not.toBeInTheDocument();
     expect(screen.queryByText("Application Strategy & Support")).not.toBeInTheDocument();
+  });
+
+  it("offers empty presets as recommended folders and reveals one on click", async () => {
+    renderBrowser();
+    await screen.findByText("Profile");
+    // Goals (empty preset) is not in the rail by default.
+    expect(screen.queryByText("Goals")).not.toBeInTheDocument();
+
+    // Open the New-folder panel → recommended chips appear.
+    fireEvent.click(screen.getByRole("button", { name: /new folder/i }));
+    const goalsChip = await screen.findByRole("button", { name: /add goals folder/i });
+    expect(goalsChip).toBeInTheDocument();
+
+    // Tapping the chip reveals Goals as a folder in the rail.
+    fireEvent.click(goalsChip);
+    await waitFor(() => {
+      const optionsBtn = screen
+        .getAllByRole("button")
+        .find((b) => b.getAttribute("aria-label") === "Goals folder options");
+      expect(optionsBtn).toBeDefined();
+    });
   });
 
   it("shows a Pinned section when sessions are pinned", async () => {
