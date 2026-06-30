@@ -5010,9 +5010,9 @@ _COST_BY_SLUG["georgetown-arabic-ma"] = {
 # Each is the program's published per-credit rate × its published required credit count (the
 # same convention as the blocks above), every figure read from an official Georgetown page.
 # Programs whose required credit count OR per-credit rate is NOT cleanly published first-party
-# (the SJD research doctorate, the on-campus DNAP, the BSN-to-DNP, the MSN umbrella, and the
-# School of Health executive MS whose cost Georgetown lists as "TBD") stay omit-with-reason
-# below — never the undergraduate sticker copied down, never a guessed total.
+# (the SJD research doctorate, the BSN-to-DNP, the MSN umbrella, and the School of Health
+# executive MS whose cost Georgetown lists as "TBD") stay omit-with-reason below — never the
+# undergraduate sticker copied down, never a guessed total.
 _COST_BY_SLUG.update(
     {
         # GSAS academic master's — Graduate School $2,652/credit × published required credits.
@@ -5042,6 +5042,22 @@ _COST_BY_SLUG.update(
             "Graduate Nursing Online $2,758/credit × 30-credit Executive (Post-Master's) DNP.",
             year="2026-27",
         ),
+        # Doctor of Nurse Anesthesia Practice — an on-campus graduate professional doctorate
+        # billed at the standard $2,652/credit graduate rate (finaid 2025-26 COA) across its
+        # published 70-credit curriculum. Both figures are Georgetown first-party, so the
+        # program total is computed (not omitted as #1227 had it — the 70-credit count IS
+        # published on the DNAP curriculum page).
+        "georgetown-nurse-anesthesia-dnap": _per_credit_cost(
+            _GSAS_PER_CREDIT * 70,
+            (
+                "Georgetown DNAP Curriculum (70 credits, 39+18+13 over three years) + finaid "
+                "2025-26 Graduate Program Cost of Attendance on-campus graduate rate "
+                "($2,652/credit)",
+                "https://nurseanesthesia.georgetown.edu/dnap-curriculum-2/",
+            ),
+            "On-campus graduate $2,652/credit × 70-credit Doctor of Nurse Anesthesia Practice "
+            "curriculum (a three-year professional doctorate).",
+        ),
     }
 )
 # McCourt Executive Master of Policy Leadership — a 30-credit cohort billed at term-specific
@@ -5069,11 +5085,6 @@ _OMIT_NOTE_BY_SLUG: dict[str, str] = {
         "The Doctor of Juridical Science is a post-J.D./LL.M. research doctorate billed on "
         "residency status with no single published annual or total tuition figure, so the "
         "scalar is omitted rather than estimated. See Georgetown Law's S.J.D. cost page."
-    ),
-    "georgetown-nurse-anesthesia-dnap": (
-        "Georgetown publishes the on-campus graduate per-credit rate but no first-party total "
-        "credit count for the 36-month Doctor of Nurse Anesthesia Practice, so a verified "
-        "program total cannot be computed and the scalar is omitted rather than estimated."
     ),
     "georgetown-nursing-dnp": (
         "The BSN-to-DNP credit requirement varies by nurse-practitioner specialization, so "
