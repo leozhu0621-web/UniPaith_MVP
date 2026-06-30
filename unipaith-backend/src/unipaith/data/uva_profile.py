@@ -40,11 +40,14 @@ UVA SFS. Graduate/professional tuition is the Board of Visitors 2025-26 non-resi
 rate where one is published (Darden MBA $80,080; School of Law J.D./LL.M. $76,396; School of
 Medicine M.D. $62,846 first-year; Batten M.P.P. $56,536; M.S. in Data Science $53,754;
 McIntire M.S. in Commerce $54,754 / M.S. in Business Analytics $69,420; M.P.H. $35,272;
-Doctor of Nursing Practice $35,832; Master of Teaching $36,610). Programs billed only per
-credit hour (most Engineering and Arts & Sciences master's, the Architecture graduate
-degrees) carry no separately-published flat annual figure, so the annual scalar is omitted
-with reason and the per-credit rate recorded; funded research doctorates carry
-funded=True / tuition=None (tuition is waived for funded Ph.D. students).
+Doctor of Nursing Practice $35,832; Master of Teaching $36,610; School of Engineering
+master's $34,822 / Computer Science master's $39,926; Graduate School of Architecture
+master's $36,730; School of Nursing master's $35,832). The full-time master's tiers in
+Engineering, Architecture, and Nursing each publish a flat annual non-resident rate on the
+same Board of Visitors sheet, so those carry the published annual scalar (with the per-credit
+part-time rate noted). Only programs with no flat annual figure at all — the fully online
+per-credit M.S. in Data Science — omit the scalar with reason; funded research doctorates
+carry funded=True / tuition=None (tuition is waived for funded Ph.D. students).
 """
 
 from __future__ import annotations
@@ -580,23 +583,25 @@ _MPH = 35272
 _DNP = 35832
 _MT = 36610
 
-# Per-credit-billed graduate programs publish no flat annual figure, so the annual scalar is
-# omitted with reason and the verified non-resident per-credit rate recorded.
-_PC_ENG = (
-    "Billed per credit hour; UVA's 2025-26 non-resident graduate engineering rate is "
-    "$1,935 per credit ($2,218 for Computer Science). No flat annual tuition is published."
+# Graduate per-school FLAT non-resident annual master's rates. The UVA Board of Visitors
+# 2025-26 rate sheet publishes a flat full-time annual figure for these schools' master's
+# programs (the same sheet every constant above round-trips to). The CPEF matcher scalar
+# carries the NON-RESIDENT rate; each program's cost_note preserves the VA resident rate and
+# the per-credit part-time rate (run-83 public-university rule).
+_MS_ENG = 34822  # Engineering master's (Non-VA); VA $19,854; $1,935/credit part-time
+_MS_CS = 39926  # Computer Science master's (Non-VA); VA $22,962; $2,218/credit part-time
+_MS_ARCH = 36730  # Graduate School of Architecture master's (Non-VA); VA $23,026; $1,530/credit
+_MSN = 35832  # School of Nursing master's (Non-VA); VA $21,942; $1,493/credit part-time
+
+_ENG_NOTE = (
+    "2025-26 School of Engineering master's non-resident annual tuition (Board of "
+    "Visitors); Virginia residents pay $19,854. Part-time study is billed at $1,935 "
+    "per credit hour."
 )
-_PC_GSAS = (
-    "Billed per credit hour; UVA's 2025-26 non-resident Graduate Arts & Sciences "
-    "master's rate is $1,553 per credit. No flat annual tuition is published."
-)
-_PC_ARCH = (
-    "Billed per credit hour; UVA's 2025-26 non-resident graduate Architecture "
-    "master's rate is $1,530 per credit. No flat annual tuition is published."
-)
-_PC_MSN = (
-    "Billed per credit hour; UVA's 2025-26 non-resident graduate Nursing rate is "
-    "$1,493 per credit. No flat annual tuition is published."
+_ARCH_NOTE = (
+    "2025-26 Graduate School of Architecture master's non-resident annual tuition (Board "
+    "of Visitors); Virginia residents pay $23,026. Part-time study is billed at $1,530 "
+    "per credit hour."
 )
 
 _A = _ARTSCI
@@ -2230,7 +2235,13 @@ _CATALOG: list[dict] = [
         cip="11.07",
         duration_months=24,
         keywords=["computer science", "CS", "graduate"],
-        omit_tuition_reason=_PC_ENG,
+        tuition=_MS_CS,
+        cost_source=_BOV_SRC,
+        cost_note=(
+            "2025-26 M.S. in Computer Science non-resident annual tuition (Board of "
+            "Visitors); Virginia residents pay $22,962. Part-time study is billed at "
+            "$2,218 per credit hour."
+        ),
         description=(
             "The M.S. in Computer Science offers advanced study and research across "
             "systems, theory, machine learning, and security, with thesis and "
@@ -2250,7 +2261,9 @@ _CATALOG: list[dict] = [
         cip="14.27",
         duration_months=24,
         keywords=["systems engineering", "graduate"],
-        omit_tuition_reason=_PC_ENG,
+        tuition=_MS_ENG,
+        cost_source=_BOV_SRC,
+        cost_note=_ENG_NOTE,
         description=(
             "The M.S. in Systems Engineering advances optimization, data analytics, and "
             "the modeling of complex sociotechnical systems in domains such as healthcare, "
@@ -2270,7 +2283,9 @@ _CATALOG: list[dict] = [
         cip="14.05",
         duration_months=24,
         keywords=["biomedical engineering", "graduate"],
-        omit_tuition_reason=_PC_ENG,
+        tuition=_MS_ENG,
+        cost_source=_BOV_SRC,
+        cost_note=_ENG_NOTE,
         description=(
             "The M.S. in Biomedical Engineering advances research in imaging, "
             "biomechanics, biomaterials, and medical devices through a department shared "
@@ -2491,7 +2506,13 @@ _CATALOG: list[dict] = [
         cip="51.38",
         duration_months=24,
         keywords=["nursing", "MSN", "graduate"],
-        omit_tuition_reason=_PC_MSN,
+        tuition=_MSN,
+        cost_source=_BOV_SRC,
+        cost_note=(
+            "2025-26 School of Nursing master's non-resident annual tuition (Board of "
+            "Visitors); Virginia residents pay $21,942. Part-time study is billed at "
+            "$1,493 per credit hour."
+        ),
         description=(
             "The Master of Science in Nursing prepares nurses for advanced roles such as "
             "the clinical nurse leader, building on clinical practice at UVA Health and "
@@ -2555,7 +2576,9 @@ _CATALOG: list[dict] = [
         cip="04.02",
         duration_months=36,
         keywords=["architecture", "MArch", "design"],
-        omit_tuition_reason=_PC_ARCH,
+        tuition=_MS_ARCH,
+        cost_source=_BOV_SRC,
+        cost_note=_ARCH_NOTE,
         description=(
             "The Master of Architecture is the professional, accreditation-track degree, "
             "centered on design studios with history, theory, and building technology for "
@@ -2575,7 +2598,9 @@ _CATALOG: list[dict] = [
         cip="04.03",
         duration_months=24,
         keywords=["urban planning", "environmental planning"],
-        omit_tuition_reason=_PC_ARCH,
+        tuition=_MS_ARCH,
+        cost_source=_BOV_SRC,
+        cost_note=_ARCH_NOTE,
         description=(
             "The Master of Urban and Environmental Planning trains planners in land use, "
             "housing, transportation, and environmental policy to shape sustainable and "
@@ -2594,7 +2619,9 @@ _CATALOG: list[dict] = [
         cip="04.06",
         duration_months=36,
         keywords=["landscape architecture", "design"],
-        omit_tuition_reason=_PC_ARCH,
+        tuition=_MS_ARCH,
+        cost_source=_BOV_SRC,
+        cost_note=_ARCH_NOTE,
         description=(
             "The Master of Landscape Architecture is the professional degree in designing "
             "landscapes and public space, joining ecology and design to address climate, "
