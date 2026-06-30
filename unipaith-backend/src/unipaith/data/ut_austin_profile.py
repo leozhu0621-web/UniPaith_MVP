@@ -47,17 +47,21 @@ institution outcome fields are omitted with reason (the College Scorecard
 institution-wide ten-year median earnings, $75,121, is kept). Most
 graduate/professional programs bill tuition per semester/per program and publish
 no single annual figure, so those carry a sourced "see the program's tuition
-page" record rather than a guessed number. Where a program publishes a single
-verified program TOTAL (the online CS/DS/AI master's at ~$10,000, the post-MSN
-DNP at $30,000), that total now feeds ``program.tuition`` as the matcher's budget
-scalar — the cost card keeps the total framing so it never renders "/yr" — so the
-master's/professional tiers are no longer matcher-blind on budget. Only the
-Pharm.D. (calculator/PDF-only, unverifiable to two sources) and three specialized
-master's with no separately-published rate (MS Energy Management — not admitting;
-MS Management; the IROM department row, marketed as the MSITM filled above) remain
-honestly omitted. This repair (2026-06-30) adds the verified
-``news.utexas.edu/feed/`` RSS on every node, credential-disambiguated program
-names, field-specific descriptions, and coverable ``external_reviews``.
+page" record rather than a guessed number. The post-MSN DNP bills a published
+FLAT per-semester rate ($6,000, residency-independent), so it carries a real
+ANNUAL scalar ($12,000/yr = $6,000 × the standard Fall+Spring year) with the
+$30,000 program total in ``cost_data`` — clearing the professional tier. The
+online CS/DS/AI master's publish only a flexible multi-year program TOTAL
+(~$10,000) with no annual basis, so — since ``program.tuition`` is consumed as
+ANNUAL by the matcher and rendered "/yr" by the UI — their annual scalar is
+honestly omitted (total kept in ``cost_data``), never a multi-year total stuffed
+into the annual field. The Pharm.D. (calculator/PDF-only, unverifiable to two
+sources) and three specialized master's with no separately-published rate (MS
+Energy Management — not admitting; MS Management; the IROM department row, marketed
+as the MSITM filled above) likewise remain honestly omitted. This repair
+(2026-06-30) adds the verified ``news.utexas.edu/feed/`` RSS on every node,
+credential-disambiguated program names, field-specific descriptions, and coverable
+``external_reviews``.
 """
 
 # ruff: noqa: E501
@@ -5876,27 +5880,32 @@ _PROFESSIONAL_TUITION: dict[str, dict] = {
         ),
     },
 }
-# Professional doctorates that publish a single flat TOTAL program tuition spanning MULTIPLE
-# semesters (not an annual, residency-split rate). UT publishes no separate annual figure, so
-# ``program.tuition`` (the matcher's budget scalar) carries the verified published TOTAL — the
-# program's de-facto cost, the same matcher treatment the McCombs one-year cohort totals get
-# (_MASTERS_TOTAL_TUITION) — rather than leaving the budget signal blind. The total framing is
-# preserved in ``cost_data.total_program_tuition`` and the note, so the cost card never renders
-# a misleading "/yr"; the matcher simply has a real, conservative, published number to score.
-_PROFESSIONAL_TOTAL: dict[str, dict] = {
+# The post-MSN DNP bills a published FLAT per-semester rate ($6,000 for 9 credit hours), the
+# SAME for residents and non-residents (verified: UT School of Nursing DNP Tuition & Funding —
+# "$6,000 per semester ... the same for all students, regardless of residency status", 5
+# consecutive semesters Fall1/Spring1/Summer1/Fall2/Spring2 = $30,000 total / 45 credit hours).
+# ``program.tuition`` is consumed as ANNUAL tuition by the matcher (``program_features`` →
+# ``tuition_usd_per_year``; ``matching`` budget veto) and rendered "/yr" by the frontend, so the
+# scalar carries the conventional ANNUAL sticker — the published per-semester rate × the standard
+# two-long-semester (Fall+Spring) academic year = $12,000/yr, flat (no residency split) — exactly
+# how every other annual rate in this module is constructed. The full $30,000 program total is
+# preserved in ``cost_data.total_program_tuition`` for the editorial cost card. (Writing the
+# multi-year TOTAL into the annual scalar would over-fire the budget veto and misrender as a
+# yearly price, since no consumer honors ``tuition_period`` — PR #1236 review.)
+_DNP_ANNUAL_FLAT = 12000  # $6,000/semester × 2 standard Fall+Spring semesters, residency-flat
+_PROFESSIONAL_FLAT_ANNUAL: dict[str, dict] = {
     "ut-austin-nursing-dnp": {
+        "annual": _DNP_ANNUAL_FLAT,
         "total": 30000,
         "year": "2025-26",
-        "semesters": "45 credit hours over five semesters (post-MSN track)",
         "source": "UT Austin School of Nursing — DNP Tuition & Funding",
         "source_url": "https://nursing.utexas.edu/academics/graduate/dnp-post-msn/tuition-funding",
         "note": (
-            "The post-MSN Doctor of Nursing Practice publishes a single flat program tuition "
-            "of $30,000 (45 credit hours over five semesters, billed at roughly $667/credit), "
-            "the same regardless of residency. UT publishes no separate annual figure, so the "
-            "matcher's budget signal (program.tuition) carries this verified program total — "
-            "the program's de-facto cost — while the cost card shows it as a program total, "
-            "never as a per-year rate."
+            "The post-MSN Doctor of Nursing Practice bills a flat $6,000 per semester (9 credit "
+            "hours), the same for residents and non-residents, across five consecutive semesters "
+            "(45 credit hours, $30,000 total program tuition). The annual figure shown is the "
+            "standard Fall+Spring academic year ($6,000 × 2 = $12,000); the full program total "
+            "is shown as Total program tuition."
         ),
     },
 }
@@ -5907,29 +5916,29 @@ _PROFESSIONAL_TOTAL: dict[str, dict] = {
 # not be confirmed against the official UT source or a second independent source, so per the
 # routine's two-source / first-party verify gate the scalar is honestly OMITTED rather than
 # ship an unverified number (no-fabrication). AuD bills at the standard graduate rate
-# (_PROFESSIONAL_TUITION); the DNP and the online CS/DS/AI master's now carry their VERIFIED
-# published program TOTAL as the matcher's budget scalar (_PROFESSIONAL_TOTAL /
-# _ONLINE_MASTERS_TOTAL), with the total framing kept in cost_data so neither renders "/yr".
+# (_PROFESSIONAL_TUITION); the DNP carries a verified FLAT ANNUAL rate (_PROFESSIONAL_FLAT_ANNUAL).
+# The online CS/DS/AI master's publish only a flexible multi-year program TOTAL with no annual
+# basis, so their annual scalar is honestly OMITTED (_ONLINE_MASTERS_TOTAL) — the total is kept
+# in cost_data; writing it into the annual scalar would mis-signal the per-year matcher/UI.
 _TUITION_OMIT_SLUGS = {
     "ut-austin-pharmacy-pharmd",
 }
 
 
 def _tuition_omitted(slug: str) -> bool:
-    """True when this program's editorial annual ``cost_data.tuition_usd`` is honestly omitted.
+    """True when this program's annual ``program.tuition`` / ``cost_data.tuition_usd`` is omitted.
 
-    This governs ONLY the editorial annual rate shown on the cost card — NOT the matcher's
-    budget scalar (``program.tuition``). The online CS/DS/AI master's and the DNP publish a
-    single program TOTAL and no separate annual figure: their TOTAL now feeds ``program.tuition``
-    (so the matcher is no longer budget-blind), while ``cost_data.tuition_usd`` (the per-year
-    card field) stays honestly omitted — the card shows a ``total_program_tuition`` instead, so
-    it never renders a misleading "/yr".
+    The online CS/DS/AI master's publish only a single FLEXIBLE multi-year program TOTAL (no
+    per-semester or annual basis), so their annual scalar is honestly omitted — the published
+    total is kept in ``cost_data.total_program_tuition``; writing it into the annual field would
+    mis-signal the matcher (consumed as ``tuition_usd_per_year``) and misrender as "/yr". The
+    DNP, by contrast, bills a published flat per-semester rate, so it carries a real annual scalar
+    and is NOT omitted (see ``_PROFESSIONAL_FLAT_ANNUAL``).
     """
     return (
         slug in _TUITION_OMIT_SLUGS
         or slug in _PREMIUM_MASTERS_OMIT
         or slug in _ONLINE_MASTERS_TOTAL
-        or slug in _PROFESSIONAL_TOTAL  # DNP — flat program total; annual card field omitted
     )
 
 
@@ -6024,29 +6033,32 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
         return pr["out_of_state"], _annual_tuition_cost(
             pr["in_state"], pr["out_of_state"], pr["source"], pr["source_url"], pr.get("note")
         )
-    if slug in _PROFESSIONAL_TOTAL:  # DNP — flat program TOTAL feeds the matcher budget scalar
-        pr = _PROFESSIONAL_TOTAL[slug]
-        return pr["total"], {
+    if slug in _PROFESSIONAL_FLAT_ANNUAL:  # DNP — published flat per-semester → annual scalar
+        pr = _PROFESSIONAL_FLAT_ANNUAL[slug]
+        return pr["annual"], {
+            "tuition_usd": pr["annual"],
             "total_program_tuition": pr["total"],
-            "tuition_period": "total_program",
+            "breakdown": {
+                "tuition_in_state": pr["annual"],
+                "tuition_out_of_state": pr["annual"],
+            },
             "funded": False,
             "note": pr["note"],
             "source": pr["source"],
             "source_url": pr["source_url"],
             "year": pr["year"],
         }
-    if slug in _ONLINE_MASTERS_TOTAL:  # published program TOTAL feeds the matcher budget scalar
-        return _ONLINE_MASTERS_TOTAL[slug], {
+    if slug in _ONLINE_MASTERS_TOTAL:  # only a flexible multi-year TOTAL → annual scalar omitted
+        return None, {
             "total_program_tuition": _ONLINE_MASTERS_TOTAL[slug],
-            "tuition_period": "total_program",
             "funded": False,
             "note": (
                 "UT Austin's online Computer & Data Science Online master's degrees publish a "
                 "single TOTAL program tuition of approximately $10,000 (the program is taken "
-                "part-time and flexibly), not a standard annual rate. UT publishes no separate "
-                "annual figure, so the matcher's budget signal (program.tuition) carries this "
-                "verified program total — the canonical, widely-quoted cost — shown on the cost "
-                "card as a program total, never as a per-year rate."
+                "part-time and flexibly over multiple years), not a standard annual rate. UT "
+                "publishes no per-semester or annual figure for them, so the per-year scalar is "
+                "omitted (recorded in _standard.omitted) rather than misrepresent the multi-year "
+                "total as an annual rate; the verified total is shown as Total program tuition."
             ),
             "source": "UT Austin Computer & Data Science Online",
             "source_url": _website_for(spec),
