@@ -35,7 +35,7 @@ quickly. The migration still records as applied so the chain advances; ``uva_pro
 is idempotent and the routine re-applies + verifies live.
 
 Revision ID: uvatuition1
-Revises: washutuition1
+Revises: ucituition1
 Create Date: 2026-06-30
 """
 
@@ -50,7 +50,7 @@ from unipaith.models.institution import Institution
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "uvatuition1"
-down_revision = "washutuition1"
+down_revision = "ucituition1"
 branch_labels = None
 depends_on = None
 
