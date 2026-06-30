@@ -916,14 +916,24 @@ class StudentService:
         if data.answers is not None:
             await self._fan_in_preferences(profile.id, answers)
         now_iso = datetime.now(UTC).isoformat()
-        if data.completed and not state.get("completed_at"):
+        first_completion = bool(data.completed and not state.get("completed_at"))
+        if first_completion:
             state["completed_at"] = now_iso
-            await self._fan_in_onboarding_answers(profile.id, answers)
-            await self._seed_matches_from_onboarding(profile.id)
         if data.dismissed and not state.get("dismissed_at"):
             state["dismissed_at"] = now_iso
+        # Persist the merged state (with the just-picked interests) onto the
+        # profile and flush BEFORE seeding matches. The match overlay
+        # (_overlay_student_attrs) reads StudentProfile.onboarding_state for the
+        # wizard-interest → field_of_study fallback, so it must see the new
+        # answers. Previously the seed ran while profile.onboarding_state still
+        # held the PRE-MERGE value, so a brand-new student's matches were computed
+        # field-blind — no field signal, no wrong-discipline veto — and e.g. a
+        # Computer-Science student got Psychology / History / Biology programs.
         profile.onboarding_state = state
         await self.db.flush()
+        if first_completion:
+            await self._fan_in_onboarding_answers(profile.id, answers)
+            await self._seed_matches_from_onboarding(profile.id)
         return state
 
     async def _fan_in_preferences(self, student_id: UUID, answers: dict) -> None:
