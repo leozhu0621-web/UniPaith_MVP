@@ -67,6 +67,14 @@ export default function MatchCard({
   const storyline = matchStoryline(match.band_label, 0, false)
   const acceptPct =
     match.acceptance_rate != null ? Math.round(match.acceptance_rate * 100) : null
+  // Affordability readout — net price (after aid) front-and-center, with a budget-fit
+  // chip, since money is the student's #1 worry (not sticker tuition).
+  const affordMeta: Record<string, { label: string; cls: string }> = {
+    affordable: { label: 'Likely under budget', cls: 'bg-secondary/10 text-secondary' },
+    stretch: { label: 'A stretch on budget', cls: 'bg-muted text-foreground' },
+    out_of_reach: { label: 'Over budget', cls: 'bg-error/10 text-error' },
+  }
+  const affordInfo = match.affordability_band ? affordMeta[match.affordability_band] : undefined
   // Without an explicit reason on the list payload, derive the right "not
   // enough data yet" copy from whether the program has a historical rate.
   const bandsReason = match.acceptance_rate == null ? 'no_history' : 'not_match_ready'
@@ -104,9 +112,19 @@ export default function MatchCard({
                 {degree}
               </span>
             )}
-            {match.tuition != null && (
-              <span className="text-[11px] text-muted-foreground">{formatCurrency(match.tuition)}/yr</span>
+            {affordInfo && (
+              <span
+                className={`inline-flex items-center px-2 py-0.5 text-[10px] font-semibold rounded-md ${affordInfo.cls}`}
+                title="Estimated yearly net price after typical aid — your budget fit, not sticker tuition"
+              >
+                {affordInfo.label}
+              </span>
             )}
+            {match.net_price_annual != null ? (
+              <span className="text-[11px] text-muted-foreground">~{formatCurrency(match.net_price_annual)}/yr after aid</span>
+            ) : match.tuition != null ? (
+              <span className="text-[11px] text-muted-foreground">{formatCurrency(match.tuition)}/yr</span>
+            ) : null}
             {acceptPct != null && (
               <span className="text-[11px] text-muted-foreground">· {acceptPct}% admit</span>
             )}
