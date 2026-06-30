@@ -88,17 +88,30 @@ export default function MatchesSection({ savedIds, onToggleSave, nextEventByInst
       showToast((err as Error).message ?? 'Could not refresh matches.', 'error'),
   })
 
+  // Affordability filter (the student's #1 worry): hide over-budget schools while
+  // keeping affordable / stretch / unknown-price ones (so a program we simply lack
+  // cost data for is never dropped). Only offered when something is over budget.
+  const [budgetOnly, setBudgetOnly] = useState(false)
+  const hasOverBudget = useMemo(
+    () => matches.some(m => m.affordability_band === 'out_of_reach'),
+    [matches],
+  )
+  const visibleMatches = useMemo(
+    () => (budgetOnly ? matches.filter(m => m.affordability_band !== 'out_of_reach') : matches),
+    [matches, budgetOnly],
+  )
+
   const groups = useMemo(() => {
     const by: Record<MatchBand, MatchResultDual[]> = { reach: [], target: [], safer: [] }
-    for (const m of matches) {
+    for (const m of visibleMatches) {
       const band = (m.band_label ?? 'target') as MatchBand
       ;(by[band] ?? by.target).push(m)
     }
     return by
-  }, [matches])
+  }, [visibleMatches])
 
   // A counselor's read of the whole shortlist (shape + balance + standout).
-  const digest = useMemo(() => shortlistDigest(matches), [matches])
+  const digest = useMemo(() => shortlistDigest(visibleMatches), [visibleMatches])
 
   const firstId = matches[0]?.program_id
   const appliedMap = useAppliedPrograms()
@@ -205,6 +218,27 @@ export default function MatchesSection({ savedIds, onToggleSave, nextEventByInst
         onRefinePriorities={() => setPrioritiesOpen(true)}
       />
 
+      {hasOverBudget && (
+        <div className="-mt-1 mb-3 flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => setBudgetOnly(v => !v)}
+            aria-pressed={budgetOnly}
+            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+              budgetOnly
+                ? 'bg-secondary text-secondary-foreground'
+                : 'bg-muted text-foreground hover:bg-muted/70'
+            }`}
+          >
+            {budgetOnly ? '✓ Fits my budget' : 'Fits my budget'}
+          </button>
+          {budgetOnly && (
+            <span className="text-xs text-muted-foreground">
+              Hiding schools whose net price after aid is over your budget
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Strategy → matches bridge. Only with an active strategy + matches present:
           names the honest relationship (matches are banded off the strategy, not
           ranked in this view) and puts Refine priorities right at the seam. */}
@@ -271,7 +305,7 @@ export default function MatchesSection({ savedIds, onToggleSave, nextEventByInst
         </div>
       ) : (
         <div className="stagger-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 [&>*]:min-w-0">
-          {matches.map(renderCard)}
+          {visibleMatches.map(renderCard)}
         </div>
       )}
 
