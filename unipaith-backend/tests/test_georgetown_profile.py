@@ -169,7 +169,7 @@ def test_graduate_tuition_fills_present():
     """The verified master's/professional tuition fills land with their published values."""
     specs = {p["slug"]: p for p in g.PROGRAMS}
     expected = {
-        "georgetown-english-ma": 79560,  # GSAS $2,652/credit x 30 credits
+        "georgetown-english-ma": 63648,  # GSAS $2,652/credit x 24 credits (8 courses + 0-cr thesis)
         "georgetown-spanish-linguistics-ms": 87516,  # GSAS $2,652/credit x 33 credits
         "georgetown-executive-dnp": 82740,  # Nursing@Georgetown $2,758/credit x 30 credits
         "georgetown-policy-leadership-empl": 82104,  # 6 cr @ $2,652 + 24 cr @ $2,758

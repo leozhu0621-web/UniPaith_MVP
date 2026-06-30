@@ -5,7 +5,7 @@ Continues the REPAIR_BACKLOG #1 (run 94) Georgetown tuition repair started in
 first-party-published rate × the program's published required credit count — never
 the undergraduate sticker, never a guess:
 
-  * Master of Arts in English (GSAS)            — $2,652/credit × 30 credits = $79,560
+  * Master of Arts in English (GSAS)            — $2,652/credit × 24 credits = $63,648
   * Master of Science in Spanish Linguistics    — $2,652/credit × 33 credits = $87,516
   * Executive Doctor of Nursing Practice        — Nursing@Georgetown $2,758/credit × 30 = $82,740
   * Executive Master of Policy Leadership (EMPL) — 6 cr @ $2,652 + 24 cr @ $2,758 = $82,104

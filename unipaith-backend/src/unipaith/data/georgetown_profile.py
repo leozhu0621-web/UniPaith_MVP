@@ -4721,8 +4721,8 @@ _SCS_RATE_SRC = (
 )
 
 
-def _per_credit_cost(tuition: int, src: tuple[str, str], note: str) -> dict:
-    return {"tuition_usd": tuition, "src": src, "year": "2025-26", "note": note}
+def _per_credit_cost(tuition: int, src: tuple[str, str], note: str, year: str = "2025-26") -> dict:
+    return {"tuition_usd": tuition, "src": src, "year": year, "note": note}
 
 
 # Walsh School of Foreign Service master's — $2,758/credit × published degree credits
@@ -5017,13 +5017,14 @@ _COST_BY_SLUG.update(
     {
         # GSAS academic master's — Graduate School $2,652/credit × published required credits.
         "georgetown-english-ma": _per_credit_cost(
-            _GSAS_PER_CREDIT * 30,
+            _GSAS_PER_CREDIT * 24,
             (
-                "Georgetown Department of English — M.A. Program (10 courses / 30 credits) + "
-                "Graduate School $2,652/credit",
+                "Georgetown Department of English — M.A. Program (8 courses / 24 credits, "
+                "plus a 0-credit thesis) + Graduate School $2,652/credit",
                 "https://english.georgetown.edu/graduate-program/ma-program/",
             ),
-            "Graduate School $2,652/credit × 30-credit (10-course) M.A. in English.",
+            "Graduate School $2,652/credit × 24-credit (8-course) M.A. in English "
+            "(the thesis research carries 0 credits).",
         ),
         "georgetown-spanish-linguistics-ms": _per_credit_cost(
             _GSAS_PER_CREDIT * 33,
@@ -5039,6 +5040,7 @@ _COST_BY_SLUG.update(
             _NURSING_ONLINE_PER_CREDIT * 30,
             _NURSING_ONLINE_SRC,
             "Graduate Nursing Online $2,758/credit × 30-credit Executive (Post-Master's) DNP.",
+            year="2026-27",
         ),
     }
 )
