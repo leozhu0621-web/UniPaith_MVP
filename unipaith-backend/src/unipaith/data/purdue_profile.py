@@ -623,17 +623,22 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
         }
 
     if dtype == "phd":
-        return 0, {
-            "tuition_usd": 0,
-            "funded": True,
-            "note": (
-                "Purdue PhD students typically receive full tuition plus a stipend through "
-                "Purdue Graduate School fellowship programs."
+        # Funded Ph.D. support is a separate signal; the matcher still needs the published
+        # sticker price rather than a zero-budget placeholder. Keep both resident and
+        # nonresident rates in the breakdown and use the nonresident scalar for the public-
+        # university budget invariant.
+        return _TUITION_GRAD_OOS, _grad_cost(
+            _TUITION_GRAD_RESIDENT,
+            oos=_TUITION_GRAD_OOS,
+            note=(
+                f"Purdue's published {_TUITION_YEAR} general graduate tuition is "
+                f"${_TUITION_GRAD_RESIDENT:,} for Indiana residents and ${_TUITION_GRAD_OOS:,} "
+                "for nonresidents for the academic year at a full-time load of 8+ credits "
+                "per semester. Purdue Ph.D. students may receive assistantships or "
+                "fellowships; funding is represented separately from the matcher tuition scalar."
             ),
-            "source": "Purdue Graduate School — Funding",
-            "source_url": "https://www.purdue.edu/gradschool/prospective/financing/",
-            "year": _TUITION_YEAR,
-        }
+            extra={"funded": True},
+        )
 
     if slug == "purdue-pharmacy-prof":
         return _TUITION_PHARMD_OOS, _grad_cost(
