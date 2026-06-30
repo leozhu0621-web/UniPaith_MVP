@@ -5042,24 +5042,34 @@ _COST_BY_SLUG.update(
             "Graduate Nursing Online $2,758/credit × 30-credit Executive (Post-Master's) DNP.",
             year="2026-27",
         ),
-        # Doctor of Nurse Anesthesia Practice — an on-campus graduate professional doctorate
-        # billed at the standard $2,652/credit graduate rate (finaid 2025-26 COA) across its
-        # published 70-credit curriculum. Both figures are Georgetown first-party, so the
-        # program total is computed (not omitted as #1227 had it — the 70-credit count IS
-        # published on the DNAP curriculum page).
-        "georgetown-nurse-anesthesia-dnap": _per_credit_cost(
-            _GSAS_PER_CREDIT * 70,
-            (
-                "Georgetown DNAP Curriculum (70 credits, 39+18+13 over three years) + finaid "
-                "2025-26 Graduate Program Cost of Attendance on-campus graduate rate "
-                "($2,652/credit)",
-                "https://nurseanesthesia.georgetown.edu/dnap-curriculum-2/",
-            ),
-            "On-campus graduate $2,652/credit × 70-credit Doctor of Nurse Anesthesia Practice "
-            "curriculum (a three-year professional doctorate).",
-        ),
     }
 )
+# Doctor of Nurse Anesthesia Practice — billed per TERM at Georgetown's published
+# per-credit rates over the COA page's published billed-credits-per-term, NOT a flat
+# $2,652 × the curriculum's 70 credits (that overstated tuition by ~10% — it ignored the
+# discounted summer rate AND counted the non-tuition-billed clinical credits). The finaid
+# 2025-26 Graduate COA lists DNAP billed credits as Summer 12/3/4, Fall 13/6/2, Spring
+# 14/6/4 across the three years (= 19 summer + 45 Fall/Spring = 64 billed credits) and the
+# rates as Summer $2,550 / Fall-Spring $2,652. The resulting tuition (19 × $2,550 + 45 ×
+# $2,652 = $167,790) reconciles EXACTLY with the page's published "Tuition and Mandatory
+# Fees" total of $182,901 once the $5,037/yr mandatory fee is removed — so it is verified
+# first-party, not estimated.
+_COST_BY_SLUG["georgetown-nurse-anesthesia-dnap"] = {
+    "tuition_usd": 19 * 2550 + 45 * 2652,  # $48,450 + $119,340 = $167,790
+    "src": (
+        "Georgetown finaid 2025-26 Graduate Program Cost of Attendance — DNAP billed "
+        "credits per term (Summer 12/3/4, Fall 13/6/2, Spring 14/6/4) × the published "
+        "per-credit rates (Summer $2,550, Fall/Spring $2,652)",
+        "https://finaid.georgetown.edu/graduate/aid-by-program/2025-26-graduate-program-cost-of-attendance/",
+    ),
+    "year": "2025-26",
+    "note": (
+        "Doctor of Nurse Anesthesia Practice tuition, computed from the published "
+        "per-term billed credits (19 summer credits at $2,550 + 45 Fall/Spring credits "
+        "at $2,652 = $167,790); excludes mandatory fees. Reconciles with Georgetown's "
+        "published Tuition-and-Mandatory-Fees total of $182,901 (less the $5,037/yr fee)."
+    ),
+}
 # McCourt Executive Master of Policy Leadership — a 30-credit cohort billed at term-specific
 # rates: 6 credits at $2,652 (Summer) + 24 credits at $2,758 (Fall/Spring/Summer). The total
 # is the sum of the published per-term rates, not a single per-credit figure, so it is set

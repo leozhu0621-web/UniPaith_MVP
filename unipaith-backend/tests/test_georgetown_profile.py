@@ -173,7 +173,7 @@ def test_graduate_tuition_fills_present():
         "georgetown-spanish-linguistics-ms": 87516,  # GSAS $2,652/credit x 33 credits
         "georgetown-executive-dnp": 82740,  # Nursing@Georgetown $2,758/credit x 30 credits
         "georgetown-policy-leadership-empl": 82104,  # 6 cr @ $2,652 + 24 cr @ $2,758
-        "georgetown-nurse-anesthesia-dnap": 185640,  # on-campus grad $2,652/credit x 70 credits
+        "georgetown-nurse-anesthesia-dnap": 167790,  # 19 summer cr @ $2,550 + 45 F/S cr @ $2,652
     }
     for slug, amount in expected.items():
         cost = g._grad_cost(slug, specs[slug])
