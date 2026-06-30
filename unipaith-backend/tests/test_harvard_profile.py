@@ -188,6 +188,49 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     assert "need-blind" in ar["evaluation"].lower()
 
 
+async def test_content_sources_use_current_livewhale_calendar(db_session):
+    """Harvard's old College iCal endpoint now 404s; every inherited event feed
+    must use the verified LiveWhale calendar, while HBS keeps its own working feed."""
+    inst = await _make_harvard(db_session)
+    await db_session.run_sync(harvard_profile.apply)
+    await db_session.refresh(inst)
+
+    old_url = "https://calendar.college.harvard.edu/calendar.ics"
+    livewhale_url = "https://events.college.harvard.edu/live/ical/events"
+    hbs_url = "https://events.hbs.edu/calendar.ics"
+
+    assert inst.content_sources["events_feed"]["url"] == livewhale_url
+    assert old_url not in str(inst.content_sources)
+
+    schools = (
+        (await db_session.execute(select(School).where(School.institution_id == inst.id)))
+        .scalars()
+        .all()
+    )
+    for school in schools:
+        events_url = school.content_sources["events_feed"]["url"]
+        if school.name == harvard_profile._HBS:
+            assert events_url == hbs_url
+        else:
+            assert events_url == livewhale_url
+        assert old_url not in str(school.content_sources)
+
+    school_by_id = {school.id: school.name for school in schools}
+    progs = (
+        (await db_session.execute(select(Program).where(Program.institution_id == inst.id)))
+        .scalars()
+        .all()
+    )
+    assert progs
+    for program in progs:
+        events_url = program.content_sources["events_feed"]["url"]
+        if school_by_id.get(program.school_id) == harvard_profile._HBS:
+            assert events_url == hbs_url
+        else:
+            assert events_url == livewhale_url
+        assert old_url not in str(program.content_sources)
+
+
 async def test_apply_stamps_matcher_core_cip_and_distinct_who(db_session):
     """REPAIR_BACKLOG #1 (cip_code starvation) + #4b (who_its_for type-gaming):
     every program ships a verified CIP join key and a program-DISTINCT audience

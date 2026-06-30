@@ -576,9 +576,7 @@ _ABOUT_DETAIL: dict[str, dict] = {
             "Institute for Applied Computational Science (IACS)",
             "Harvard Materials Research Science and Engineering Center (MRSEC)",
         ],
-        "named_for": (
-            "John A. Paulson, whose $400 million gift in 2015 named the school"
-        ),
+        "named_for": ("John A. Paulson, whose $400 million gift in 2015 named the school"),
         "source": {
             "label": "Harvard SEAS — Office of the Dean",
             "url": "https://seas.harvard.edu/office-dean",
@@ -675,9 +673,7 @@ _ABOUT_DETAIL: dict[str, dict] = {
             "Shorenstein Center on Media, Politics and Public Policy",
             "Center for Public Leadership",
         ],
-        "named_for": (
-            "President John F. Kennedy, in whose memory the school was renamed in 1966"
-        ),
+        "named_for": ("President John F. Kennedy, in whose memory the school was renamed in 1966"),
         "source": {
             "label": "Harvard Kennedy School — About",
             "url": "https://www.hks.harvard.edu/more/about",
@@ -685,9 +681,7 @@ _ABOUT_DETAIL: dict[str, dict] = {
     },
     _HGSE: {
         "founded": 1920,
-        "leadership": (
-            "Nonie K. Lesaux — Roy E. Larsen Dean; 13th dean of HGSE (since 2025)"
-        ),
+        "leadership": ("Nonie K. Lesaux — Roy E. Larsen Dean; 13th dean of HGSE (since 2025)"),
         "research_centers": [
             "Project Zero",
             "EdRedesign Lab",
@@ -768,16 +762,19 @@ _ABOUT_OMITTED: dict[str, list[str]] = {
 # ── Per-node content feeds (so EVERY school + program has a populated Events &
 # Updates tab, not just HBS + the MBA) ─────────────────────────────────────────
 # Harvard runs one university-wide news system (the Harvard Gazette) whose RSS is
-# refreshed hourly and carries inline article images, plus a public university
-# events calendar exposed as iCal (Harvard College's Localist calendar). Both are
-# live-verified Harvard-owned feeds (checked 2026-06-11). Each school/program below
+# refreshed hourly and carries inline article images, plus a public Harvard College
+# events calendar exposed as LiveWhale iCal. Both are live-verified Harvard-owned
+# feeds (re-checked 2026-06-30: iCal returns 200+ VEVENTs). Each school/program below
 # filters the shared Gazette feed by keywords naming the school / department (the
 # MIT/MBAn pattern) so content_sources is never left null and the tab populates
 # with relevant items. HBS keeps its own verified events calendar + social handles;
 # its legacy Working Knowledge RSS went stale (last item Nov 2024, no images), so
 # its news now routes through the fresh, image-rich Gazette filtered to HBS items.
 _HARVARD_NEWS_RSS = "https://news.harvard.edu/gazette/feed/"
-_HARVARD_EVENTS_ICS = {"url": "https://calendar.college.harvard.edu/calendar.ics", "type": "ical"}
+_HARVARD_EVENTS_ICS = {
+    "url": "https://events.college.harvard.edu/live/ical/events",
+    "type": "ical",
+}
 # Official Harvard social handles (verified at author time).
 _SOCIAL_HARVARD = {
     "instagram": "https://www.instagram.com/harvard/",
@@ -1401,9 +1398,20 @@ _EXISTING_FIELD_KEYS = {
     (p["school"], p["program_name"].lower().strip(), p["degree_type"]) for p in PROGRAMS
 }
 
-_PRO_SCHOOLS = frozenset({
-    _HBS, _HLS, _HMS, _HSPH, _HKS, _HGSE, _GSD, _HDS, _HSDM, _DCE,
-})
+_PRO_SCHOOLS = frozenset(
+    {
+        _HBS,
+        _HLS,
+        _HMS,
+        _HSPH,
+        _HKS,
+        _HGSE,
+        _GSD,
+        _HDS,
+        _HSDM,
+        _DCE,
+    }
+)
 
 
 def _delivery_format(raw: str) -> str:
@@ -1450,9 +1458,7 @@ _ROLLUP_RESOLVE: dict[str, str] = {
     "Biomathematics, Bioinformatics, and Computational Biology": (
         "Computational Biology and Quantitative Genetics"
     ),
-    "Architectural History, Criticism, and Conservation": (
-        "History of Art and Architecture"
-    ),
+    "Architectural History, Criticism, and Conservation": ("History of Art and Architecture"),
     # Run-78 whole-class re-scan (REPAIR_BACKLOG #1): un-enumerated federal CIP
     # taxonomy titles resolved to a real Harvard degree (web-verified against the
     # owning school's program page). Credential levels Harvard does not confer are
@@ -1486,28 +1492,33 @@ _ROLLUP_RESOLVE: dict[str, str] = {
 #    physiology and pathobiology live in MCB/OEB research and HMS graduate courses
 #    (HBTM), not a named FAS certificate (HMS HMX Physiology Fundamentals is
 #    professional continuing education, a different credential).
-_ROLLUP_LEVEL_DROP: frozenset[tuple[str, str]] = frozenset({
-    ("Linguistic, Comparative, and Related Language Studies and Services", "masters"),
-    ("Linguistic, Comparative, and Related Language Studies and Services", "certificate"),
-    ("Electrical, Electronics, and Communications Engineering", "bachelors"),
-    ("Ecology, Evolution, Systematics, and Population Biology", "masters"),
-    ("Ecology, Evolution, Systematics, and Population Biology", "certificate"),
-    ("Biomathematics, Bioinformatics, and Computational Biology", "certificate"),
-    ("Architectural History, Criticism, and Conservation", "masters"),
-    ("Architectural History, Criticism, and Conservation", "certificate"),
-    ("Physiology, Pathology and Related Sciences", "certificate"),
-    # Run-78 resolved fields — drop the credential levels Harvard does not confer:
-    #  • Teaching and Teacher Leadership: a one-year HGSE Ed.M. only (no certificate).
-    #  • Chemical and Physical Biology: a Harvard College concentration only — no
-    #    terminal FAS master's or certificate (graduate work runs through the
-    #    integrated PhD, already shipped as the MCB / Biomedical Sciences doctorates).
-    ("Teacher Education and Professional Development, Specific Levels and Methods", "certificate"),
-    ("Biochemistry, Biophysics and Molecular Biology", "masters"),
-    ("Biochemistry, Biophysics and Molecular Biology", "certificate"),
-    # Real Estate: the master's is GSD's real MRE (kept, reassigned to GSD); GSD
-    # confers no real-estate certificate, so the IPEDS HBS cert mint drops.
-    ("Real Estate", "certificate"),
-})
+_ROLLUP_LEVEL_DROP: frozenset[tuple[str, str]] = frozenset(
+    {
+        ("Linguistic, Comparative, and Related Language Studies and Services", "masters"),
+        ("Linguistic, Comparative, and Related Language Studies and Services", "certificate"),
+        ("Electrical, Electronics, and Communications Engineering", "bachelors"),
+        ("Ecology, Evolution, Systematics, and Population Biology", "masters"),
+        ("Ecology, Evolution, Systematics, and Population Biology", "certificate"),
+        ("Biomathematics, Bioinformatics, and Computational Biology", "certificate"),
+        ("Architectural History, Criticism, and Conservation", "masters"),
+        ("Architectural History, Criticism, and Conservation", "certificate"),
+        ("Physiology, Pathology and Related Sciences", "certificate"),
+        # Run-78 resolved fields — drop the credential levels Harvard does not confer:
+        #  • Teaching and Teacher Leadership: a one-year HGSE Ed.M. only (no certificate).
+        #  • Chemical and Physical Biology: a Harvard College concentration only — no
+        #    terminal FAS master's or certificate (graduate work runs through the
+        #    integrated PhD, already shipped as the MCB / Biomedical Sciences doctorates).
+        (
+            "Teacher Education and Professional Development, Specific Levels and Methods",
+            "certificate",
+        ),
+        ("Biochemistry, Biophysics and Molecular Biology", "masters"),
+        ("Biochemistry, Biophysics and Molecular Biology", "certificate"),
+        # Real Estate: the master's is GSD's real MRE (kept, reassigned to GSD); GSD
+        # confers no real-estate certificate, so the IPEDS HBS cert mint drops.
+        ("Real Estate", "certificate"),
+    }
+)
 
 # slug → real owning school, for an IPEDS row whose Field-of-Study completion is coded to
 # F.A.S. but whose real degree is conferred by another Harvard school (REPAIR_BACKLOG #1).
@@ -1519,74 +1530,77 @@ _SLUG_SCHOOL_OVERRIDE: dict[str, str] = {
     "harvard-real-estate-ms": _GSD,
 }
 
-_ROLLUP_DROP: frozenset[str] = frozenset({
-    "Accounting and Related Services",
-    "Advanced/Graduate Dentistry and Oral Sciences",
-    "Area Studies",
-    # Run-78 whole-class re-scan (REPAIR_BACKLOG #1): federal CIP taxonomy titles +
-    # impossible-credential mints Harvard does not award at ANY level. Harvard's REAL
-    # degrees in each area already ship as flagships, so dropping these loses no program:
-    #  • HBS confers ONE general MBA + the PhD in Business Administration (both
-    #    flagships) — NOT undergraduate business degrees, concentration MBAs, or
-    #    certificates, so every IPEDS-minted "BA/MBA-in-{area}" HBS row drops.
-    #  • Harvard Law (LL.M./S.J.D./J.D.), GSE (Ed.M./Ed.L.D./PhD in Education), and
-    #    Psychology (A.B./PhD) flagships already cover these federal-title rollups.
-    #  • Environmental study is covered by Environmental Science & Engineering / Earth
-    #    & Planetary Sciences / Sustainability Studies flagships.
-    # "Intelligence, Command Control and Information Operations" is the exact fabrication
-    # the enrich-profile rulebook cites; Harvard offers none of these as a degree.
-    "Bilingual, Multilingual, and Multicultural Education",
-    "Business Administration, Management and Operations",
-    "Clinical, Counseling and Applied Psychology",
-    "Educational Administration and Supervision",
-    "Educational Assessment, Evaluation, and Research",
-    "Entrepreneurial and Small Business Operations",
-    "Finance and Financial Management Services",
-    "Human Resources Management and Services",
-    "Intelligence, Command Control and Information Operations",
-    "Legal Research and Advanced Professional Studies",
-    "Management Sciences and Quantitative Methods",
-    "Marketing",
-    "Natural Resources Conservation and Research",
-    "Non-Professional Legal Studies",
-    "Public Relations, Advertising, and Applied Communication",
-    "Radio, Television, and Digital Communication",
-    # NB: "Real Estate" is NOT dropped — the CIP 52.15 master's is Harvard GSD's REAL
-    # 12-month Master in Real Estate (MRE), reassigned to GSD below; only the HBS
-    # certificate mint is dropped (in _ROLLUP_LEVEL_DROP).
-    "Research and Experimental Psychology",
-    "Teacher Education and Professional Development, Specific Subject Areas",
-    "Biological and Biomedical Sciences, Other",
-    "Business/Commerce, General",
-    "Business/Corporate Communications",
-    "Business/Managerial Economics",
-    "Computer and Information Sciences, General",
-    "Computer/Information Technology Administration and Management",
-    "Cultural Studies/Critical Theory and Analysis",
-    "Education, General",
-    "Education, Other",
-    "Educational/Instructional Media Design",
-    "Environmental/Natural Resources Management and Policy",
-    "Ethnic, Cultural Minority, Gender, and Group Studies",
-    "Foods, Nutrition, and Related Services",
-    "Health/Medical Preparatory Programs",
-    "Intercultural/Multicultural and Diversity Studies",
-    "Liberal Arts and Sciences, General Studies and Humanities",
-    "Medical Clinical Sciences/Graduate Medical Studies",
-    "Museology/Museum Studies",
-    "Philosophy and Religious Studies, General",
-    "Rhetoric and Composition/Writing Studies",
-    "Social Sciences, General",
-    "Southeast Asian and Australasian/Pacific Languages, Literatures, and Linguistics",
-    "Theology and Religious Vocations, Other",
-    "Turkic, Uralic-Altaic, Caucasian, and Central Asian Languages, Literatures, and Linguistics",
-    "Visual and Performing Arts, General",
-})
+_ROLLUP_DROP: frozenset[str] = frozenset(
+    {
+        "Accounting and Related Services",
+        "Advanced/Graduate Dentistry and Oral Sciences",
+        "Area Studies",
+        # Run-78 whole-class re-scan (REPAIR_BACKLOG #1): federal CIP taxonomy titles +
+        # impossible-credential mints Harvard does not award at ANY level. Harvard's REAL
+        # degrees in each area already ship as flagships, so dropping these loses no program:
+        #  • HBS confers ONE general MBA + the PhD in Business Administration (both
+        #    flagships) — NOT undergraduate business degrees, concentration MBAs, or
+        #    certificates, so every IPEDS-minted "BA/MBA-in-{area}" HBS row drops.
+        #  • Harvard Law (LL.M./S.J.D./J.D.), GSE (Ed.M./Ed.L.D./PhD in Education), and
+        #    Psychology (A.B./PhD) flagships already cover these federal-title rollups.
+        #  • Environmental study is covered by Environmental Science & Engineering / Earth
+        #    & Planetary Sciences / Sustainability Studies flagships.
+        # "Intelligence, Command Control and Information Operations" is the exact fabrication
+        # the enrich-profile rulebook cites; Harvard offers none of these as a degree.
+        "Bilingual, Multilingual, and Multicultural Education",
+        "Business Administration, Management and Operations",
+        "Clinical, Counseling and Applied Psychology",
+        "Educational Administration and Supervision",
+        "Educational Assessment, Evaluation, and Research",
+        "Entrepreneurial and Small Business Operations",
+        "Finance and Financial Management Services",
+        "Human Resources Management and Services",
+        "Intelligence, Command Control and Information Operations",
+        "Legal Research and Advanced Professional Studies",
+        "Management Sciences and Quantitative Methods",
+        "Marketing",
+        "Natural Resources Conservation and Research",
+        "Non-Professional Legal Studies",
+        "Public Relations, Advertising, and Applied Communication",
+        "Radio, Television, and Digital Communication",
+        # NB: "Real Estate" is NOT dropped — the CIP 52.15 master's is Harvard GSD's REAL
+        # 12-month Master in Real Estate (MRE), reassigned to GSD below; only the HBS
+        # certificate mint is dropped (in _ROLLUP_LEVEL_DROP).
+        "Research and Experimental Psychology",
+        "Teacher Education and Professional Development, Specific Subject Areas",
+        "Biological and Biomedical Sciences, Other",
+        "Business/Commerce, General",
+        "Business/Corporate Communications",
+        "Business/Managerial Economics",
+        "Computer and Information Sciences, General",
+        "Computer/Information Technology Administration and Management",
+        "Cultural Studies/Critical Theory and Analysis",
+        "Education, General",
+        "Education, Other",
+        "Educational/Instructional Media Design",
+        "Environmental/Natural Resources Management and Policy",
+        "Ethnic, Cultural Minority, Gender, and Group Studies",
+        "Foods, Nutrition, and Related Services",
+        "Health/Medical Preparatory Programs",
+        "Intercultural/Multicultural and Diversity Studies",
+        "Liberal Arts and Sciences, General Studies and Humanities",
+        "Medical Clinical Sciences/Graduate Medical Studies",
+        "Museology/Museum Studies",
+        "Philosophy and Religious Studies, General",
+        "Rhetoric and Composition/Writing Studies",
+        "Social Sciences, General",
+        "Southeast Asian and Australasian/Pacific Languages, Literatures, and Linguistics",
+        "Theology and Religious Vocations, Other",
+        (
+            "Turkic, Uralic-Altaic, Caucasian, and Central Asian Languages, "
+            "Literatures, and Linguistics"
+        ),
+        "Visual and Performing Arts, General",
+    }
+)
 
 
-def _resolve_rollup(
-    field_name: str, degree_type: str = "", school: str = ""
-) -> str | None:
+def _resolve_rollup(field_name: str, degree_type: str = "", school: str = "") -> str | None:
     """Real Harvard degree name for a Scorecard CIP field, or None to DROP the row."""
     if (field_name, degree_type) in _ROLLUP_LEVEL_DROP:
         return None
@@ -1613,12 +1627,14 @@ _CRED_PREFIXES = (
 _POSSESSIVE_NAME_RE = re.compile(r"^(Bachelor's|Master's|Doctorate) in ")
 
 # Schools whose graduate degrees are typically conferred as Master of Science.
-_MS_SCHOOLS = frozenset({
-    _SEAS,
-    _HSPH,
-    _HMS,
-    _HSDM,
-})
+_MS_SCHOOLS = frozenset(
+    {
+        _SEAS,
+        _HSPH,
+        _HMS,
+        _HSDM,
+    }
+)
 
 
 def _conferred_program_name(field_name: str, degree_type: str, school: str) -> str:
@@ -1651,7 +1667,7 @@ def _real_field_of(program_name: str) -> str:
     """Extract the field-of-study part of a credential-disambiguated program name."""
     for prefix in _CRED_PREFIXES:
         if program_name.startswith(prefix):
-            return program_name[len(prefix):]
+            return program_name[len(prefix) :]
     return program_name
 
 
@@ -1683,7 +1699,7 @@ _FOCUS_LEAD_RE = re.compile(
 
 def _extract_focus(clause: str) -> str:
     m = _FOCUS_LEAD_RE.match(clause)
-    rest = clause[m.end():] if m else clause
+    rest = clause[m.end() :] if m else clause
     rest = re.split(
         r"\s+(?:with|through|tied to|drawing on|near|at the|across Harvard|for Harvard|for the)\s+",
         rest,
@@ -1735,9 +1751,9 @@ def _sibling_body(dtype: str, field_label: str, focus: str) -> str:
 def _adapt_clause_for_degree_type(clause: str, degree_type: str) -> str:
     if degree_type == "bachelors":
         if clause.startswith("Graduate "):
-            return "Undergraduate " + clause[len("Graduate "):]
+            return "Undergraduate " + clause[len("Graduate ") :]
         if clause.startswith("Graduate-level "):
-            return "Undergraduate-level " + clause[len("Graduate-level "):]
+            return "Undergraduate-level " + clause[len("Graduate-level ") :]
     return clause
 
 
@@ -1745,9 +1761,7 @@ def _level_appropriate_clause(clause: str, degree_type: str) -> str:
     if degree_type == "bachelors":
         return clause
     clause = re.sub(r"\bthe undergraduate major\b", "the program", clause, flags=re.I)
-    clause = re.sub(
-        r"\bundergraduate (major|program)\b", "program", clause, flags=re.I
-    )
+    clause = re.sub(r"\bundergraduate (major|program)\b", "program", clause, flags=re.I)
     return clause
 
 
@@ -1769,17 +1783,13 @@ def _resolve_fd_field(spec: dict, field_name: str | None = None) -> str:
     if field_key and field_key in FIELD_DESCRIPTIONS:
         return field_key
     fallback_key = (
-        field_key
-        or spec.get("department")
-        or _real_field_of(spec.get("program_name", ""))
+        field_key or spec.get("department") or _real_field_of(spec.get("program_name", ""))
     )
     if fallback_key in FIELD_ALIASES:
         fallback_key = FIELD_ALIASES[fallback_key]
     if fallback_key in FIELD_DESCRIPTIONS:
         return fallback_key
-    raise ValueError(
-        f"Missing FIELD_DESCRIPTIONS entry for {fallback_key!r} ({spec['slug']})"
-    )
+    raise ValueError(f"Missing FIELD_DESCRIPTIONS entry for {fallback_key!r} ({spec['slug']})")
 
 
 def _assign_descriptions(programs: list[dict]) -> None:
@@ -2333,8 +2343,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
                 "label": "Cost & debt",
                 "sentiment": "caution",
                 "detail": (
-                    "Three-year tuition near $78,700/year before living costs in "
-                    "the Boston area."
+                    "Three-year tuition near $78,700/year before living costs in the Boston area."
                 ),
             },
             {
@@ -2397,8 +2406,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
                 "label": "Cost of attendance",
                 "sentiment": "caution",
                 "detail": (
-                    "Tuition near $78,700/year plus Boston-area living expenses "
-                    "over four years."
+                    "Tuition near $78,700/year plus Boston-area living expenses over four years."
                 ),
             },
         ],
@@ -2511,16 +2519,14 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
                 "label": "Quantitative demands",
                 "sentiment": "caution",
                 "detail": (
-                    "The M.P.P. core requires substantial economics and statistics "
-                    "coursework."
+                    "The M.P.P. core requires substantial economics and statistics coursework."
                 ),
             },
             {
                 "label": "Cost",
                 "sentiment": "caution",
                 "detail": (
-                    "Two-year professional tuition without Harvard College's "
-                    "need-blind aid model."
+                    "Two-year professional tuition without Harvard College's need-blind aid model."
                 ),
             },
         ],
@@ -2582,8 +2588,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
                 "label": "Concentration competition",
                 "sentiment": "caution",
                 "detail": (
-                    "Rising demand has made the CS concentration increasingly "
-                    "selective to enter."
+                    "Rising demand has made the CS concentration increasingly selective to enter."
                 ),
             },
         ],
@@ -2631,8 +2636,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
                 "label": "Recruiting outcomes",
                 "sentiment": "positive",
                 "detail": (
-                    "Common path into finance, consulting, tech, and top "
-                    "economics Ph.D. programs."
+                    "Common path into finance, consulting, tech, and top economics Ph.D. programs."
                 ),
             },
             {
@@ -2682,8 +2686,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
                 "label": "Studio culture",
                 "sentiment": "positive",
                 "detail": (
-                    "Gund Hall's open studio floors foster interdisciplinary "
-                    "design collaboration."
+                    "Gund Hall's open studio floors foster interdisciplinary design collaboration."
                 ),
             },
             {
@@ -2698,8 +2701,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
                 "label": "Program cost",
                 "sentiment": "caution",
                 "detail": (
-                    "Professional tuition for a multi-year residential degree in "
-                    "the Boston area."
+                    "Professional tuition for a multi-year residential degree in the Boston area."
                 ),
             },
         ],
@@ -2791,8 +2793,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
                 "label": "Applied computing depth",
                 "sentiment": "positive",
                 "detail": (
-                    "Coursework in numerical methods, HPC, and scientific "
-                    "machine learning."
+                    "Coursework in numerical methods, HPC, and scientific machine learning."
                 ),
             },
             {
@@ -2807,8 +2808,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
                 "label": "Prerequisite bar",
                 "sentiment": "caution",
                 "detail": (
-                    "Expects strong linear algebra, programming, and prior "
-                    "STEM coursework."
+                    "Expects strong linear algebra, programming, and prior STEM coursework."
                 ),
             },
             {
@@ -2865,8 +2865,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
                 "label": "One-year pace",
                 "sentiment": "caution",
                 "detail": (
-                    "A compressed schedule of coursework, activities, and "
-                    "networking in Cambridge."
+                    "A compressed schedule of coursework, activities, and networking in Cambridge."
                 ),
             },
             {
@@ -2913,24 +2912,19 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
                 "label": "Pathway flexibility",
                 "sentiment": "positive",
                 "detail": (
-                    "Multiple Ed.M. strands across leadership, teaching, and "
-                    "learning design."
+                    "Multiple Ed.M. strands across leadership, teaching, and learning design."
                 ),
             },
             {
                 "label": "One-year format",
                 "sentiment": "caution",
-                "detail": (
-                    "The standard Ed.M. is designed to be completed in one "
-                    "academic year."
-                ),
+                "detail": ("The standard Ed.M. is designed to be completed in one academic year."),
             },
             {
                 "label": "Professional tuition",
                 "sentiment": "caution",
                 "detail": (
-                    "Graduate tuition without Harvard College's need-blind "
-                    "financial-aid model."
+                    "Graduate tuition without Harvard College's need-blind financial-aid model."
                 ),
             },
         ],
@@ -3397,9 +3391,7 @@ def _normalize_all_program_names() -> None:
         resolved = _resolve_rollup(field, p["degree_type"], p["school"])
         if resolved is None:
             continue
-        p["program_name"] = _conferred_program_name(
-            resolved, p["degree_type"], p["school"]
-        )
+        p["program_name"] = _conferred_program_name(resolved, p["degree_type"], p["school"])
 
 
 def _dedupe_conferred_name_collisions() -> None:
@@ -3424,16 +3416,12 @@ PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 counts = Counter(p["program_name"] for p in PROGRAMS)
 for p in PROGRAMS:
     if counts[p["program_name"]] > 1:
-        suffix = (
-            " (Online)" if p.get("delivery_format") == "online"
-            else f" ({p['school']})"
-        )
+        suffix = " (Online)" if p.get("delivery_format") == "online" else f" ({p['school']})"
         p["program_name"] += suffix
 for _p in PROGRAMS:
     _normalize_program(
         _p,
-        _p.get("_field_name")
-        or _field_from_program_name(_p.get("program_name", "")),
+        _p.get("_field_name") or _field_from_program_name(_p.get("program_name", "")),
     )
 _assign_descriptions(PROGRAMS)
 
@@ -3497,9 +3485,7 @@ _ROLLUP_NAME_RE = re.compile(
 _CIP_CODE_RE = re.compile(r"\(CIP\s*\d|\b\d\d\.\d\d\b")
 _catalog_errors = validate_catalog(PROGRAMS)
 _name_prefix_desc = sum(
-    1
-    for p in PROGRAMS
-    if (p.get("description") or "").startswith(p.get("program_name", ""))
+    1 for p in PROGRAMS if (p.get("description") or "").startswith(p.get("program_name", ""))
 )
 if _name_prefix_desc:
     _catalog_errors.append(f"name-prefixed descriptions on {_name_prefix_desc} programs")
@@ -3526,31 +3512,22 @@ _field_echo_dept = [
 if _field_echo_dept:
     _catalog_errors.append(f"field-echo departments: {_field_echo_dept[:5]}")
 _possessive_names = [
-    p["program_name"]
-    for p in PROGRAMS
-    if _POSSESSIVE_NAME_RE.match(p.get("program_name", ""))
+    p["program_name"] for p in PROGRAMS if _POSSESSIVE_NAME_RE.match(p.get("program_name", ""))
 ]
 if _possessive_names:
     _catalog_errors.append(
-        f"possessive-mint program names ({len(_possessive_names)}): "
-        f"{_possessive_names[:5]}"
+        f"possessive-mint program names ({len(_possessive_names)}): {_possessive_names[:5]}"
     )
 try:
     from unipaith.profile_standard import anti_stub as _anti_stub
 
     _astub = _anti_stub.analyze(
-        [
-            {"program_name": p["program_name"], "description": p.get("description")}
-            for p in PROGRAMS
-        ]
+        [{"program_name": p["program_name"], "description": p.get("description")} for p in PROGRAMS]
     )
     if not _astub.is_clean:
         _catalog_errors.append(f"anti-stub: {_astub.summary()}")
     _artifacts = _anti_stub.machine_artifacts(
-        [
-            {"program_name": p["program_name"], "description": p.get("description")}
-            for p in PROGRAMS
-        ]
+        [{"program_name": p["program_name"], "description": p.get("description")} for p in PROGRAMS]
     )
     if _artifacts:
         _catalog_errors.append(f"machine artifacts on {len(_artifacts)} programs")
@@ -3816,11 +3793,7 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict | None]:
         return 0, _cost_data_for(0, spec)
     if dt == "bachelors":
         return _TUITION_UNDERGRAD, _cost_data_for(_TUITION_UNDERGRAD, spec)
-    if (
-        slug == "harvard-alm"
-        or spec.get("delivery_format") == "online"
-        or dt == "certificate"
-    ):
+    if slug == "harvard-alm" or spec.get("delivery_format") == "online" or dt == "certificate":
         return None, None
     if dt == "masters":
         if school in _MASTERS_TUITION_OMIT_SCHOOLS:
