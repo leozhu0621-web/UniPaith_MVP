@@ -48,6 +48,10 @@ Policy & Strategy, the M.P.H., and the executive M.S. in Health Administration �
 omitted-with-reason: UCSD bills these on a separate per-unit cohort schedule with no single annual
 figure on the academic basis, so pricing them at the academic rate would understate them (coverage
 is not correctness) and a guessed per-unit total is not permitted — verify-or-omit.
+
+Matcher-core repair (2026-06-29, ucsdwho1): stamps a program-distinct ``who_its_for`` statement
+for every real UCSD program, derived from the program's credential, field, and already verified
+description. No external outcome or ranking claim is added by this repair.
 """
 
 # ruff: noqa: E501
@@ -561,6 +565,73 @@ def _ucsd_description(spec: dict, *, field: str) -> str:
     return f"{clause}{delivery}"
 
 
+_WHO_VERB_SPLITS = (
+    " undergraduates examine ",
+    " undergraduates analyze ",
+    " undergraduates study ",
+    " integrates ",
+    " emphasizes ",
+    " examines ",
+    " combines ",
+    " covers ",
+    " spans ",
+    " advances ",
+    " deepens ",
+    " offers depth in ",
+    " pursue advanced study in ",
+    " lets students specialize across ",
+    " students specialize in ",
+    " study ",
+    " studies ",
+    " analyze ",
+    " addresses ",
+    " training covers ",
+)
+
+
+def _who_focus(spec: dict) -> str:
+    """Return a short, source-grounded focus phrase from the verified description."""
+    desc = (spec.get("description") or "").strip().rstrip(".")
+    lower = desc.lower()
+    for marker in _WHO_VERB_SPLITS:
+        idx = lower.find(marker)
+        if idx >= 0:
+            return desc[idx + len(marker) :].strip()
+    return _field_key_from_spec(spec)
+
+
+def _who_its_for(spec: dict) -> str:
+    field = _field_key_from_spec(spec)
+    name = spec["program_name"]
+    focus = _who_focus(spec)
+    dtype = spec["degree_type"]
+    if dtype == "bachelors":
+        return (
+            f"Undergraduates choosing {name} who want UC San Diego study in {field}, with "
+            f"coursework and projects focused on {focus}. Suited to graduate study, research, "
+            "or early-career work connected to the field."
+        )
+    if dtype == "masters":
+        return (
+            f"Graduate students choosing {name} who want advanced UC San Diego study in {field}, "
+            f"with specialized coursework or research focused on {focus}. Best for professional "
+            "practice, research roles, or doctoral preparation in the field."
+        )
+    if dtype == "phd":
+        return (
+            f"Doctoral applicants choosing {name} who want dissertation-level UC San Diego "
+            f"research in {field}, especially {focus}. Best for academic, research, or "
+            "expert-practice paths."
+        )
+    if dtype == "professional":
+        return (
+            f"Applicants choosing {name} who are preparing for licensed health-professions "
+            f"practice through UC San Diego training focused on {focus}. Best for clinical, "
+            "patient-care, or pharmacy practice tied to the credential."
+        )
+    raise ValueError(f"Unsupported UCSD degree type for who_its_for: {dtype!r}")
+
+
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
     slug = spec["slug"]
     school = spec["school"]
@@ -650,6 +721,14 @@ if _cred_prefix:
     _catalog_errors.append(f"credential-prefix program_name on {_cred_prefix} programs")
 _catalog_errors.extend(_fabricated_unit_violations(PROGRAMS))
 _catalog_errors.extend(_shared_description_violations(PROGRAMS))
+_who_values = [_who_its_for(p) for p in PROGRAMS]
+_who_missing = [p["slug"] for p, who in zip(PROGRAMS, _who_values, strict=True) if not who.strip()]
+if _who_missing:
+    _catalog_errors.append(f"who_its_for missing on {_who_missing[:5]}")
+if len(set(_who_values)) != len(_who_values):
+    _catalog_errors.append(
+        f"who_its_for not program-distinct: {len(set(_who_values))}/{len(_who_values)}"
+    )
 if _catalog_errors:
     raise RuntimeError(f"UCSD catalog quality gate failed: {_catalog_errors}")
 
@@ -759,7 +838,9 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
     school = spec["school"]
     name = spec["program_name"]
     if dt == "bachelors":
-        return _TUITION_UG_INSTATE, {
+        # Matcher scalar = NON-RESIDENT; cost_data stays RESIDENT-consistent (tuition_usd + COA);
+        # breakdown carries BOTH (REPAIR_BACKLOG #4, the Berkeley pattern).
+        return _TUITION_UG_OOS, {
             "tuition_usd": _TUITION_UG_INSTATE, "total_cost_of_attendance": _UNDERGRAD_COA,
             "avg_net_price": _AVG_NET_PRICE, "funded": False,
             "breakdown": {"tuition_in_state": _TUITION_UG_INSTATE, "tuition_out_of_state": _TUITION_UG_OOS},
@@ -1254,6 +1335,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         # value is the IPEDS-reported CIP-2020 family code for UNITID 110680 already
         # carried on every spec for the breadth cross-check — never a guess.
         p.cip_code = spec.get("cip")
+        p.who_its_for = _who_its_for(spec)
         kw = _PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(_KEYWORDS_BY_SCHOOL[spec["school"]])
         p.content_sources = _program_content(spec["school"], kw)
         tuition, cost = _program_tuition(spec)

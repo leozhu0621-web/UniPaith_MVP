@@ -4315,6 +4315,8 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
         )
         cost["total_cost_of_attendance"] = _UNDERGRAD_COA
         cost["avg_net_price"] = _AVG_NET_PRICE
+        # Matcher scalar = NON-RESIDENT; cost_data stays RESIDENT-consistent (tuition_usd + COA);
+        # breakdown carries BOTH (REPAIR_BACKLOG #4, the Berkeley pattern).
         return oos, cost
     # A distinct published per-program rate (overrides the school default AND Ph.D. funding,
     # so a professional doctorate billed at a real rate is never zeroed as a research Ph.D.).
