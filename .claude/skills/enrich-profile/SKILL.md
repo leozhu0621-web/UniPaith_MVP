@@ -489,6 +489,41 @@ Concrete misses observed in the first runs — each broke a real page:
      the CIP mint), while gold MIT ships 0 of them and carries its real "Science,
      Technology, and Society" major (so the prior comma-and tell, applied bluntly, would
      reject the 0-control itself).
+   - **The embedded-SLASH rollup tell must EXCLUDE a verified real JOINT/DUAL-degree, a
+     COMBINED/DOUBLE-major, and a GENDER-INCLUSIVE ethnic-studies slash — a blunt "any `/`
+     in the field ⇒ rollup" scan FALSE-FLAGS dozens of verified real conferred degrees and
+     would pressure mangling them (the slash analog of the run-77 comma-and carve-out and the
+     run-92 possessive carve-out; the live over-trigger this run).** The prior bullets
+     correctly list an embedded slash ("Religion/Religious Studies",
+     "Engineering/Engineering-Related Technologies/Technicians, Other") as a CIP-rollup tell —
+     but a `/` in a `program_name` is FAR more often a real conferred form than a rollup, and
+     a scan that flags every slash (the form a FLAG-#3 CI metric or an over-zealous repair
+     would run) destroys real data (omit-never-guess in REVERSE — never replace a verified real
+     name with a "cleaner" one). Three real slash forms must be carved out: **(a) a
+     JOINT/DUAL degree** — two real conferred credentials joined ("Doctor of Medicine / Doctor
+     of Philosophy (MD/PhD)", "Juris Doctor / Master of Business Administration (JD/MBA)",
+     "Master of Social Work / Master of Public Health (MSW/MPH)", "Bachelor of Arts in
+     Mathematics / Master of Science in Computer Science (Accelerated)"); **(b) a
+     COMBINED/DOUBLE major** — one degree spanning two fields ("Bachelor of Arts in
+     Mathematics/Economics", "… in Chemistry/Materials Science", "… in
+     Atmospheric and Oceanic Sciences/Mathematics", NYU's "… in Childhood Education/Childhood
+     Special Education"); and **(c) a GENDER-INCLUSIVE ethnic-studies name** the institution
+     publishes with a slash ("Bachelor of Arts in Latina/Latino Studies", "… in
+     Chicana/Chicano Studies", "… in Chicano/Latino Studies", "Mexican American and Latina/o
+     Studies") — plus the run-77 carve-out major "Radio/Television/Film". The DISCRIMINATOR is
+     unchanged from run 77: the defect is the field part **byte-identical to a federal CIP
+     rollup/aggregation TITLE** (e.g. CIP 26.0701 "Zoology/Animal Biology" — the institution's
+     real degree is "Zoology" — minted across cert/bachelor's/master's = the IPEDS×award-level
+     fingerprint), NOT the mere presence of a slash; resolve a CIP-title slash to the real
+     published degree, NEVER mangle a verified real joint/combined/inclusive name. This
+     TIGHTENS toward no-fabrication (removes a false-positive that would mangle verified real
+     degrees); it loosens NOTHING (a CIP-rollup-title slash is still a hard FAIL). Evidence:
+     live API this run — Boston University ships 19 real joint/dual conferred degrees with a
+     slash, NYU 8 (combined teaching certifications + the Stern/Abu-Dhabi EMBA), UCLA 5
+     combined/double majors, and gender-inclusive Latina/o + Chicana/o majors appear verbatim
+     across ≥6 catalogs (UCLA · UT-Austin · UC-Davis · UC-Irvine · UIUC · Michigan) — all
+     verified real — while UW-Madison's "Zoology/Animal Biology" ×3 (CIP 26.0701) is the one
+     true CIP-title slash and stays flagged.
    - **A CIP-title-NAME repair must clear the WHOLE CLASS, not the backlog-enumerated
      strings — the REPAIR_BACKLOG lists a SAMPLE the grader happened to spot, never the
      exhaustive set, so a pass that resolves exactly the named strings and ships leaves the
