@@ -31,7 +31,7 @@ locks quickly. The apply is a light 65-row update, so it completes immediately; 
 verified LIVE against the public API (cip_code + who_its_for distinctness) regardless.
 
 Revision ID: mitcipwho1
-Revises: gtowntuition2
+Revises: gtowntuition3
 Create Date: 2026-06-30
 """
 
@@ -46,7 +46,7 @@ from unipaith.models.institution import Institution
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "mitcipwho1"
-down_revision = "gtowntuition2"
+down_revision = "gtowntuition3"
 branch_labels = None
 depends_on = None
 
