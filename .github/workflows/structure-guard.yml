@@ -1,0 +1,60 @@
+name: Structure Guard
+
+# Soft, advisory structural guardrails. Every check is continue-on-error so it
+# INFORMS the reviewer (PR annotations) without blocking. Flip an individual
+# check to a hard gate once the codebase is clean on that dimension.
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: PR title is conventional
+        continue-on-error: true
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          if echo "$TITLE" | grep -qE '^(feat|fix|perf|refactor|docs|test|ci|build|chore|repair|enrich)(\([a-z0-9 ._/-]+\))?!?: .+'; then
+            echo "OK: $TITLE"
+          else
+            echo "::warning::PR title is not conventional — expected 'type(scope): summary'. Got: '$TITLE'"
+          fi
+
+      - name: No new data-as-code, god-files, or VCS dumps
+        continue-on-error: true
+        run: |
+          base="origin/${{ github.base_ref }}"
+          git fetch -q origin "${{ github.base_ref }}"
+          added=$(git diff --diff-filter=A --name-only "$base"...HEAD || true)
+          [ -z "$added" ] && { echo "No added files."; exit 0; }
+
+          echo "$added" | grep -E 'unipaith-backend/src/unipaith/data/.*_profile\.py$' | while read -r f; do
+            [ -n "$f" ] && echo "::warning file=$f::New data-as-code module. University data belongs in the datastore / structured files behind the loader, not Python source (CONTRIBUTING.md)."
+          done
+
+          echo "$added" | grep -E '(_branches.*\.txt$|\.log$)' | while read -r f; do
+            [ -n "$f" ] && echo "::warning file=$f::Looks like a VCS dump or log file — don't commit these (.gitignore)."
+          done
+
+          while read -r f; do
+            [ -z "$f" ] && continue
+            case "$f" in
+              *.py|*.ts|*.tsx)
+                loc=$(wc -l < "$f" 2>/dev/null || echo 0)
+                if [ "$loc" -gt 800 ]; then
+                  echo "::warning file=$f::New file is $loc LOC (> 800). Consider splitting into smaller modules (CONTRIBUTING.md §No god-files)."
+                fi ;;
+            esac
+          done <<< "$added"
+
+          echo "Structure guard finished (advisory)."

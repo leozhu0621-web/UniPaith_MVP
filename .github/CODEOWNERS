@@ -1,0 +1,17 @@
+# Code owners — auto-requests review from the right owner per area.
+# Only enforces blocking review if branch protection has "Require review from Code Owners" enabled.
+# Single maintainer today; add teammates per-area as the team grows.
+
+# Default owner for everything
+*                                       @leozhu0621-web
+
+# Areas
+/frontend/                              @leozhu0621-web
+/unipaith-backend/                      @leozhu0621-web
+/infra/                                 @leozhu0621-web
+/.github/                               @leozhu0621-web
+
+# High-blast-radius — review with extra care
+/unipaith-backend/alembic/              @leozhu0621-web
+/unipaith-backend/src/unipaith/data/    @leozhu0621-web
+/infra/*.tf                             @leozhu0621-web
