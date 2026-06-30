@@ -62,3 +62,16 @@ tfplan
 
 # visual-companion brainstorm scratch
 .superpowers/
+
+# --- repo hygiene (structure/governance pass) ---
+# Logs
+*.log
+
+# Local parallel working copies — never commit these
+App_MVP_qwen/
+App_MVP_unifix/
+
+# Editor/OS scratch
+*.tmp
+*.bak
+*.orig
