@@ -1159,7 +1159,24 @@ async def _list_enriched_matches(
     weight_ranking = getattr(pref, "weight_ranking", None)
     bands_enabled = _cfg.ai_probability_bands_enabled
 
+    # Student academic strength (GPA) so banding is reach/target/safer vs the
+    # student's OWN stats, not just a slider.
+    from unipaith.models.student import AcademicRecord
+
+    gpa_raw = (
+        await db.execute(
+            select(AcademicRecord.gpa)
+            .where(
+                AcademicRecord.student_id == student_id,
+                AcademicRecord.is_current.is_(True),
+            )
+            .limit(1)
+        )
+    ).scalar_one_or_none()
+    student_gpa = float(gpa_raw) if gpa_raw is not None else None
+
     out: list[StudentMatchResponse] = []
+    fits: list[float] = []
     for m in matches:  # preserves fitness-desc order
         row = row_by_pid.get(m.program_id)
         if row is None:
@@ -1174,9 +1191,25 @@ async def _list_enriched_matches(
                 institution_name=inst_name,
                 institution_ranking=inst_ranking,
                 weight_ranking=weight_ranking,
+                student_gpa=student_gpa,
                 bands_enabled=bands_enabled,
             )
         )
+        fits.append(_band_fitness(row))
+    # Balance safety net: if banding still collapsed to all-"reach" (no usable
+    # selectivity data anywhere in the list), spread by relative fit so the student
+    # gets a usable reach/target/safer mix instead of 20 reaches — the strongest
+    # fits are the safer bets.
+    if len(out) >= 6 and not any(r.band_label in ("target", "safer") for r in out):
+        order = sorted(range(len(out)), key=lambda i: fits[i], reverse=True)
+        n = len(order)
+        for rank, i in enumerate(order):
+            if rank < n * 0.30:
+                out[i].band_label = "safer"
+            elif rank < n * 0.65:
+                out[i].band_label = "target"
+            else:
+                out[i].band_label = "reach"
     return out
 
 
@@ -1340,6 +1373,7 @@ def _enrich_match_for_student(
     institution_name: str | None = None,
     institution_ranking: object = None,
     weight_ranking: int | None = None,
+    student_gpa: float | None = None,
     bands_enabled: bool = True,
 ) -> StudentMatchResponse:
     """Student-safe response (spec 06 §5.5) plus Spec 09 context: program
@@ -1374,7 +1408,10 @@ def _enrich_match_for_student(
     fitness = _band_fitness(match)
     confidence = float(match.confidence_score)
     resp.band_label = band_for_acceptance(
-        fitness=fitness, acceptance_rate=acceptance_rate, weight_ranking=weight_ranking
+        fitness=fitness,
+        acceptance_rate=acceptance_rate,
+        weight_ranking=weight_ranking,
+        student_gpa=student_gpa,
     )
     # Simple range-based "Fit" readout (§14: never the raw number): a program
     # whose computed fit clears the threshold is shown as a fit.

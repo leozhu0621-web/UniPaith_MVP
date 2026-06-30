@@ -45,33 +45,69 @@ def tolerance_from_preferences(weight_ranking: int | None) -> float:
     return _clamp(float(weight_ranking) / 10.0, 0.0, 1.0)
 
 
+def strength_from_gpa(gpa: float | None) -> float | None:
+    """The student's academic strength in ``[0, 1]`` from a 4.0-scale GPA, used
+    as the comfort line for banding. Deliberately conservative — GPA alone does
+    not buy a seat at the most selective schools — so ``(gpa - 2.0) / 2.5``:
+    4.0→0.8, 3.7→0.68, 3.0→0.4. ``None`` when no GPA is on file (banding then
+    falls back to the selectivity slider)."""
+    if gpa is None:
+        return None
+    try:
+        return _clamp((float(gpa) - 2.0) / 2.5, 0.0, 1.0)
+    except (TypeError, ValueError):
+        return None
+
+
 def classify_band(
     *,
     fitness: float,
     selectivity: float | None,
     tolerance: float | None,
+    student_strength: float | None = None,
 ) -> str:
     """Return ``"reach" | "target" | "safer"`` (Spec 09 §6).
 
-    Primary signal is selectivity-vs-tolerance — a program more selective
-    than the student's comfort is a *reach*; less selective is *safer*. When
-    selectivity is unknown we fall back to the spec's fitness thresholds
-    (scaled to the 0–1 score space).
+    The band is the program's admission difficulty (``selectivity``) vs how
+    strong the STUDENT is. When we know the student's stats we compare against
+    ``student_strength`` (GPA-derived); the ranking slider only nudges it. When
+    the student's stats are unknown we fall back to the slider ``tolerance``;
+    when selectivity itself is unknown we fall back to fitness thresholds, shifted
+    down for stronger students so a good applicant isn't told everything is a
+    reach.
     """
     f = _clamp(float(fitness), 0.0, 1.0)
-    if selectivity is None or tolerance is None:
-        # Fitness-only fallback (Spec 09 §6 thresholds, 0–100 → 0–1).
-        if f >= 0.75:
+    if selectivity is not None:
+        if student_strength is not None:
+            comfort = student_strength
+            if tolerance is not None:
+                # The slider tilts the comfort line a little (a student reaching
+                # for prestige accepts more selective "targets"), but the GPA
+                # dominates.
+                comfort = _clamp(0.8 * student_strength + 0.2 * tolerance, 0.0, 1.0)
+        elif tolerance is not None:
+            comfort = tolerance
+        else:
+            comfort = 0.5
+        gap = float(selectivity) - comfort
+        if gap > 0.12:
+            return "reach"
+        if gap < -0.12:
             return "safer"
-        if f >= 0.65:
-            return "target"
-        return "reach"
-    gap = float(selectivity) - float(tolerance)
-    if gap > 0.12:
-        return "reach"
-    if gap < -0.12:
+        return "target"
+    # Selectivity unknown — fitness fallback. The old 0.65/0.75 bars sat above the
+    # live CPEF fit distribution, pinning everything to "reach"; lower them and let
+    # a stronger student clear them more easily.
+    bar_target, bar_safer = 0.50, 0.70
+    if student_strength is not None:
+        shift = (student_strength - 0.5) * 0.20
+        bar_target = _clamp(bar_target - shift, 0.30, 0.75)
+        bar_safer = _clamp(bar_safer - shift, 0.45, 0.88)
+    if f >= bar_safer:
         return "safer"
-    return "target"
+    if f >= bar_target:
+        return "target"
+    return "reach"
 
 
 def band_for_acceptance(
@@ -79,13 +115,15 @@ def band_for_acceptance(
     fitness: float,
     acceptance_rate: float | None,
     weight_ranking: int | None,
+    student_gpa: float | None = None,
 ) -> str:
-    """Convenience wrapper that derives selectivity + tolerance from raw
-    program/preference fields and classifies the band."""
+    """Convenience wrapper that derives selectivity + tolerance + student
+    strength from raw program/preference/profile fields and classifies the band."""
     return classify_band(
         fitness=fitness,
         selectivity=selectivity_from_acceptance(acceptance_rate),
         tolerance=tolerance_from_preferences(weight_ranking),
+        student_strength=strength_from_gpa(student_gpa),
     )
 
 
