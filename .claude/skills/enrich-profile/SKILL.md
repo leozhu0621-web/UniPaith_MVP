@@ -66,6 +66,9 @@ claimed one fill **only** the gaps the school left empty. First-party always win
   start terms · intake rounds · deadlines.
 - **requirements** — test policy (test-optional?) · prerequisites · English policy.
 - **academic substance** — tracks/specializations · curriculum · faculty/research.
+- **accreditation** — accreditor body · status · scope (`ref_accreditation` /
+  `ranking_data.accreditor`). Editorial + eligibility depth (Chart-2 §3.5), **not a
+  scored value**; populate where public, omit-with-reason otherwise.
 - School **ranking** stays **editorial-only** — shown on cards, **never** a scored value.
 
 **Base match inputs + per-field provenance — the floor the matcher scores on.**
@@ -302,8 +305,13 @@ target-applicant row for every program of that institution lacking one — `pref
 from the name/CIP, `pref_levels` from the degree, `pref_min_gpa` from a real class
 profile (omit-never-guess) — stamping `source="derived"`, `confidence=0.4`, and it
 **never touches a claimed/first-party row**. The whole fleet was backfilled once
-(migration `progprefbf1`); calling it in your migration keeps each newly-enriched
-university covered. `field_provenance` per-attribute stamping is NOT yet automated or
+(migration `progprefbf1`, with GPA floors later filled from the editorial
+`Program.class_profile` JSONB by `progprefgpa1`); calling it in your migration keeps each
+newly-enriched university covered. **Canonical exemplar:** copy a post-`progprefbf1`
+migration that already models the call (e.g. `dartprof1_dartmouth_profile.py`), NOT the
+MIT chain — the MIT migrations predate `progprefbf1` and were covered by the one-time
+fleet backfill, so they do not contain this line. `field_provenance` per-attribute
+stamping is NOT yet automated or
 matcher-consumed — stamp it as you populate attributes for future authority-precedence,
 but it is not a hard gate today. (The match SCORE math is Spec 3, backend-only; your job
 is to feed it typed, grounded data.)
