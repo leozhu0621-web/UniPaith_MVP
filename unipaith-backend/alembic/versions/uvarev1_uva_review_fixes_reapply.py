@@ -3,9 +3,9 @@
 Follow-up to ``uvaprof1`` addressing the Codex review on PR #1174 (all verified):
 - Doctor of Nursing Practice ``degree_type`` ``phd`` → ``professional`` (a practice
   doctorate belongs with JD/MD, not the research-PhD bucket, for degree-type filters).
-- M.S. in Data Science + M.S. in Business Analytics ``delivery_format`` → ``hybrid`` and
-  ``part_time_available`` → True (both publish an online / part-time format, so the
-  online/part-time discovery filters now surface them).
+- M.S. in Data Science keeps the residential row and adds the verified online /
+  part-time delivery row; M.S. in Business Analytics stays on-campus and is marked
+  part-time available.
 - The LL.M. now takes graduate-law admissions requirements instead of the J.D.'s
   LSAT/CAS checklist.
 
@@ -18,7 +18,7 @@ it cannot get its locks quickly. The migration still records as applied so the c
 advances; ``uva_profile.apply()`` is idempotent and the routine re-applies it.
 
 Revision ID: uvarev1
-Revises: uvaprof1
+Revises: purduefeedimg1
 Create Date: 2026-06-26
 """
 
@@ -33,7 +33,7 @@ from unipaith.models.institution import Institution, Program, ProgramPreference
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "uvarev1"
-down_revision = "uvaprof1"
+down_revision = "purduefeedimg1"
 branch_labels = None
 depends_on = None
 
@@ -46,9 +46,7 @@ def upgrade() -> None:
         with session.begin_nested():
             uva_profile.apply(session)
             inst = session.scalar(
-                select(Institution).where(
-                    Institution.name == uva_profile.INSTITUTION_NAME
-                )
+                select(Institution).where(Institution.name == uva_profile.INSTITUTION_NAME)
             )
             if inst is not None:
                 # Drop this institution's DERIVED preference rows so backfill RE-DERIVES
@@ -69,10 +67,7 @@ def upgrade() -> None:
                 backfill_program_preferences(session, institution_id=inst.id)
         session.flush()
     except Exception as exc:  # noqa: BLE001 — never let a data re-apply freeze the deploy
-        print(
-            f"  uvarev1: data re-apply skipped "
-            f"({type(exc).__name__}: {str(exc)[:140]})"
-        )
+        print(f"  uvarev1: data re-apply skipped ({type(exc).__name__}: {str(exc)[:140]})")
 
 
 def downgrade() -> None:
