@@ -22,8 +22,8 @@ FILLED
 OMIT-WITH-REASON (no annual full-time basis; ``program.tuition`` is consumed as ANNUAL by the
 matcher, so a multi-year cohort TOTAL or per-credit rate would over-fire the budget veto)
   - **Executive MBA Americas** — fixed $198,234 program fee (5 installments / 17-month cohort)
-  - **Executive M.H.A.** — flat $93,316 for the 18-month degree
-  - **Executive M.P.A.** — flat $89,536 for the 18-month degree
+  - **Executive M.H.A.** — flat $93,316 for the 18-month degree (Summer 2026 cohort)
+  - **Executive M.P.A.** — flat $93,316 for the 18-month degree (Summer 2026 cohort)
   - **online M.S.L.S.** — $2,265/credit (30 credits / 5 part-time terms ≈ $67,950)
   - **hybrid M.Eng. Engineering Management** — $2,465/credit (30+ credits over 2-3 years)
 Each verified total / per-credit rate is preserved in ``cost_data`` and the annual scalar is

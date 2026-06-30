@@ -2747,8 +2747,8 @@ _TUITION_OMIT_DETAIL: dict[str, dict] = {
     "cornell-emha-online": {
         "note": (
             "The Executive M.H.A. is billed as a flat program fee of $93,316 for the 18-month "
-            "degree, not an annual tuition, so no per-year matcher rate is stated; the verified "
-            "total program cost is recorded below."
+            "degree (new students starting Summer 2026), not an annual tuition, so no per-year "
+            "matcher rate is stated; the verified total program cost is recorded below."
         ),
         "source": "Cornell Brooks School — Executive M.H.A., Costs and Aid",
         "source_url": "https://publicpolicy.cornell.edu/masters/sloan/emha/costs-and-aid/",
@@ -2756,13 +2756,13 @@ _TUITION_OMIT_DETAIL: dict[str, dict] = {
     },
     "cornell-empa-online": {
         "note": (
-            "The Executive M.P.A. is billed as a flat program fee of $89,536 for the 18-month "
-            "degree, not an annual tuition, so no per-year matcher rate is stated; the verified "
-            "total program cost is recorded below."
+            "The Executive M.P.A. is billed as a flat program fee of $93,316 for the 18-month "
+            "degree (new students starting Summer 2026), not an annual tuition, so no per-year "
+            "matcher rate is stated; the verified total program cost is recorded below."
         ),
         "source": "Cornell Brooks School — Executive M.P.A., Costs and Aid",
         "source_url": "https://publicpolicy.cornell.edu/masters/mpa/empa/costs-and-aid/",
-        "extra": {"total_program_tuition": 89536, "tuition_period": "total_program"},
+        "extra": {"total_program_tuition": 93316, "tuition_period": "total_program"},
     },
     "cornell-legal-studies-ms-online": {
         "note": (
