@@ -191,8 +191,10 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     # (which honestly omits every outcomes field).
     assert set(mm.outcomes_data) == {"_standard"}
     assert "outcomes_data.median_salary" in mm.outcomes_data["_standard"]["omitted"]
-    # Audience + highlights populate (flagship override + by-type fallback).
-    assert eecs.who_its_for and "education" in eecs.who_its_for
+    # Audience + highlights populate. who_its_for is now program-DISTINCT
+    # (a field-specific _WHO_BY_SLUG statement for every program, not the old
+    # degree-type fallback), so it names EECS's own subject, not a generic blurb.
+    assert eecs.who_its_for and "circuits" in eecs.who_its_for
     assert eecs.highlights and any("CSAIL" in h for h in eecs.highlights)
     assert chem.highlights  # by-type (bachelors) fallback
     assert eecs.tracks and any("6-3" in c for c in eecs.tracks["concentrations"])

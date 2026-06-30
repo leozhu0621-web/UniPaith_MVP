@@ -30,7 +30,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Massachusetts Institute of Technology"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-15"
+ENRICHED_AT = "2026-06-30"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -259,8 +259,8 @@ UNDERGRAD_COUNT = 4561
 
 DESCRIPTION = (
     "Massachusetts Institute of Technology is a private research university in "
-    "Cambridge, MA, founded in 1861 whose motto — Mens et Manus (\"mind and "
-    "hand\") — captures its founding commitment to advancing knowledge in the "
+    'Cambridge, MA, founded in 1861 whose motto — Mens et Manus ("mind and '
+    'hand") — captures its founding commitment to advancing knowledge in the '
     "service of real-world problems. Its campus stretches more than a mile "
     "along the north bank of the Charles River, across from downtown Boston.\n\n"
     "MIT is organized into five schools and one college: Engineering; Science; "
@@ -639,7 +639,10 @@ _SCI_ABOUT_DETAIL: dict = {
         },
         {"name": "Laboratory for Nuclear Science (LNS)", "url": "https://web.mit.edu/lns/"},
     ],
-    "source": {"label": "MIT School of Science", "url": "https://science.mit.edu/about/leadership/"},
+    "source": {
+        "label": "MIT School of Science",
+        "url": "https://science.mit.edu/about/leadership/",
+    },
 }
 _SHASS_ABOUT_DETAIL: dict = {
     "founded": 1950,
@@ -1661,6 +1664,94 @@ _FOS_OUTCOMES: dict[str, tuple[int, int | None, str]] = {
     "mit-chemistry-phd": (120827, None, "40.05"),
 }
 
+# ── Per-program CIP code (matcher-core field/interest join key — REPAIR_BACKLOG #2) ──
+# Every code is the verified federal CIP-4 family MIT itself reports under for that
+# program, read directly from the U.S. Dept. of Education College Scorecard
+# field-of-study list for MIT (UNITID 166683) — the same IPEDS source used for the
+# breadth cross-check; nothing is guessed. ``p.cip_code`` is the CIP join key the
+# matcher uses to resolve a program's field to ``ref_majors`` + the field-66
+# vocabulary (alongside the dense ``description_text`` embedding); a null leaves the
+# program scored field-blind. MIT's distinctive interdisciplinary majors map to the
+# real interdisciplinary CIPs MIT reports (30.08 Mathematics & Computer Science,
+# 30.39 Economics & Computer Science, 30.15 Science/Technology/Society, 30.25
+# Cognitive Science, 04.10 Real Estate Development, 09.07 Media Arts & Sciences),
+# never a generic stand-in. Verified 2026-06-30: every value below appears in MIT's
+# College Scorecard cip_4_digit list.
+_CIP_BY_SLUG: dict[str, str] = {
+    # School of Engineering
+    "mit-eecs-bs": "14.10",
+    "mit-eecs-phd": "14.10",
+    "mit-meche-bs": "14.19",
+    "mit-meche-phd": "14.19",
+    "mit-aeroastro-bs": "14.02",
+    "mit-aeroastro-phd": "14.02",
+    "mit-cheme-bs": "14.07",
+    "mit-dmse-bs": "14.18",
+    "mit-be-bs": "14.05",
+    "mit-cee-bs": "14.08",
+    "mit-nse-bs": "14.23",
+    "mit-sdm-sm": "14.27",
+    "mit-tpp-sm": "14.27",
+    # School of Science
+    "mit-physics-bs": "40.08",
+    "mit-physics-phd": "40.08",
+    "mit-math-bs": "27.01",
+    "mit-math-phd": "27.01",
+    "mit-biology-bs": "26.01",
+    "mit-chemistry-bs": "40.05",
+    "mit-chemistry-phd": "40.05",
+    "mit-bcs-bs": "26.15",  # Neurobiology & Neurosciences (Brain & Cognitive Sciences)
+    "mit-eaps-bs": "40.06",  # Geological & Earth Sciences (Earth/Atmospheric/Planetary)
+    "mit-statistics-phd": "27.03",  # MIT files statistics under Applied Mathematics
+    # School of Humanities, Arts, and Social Sciences
+    "mit-economics-bs": "45.06",
+    "mit-economics-phd": "45.06",
+    "mit-linguistics-philosophy-bs": "16.01",
+    "mit-political-science-bs": "45.10",
+    "mit-cms-writing-bs": "09.01",  # Communication & Media Studies (Comparative Media/Writing)
+    "mit-anthropology-bs": "45.02",
+    "mit-history-bs": "54.01",
+    "mit-literature-bs": "23.01",
+    "mit-music-bs": "50.09",
+    "mit-sts-bs": "30.15",  # Science, Technology and Society
+    "mit-global-languages-bs": "16.01",
+    "mit-science-writing-sm": "23.13",  # Rhetoric & Composition / Writing Studies
+    # MIT Sloan School of Management
+    "mit-management-bs": "52.01",
+    "mit-sloan-mba": "52.01",
+    "mit-sloan-mfin": "52.08",
+    "mit-sloan-mban": "52.13",  # Management Sciences & Quantitative Methods
+    "mit-sloan-phd": "52.01",
+    "mit-business-analytics-bs": "52.13",
+    "mit-finance-bs": "52.08",
+    "mit-sloan-fellows-mba": "52.01",
+    # School of Architecture and Planning
+    "mit-architecture-bs": "04.02",
+    "mit-architecture-march": "04.02",
+    "mit-dusp-bs": "04.03",
+    "mit-mediaarts-sm": "09.07",  # Media Arts & Sciences (Media Lab)
+    "mit-red-sm": "04.10",  # Real Estate Development
+    "mit-city-planning-sm": "04.03",
+    # Stephen A. Schwarzman College of Computing
+    "mit-cs-6-3-bs": "11.07",
+    "mit-ai-6-4-bs": "11.07",
+    "mit-comp-cognition-bs": "30.25",  # Cognitive Science (6-9)
+    "mit-math-cs-bs": "30.08",  # Mathematics & Computer Science (18C)
+    "mit-cs-econ-data-bs": "30.39",  # Economics & Computer Science (6-14)
+    "mit-cse-phd": "30.08",  # Computational Science & Engineering
+    # MicroMasters + Professional Education certificates (field CIP)
+    "mit-mm-supply-chain": "52.13",
+    "mit-mm-statistics-data-science": "27.03",
+    "mit-mm-data-econ-policy": "45.06",
+    "mit-mm-manufacturing": "14.19",
+    "mit-mm-finance": "52.08",
+    "mit-pe-ml-ai": "11.07",
+    "mit-pe-design-manufacturing": "14.19",
+    "mit-pe-sustainability": "14.14",  # Environmental/Environmental Health Engineering
+    "mit-pe-cto": "52.01",
+    "mit-pe-innovation-tech": "52.01",
+}
+
 # Who-it's-for + highlights — real content, by degree type with per-program
 # overrides for flagship programs. Fills the program page's audience +
 # highlights sections (previously empty for MIT).
@@ -1670,10 +1761,271 @@ _WHO_BY_TYPE = {
     "phd": "Researchers pursuing an academic or research career through a funded doctorate.",
     "certificate": "Learners worldwide seeking a focused MIT credential, often online.",
 }
+# Program-DISTINCT "Who it's for" — a field-specific statement for every program
+# (REPAIR_BACKLOG #3b: the degree-type ``_WHO_BY_TYPE`` fallback collapsed all
+# bachelors / master's / PhD / certificate rows to one template each, so a CS PhD
+# and an Economics PhD read identically). Each line names the applicant the program
+# fits and what they study — distinct per program, derived from the program's own
+# subject; ``_WHO_BY_TYPE`` remains only as a safety fallback for any future slug.
 _WHO_BY_SLUG = {
+    # School of Engineering
+    "mit-eecs-bs": (
+        "Undergraduates who want to build across circuits, software, algorithms, and "
+        "AI rather than specialize early, in MIT's largest and most flexible engineering major."
+    ),
+    "mit-eecs-phd": (
+        "Researchers aiming to push the frontier of computing systems, machine "
+        "learning, or device theory through a funded doctorate and a research career."
+    ),
+    "mit-meche-bs": (
+        "Students drawn to how physical things work — mechanics, design, controls, "
+        "robotics, and energy — who want a broad, hands-on engineering foundation."
+    ),
+    "mit-meche-phd": (
+        "Doctoral researchers in mechanics, design, robotics, or energy systems "
+        "ready to lead original engineering research."
+    ),
+    "mit-aeroastro-bs": (
+        "Future aerospace engineers fascinated by flight, autonomy, and space "
+        "systems, ready for a design-intensive program tied to MIT's aerospace labs."
+    ),
+    "mit-aeroastro-phd": (
+        "Researchers advancing autonomous systems, propulsion, or spacecraft "
+        "engineering toward a research or faculty career."
+    ),
+    "mit-cheme-bs": (
+        "Students who want to engineer chemical and biological processes — from "
+        "energy and materials to pharmaceuticals — on a quantitative, lab-grounded track."
+    ),
+    "mit-dmse-bs": (
+        "Undergraduates curious about why materials behave as they do — the "
+        "structure, properties, and processing of metals, polymers, and electronic materials."
+    ),
+    "mit-be-bs": (
+        "Students working at the interface of biology and engineering — synthetic "
+        "biology, biomedical devices, and the quantitative analysis of living systems."
+    ),
+    "mit-cee-bs": (
+        "Future engineers of infrastructure and the environment — structures, "
+        "water, climate, and sustainable systems at the scale of cities."
+    ),
+    "mit-nse-bs": (
+        "Students drawn to nuclear science — fission, fusion, and radiation — and "
+        "its role in clean energy, security, and medicine."
+    ),
+    # School of Science
+    "mit-physics-bs": (
+        "Undergraduates who want the deepest possible grounding in how the universe "
+        "works, from quantum mechanics to astrophysics, with early access to research."
+    ),
+    "mit-physics-phd": (
+        "Researchers pursuing original theoretical or experimental physics — "
+        "particle, condensed-matter, astrophysics, or quantum — through a funded doctorate."
+    ),
+    "mit-math-bs": (
+        "Students who love mathematical structure and proof and want flexibility "
+        "across pure, applied, and computational tracks."
+    ),
+    "mit-math-phd": (
+        "Doctoral mathematicians pursuing pure or applied research toward an "
+        "academic or research career."
+    ),
+    "mit-biology-bs": (
+        "Undergraduates fascinated by molecular and cellular life who want a "
+        "rigorous, research-intensive path into biology or medicine."
+    ),
+    "mit-chemistry-bs": (
+        "Students who want to understand and create matter at the molecular level, "
+        "across organic, inorganic, physical, and biological chemistry."
+    ),
+    "mit-chemistry-phd": (
+        "Researchers pursuing original chemical-sciences work — synthesis, "
+        "spectroscopy, or biological chemistry — through a funded doctorate."
+    ),
+    "mit-bcs-bs": (
+        "Students curious about how the brain gives rise to mind and behavior, "
+        "spanning molecular neuroscience to cognition and computation."
+    ),
+    "mit-eaps-bs": (
+        "Undergraduates drawn to Earth, the oceans, climate, and the planets, "
+        "ready for a field- and data-rich science."
+    ),
+    # School of Humanities, Arts, and Social Sciences
+    "mit-economics-bs": (
+        "Students who want to analyze how people, markets, and policy interact, "
+        "with the quantitative rigor MIT's top-ranked economics department is known for."
+    ),
+    "mit-economics-phd": (
+        "Researchers pursuing frontier economic theory or empirical work toward an "
+        "academic or policy-research career, fully funded."
+    ),
+    "mit-linguistics-philosophy-bs": (
+        "Students drawn to the structure of language or the foundations of "
+        "knowledge, mind, and ethics — often both — in a small, intense department."
+    ),
+    "mit-political-science-bs": (
+        "Undergraduates who want to study power, institutions, and policy "
+        "empirically, from elections and security to political economy."
+    ),
+    "mit-cms-writing-bs": (
+        "Students who want to analyze and make media — film, games, digital "
+        "culture, and writing — across critical study and hands-on production."
+    ),
+    "mit-anthropology-bs": (
+        "Students interested in how culture, technology, and society shape human "
+        "life, grounded in ethnographic fieldwork."
+    ),
+    "mit-history-bs": (
+        "Undergraduates who want to understand the present through rigorous study "
+        "of the past, including the history of science and technology."
+    ),
+    "mit-literature-bs": (
+        "Students who read closely and think critically across literary traditions, "
+        "periods, and media."
+    ),
+    "mit-music-bs": (
+        "Musicians and scholars who want to compose, perform, and study music — "
+        "including music technology — within a rigorous liberal-arts setting."
+    ),
+    "mit-sts-bs": (
+        "Students who want to examine how science and technology shape, and are "
+        "shaped by, society, politics, and ethics."
+    ),
+    "mit-global-languages-bs": (
+        "Students seeking fluency in another language and culture, and a global, "
+        "cross-cultural lens on their MIT education."
+    ),
+    "mit-science-writing-sm": (
+        "Writers and scientists who want to communicate science to the public "
+        "through a graduate program in narrative science journalism."
+    ),
+    # MIT Sloan School of Management
+    "mit-management-bs": (
+        "Undergraduates who want an analytical, tech-oriented management education "
+        "— finance, analytics, operations, and entrepreneurship — at MIT Sloan."
+    ),
     "mit-sloan-mba": "Early-to-mid-career professionals targeting management and tech leadership.",
     "mit-sloan-mfin": "Quantitatively-minded graduates targeting careers across modern finance.",
     "mit-sloan-mban": "Graduates who want to turn data into business decisions.",
+    "mit-sloan-phd": (
+        "Researchers pursuing a management-science academic career — finance, "
+        "economics, operations, marketing, or organization studies — fully funded."
+    ),
+    "mit-business-analytics-bs": (
+        "Undergraduates who want to turn data into decisions, blending statistics, "
+        "optimization, and management."
+    ),
+    "mit-finance-bs": (
+        "Students aiming for quantitative finance careers, grounded in MIT Sloan's "
+        "data-driven approach to markets and risk."
+    ),
+    "mit-sloan-fellows-mba": (
+        "Accomplished mid-career leaders ready for an intensive one-year MBA built "
+        "around innovation and global leadership."
+    ),
+    # School of Architecture and Planning
+    "mit-architecture-bs": (
+        "Students who want to design across scales — buildings, computation, and "
+        "the built environment — in the oldest architecture program in the U.S."
+    ),
+    "mit-architecture-march": (
+        "Aspiring licensed architects pursuing the accredited professional degree, "
+        "combining design studios with history, theory, and building technology."
+    ),
+    "mit-dusp-bs": (
+        "Undergraduates who want to shape cities and communities through planning, "
+        "policy, and the study of urban life."
+    ),
+    "mit-mediaarts-sm": (
+        "Inventors and researchers at the MIT Media Lab who want to build at the "
+        "edges of technology, art, and human experience."
+    ),
+    "mit-red-sm": (
+        "Professionals pursuing real-estate development with MIT's analytical, "
+        "finance- and technology-driven approach to the built environment."
+    ),
+    "mit-city-planning-sm": (
+        "Future urban planners working on housing, transportation, environment, and "
+        "equitable development in cities worldwide."
+    ),
+    "mit-tpp-sm": (
+        "Technically trained graduates who want to shape technology policy — energy, "
+        "AI, mobility — by pairing engineering analysis with policy and economics."
+    ),
+    "mit-sdm-sm": (
+        "Experienced engineers integrating systems thinking, engineering, and "
+        "management to lead complex products and organizations."
+    ),
+    # Schwarzman College of Computing + interdisciplinary majors
+    "mit-cs-6-3-bs": (
+        "Undergraduates focused squarely on computer science — algorithms, systems, "
+        "and software — within MIT's flagship computing curriculum."
+    ),
+    "mit-ai-6-4-bs": (
+        "Students who want to build intelligent systems, combining machine "
+        "learning, decision-making, and the mathematics behind modern AI."
+    ),
+    "mit-comp-cognition-bs": (
+        "Students at the intersection of computation and the mind — machine "
+        "learning, neuroscience, and cognitive science together."
+    ),
+    "mit-math-cs-bs": (
+        "Students who want a rigorous joint foundation in mathematics and computer "
+        "science, strong for theory, data, or graduate study."
+    ),
+    "mit-cs-econ-data-bs": (
+        "Undergraduates who want to combine computer science, economics, and data "
+        "science to study markets, mechanisms, and large-scale data."
+    ),
+    "mit-cse-phd": (
+        "Researchers developing computational methods — simulation, numerical "
+        "algorithms, and data-driven modeling — across science and engineering."
+    ),
+    "mit-statistics-phd": (
+        "Doctoral researchers building methods for statistical inference and "
+        "learning, across MIT's interdisciplinary IDSS community."
+    ),
+    # MicroMasters + Professional Education certificates
+    "mit-mm-supply-chain": (
+        "Working professionals and career-changers who want a credential in "
+        "supply-chain analytics and management, stackable toward an MIT master's."
+    ),
+    "mit-mm-statistics-data-science": (
+        "Learners worldwide building a rigorous foundation in statistics, data "
+        "science, and machine learning, stackable toward an MIT master's."
+    ),
+    "mit-mm-data-econ-policy": (
+        "Professionals who want the tools of modern development economics — data, "
+        "causal inference, and policy design — from MIT's economics faculty."
+    ),
+    "mit-mm-manufacturing": (
+        "Engineers and operators who want to master the principles of modern "
+        "manufacturing, from process control to systems."
+    ),
+    "mit-mm-finance": (
+        "Aspiring and current finance professionals building graduate-level finance "
+        "fundamentals online, stackable toward an MIT degree."
+    ),
+    "mit-pe-ml-ai": (
+        "Practicing technologists and managers who want applied, current grounding "
+        "in machine learning and AI for real-world problems."
+    ),
+    "mit-pe-design-manufacturing": (
+        "Engineers and product leaders sharpening modern design and manufacturing "
+        "practice in a focused professional program."
+    ),
+    "mit-pe-sustainability": (
+        "Professionals driving sustainability in their organizations who want MIT's "
+        "science- and systems-based approach to climate and resources."
+    ),
+    "mit-pe-cto": (
+        "Senior technologists preparing to lead as chief technology officers, "
+        "bridging deep technology and executive strategy."
+    ),
+    "mit-pe-innovation-tech": (
+        "Leaders who want to build innovation capability in their organizations, "
+        "drawing on MIT's research on technology and entrepreneurship."
+    ),
 }
 _HL_BY_TYPE = {
     "bachelors": [
@@ -2499,10 +2851,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
         "sources": [
             {
                 "label": "MIT News — U.S. News 2025–26 rankings",
-                "url": (
-                    "https://news.mit.edu/2025/"
-                    "mit-named-no-2-university-us-news-2025-26-0923"
-                ),
+                "url": ("https://news.mit.edu/2025/mit-named-no-2-university-us-news-2025-26-0923"),
             },
             {
                 "label": "Niche — Massachusetts Institute of Technology",
@@ -2565,18 +2914,13 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             {
                 "label": "Intensity",
                 "sentiment": "caution",
-                "detail": (
-                    "Students report a demanding pace shared across all MIT majors."
-                ),
+                "detail": ("Students report a demanding pace shared across all MIT majors."),
             },
         ],
         "sources": [
             {
                 "label": "MIT News — U.S. News 2025–26 rankings",
-                "url": (
-                    "https://news.mit.edu/2025/"
-                    "mit-named-no-2-university-us-news-2025-26-0923"
-                ),
+                "url": ("https://news.mit.edu/2025/mit-named-no-2-university-us-news-2025-26-0923"),
             },
             {
                 "label": "MIT Sloan — Course 15 (Management)",
@@ -2607,8 +2951,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
                 "label": "Global architecture standing",
                 "sentiment": "positive",
                 "detail": (
-                    "QS World University Rankings No. 2 in Architecture & Built "
-                    "Environment."
+                    "QS World University Rankings No. 2 in Architecture & Built Environment."
                 ),
             },
             {
@@ -2726,10 +3069,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             },
             {
                 "label": "MIT News — U.S. News 2025–26 rankings",
-                "url": (
-                    "https://news.mit.edu/2025/"
-                    "mit-named-no-2-university-us-news-2025-26-0923"
-                ),
+                "url": ("https://news.mit.edu/2025/mit-named-no-2-university-us-news-2025-26-0923"),
             },
             {
                 "label": "Niche — Massachusetts Institute of Technology",
@@ -2780,8 +3120,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
                 "label": "Smaller cohort",
                 "sentiment": "mixed",
                 "detail": (
-                    "Course 15-2 is newer and less established than EECS or traditional "
-                    "Course 15."
+                    "Course 15-2 is newer and less established than EECS or traditional Course 15."
                 ),
             },
             {
@@ -3099,8 +3438,8 @@ def _apply_schools(session: Session, inst: Institution) -> dict[str, School]:
         # Every school carries a populated Events & Updates feed: Sloan keeps its
         # own keyword-relevant topic feed; the rest filter MIT's all-Institute
         # feed by school keywords (the MIT/MBAn pattern) so none is ever empty.
-        sc.content_sources = _SLOAN_CONTENT if spec["name"] == _SLOAN else _school_content(
-            spec["name"]
+        sc.content_sources = (
+            _SLOAN_CONTENT if spec["name"] == _SLOAN else _school_content(spec["name"])
         )
         # Rich, sourced About tab on every school, stamped with its _standard.
         about = dict(_SCHOOL_ABOUT[spec["name"]])
@@ -3255,6 +3594,8 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             p.outcomes_data = {"_standard": _program_standard(spec)}
         else:
             p.outcomes_data["_standard"] = _program_standard(spec)
+        # CIP code — matcher-core field/interest join key (verified MIT-reported).
+        p.cip_code = _CIP_BY_SLUG.get(spec["slug"])
         # Audience + highlights: per-program for flagship, else by degree type.
         p.who_its_for = _WHO_BY_SLUG.get(spec["slug"]) or _WHO_BY_TYPE.get(spec["degree_type"])
         p.highlights = _HL_BY_SLUG.get(spec["slug"]) or _HL_BY_TYPE.get(spec["degree_type"])
