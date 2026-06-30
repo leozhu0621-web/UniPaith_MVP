@@ -3290,6 +3290,12 @@ def _titlecase_field(field: str) -> str:
     so it is idempotent on an already-title-cased field and invents nothing (only its
     capitalization is corrected, never a word — REPAIR_BACKLOG #4b casing carve-out).
     """
+    def _cap_segment(s: str) -> str:
+        j = 0
+        while j < len(s) and not s[j].isalpha():
+            j += 1
+        return s[:j] + s[j].upper() + s[j + 1:] if j < len(s) else s
+
     words = field.split(" ")
     out: list[str] = []
     for i, w in enumerate(words):
@@ -3302,10 +3308,9 @@ def _titlecase_field(field: str) -> str:
         if i != 0 and w.lower() in _TITLECASE_LOWER:  # mid-name connective stays lowercase
             out.append(w.lower())
             continue
-        j = 0
-        while j < len(w) and not w[j].isalpha():
-            j += 1
-        out.append(w[:j] + w[j].upper() + w[j + 1:] if j < len(w) else w)
+        # Capitalize each HYPHEN-joined segment ("radio-television-film" →
+        # "Radio-Television-Film"); slashes are left intact so "Latina/o" stays lowercase.
+        out.append("-".join(_cap_segment(seg) for seg in w.split("-")))
     return " ".join(out)
 
 
@@ -5861,11 +5866,11 @@ _PROFESSIONAL_TUITION: dict[str, dict] = {
         ),
     },
 }
-# Professional doctorates that publish a single flat TOTAL program tuition (not an annual,
-# residency-split rate). The published total is the program's real, verified price, so it
-# carries the matcher's budget scalar (program.tuition) — a conservative, non-null budget
-# signal for the whole pool (REPAIR_BACKLOG #1: a professional tier publishes a rate, so it
-# is filled, never left blank) — and is also recorded in ``cost_data.total_program_tuition``.
+# Professional doctorates that publish a single flat TOTAL program tuition spanning MULTIPLE
+# semesters (not an annual, residency-split rate). ``program.tuition`` is rendered as an
+# ANNUAL figure ("tuition / yr"), so writing the multi-semester total there would mislead;
+# the verified total is kept ONLY in ``cost_data.total_program_tuition`` and the annual scalar
+# is honestly omitted (recorded in ``_standard.omitted``) — never a guessed per-year rate.
 _PROFESSIONAL_TOTAL: dict[str, dict] = {
     "ut-austin-nursing-dnp": {
         "total": 30000,
@@ -5876,9 +5881,9 @@ _PROFESSIONAL_TOTAL: dict[str, dict] = {
         "note": (
             "The post-MSN Doctor of Nursing Practice publishes a single flat program tuition "
             "of $30,000 (45 credit hours over five semesters), the same regardless of "
-            "residency. UT publishes no separate annual figure, so the matcher's budget "
-            "scalar carries the verified published program TOTAL — a conservative budget "
-            "signal — rather than a guessed per-year rate."
+            "residency. UT publishes no standard annual figure, and the total spans multiple "
+            "semesters, so the per-year scalar is omitted and the verified program total is "
+            "shown instead (never written into the annual field)."
         ),
     },
 }
@@ -5889,7 +5894,8 @@ _PROFESSIONAL_TOTAL: dict[str, dict] = {
 # not be confirmed against the official UT source or a second independent source, so per the
 # routine's two-source / first-party verify gate the annual scalar is honestly OMITTED rather
 # than ship an unverified number (no-fabrication). AuD now bills at the standard graduate rate
-# (_PROFESSIONAL_TUITION) and DNP carries its published program total (_PROFESSIONAL_TOTAL).
+# (_PROFESSIONAL_TUITION); DNP's multi-semester program total is kept in cost_data with its annual
+# scalar omitted (_PROFESSIONAL_TOTAL), so it never renders as a misleading "$30,000 / yr".
 _TUITION_OMIT_SLUGS = {
     "ut-austin-pharmacy-pharmd",
 }
@@ -5901,6 +5907,7 @@ def _tuition_omitted(slug: str) -> bool:
         slug in _TUITION_OMIT_SLUGS
         or slug in _PREMIUM_MASTERS_OMIT
         or slug in _ONLINE_MASTERS_TOTAL
+        or slug in _PROFESSIONAL_TOTAL  # DNP — multi-semester total, annual scalar omitted
     )
 
 
@@ -5995,10 +6002,9 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
         return pr["out_of_state"], _annual_tuition_cost(
             pr["in_state"], pr["out_of_state"], pr["source"], pr["source_url"], pr.get("note")
         )
-    if slug in _PROFESSIONAL_TOTAL:  # DNP — flat program total → carry the total as the scalar
+    if slug in _PROFESSIONAL_TOTAL:  # DNP — flat MULTI-semester total, not annual → omit scalar
         pr = _PROFESSIONAL_TOTAL[slug]
-        return pr["total"], {
-            "tuition_usd": pr["total"],
+        return None, {
             "total_program_tuition": pr["total"],
             "funded": False,
             "note": pr["note"],

@@ -223,13 +223,15 @@ def test_professional_and_masters_tuition_filled_or_omitted_with_reason():
             assert "cost_data.tuition_usd" in omitted, (
                 f"{spec['slug']} has null tuition not recorded in _standard.omitted"
             )
-    # AuD (standard graduate rate), DNP (published program total), and the academic MS in
-    # Accounting (standard graduate rate) are now FILLED, not omitted.
-    for slug in (
-        "ut-austin-audiology-aud",
-        "ut-austin-nursing-dnp",
-        "ut-austin-accounting-ms",
-    ):
+    # AuD (standard graduate rate) and the academic MS in Accounting (standard graduate rate)
+    # are now FILLED. The DNP keeps its multi-semester program total in cost_data only (annual
+    # scalar omitted — it would otherwise mis-render as "$30,000 / yr").
+    for slug in ("ut-austin-audiology-aud", "ut-austin-accounting-ms"):
         spec = next(s for s in u.PROGRAMS if s["slug"] == slug)
         scalar, _cost = u._program_tuition(spec)
         assert scalar and scalar > 0, f"{slug} should carry a published tuition scalar"
+    dnp = next(s for s in u.PROGRAMS if s["slug"] == "ut-austin-nursing-dnp")
+    dnp_scalar, dnp_cost = u._program_tuition(dnp)
+    assert dnp_scalar is None and dnp_cost.get("total_program_tuition") == 30000, (
+        "DNP multi-semester total must stay in total_program_tuition, not the annual scalar"
+    )
