@@ -11,7 +11,7 @@ record the change in the changelog at the bottom. Eval fixtures pin to a
 schema version so changes are gated behind eval updates.
 """
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 EXTRACT_SIGNALS_TOOL = {
     "name": "extract_signals",
@@ -42,6 +42,14 @@ EXTRACT_SIGNALS_TOOL = {
                         ],
                     },
                     "gpa": {"type": ["number", "null"]},
+                    "field_of_study": {
+                        "type": ["string", "null"],
+                        "description": (
+                            "The student's intended major / field of study in plain "
+                            "words, e.g. 'Computer Science', 'Biology', 'Nursing'. "
+                            "Extract whenever the student names what they want to study."
+                        ),
+                    },
                     "test_scores": {
                         "type": "array",
                         "items": {

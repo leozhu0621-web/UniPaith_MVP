@@ -317,6 +317,16 @@ class DiscoveryService:
                     session_id=session.id,
                     extraction=extraction,
                 )
+                # The chat just updated the student's structured profile (field /
+                # goals / needs). Mark matches stale so the next Refresh/read
+                # re-derives the feature vector — otherwise the recompute scores a
+                # FROZEN vector and the list never reflects the conversation.
+                try:
+                    from unipaith.services.match_service import MatchService
+
+                    await MatchService(self.db).invalidate_for_profile_change(student_id)
+                except Exception:  # noqa: BLE001 — invalidation must never fail the turn
+                    pass
             except ConsentDeniedError:
                 # Best-effort: a consent denial (e.g. analytics off / trial lapsed)
                 # must not crash the turn — skip enrichment, keep the reply. Genuine
@@ -791,6 +801,16 @@ class DiscoveryService:
                     session_id=session.id,
                     extraction=extraction,
                 )
+                # The chat just updated the student's structured profile (field /
+                # goals / needs). Mark matches stale so the next Refresh/read
+                # re-derives the feature vector — otherwise the recompute scores a
+                # FROZEN vector and the list never reflects the conversation.
+                try:
+                    from unipaith.services.match_service import MatchService
+
+                    await MatchService(self.db).invalidate_for_profile_change(student_id)
+                except Exception:  # noqa: BLE001 — invalidation must never fail the turn
+                    pass
             except ConsentDeniedError:
                 # Best-effort: a consent denial (e.g. analytics off / trial lapsed)
                 # must not crash the turn — skip enrichment, keep the reply. Genuine

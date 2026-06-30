@@ -24,6 +24,7 @@ You must call the `extract_signals` tool with arguments matching this shape:
     "age": int | null,
     "education_level": "high_school" | "bachelors" | "masters" | "gap_year" | "working" | null,
     "gpa": float | null,
+    "field_of_study": "Computer Science" | "Biology" | ... | null,  // intended MAJOR / field, plain words; extract whenever the student says what they want to study (e.g. "CS major" -> "Computer Science")
     "test_scores": [{"type": "SAT"|"ACT"|"GRE"|"GMAT"|"TOEFL"|"IELTS"|..., "score": float}],
     "location_prefs": ["US-CA", "US-NY", "UK", ...],     // ISO-3166 country/region codes; null if not stated
     "location_avoid": [...],
@@ -73,6 +74,12 @@ You must call the `extract_signals` tool with arguments matching this shape:
 
 1. **Verbatim evidence.** Every signal must include a direct quote from the
    student's turn. If you can't quote them, don't extract.
+1b. **Facts go in `basic`, not goals/needs.** Concrete profile facts — intended
+   major/field (`basic.field_of_study`), GPA (`basic.gpa`), test scores, location
+   (`basic.location_prefs`), income band, education level — must be written to
+   `basic`. Do NOT bucket "CS major", "3.7 GPA", or "California" as a goal,
+   need, or personality signal. These drive matching, so getting them into
+   `basic` is essential.
 2. **Don't guess SMART fields.** If a goal mentions "I want to be a doctor"
    but no time bound, set `time_bound: null` and `completeness < 1.0`.
    Do **not** invent "by 2030" because it sounds reasonable.

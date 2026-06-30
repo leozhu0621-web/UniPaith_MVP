@@ -250,7 +250,8 @@ async def _persist_basic_layer(
     # ─── AcademicRecord (one current row per student) ────────────────────
     gpa_raw = basic.get("gpa")
     edu = basic.get("education_level")
-    if gpa_raw is None and edu is None:
+    field_raw = basic.get("field_of_study")
+    if gpa_raw is None and edu is None and not field_raw:
         return
 
     record = (
@@ -280,11 +281,14 @@ async def _persist_basic_layer(
             institution_name="Current institution",
             degree_type=degree_type,
             gpa=gpa_decimal,
+            field_of_study=field_raw or None,
             is_current=True,
         )
         db.add(record)
         result.academic_record_touched = True
         if gpa_decimal is not None:
+            result.basic_fields_written += 1
+        if field_raw:
             result.basic_fields_written += 1
     else:
         # Idempotent fills only — don't overwrite a confirmed value.
@@ -300,6 +304,12 @@ async def _persist_basic_layer(
             if mapped:
                 record.degree_type = mapped
                 result.academic_record_touched = True
+        # Field of study — the column the matcher reads for field relevance.
+        # Idempotent: only fill when the student hasn't already set one.
+        if not record.field_of_study and field_raw:
+            record.field_of_study = field_raw
+            result.basic_fields_written += 1
+            result.academic_record_touched = True
 
     await db.flush()
 
