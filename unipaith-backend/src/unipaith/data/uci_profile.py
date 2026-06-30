@@ -407,6 +407,12 @@ _GRAD_COST_SRC = (
     "UC Irvine — 2025-26 graduate-academic tuition & fees (Catalogue / University Registrar)",
     "https://catalogue.uci.edu/informationforprospectivestudents/expensestuitionandfees/",
 )
+# Defined here (ahead of the catalog lists) because the M.C.R.S. row lives in the academic
+# graduate (`_GRAD`) block; the remaining self-supporting / PDST fee sources sit with `_PROF`.
+_MCRS_SRC = (
+    "UC Irvine — 2025-26 M. Conservation & Restoration Science program fee (University Registrar)",
+    "https://www.reg.uci.edu/fees/2025-2026/conservation.pdf",
+)
 
 _FUNDED_NOTE = (
     "Admitted research doctoral students in this program are funded — tuition is covered "
@@ -1890,11 +1896,13 @@ _GRAD = [
         slug="uci-conservation-restoration-science-mcrs", school=_BIO, degree_type="masters",
         program_name="Master of Conservation and Restoration Science",
         department="Charlie Dunlop School of Biological Sciences",
-        cip="03.0101", duration_months=12,
-        omit_tuition_reason=(
-            "The Master of Conservation and Restoration Science is a self-supporting "
-            "professional program whose fee is published on the program page rather than the "
-            "systemwide academic schedule; a current verified annual figure is omitted."
+        cip="03.0101", duration_months=24,
+        delivery_format="on_campus", tuition=30712, cost_source=_MCRS_SRC,
+        cost_note=(
+            "2025-26 full-time annual tuition and fees ($30,712, excluding optional health "
+            "insurance); the self-supporting program fee is $29,106 per year over the two-year "
+            "program ($58,212 total). The same self-supporting fee applies to California "
+            "residents and non-residents."
         ),
         keywords=["conservation", "restoration ecology"],
         description=(
@@ -2351,6 +2359,56 @@ _MPH_SRC = (
     "UC Irvine — 2025-26 Public Health tuition & fees (University Registrar)",
     "https://www.reg.uci.edu/fees/2025-2026/publichealth.html",
 )
+# Self-supporting (SSGDP) and PDST graduate program fee schedules — each published per-program
+# on the UCI University Registrar 2025-26 fee site. Self-supporting programs charge ONE flat fee
+# to residents and nonresidents (no resident discount); the PDST programs (MPP, MURP, Genetic
+# Counseling) publish separate resident / non-resident rates and the non-resident rate is the
+# matcher scalar for a national / international applicant pool. All figures are the full-time
+# annual tuition and fees EXCLUDING the optional/waivable health insurance (GSHIP).
+_MFIN_SRC = (
+    "UC Irvine — 2025-26 Master of Finance program fee (University Registrar)",
+    "https://www.reg.uci.edu/fees/2025-2026/finance.pdf",
+)
+_MSBA_SRC = (
+    "UC Irvine — 2025-26 M.S. Business Analytics program fee (University Registrar)",
+    "https://www.reg.uci.edu/fees/2025-2026/businessanalytics.pdf",
+)
+_MDS_SRC = (
+    "UC Irvine — 2025-26 Master of Data Science program fee (University Registrar)",
+    "https://www.reg.uci.edu/fees/2025-2026/datasci.pdf",
+)
+_MIE_SRC = (
+    "UC Irvine — 2025-26 M. Innovation & Entrepreneurship program fee (University Registrar)",
+    "https://www.reg.uci.edu/fees/2025-2026/innovation.pdf",
+)
+_MPAC_SRC = (
+    "UC Irvine — 2025-26 Master of Professional Accountancy program fee (University Registrar)",
+    "https://www.reg.uci.edu/fees/2025-2026/mpac.pdf",
+)
+_MCS_SRC = (
+    "UC Irvine — 2025-26 Master of Computer Science program fee (University Registrar)",
+    "https://www.reg.uci.edu/fees/2025-2026/compsci.pdf",
+)
+_MHCID_SRC = (
+    "UC Irvine — 2025-26 M.HCI/Design program fee (University Registrar)",
+    "https://www.reg.uci.edu/fees/2025-2026/humancomp.pdf",
+)
+_MPP_SRC = (
+    "UC Irvine — 2025-26 Master of Public Policy fees (University Registrar)",
+    "https://www.reg.uci.edu/fees/2025-2026/publicpolicy.html",
+)
+_MURP_SRC = (
+    "UC Irvine — 2025-26 Master of Urban & Regional Planning fees (University Registrar)",
+    "https://www.reg.uci.edu/fees/2025-2026/planning.html",
+)
+_GENCOUNSEL_SRC = (
+    "UC Irvine — 2025-26 M.S. Genetic Counseling fees (University Registrar)",
+    "https://www.reg.uci.edu/fees/2025-2026/genetic.html",
+)
+_DNP_SRC = (
+    "UC Irvine — 2025-26 Doctor of Nursing Practice program fee (University Registrar)",
+    "https://www.reg.uci.edu/fees/2025-2026/nursingpract.pdf",
+)
 _SELF_SUPP_NOTE = (
     "This is a self-supporting graduate program whose fee is published on the program's own "
     "page rather than the systemwide academic schedule; a current verified annual figure is "
@@ -2381,7 +2439,12 @@ _PROF = [
         slug="uci-business-analytics-ms", school=_MERAGE, degree_type="masters",
         program_name="Master of Science in Business Analytics",
         department="Paul Merage School of Business", cip="52.1301", duration_months=12,
-        delivery_format="on_campus", omit_tuition_reason=_SELF_SUPP_NOTE,
+        delivery_format="on_campus", tuition=74840, cost_source=_MSBA_SRC,
+        cost_note=(
+            "2025-26 full-time annual tuition and fees ($74,840, excluding optional health "
+            "insurance); the published self-supporting program fee is $72,688. The same "
+            "self-supporting fee applies to California residents and non-residents."
+        ),
         keywords=["business analytics", "data science"],
         description=(
             "This master's builds expertise in data, marketing, and operations analytics for "
@@ -2393,7 +2456,12 @@ _PROF = [
         slug="uci-finance-mfin", school=_MERAGE, degree_type="masters",
         program_name="Master of Finance",
         department="Paul Merage School of Business", cip="52.0801", duration_months=12,
-        delivery_format="on_campus", omit_tuition_reason=_SELF_SUPP_NOTE,
+        delivery_format="on_campus", tuition=81425, cost_source=_MFIN_SRC,
+        cost_note=(
+            "2025-26 full-time annual tuition and fees ($81,425, excluding optional health "
+            "insurance); the published self-supporting program fee is $79,264. The same "
+            "self-supporting fee applies to California residents and non-residents."
+        ),
         keywords=["finance"],
         description=(
             "This master's provides specialized training in financial management, investment, "
@@ -2405,7 +2473,12 @@ _PROF = [
         slug="uci-professional-accountancy-mpac", school=_MERAGE, degree_type="masters",
         program_name="Master of Professional Accountancy",
         department="Paul Merage School of Business", cip="52.0301", duration_months=12,
-        delivery_format="on_campus", omit_tuition_reason=_SELF_SUPP_NOTE,
+        delivery_format="on_campus", tuition=68371, cost_source=_MPAC_SRC,
+        cost_note=(
+            "2025-26 full-time annual tuition and fees ($68,371, excluding optional health "
+            "insurance); the published self-supporting program fee is $66,750. The same "
+            "self-supporting fee applies to California residents and non-residents."
+        ),
         keywords=["accounting", "accountancy"],
         description=(
             "This master's develops expertise in financial reporting, taxation, auditing, and "
@@ -2417,7 +2490,12 @@ _PROF = [
         slug="uci-innovation-entrepreneurship-mie", school=_MERAGE, degree_type="masters",
         program_name="Master of Innovation and Entrepreneurship",
         department="Paul Merage School of Business", cip="52.0701", duration_months=12,
-        delivery_format="on_campus", omit_tuition_reason=_SELF_SUPP_NOTE,
+        delivery_format="on_campus", tuition=64711, cost_source=_MIE_SRC,
+        cost_note=(
+            "2025-26 full-time annual tuition and fees ($64,711, excluding optional health "
+            "insurance); the published self-supporting program fee is $63,090. The same "
+            "self-supporting fee applies to California residents and non-residents."
+        ),
         keywords=["innovation", "entrepreneurship"],
         description=(
             "This master's focuses on new-venture creation and growth strategy, turning applied "
@@ -2515,7 +2593,12 @@ _PROF = [
         slug="uci-dnp", school=_NURSING, degree_type="professional",
         program_name="Doctor of Nursing Practice",
         department="Sue & Bill Gross School of Nursing", cip="51.3818", duration_months=36,
-        delivery_format="hybrid", omit_tuition_reason=_SELF_SUPP_NOTE,
+        delivery_format="hybrid", tuition=43860, cost_source=_DNP_SRC,
+        cost_note=(
+            "2025-26 annual tuition and fees ($43,860); the self-supporting program fee is "
+            "$43,744 per year over the three-year program. The same self-supporting fee applies "
+            "to California residents and non-residents."
+        ),
         keywords=["nursing practice", "DNP"],
         description=(
             "The Doctor of Nursing Practice develops the competencies for advanced clinical "
@@ -2546,7 +2629,14 @@ _PROF = [
         program_name="Master of Urban and Regional Planning",
         department="Department of Urban Planning and Public Policy",
         cip="04.0301", duration_months=24,
-        delivery_format="on_campus", omit_tuition_reason=_SELF_SUPP_NOTE,
+        delivery_format="on_campus", tuition=34668, cost_source=_MURP_SRC,
+        cost_breakdown={"tuition_in_state": 22423, "tuition_out_of_state": 34668},
+        cost_note=(
+            "2025-26 non-resident annual tuition and fees ($34,668, excluding optional health "
+            "insurance); California residents pay about $22,423. This professional master's "
+            "charges Professional Degree Supplemental Tuition, so the non-resident rate is the "
+            "matcher's budget input for a national and international applicant pool."
+        ),
         keywords=["urban planning"],
         description=(
             "This professional planning master's trains students to shape housing, "
@@ -2560,7 +2650,14 @@ _PROF = [
         program_name="Master of Public Policy",
         department="Department of Urban Planning and Public Policy",
         cip="44.0501", duration_months=24,
-        delivery_format="on_campus", omit_tuition_reason=_SELF_SUPP_NOTE,
+        delivery_format="on_campus", tuition=37308, cost_source=_MPP_SRC,
+        cost_breakdown={"tuition_in_state": 25063, "tuition_out_of_state": 37308},
+        cost_note=(
+            "2025-26 non-resident annual tuition and fees ($37,308, excluding optional health "
+            "insurance); California residents pay about $25,063. This professional master's "
+            "charges Professional Degree Supplemental Tuition, so the non-resident rate is the "
+            "matcher's budget input for a national and international applicant pool."
+        ),
         keywords=["public policy"],
         description=(
             "This professional master's builds the analytic and quantitative skills to design "
@@ -2573,7 +2670,12 @@ _PROF = [
         program_name="Master of Data Science",
         department="Donald Bren School of Information and Computer Sciences",
         cip="30.7001", duration_months=12,
-        delivery_format="on_campus", omit_tuition_reason=_SELF_SUPP_NOTE,
+        delivery_format="on_campus", tuition=50301, cost_source=_MDS_SRC,
+        cost_note=(
+            "2025-26 full-time annual tuition and fees ($50,301, excluding optional health "
+            "insurance); the full self-supporting program fee is $60,200 over five quarters. The "
+            "same self-supporting fee applies to California residents and non-residents."
+        ),
         keywords=["data science"],
         description=(
             "This professional master's builds end-to-end data-science skills — statistics, "
@@ -2585,7 +2687,13 @@ _PROF = [
         slug="uci-computer-science-mcs", school=_ICS, degree_type="masters",
         program_name="Master of Computer Science",
         department="Department of Computer Science", cip="11.0701", duration_months=18,
-        delivery_format="on_campus", omit_tuition_reason=_SELF_SUPP_NOTE,
+        delivery_format="on_campus", tuition=50525, cost_source=_MCS_SRC,
+        cost_note=(
+            "2025-26 full-time annual tuition and fees ($50,525, excluding optional health "
+            "insurance); the full self-supporting program fee is $60,480 over the 18-month "
+            "program. The same self-supporting fee applies to California residents and "
+            "non-residents."
+        ),
         keywords=["computer science"],
         description=(
             "This professional master's deepens applied expertise across computer systems, "
@@ -2597,7 +2705,12 @@ _PROF = [
         slug="uci-hcid-mhcid", school=_ICS, degree_type="masters",
         program_name="Master of Human-Computer Interaction and Design",
         department="Department of Informatics", cip="11.0104", duration_months=12,
-        delivery_format="on_campus", omit_tuition_reason=_SELF_SUPP_NOTE,
+        delivery_format="on_campus", tuition=57216, cost_source=_MHCID_SRC,
+        cost_note=(
+            "2025-26 full-time annual tuition and fees ($57,216); the published self-supporting "
+            "program fee is $57,100. The same self-supporting fee applies to California residents "
+            "and non-residents."
+        ),
         keywords=["human-computer interaction", "UX design"],
         description=(
             "This professional master's trains designers and researchers in user experience and "
@@ -2609,7 +2722,14 @@ _PROF = [
         slug="uci-genetic-counseling-ms", school=_MED, degree_type="masters",
         program_name="Master of Science in Genetic Counseling",
         department="School of Medicine", cip="51.1509", duration_months=24,
-        delivery_format="on_campus", omit_tuition_reason=_SELF_SUPP_NOTE,
+        delivery_format="on_campus", tuition=42906, cost_source=_GENCOUNSEL_SRC,
+        cost_breakdown={"tuition_in_state": 30661, "tuition_out_of_state": 42906},
+        cost_note=(
+            "2025-26 non-resident annual tuition and fees ($42,906, excluding optional health "
+            "insurance); California residents pay about $30,661. This professional master's "
+            "charges Professional Degree Supplemental Tuition, so the non-resident rate is the "
+            "matcher's budget input for a national and international applicant pool."
+        ),
         keywords=["genetic counseling"],
         description=(
             "This professional master's trains genetic counselors to interpret genetic risk and "
@@ -2750,6 +2870,7 @@ PROGRAMS: list[dict] = [
         "funded": r.get("funded", False),
         "cost_note": r.get("cost_note"),
         "cost_source": r.get("cost_source"),
+        "cost_breakdown": r.get("cost_breakdown"),
         "omit_tuition_reason": r.get("omit_tuition_reason"),
     }
     for r in _CATALOG
@@ -3036,7 +3157,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             p.cost_data = _undergrad_cost()
         elif spec.get("tuition") is not None:
             p.tuition = spec["tuition"]
-            p.cost_data = {
+            cost_data = {
                 "tuition_usd": spec["tuition"],
                 "funded": False,
                 "note": spec.get("cost_note", ""),
@@ -3044,6 +3165,11 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 "source_url": (spec.get("cost_source") or _GRAD_COST_SRC)[1],
                 "year": "2025-26",
             }
+            # PDST programs publish separate resident / non-resident rates; preserve BOTH so a
+            # future residency-aware matcher can read them (the scalar stays non-resident).
+            if spec.get("cost_breakdown"):
+                cost_data["breakdown"] = dict(spec["cost_breakdown"])
+            p.cost_data = cost_data
         elif spec.get("funded"):
             p.tuition = None
             p.cost_data = {
