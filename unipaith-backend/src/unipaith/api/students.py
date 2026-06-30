@@ -1174,6 +1174,9 @@ async def _list_enriched_matches(
         )
     ).scalar_one_or_none()
     student_gpa = float(gpa_raw) if gpa_raw is not None else None
+    _budget = getattr(pref, "budget_max", None)
+    student_budget_annual = float(_budget) if _budget is not None else None
+    funding_requirement = getattr(pref, "funding_requirement", None)
 
     out: list[StudentMatchResponse] = []
     fits: list[float] = []
@@ -1192,6 +1195,8 @@ async def _list_enriched_matches(
                 institution_ranking=inst_ranking,
                 weight_ranking=weight_ranking,
                 student_gpa=student_gpa,
+                student_budget_annual=student_budget_annual,
+                funding_requirement=funding_requirement,
                 bands_enabled=bands_enabled,
             )
         )
@@ -1374,6 +1379,8 @@ def _enrich_match_for_student(
     institution_ranking: object = None,
     weight_ranking: int | None = None,
     student_gpa: float | None = None,
+    student_budget_annual: float | None = None,
+    funding_requirement: str | None = None,
     bands_enabled: bool = True,
 ) -> StudentMatchResponse:
     """Student-safe response (spec 06 §5.5) plus Spec 09 context: program
@@ -1423,6 +1430,32 @@ def _enrich_match_for_student(
             confidence=confidence,
             readiness=_band_readiness(match),
         )
+
+    # Affordability — surface the after-aid net-price estimate + band right on the
+    # match (the student's #1 worry), not just sticker tuition. Best-effort.
+    if program is not None:
+        try:
+            from unipaith.services.net_price_service import compute_net_price_estimate
+
+            est = compute_net_price_estimate(
+                program={
+                    "tuition": getattr(program, "tuition", None),
+                    "cost_data": getattr(program, "cost_data", None),
+                    "acceptance_rate": acceptance_rate,
+                    "duration_months": getattr(program, "duration_months", None),
+                    "degree_type": getattr(program, "degree_type", None),
+                },
+                ranking_data=institution_ranking if isinstance(institution_ranking, dict) else None,
+                student_gpa=student_gpa,
+                student_budget_annual=student_budget_annual,
+                funding_requirement=funding_requirement,
+            )
+            if est.get("available"):
+                exp = (est.get("net_cost_scenario_range") or {}).get("expected")
+                resp.net_price_annual = int(exp) if exp is not None else None
+                resp.affordability_band = est.get("affordability_band")
+        except Exception:  # noqa: BLE001 — affordability is best-effort, never fail the match
+            pass
     return resp
 
 

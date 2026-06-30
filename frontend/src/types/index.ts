@@ -3088,6 +3088,10 @@ export interface MatchResultDual {
   band_label?: MatchBand | null
   // Simple range-based "Fit" readout (server-computed; not the raw number).
   fit_label?: string | null
+  // Affordability — estimated annual NET price (after expected aid) + a band vs
+  // the student's budget ("affordable" | "stretch" | "out_of_reach" | "unknown").
+  net_price_annual?: number | null
+  affordability_band?: string | null
   probability_bands?: ProbabilityBands | null
 }
 

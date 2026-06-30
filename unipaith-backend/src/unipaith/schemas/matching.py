@@ -104,6 +104,14 @@ class StudentMatchResponse(BaseModel):
     # surfaces show a Fit signal without exposing the omitted fitness_score.
     fit_label: str | None = None
 
+    # Affordability readout (Spec 11 / net_price_service) so money is visible right
+    # on the match: the estimated annual NET price (after expected aid, USD) and an
+    # affordability band vs the student's budget — "affordable" / "stretch" /
+    # "out_of_reach" / "unknown". Sticker tuition is in `tuition`; this is the
+    # after-aid estimate the student actually cares about.
+    net_price_annual: int | None = None
+    affordability_band: str | None = None
+
     # Spec 09 §4A — probability bands (admit / scholarship / waitlist + drivers).
     probability_bands: dict | None = None
 
