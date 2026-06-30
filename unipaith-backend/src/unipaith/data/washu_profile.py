@@ -23,14 +23,20 @@ gold contrast), a ``who_its_for`` statement, a real owning ``department``, a ``c
 a verified ``delivery_format``, published tuition per credential level (never the
 undergraduate sticker copied onto a graduate row — funded PhDs carry funded=True /
 tuition=None; programs whose annual figure is not separately published omit-with-reason),
-working WashU news feeds, and sourced ``external_reviews`` on the obviously-coverable
-flagships (Olin MBA, the Brown School MSW, the J.D., and the M.D.). Nothing is padded.
+working WashU news feeds, and sourced ``external_reviews`` on the coverable flagships
+(Olin MBA, the Olin MS in Finance and MS in Business Analytics, the Brown School MSW, the
+J.D., and the M.D.). Nothing is padded.
 
-Tuition (all verified 2025-26, WashU "The Source" + each school): undergraduate sticker
-$68,240; Arts & Sciences / McKelvey Engineering graduate $66,850; Olin Full-Time MBA
-$70,250; School of Medicine M.D. $67,968 (fixed across four years); School of Law J.D.
-$72,792; Brown School M.S.W. $49,210. Graduate-School-of-Arts-&-Sciences doctorates are
-funded (tuition waived for funded PhD students), so they carry funded=True + tuition=None.
+Tuition (verified WashU "The Source" + each school): undergraduate sticker $68,240; Arts &
+Sciences / McKelvey Engineering graduate $66,850; Olin Full-Time MBA $70,250; School of
+Medicine M.D. $67,968 (fixed across four years); School of Law J.D. $72,792; Brown School
+M.S.W. $49,210. The 2026-06-30 pass closes the last matcher-core tuition gap — Olin's two
+specialized master's, billed per program rather than in the university release, now carry
+their published per-program rate (MS in Finance $81,500, Corporate Finance one-year track;
+MS in Business Analytics $67,866 academic-year, of a $101,799 three-semester program;
+Olin Cost-Aid-Scholarships pages) instead of an omit-with-reason. Graduate-School-of-Arts-&-
+Sciences doctorates are funded (tuition waived for funded PhD students), so they carry
+funded=True + tuition=None.
 """
 
 from __future__ import annotations
@@ -45,7 +51,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Washington University in St Louis"
 
-ENRICHED_AT = "2026-06-26"
+ENRICHED_AT = "2026-06-30"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -470,6 +476,25 @@ _GRAD_SRC = (
 _OLIN_SRC = (
     "WashU Olin Business School — 2025-26 Full-Time MBA cost",
     "https://olin.washu.edu/programs/mbas/full-time-mba/cost-aid-scholarships.php",
+)
+# Olin specialized-master's tuition, published per program on each program's Cost, Aid &
+# Scholarships page (billed at a flat per-semester rate). The matcher reads the flat annual
+# scalar, so each carries a standard two-semester academic-year figure; the per-semester
+# rate and full multi-semester program total are stated in the cost note.
+_MSF = 81500  # MS in Finance — Corporate Finance track (2 semesters = 1 academic year total)
+_OLIN_MSF_SRC = (
+    "WashU Olin Business School — MS in Finance Cost, Aid & Scholarships (2026-27)",
+    "https://olin.washu.edu/programs/specialized-masters/ms-in-finance/cost-aid-scholarships.php",
+)
+_MSBA = 67866  # MS in Business Analytics — 2 semesters (of the 3-semester program) at $33,933
+_OLIN_MSBA_SRC = (
+    "WashU Olin Business School — MS in Business Analytics Cost, Aid & Scholarships",
+    "https://olin.washu.edu/programs/specialized-masters/ms-in-business-analytics/"
+    "cost-aid-scholarships.php",
+)
+_OLIN_RANK_SRC = (
+    "WashU Olin Business School — Accreditation & Rankings",
+    "https://olin.washu.edu/about/why-olin/accreditation-rankings.php",
 )
 _MED_SRC = (
     "WashU School of Medicine — 2025-26 M.D. tuition",
@@ -1048,16 +1073,21 @@ _CATALOG: list[dict] = [
             "Analytically strong graduates targeting careers in investment, corporate "
             "finance, or financial analysis."
         ),
-        omit_tuition_reason=(
-            "Olin's specialized-master's tuition is billed by program and is not "
-            "separately stated in the university tuition release, so it is omitted rather "
-            "than estimated; see the Olin program page."
+        tuition=_MSF,
+        cost_source=_OLIN_MSF_SRC,
+        cost_note=(
+            "MS in Finance tuition is billed at a flat per-semester rate. The Corporate "
+            "Finance track runs two semesters and totals $81,500; the STEM-designated "
+            "Quantitative and Wealth & Asset Management tracks run three semesters and "
+            "total $102,900 (Olin, 2026-27). The scalar shows the one-academic-year "
+            "Corporate Finance total; a $1,350 per-semester program/fees charge is additional."
         ),
+        cost_year="2026-27",
     ),
     dict(
         slug="washu-business-analytics-ms", school=_OLIN, degree_type="masters",
         program_name="Master of Science in Business Analytics",
-        department="Olin Business School", cip="52.13", duration_months=12,
+        department="Olin Business School", cip="52.13", duration_months=16,
         keywords=["business analytics"],
         description=(
             "The MS in Business Analytics trains students in data management, statistical "
@@ -1068,11 +1098,15 @@ _CATALOG: list[dict] = [
             "Graduates who want to turn data into business decisions through analytics and "
             "machine learning."
         ),
-        omit_tuition_reason=(
-            "Olin's specialized-master's tuition is billed by program and is not "
-            "separately stated in the university tuition release, so it is omitted rather "
-            "than estimated; see the Olin program page."
+        tuition=_MSBA,
+        cost_source=_OLIN_MSBA_SRC,
+        cost_note=(
+            "The STEM-designated MS in Business Analytics is billed at a flat $33,933 per "
+            "semester; the three-semester program totals $101,799 (Olin, Spring 2026 "
+            "cohort). The scalar shows the standard two-semester academic-year tuition; a "
+            "$1,350 per-semester program/fees charge is additional."
         ),
+        cost_year="2025-26",
     ),
     # ───────────── Sam Fox School of Design & Visual Arts ─────────────
     dict(
@@ -1444,6 +1478,98 @@ _SDN_MED = (
 )
 
 _REVIEWS_BY_SLUG: dict[str, dict] = {
+    "washu-finance-ms": {
+        "summary": (
+            "Olin's MS in Finance draws strong third-party recognition — TFE Times ranked "
+            "WashU's Master of Finance #3 globally in 2025 — and coverage emphasizes its "
+            "quantitative rigor, STEM-designated tracks (Quantitative and Wealth & Asset "
+            "Management), and AACSB-accredited faculty; common cautions are the program's "
+            "modest cohort and St. Louis location relative to the largest coastal finance "
+            "markets, and a multi-track structure applicants must navigate."
+        ),
+        "themes": [
+            {
+                "label": "Top-ranked finance master's",
+                "sentiment": "positive",
+                "detail": (
+                    "TFE Times placed WashU's Master of Finance #3 worldwide in its 2025 "
+                    "ranking, reflecting strong curricular and outcomes reputation."
+                ),
+            },
+            {
+                "label": "STEM-designated quantitative tracks",
+                "sentiment": "positive",
+                "detail": (
+                    "The Quantitative and Wealth & Asset Management tracks are STEM-"
+                    "designated, extending OPT eligibility for international students and "
+                    "signalling technical depth."
+                ),
+            },
+            {
+                "label": "Scale & location",
+                "sentiment": "mixed",
+                "detail": (
+                    "A smaller cohort supports faculty access, but the St. Louis market is "
+                    "less proximate to coastal finance hubs than the largest programs."
+                ),
+            },
+        ],
+        "sources": [
+            {"label": "WashU Olin — Accreditation & Rankings", "url": _OLIN_RANK_SRC[1]},
+            {"label": "U.S. News — WashU Best Graduate Schools", "url": _USNEWS_GRAD},
+            {"label": "GradReports — Washington University in St. Louis", "url": _GRADREPORTS},
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources (TFE Times via "
+            "Olin's published rankings, U.S. News, GradReports) — not individual verbatim "
+            "reviews."
+        ),
+    },
+    "washu-business-analytics-ms": {
+        "summary": (
+            "Coverage of Olin's MS in Business Analytics highlights a STEM-designated "
+            "curriculum spanning data management, statistical modeling, and machine "
+            "learning with a capstone, taught by AACSB-accredited faculty and placing "
+            "graduates in analytics and consulting roles; common cautions are the smaller "
+            "program scale and the St. Louis market relative to the largest coastal tech "
+            "and analytics hubs."
+        ),
+        "themes": [
+            {
+                "label": "Applied analytics & machine learning",
+                "sentiment": "positive",
+                "detail": (
+                    "The curriculum pairs data management, statistical modeling, and "
+                    "machine learning with a capstone project on real business problems."
+                ),
+            },
+            {
+                "label": "STEM designation",
+                "sentiment": "positive",
+                "detail": (
+                    "The program's STEM designation extends OPT work eligibility for "
+                    "international graduates and signals technical depth to employers."
+                ),
+            },
+            {
+                "label": "Scale & location",
+                "sentiment": "mixed",
+                "detail": (
+                    "A smaller cohort affords close faculty contact, but St. Louis is less "
+                    "proximate to the largest coastal tech employer markets."
+                ),
+            },
+        ],
+        "sources": [
+            {"label": "WashU Olin — MS in Business Analytics", "url": _OLIN_MSBA_SRC[1]},
+            {"label": "U.S. News — WashU Best Graduate Schools", "url": _USNEWS_GRAD},
+            {"label": "GradReports — Washington University in St. Louis", "url": _GRADREPORTS},
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources (Olin program "
+            "materials, U.S. News, GradReports) — not individual verbatim reviews."
+        ),
+    },
     "washu-mba": {
         "summary": (
             "Coverage of the Olin MBA highlights its analytics-driven curriculum, small "
@@ -1642,6 +1768,7 @@ PROGRAMS: list[dict] = [
         "funded": r.get("funded", False),
         "cost_note": r.get("cost_note"),
         "cost_source": r.get("cost_source"),
+        "cost_year": r.get("cost_year"),
         "omit_tuition_reason": r.get("omit_tuition_reason"),
     }
     for r in _CATALOG
@@ -1927,7 +2054,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 "note": spec.get("cost_note", ""),
                 "source": (spec.get("cost_source") or _GRAD_SRC)[0],
                 "source_url": (spec.get("cost_source") or _GRAD_SRC)[1],
-                "year": "2025-26",
+                "year": spec.get("cost_year") or "2025-26",
             }
         elif spec.get("funded"):
             p.tuition = None
