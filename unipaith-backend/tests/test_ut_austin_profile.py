@@ -224,14 +224,31 @@ def test_professional_and_masters_tuition_filled_or_omitted_with_reason():
                 f"{spec['slug']} has null tuition not recorded in _standard.omitted"
             )
     # AuD (standard graduate rate) and the academic MS in Accounting (standard graduate rate)
-    # are now FILLED. The DNP keeps its multi-semester program total in cost_data only (annual
-    # scalar omitted — it would otherwise mis-render as "$30,000 / yr").
+    # carry a published annual scalar.
     for slug in ("ut-austin-audiology-aud", "ut-austin-accounting-ms"):
         spec = next(s for s in u.PROGRAMS if s["slug"] == slug)
         scalar, _cost = u._program_tuition(spec)
         assert scalar and scalar > 0, f"{slug} should carry a published tuition scalar"
-    dnp = next(s for s in u.PROGRAMS if s["slug"] == "ut-austin-nursing-dnp")
-    dnp_scalar, dnp_cost = u._program_tuition(dnp)
-    assert dnp_scalar is None and dnp_cost.get("total_program_tuition") == 30000, (
-        "DNP multi-semester total must stay in total_program_tuition, not the annual scalar"
-    )
+    # The DNP and the online CS/DS/AI master's publish a single verified program TOTAL and no
+    # separate annual figure. That TOTAL now feeds the matcher's budget scalar (program.tuition)
+    # so the master's/professional tier is no longer matcher-blind on budget (REPAIR_BACKLOG #1),
+    # while the editorial annual card field (cost_data.tuition_usd) stays honestly omitted — the
+    # card shows a `total_program_tuition` (tuition_period="total_program"), never a "/yr" rate.
+    total_programs = {
+        "ut-austin-nursing-dnp": 30000,
+        "ut-austin-computer-science-online-ms": 10000,
+        "ut-austin-data-science-ms": 10000,
+        "ut-austin-artificial-intelligence-ms": 10000,
+    }
+    for slug, total in total_programs.items():
+        spec = next(s for s in u.PROGRAMS if s["slug"] == slug)
+        scalar, cost = u._program_tuition(spec)
+        assert scalar == total, f"{slug} matcher scalar must carry the published program total"
+        assert cost.get("total_program_tuition") == total, f"{slug} must keep the program total"
+        assert cost.get("tuition_period") == "total_program", (
+            f"{slug} must mark its total so the card never renders '/yr'"
+        )
+        assert "tuition_usd" not in cost, f"{slug} has no separate annual card rate"
+        assert "cost_data.tuition_usd" in u._program_standard(slug, spec)["omitted"], (
+            f"{slug} editorial annual rate must stay omitted-with-reason"
+        )
