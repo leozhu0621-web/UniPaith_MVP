@@ -224,14 +224,38 @@ def test_professional_and_masters_tuition_filled_or_omitted_with_reason():
                 f"{spec['slug']} has null tuition not recorded in _standard.omitted"
             )
     # AuD (standard graduate rate) and the academic MS in Accounting (standard graduate rate)
-    # are now FILLED. The DNP keeps its multi-semester program total in cost_data only (annual
-    # scalar omitted — it would otherwise mis-render as "$30,000 / yr").
+    # carry a published annual scalar.
     for slug in ("ut-austin-audiology-aud", "ut-austin-accounting-ms"):
         spec = next(s for s in u.PROGRAMS if s["slug"] == slug)
         scalar, _cost = u._program_tuition(spec)
         assert scalar and scalar > 0, f"{slug} should carry a published tuition scalar"
+    # The DNP bills a published FLAT per-semester rate ($6,000, residency-independent), so it
+    # carries a real ANNUAL scalar ($12,000/yr = $6,000 × the standard Fall+Spring year) and is
+    # NOT omitted (REPAIR_BACKLOG #1 — professional tier filled). The full $30,000 program total
+    # is preserved in cost_data. program.tuition is consumed as ANNUAL by the matcher, so the
+    # scalar must be the annual figure, never the multi-year total (PR #1236 review).
     dnp = next(s for s in u.PROGRAMS if s["slug"] == "ut-austin-nursing-dnp")
     dnp_scalar, dnp_cost = u._program_tuition(dnp)
-    assert dnp_scalar is None and dnp_cost.get("total_program_tuition") == 30000, (
-        "DNP multi-semester total must stay in total_program_tuition, not the annual scalar"
+    assert dnp_scalar == 12000, "DNP matcher scalar must be the flat annual rate, not the total"
+    assert dnp_cost.get("tuition_usd") == 12000, "DNP cost card shows the annual rate"
+    assert dnp_cost.get("total_program_tuition") == 30000, "DNP keeps the full program total"
+    assert "tuition_period" not in dnp_cost, "DNP scalar is annual, not a program-total period"
+    assert "cost_data.tuition_usd" not in u._program_standard(dnp["slug"], dnp)["omitted"], (
+        "DNP annual rate is filled, not omitted"
     )
+    # The online CS/DS/AI master's publish only a flexible multi-year TOTAL with no annual basis,
+    # so the per-year scalar is honestly OMITTED rather than misrepresent the total as annual (a
+    # multi-year total in program.tuition would over-fire the budget veto and render "/yr").
+    for slug in (
+        "ut-austin-computer-science-online-ms",
+        "ut-austin-data-science-ms",
+        "ut-austin-artificial-intelligence-ms",
+    ):
+        spec = next(s for s in u.PROGRAMS if s["slug"] == slug)
+        scalar, cost = u._program_tuition(spec)
+        assert scalar is None, f"{slug} annual scalar must be omitted (only a flexible total)"
+        assert cost.get("total_program_tuition") == 10000, f"{slug} keeps the published total"
+        assert "tuition_usd" not in cost, f"{slug} has no annual rate"
+        assert "cost_data.tuition_usd" in u._program_standard(slug, spec)["omitted"], (
+            f"{slug} annual rate must stay omitted-with-reason"
+        )
