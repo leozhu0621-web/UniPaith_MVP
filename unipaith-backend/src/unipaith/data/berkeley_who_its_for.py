@@ -29,10 +29,10 @@ WHO_ITS_FOR: dict[str, str] = {
     "berkeley-chemical-engineering-bs": "Undergraduates who want to design processes that transform matter at scale — energy, materials, and biotechnology — in the College of Chemistry, toward industry or graduate engineering.",
     "berkeley-chemistry-bs": "Undergraduates who enjoy understanding matter and reactions in the lab and want the rigorous foundation of Berkeley's top-ranked College of Chemistry, toward research, medicine, or graduate study.",
     # ── College of Computing, Data Science, and Society ──
-    "berkeley-computer-science-bs": "Undergraduates drawn to computing, algorithms, and software who want a Berkeley L&S computer-science degree with deep access to AI and systems research, toward technology, research, or startups.",
+    "berkeley-computer-science-bs": "Undergraduates drawn to computing, algorithms, and software who want a Berkeley computer-science degree in the College of Computing, Data Science, and Society with deep access to AI and systems research, toward technology, research, or startups.",
     "berkeley-data-science-bs": "Undergraduates who want to turn data into insight, combining statistics, computing, and domain analysis in Berkeley's flagship data-science program, toward analytics, tech, and research careers.",
     "berkeley-information-science-studies-ms": "Students who want to design and manage information systems and data at the intersection of technology, people, and policy at the I School, toward UX, data, and product roles.",
-    "berkeley-computer-and-information-sciences-general-ms": "Students seeking an advanced professional master's in electrical engineering and computer science at Berkeley, toward technical-leadership and specialized engineering roles.",
+    "berkeley-computer-and-information-sciences-general-ms": "Students seeking an advanced master's in computing and information sciences at Berkeley's College of Computing, Data Science, and Society, toward technical, research, and specialized data and computing roles.",
     "berkeley-information-science-studies-phd": "Aspiring information scholars pursuing a funded doctorate on how people, technology, and data interact at the I School, toward faculty and research careers.",
     "berkeley-information-science-studies-prof": "Working professionals seeking Berkeley's professional information-science degree to advance into data, UX, and information-management leadership roles.",
     # ── College of Engineering ──
