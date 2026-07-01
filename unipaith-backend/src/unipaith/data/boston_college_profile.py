@@ -48,9 +48,9 @@ Honest caveats stamped into ``_standard.omitted``:
   credit total — keeps a sourced ``cost_data`` omission rather than a guessed figure.
 - ``external_reviews`` (MBAn shape, gathered → summarized → cited, each backed by ≥2
   independent third-party domains per the manifest's authoritative_2x rule) are attached
-  to the programs with genuine independent coverage (MBA, MS Finance, MSW, J.D., MSN, DNP);
-  programs whose only signal is first-party pages or a lone ranking record an honest
-  ``external_reviews`` omission (coverage-gated) rather than presenting first-party
+  to the programs with genuine independent coverage (MBA, MS Finance, MSW, J.D.); programs
+  whose only signal is first-party pages or a single ranking domain record an honest
+  ``external_reviews`` omission (coverage-gated) rather than presenting under-sourced
   material as a review.
 - Deeper per-program fields (tracks, class profile, named faculty, review themes,
   program-level employment conditions) are published only for a few flagships; the
@@ -1250,40 +1250,10 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             ("BC Law — Employment statistics", "https://www.bc.edu/bc-web/schools/law/careers/employment-statistics.html"),
         ],
     ),
-    "bc-nursing-ms": _reviews(
-        "The Connell School's MS in Nursing prepares advanced-practice nurses across five NP "
-        "specialties (often via an accelerated Direct-Entry path) with excellent certification "
-        "pass rates; cost and thin standalone review coverage are the cautions.",
-        [
-            ("Advanced-practice focus", "positive", "The 48-credit MS prepares nurse practitioners in five specialties (Adult-Gerontology, Family, Pediatric, Psychiatric/Mental Health, Women's Health), commonly through an accelerated Direct-Entry route for non-nursing bachelor's holders."),
-            ("Certification outcomes", "positive", "BC reports 100% first-time advanced-practice certification pass rates (2024-25) and 99% of graduate students employed or continuing education within one year (school-reported)."),
-            ("Strong U.S. News standing", "positive", "U.S. News ranks the master's nursing program in the #20s nationally (BC pages cite #29 of 147; its April 2025 release cited #26)."),
-            ("Cost", "caution", "Even positive reviewers describe BC nursing as expensive; per-credit graduate billing means budgeting carefully."),
-            ("Thin standalone reviews", "caution", "Aggregators (GradReports, Niche) carry little program-specific review content for BC nursing graduate programs; most detail comes from BC's own reporting."),
-        ],
-        [
-            ("U.S. News — Best Nursing Schools (Boston College)", "https://www.usnews.com/best-graduate-schools/top-nursing-schools/boston-college-33122"),
-            ("BC Connell — Facts & Figures", "https://www.bc.edu/bc-web/schools/cson/about/facts.html"),
-            ("BC Connell — Master's programs", "https://www.bc.edu/bc-web/schools/cson/academics/masters-program.html"),
-        ],
-    ),
-    "bc-nursing-dnp": _reviews(
-        "The Connell School's Doctor of Nursing Practice (launched 2019) is a clinically intensive "
-        "practice doctorate with multiple entry routes and strong certification outcomes; its "
-        "relative youth and cost are the cautions.",
-        [
-            ("Clinically intensive", "positive", "Post-baccalaureate DNP students complete a minimum of 1,000 clinical hours — double the master's requirement — plus a scholarly practice-change project across multiple clinical sites."),
-            ("Multiple entry routes", "positive", "Entry paths include post-baccalaureate, post-master's, and RN-to-DNP, plus a distinct Nurse Anesthesia track."),
-            ("Certification and employment", "positive", "BC reports 100% first-time NP certification pass rates (2024-25) and 99% of graduate students employed or continuing education within a year (school-reported)."),
-            ("U.S. News standing", "positive", "U.S. News ranks the DNP in the mid-teens to low-#20s nationally (BC pages cite #21 of 154; its April 2025 release cited #14)."),
-            ("Newer program, higher cost", "caution", "BC launched the DNP in fall 2019, younger than many peers; per-credit doctoral billing makes cost a real consideration and dedicated third-party reviews are scarce."),
-        ],
-        [
-            ("U.S. News — Best Nursing Schools (Boston College)", "https://www.usnews.com/best-graduate-schools/top-nursing-schools/boston-college-33122"),
-            ("BC Connell — DNP program", "https://www.bc.edu/bc-web/schools/cson/academics/DNP-program.html"),
-            ("BC Connell — Facts & Figures", "https://www.bc.edu/bc-web/schools/cson/about/facts.html"),
-        ],
-    ),
+    # bc-nursing-ms and bc-nursing-dnp are OMITTED (coverage-gated): their only independent
+    # source is a single U.S. News nursing ranking (one domain), with no second independent
+    # qualitative source — so they do not meet the manifest's authoritative_2x (>=2 distinct
+    # independent domains) bar and are honestly omitted rather than shipped under-sourced.
 }
 
 

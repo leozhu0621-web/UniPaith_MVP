@@ -197,19 +197,18 @@ def _domain(url: str) -> str:
 
 def test_coverable_programs_have_reviews():
     reviewed = [s for s in p._REVIEWS_BY_SLUG if s in p.PROGRAM_SLUGS]
-    assert len(reviewed) >= 6, f"only {len(reviewed)} programs reviewed"
+    assert len(reviewed) >= 4, f"only {len(reviewed)} programs reviewed"
     for slug, rev in p._REVIEWS_BY_SLUG.items():
         assert rev["summary"] and rev["themes"] and rev["sources"] and rev["disclaimer"]
         # cautions present — not praise-only
         assert any(t["sentiment"] in ("caution", "mixed") for t in rev["themes"]), slug
         for src in rev["sources"]:
             assert src["url"].startswith("http"), slug
-        # A review must carry INDEPENDENT (non-bc.edu) sourcing — never first-party-only
-        # marketing dressed as a review (manifest external_reviews sourcing = authoritative_2x).
-        # US News is the independent anchor for ranking-based programs; the well-covered
-        # business/law/social-work reviews carry two or more independent domains.
+        # authoritative_2x: >= 2 INDEPENDENT (non-bc.edu) source DOMAINS — never first-party
+        # marketing, and never a lone single-domain ranking, dressed as a review (manifest
+        # external_reviews sourcing rule). A program that can't clear this bar is omitted.
         indep = {_domain(s["url"]) for s in rev["sources"] if "bc.edu" not in _domain(s["url"])}
-        assert len(indep) >= 1, f"{slug} has a first-party-only source list: {indep}"
+        assert len(indep) >= 2, f"{slug} lacks 2 independent source domains: {indep}"
 
 
 def test_institution_is_gold_except_recorded_omission():
