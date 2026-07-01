@@ -110,6 +110,18 @@ FIELD_ALIASES: dict[str, str] = {
     "Veterinary Biomedical and Clinical Sciences": "Veterinary Biomedical Sciences",
     "Visual and Performing Arts, Other": "Visual Arts",
     "Wildlife and Wildlands Science and Management": "Wildlife Ecology",
+    # Federal CIP 26.07 title "Zoology/Animal Biology" (an embedded-slash CIP rollup TITLE,
+    # byte-identical to CIP 26.0701) → UW-Madison's real conferred UNDERGRADUATE field name
+    # "Zoology". The undergraduate major is published as "Zoology, BS" (College of Letters &
+    # Science, Department of Integrative Biology); this mirrors the "Botany/Plant Biology" →
+    # "Plant Biology" alias above so the CIP title never renders as a program name
+    # (REPAIR_BACKLOG #4c). NOTE — this alias resolves the BACHELOR'S row only; the graduate
+    # rows under CIP 26.07 are the Department of Integrative Biology's GRADUATE program, which
+    # UW-Madison confers as "Integrative Biology, MS" (there is no "Zoology, MS" and no Zoology
+    # graduate certificate — verified guide.wisc.edu/graduate/integrative-biology/), so the
+    # master's row is mapped per-slug below and the certificate row is dropped, NOT aliased to
+    # "Zoology" (which would fabricate graduate credential names).
+    "Zoology/Animal Biology": "Zoology",
 }
 
 DEPARTMENT_BY_FIELD: dict[str, str] = {
@@ -264,7 +276,7 @@ DEPARTMENT_BY_FIELD: dict[str, str] = {
     "Visual Arts": "Department of Art",
     "Wildlife Ecology": "Department of Forest and Wildlife Ecology",
     "Writing Studies": "Department of English",
-    "Zoology/Animal Biology": "Department of Integrative Biology",
+    "Zoology": "Department of Integrative Biology",
 }
 
 SLUG_PROGRAM_NAMES: dict[str, str] = {
@@ -289,6 +301,11 @@ SLUG_PROGRAM_NAMES: dict[str, str] = {
     "uw-madison-pharmacy-prof": "Doctor of Pharmacy",
     "uw-madison-psychology-bs": "Bachelor of Science in Psychology",
     "uw-madison-veterinary-medicine-prof": "Doctor of Veterinary Medicine",
+    # CIP 26.07 graduate row: UW-Madison's Department of Integrative Biology confers its
+    # graduate degree as "Integrative Biology, MS" (NOT "Zoology, MS" — verified
+    # guide.wisc.edu/graduate/integrative-biology/). Mapped per-slug so the credential-agnostic
+    # "Zoology" alias does not fabricate a nonexistent "Master of Science in Zoology".
+    "uw-madison-zoology-animal-biology-ms": "Master of Science in Integrative Biology",
 }
 
 SLUG_DEPARTMENTS: dict[str, str] = {
@@ -308,6 +325,7 @@ SLUG_DEPARTMENTS: dict[str, str] = {
     "uw-madison-pharmacy-prof": "School of Pharmacy",
     "uw-madison-psychology-bs": "Department of Psychology",
     "uw-madison-veterinary-medicine-prof": "School of Veterinary Medicine",
+    "uw-madison-zoology-animal-biology-ms": "Department of Integrative Biology",
 }
 
 BA_FIELDS = frozenset({
