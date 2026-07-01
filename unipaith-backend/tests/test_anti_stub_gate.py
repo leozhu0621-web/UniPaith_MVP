@@ -151,7 +151,7 @@ CERTIFIED_CLEAN = [
     #             rates in the breakdown, registrar professional rates, funded PhDs,
     #             self-supporting omits-with-reason); sourced reviews on the MBA / JD / MD
     #             (uciprof1)
-    "boston_college",  # institution seed (0 programs, dead feed) → gold + verified 103-program
+    "boston_college",  # institution seed (0 programs, dead feed) → gold + verified 102-program
     #             catalog across the eight schools (Morrissey Arts & Sciences, Carroll Management,
     #             Lynch Education, Connell Nursing, Social Work, Law, Clough Theology & Ministry,
     #             Woods Advancing Studies); BC University Catalog conferred B.A./B.S./M.A./M.S./

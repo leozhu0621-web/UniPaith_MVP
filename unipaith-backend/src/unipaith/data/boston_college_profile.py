@@ -572,15 +572,15 @@ _OUTCOMES_INSTITUTION = {
 # slug, for programs where a real field-level figure is published. {salary, cip}.
 _FOS_OUTCOMES: dict[str, tuple[int, str]] = {
     "bc-computer-science-bs": (84100, "11.07"),
-    "bc-communication-bs": (46940, "09.01"),
-    "bc-economics-bs": (72900, "45.06"),
+    "bc-communication-ba": (46940, "09.01"),
+    "bc-economics-ba": (72900, "45.06"),
     "bc-finance-bs": (79600, "52.08"),
     "bc-accounting-bs": (68000, "52.03"),
     "bc-nursing-bsn": (83400, "51.38"),
     "bc-psychology-bs": (41000, "42.01"),
     "bc-biology-bs": (39900, "26.01"),
     "bc-mathematics-bs": (74000, "27.01"),
-    "bc-political-science-bs": (55000, "45.10"),
+    "bc-political-science-ba": (55000, "45.10"),
 }
 
 _BC_TUITION_UG = 70702
@@ -979,7 +979,7 @@ PROGRAMS: list[dict] = [
        "Boston College Law School", "22.99",
        "A one-year advanced law degree for internationally trained lawyers, building U.S. legal knowledge within a small cohort.",
        "Internationally trained lawyers seeking U.S. legal training and credentials."),
-    _p("bc-mls-cybersecurity", _LAW, "Master of Legal Studies in Cybersecurity", "Legal Studies Cybersecurity", "masters", 12,
+    _p("bc-mls-cybersecurity", _LAW, "Master of Legal Studies in Cybersecurity, Risk, and Governance", "Legal Studies Cybersecurity", "masters", 12,
        "Boston College Law School", "22.99",
        "A master's for non-lawyers and professionals covering the law, policy, and governance of cybersecurity and data.",
        "Professionals who need legal and regulatory fluency in cybersecurity without a full J.D."),
@@ -1015,11 +1015,6 @@ PROGRAMS: list[dict] = [
        "Woods College of Advancing Studies", "45.06",
        "Applied micro- and macroeconomics and econometrics oriented to real-world policy and business analysis.",
        "Professionals who want practical economic and quantitative analysis skills for policy and business roles.",
-       delivery_format="hybrid"),
-    _p("bc-cybersecurity-ms", _WOODS, "Master of Science in Cybersecurity Policy and Governance", "Cybersecurity", "masters", 20,
-       "Woods College of Advancing Studies", "11.10",
-       "The management, policy, and governance of cybersecurity risk, bridging technology, law, and organizational leadership.",
-       "Professionals moving into cybersecurity leadership, risk, and governance roles.",
        delivery_format="hybrid"),
     _p("bc-healthcare-admin-ms", _WOODS, "Master of Healthcare Administration", "Healthcare Administration", "masters", 20,
        "Woods College of Advancing Studies", "51.07",

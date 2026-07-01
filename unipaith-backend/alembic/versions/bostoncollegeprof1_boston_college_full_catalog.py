@@ -1,10 +1,10 @@
-"""Boston College — institution seed to gold + real 103-program catalog
+"""Boston College — institution seed to gold + real 102-program catalog
 
 Takes the bulk-seeded Boston College institution (0 programs, dead feed) to the gold
 standard (REPAIR_BACKLOG entry #6 — bulk institution-level seed). This migration fills the
 institution's report-card / admissions-funnel (Class of 2029: 39,686 → 5,497 → 2,479) /
 diversity / cost-aid / research / campus-life / U.S. News ranking / working feed fields and
-creates a verified, real-named 103-program catalog across Boston College's eight schools
+creates a verified, real-named 102-program catalog across Boston College's eight schools
 (Morrissey College of Arts and Sciences, Carroll School of Management, Lynch School of
 Education and Human Development, Connell School of Nursing, School of Social Work, Law
 School, Clough School of Theology and Ministry, and Woods College of Advancing Studies).
