@@ -158,17 +158,37 @@ def test_every_program_is_conformant_or_omitted():
 
 
 def test_flagship_programs_carry_reviews():
-    # Only the hand-gathered, program-specific flagship reviews survive the gatechprof3
-    # de-fabrication; the 58 machine-synthesized DEPTH_REVIEWS were removed (miss #8).
+    # Hand-gathered, program-specific flagship reviews. The four originals survived the
+    # gatechprof3 de-fabrication (the 58 machine-synthesized DEPTH_REVIEWS were removed,
+    # miss #8); the gatechreviews1 depth pass added 13 more, each summarizing real
+    # program-specific third-party coverage with cited resolvable sources.
     for slug in (
         "gatech-online-ms-computer-science-omscs",
         "gatech-online-ms-analytics",
         "gatech-mba",
         "gatech-computer-science-bs",
+        "gatech-industrial-engineering-bs",
+        "gatech-industrial-engineering-ms",
+        "gatech-aerospace-engineering-bs",
+        "gatech-aerospace-engineering-ms",
+        "gatech-biomedical-engineering-bs",
+        "gatech-mechanical-engineering-ms",
+        "gatech-electrical-computer-engineering-ms",
+        "gatech-quantitative-computational-finance-ms",
+        "gatech-analytics-ms",
+        "gatech-mba-management-technology-executive",
+        "gatech-human-computer-interaction-ms",
+        "gatech-online-ms-cybersecurity",
+        "gatech-supply-chain-engineering-ms",
     ):
         assert slug in g._REVIEWS_BY_SLUG, f"{slug} should carry external_reviews"
         rev = g._REVIEWS_BY_SLUG[slug]
         assert rev["summary"] and rev["themes"] and rev["sources"] and rev["disclaimer"]
+        # every source carries a resolvable-looking URL and every theme a sentiment + detail
+        assert all(s.get("url", "").startswith("http") for s in rev["sources"])
+        assert all(t.get("sentiment") and t.get("detail") for t in rev["themes"])
+        # a real depth review pairs praise with at least one caution/mixed note
+        assert any(t["sentiment"] in ("caution", "mixed") for t in rev["themes"]), slug
 
 
 # --- Anti-synthesized-review gate (SKILL.md miss #8: fabrication-by-synthesis) ---
