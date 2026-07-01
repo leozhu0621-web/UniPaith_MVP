@@ -243,10 +243,12 @@ def test_professional_and_masters_tuition_filled_or_omitted_with_reason():
     assert "cost_data.tuition_usd" not in u._program_standard(dnp["slug"], dnp)["omitted"], (
         "DNP annual rate is filled, not omitted"
     )
-    # The online CS/DS/AI master's publish a single FLAT $10,000 total ($333/credit × 30, the
-    # same for residents, non-residents, and international students), completed flexibly part-time,
-    # so the flat program total IS the de-facto cost basis and carries the matcher budget scalar
-    # (the lowest-cost graduate option in the catalog) — never a silent null (REPAIR_BACKLOG #1).
+    # The online CS/DS/AI master's publish only a single FLAT $10,000 MULTI-YEAR total ($333/
+    # credit × 30, flexible over 18–36 months) with no annual basis, so the per-year scalar is
+    # honestly OMITTED rather than misrepresent the total as annual — program.tuition is consumed
+    # as tuition_usd_per_year (budget veto) and rendered "/yr", so a multi-year total there would
+    # over-fire the veto for sub-$10k/yr budgets and mislabel the total as yearly (Codex #1262).
+    # The verified total is preserved in cost_data.total_program_tuition.
     for slug in (
         "ut-austin-computer-science-online-ms",
         "ut-austin-data-science-ms",
@@ -254,12 +256,11 @@ def test_professional_and_masters_tuition_filled_or_omitted_with_reason():
     ):
         spec = next(s for s in u.PROGRAMS if s["slug"] == slug)
         scalar, cost = u._program_tuition(spec)
-        assert scalar == 10000, f"{slug} carries the verified flat $10,000 program total"
-        assert cost.get("tuition_usd") == 10000, f"{slug} cost card shows the flat total"
+        assert scalar is None, f"{slug} annual scalar must be omitted (only a flexible total)"
         assert cost.get("total_program_tuition") == 10000, f"{slug} keeps the published total"
-        assert cost["breakdown"]["tuition_out_of_state"] == 10000, f"{slug} is residency-flat"
-        assert "cost_data.tuition_usd" not in u._program_standard(slug, spec)["omitted"], (
-            f"{slug} tuition is filled, not omitted"
+        assert "tuition_usd" not in cost, f"{slug} has no annual rate"
+        assert "cost_data.tuition_usd" in u._program_standard(slug, spec)["omitted"], (
+            f"{slug} annual rate must stay omitted-with-reason"
         )
     # The academic MS in Information, Risk & Operations Management and MS in Management are
     # research master's offered only within their McCombs doctoral program (like the MS in

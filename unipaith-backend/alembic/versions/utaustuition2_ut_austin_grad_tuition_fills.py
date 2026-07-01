@@ -1,19 +1,12 @@
-"""UT Austin master's/professional tuition fills — online master's + academic IROM/Management
+"""UT Austin master's tuition fills — academic IROM + Management (standard graduate rate)
 
 Matcher-core tuition repair on The University of Texas at Austin (REPAIR_BACKLOG #1), every
 value a choice between PUBLISHED/canonical numbers, never a guess. Before this migration the
 catalog shipped seven null ``program.tuition`` scalars, so the CPEF budget feature scored those
-programs blind; five are now filled from verified published rates and the remaining two stay
+programs blind; two are now filled from a verified published rate and the remaining five stay
 honestly omitted-with-reason.
 
-Filled (5):
-  * MS Computer Science (Online) / MS Data Science (Online) / MS Artificial Intelligence
-    (Online) — UT's Computer & Data Science Online master's publish a single FLAT total program
-    tuition of $10,000 ($333/credit x the 30-credit degree, the SAME for Texas residents,
-    non-residents, and international students — no residency split; verified first-party at
-    cdso.utexas.edu). The program is completed flexibly part-time, so the flat program total is
-    the de-facto cost basis and carries the matcher budget scalar (the lowest-cost graduate
-    option in the catalog — a blind scalar had lost the single most-affordable signal there is).
+Filled (2):
   * MS Information, Risk & Operations Management + MS Management — each an academic research
     master's offered only within its McCombs doctoral program (the IROM MS is "offered only to
     students who are enrolled in the doctoral program in information, risk, and operations
@@ -23,7 +16,14 @@ Filled (5):
     published non-resident graduate scalar ($22,954), with both residency rates in
     ``cost_data.breakdown``.
 
-Still honestly omitted-with-reason (2):
+Still honestly omitted-with-reason (5):
+  * MS Computer Science / Data Science / Artificial Intelligence (Online) — UT publishes a
+    single FLAT $10,000 total ($333/credit x 30, residency-independent; verified first-party at
+    cdso.utexas.edu), but it is a MULTI-YEAR FLEXIBLE total (18–36 months) with no annual basis.
+    ``program.tuition`` is consumed as ``tuition_usd_per_year`` (budget veto) and rendered "/yr",
+    so the total is kept in ``cost_data.total_program_tuition`` and the annual scalar is omitted
+    rather than mis-signal the matcher (over-firing the veto for sub-$10k/yr budgets) or mislabel
+    the flexible total as yearly.
   * Pharm.D. — UT publishes its rate only through a login-gated tuition calculator/PDF and the
     lone concordant third-party figure is an IPEDS-republisher echo, so it fails the
     two-independent-source verify gate (no-fabrication).
@@ -31,8 +31,8 @@ Still honestly omitted-with-reason (2):
     intensive) whose premium program tuition McCombs does not publish in a verifiable /
     machine-readable form.
 
-master's tuition coverage 122/128 -> 127/128 (the lone residual, MS Energy Management, is a
-legitimate omit-with-reason); professional stays 4/5 (Pharm.D. omit-with-reason).
+master's tuition coverage 122/128 -> 124/128 (the residual — the 3 online master's + MS Energy
+Management — is legitimate omit-with-reason); professional stays 4/5 (Pharm.D. omit-with-reason).
 
 Idempotent: re-applies ``ut_austin_profile.apply()`` (updates the tuition scalar + cost_data on
 existing rows; adds/drops no programs) and re-runs the target-applicant backfill (insert-missing
