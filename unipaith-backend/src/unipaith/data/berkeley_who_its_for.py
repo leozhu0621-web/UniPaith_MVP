@@ -31,9 +31,9 @@ WHO_ITS_FOR: dict[str, str] = {
     # ── College of Computing, Data Science, and Society ──
     "berkeley-computer-science-bs": "Undergraduates drawn to computing, algorithms, and software who want a Berkeley computer-science degree in the College of Computing, Data Science, and Society with deep access to AI and systems research, toward technology, research, or startups.",
     "berkeley-data-science-bs": "Undergraduates who want to turn data into insight, combining statistics, computing, and domain analysis in Berkeley's flagship data-science program, toward analytics, tech, and research careers.",
-    "berkeley-information-science-studies-ms": "Students who want to design and manage information systems and data at the intersection of technology, people, and policy at the I School, toward UX, data, and product roles.",
+    "berkeley-information-science-studies-ms": "Students who want to design and manage information systems and data at the intersection of technology, people, and policy at Berkeley, toward UX, data, and product roles.",
     "berkeley-computer-and-information-sciences-general-ms": "Students seeking an advanced master's in computing and information sciences at Berkeley's College of Computing, Data Science, and Society, toward technical, research, and specialized data and computing roles.",
-    "berkeley-information-science-studies-phd": "Aspiring information scholars pursuing a funded doctorate on how people, technology, and data interact at the I School, toward faculty and research careers.",
+    "berkeley-information-science-studies-phd": "Aspiring information scholars pursuing a funded doctorate on how people, technology, and data interact at Berkeley, toward faculty and research careers.",
     "berkeley-information-science-studies-prof": "Working professionals seeking Berkeley's professional information-science degree to advance into data, UX, and information-management leadership roles.",
     # ── College of Engineering ──
     "berkeley-agricultural-engineering-bs": "Undergraduates who want to apply engineering to food, water, and biological systems, toward careers in agricultural technology, resource management, or graduate study.",
@@ -150,7 +150,7 @@ WHO_ITS_FOR: dict[str, str] = {
     "berkeley-germanic-languages-literatures-and-linguistics-ms": "Students seeking advanced study of German language, literature, and thought, toward doctoral work, teaching, or the humanities.",
     "berkeley-international-globalization-studies-ms": "Students seeking a graduate lens on global politics, economics, and development, toward careers in diplomacy, international organizations, or NGOs.",
     "berkeley-history-ms": "Students who want advanced archival research and historical analysis, toward doctoral study, public history, education, or research-intensive careers.",
-    "berkeley-journalism-ms": "Aspiring journalists seeking a professional, reporting-intensive master's at Berkeley's Graduate School of Journalism, toward careers in news, documentary, and investigative media.",
+    "berkeley-journalism-ms": "Aspiring journalists seeking a professional, reporting-intensive master's at Berkeley, toward careers in news, documentary, and investigative media.",
     "berkeley-linguistic-comparative-and-related-language-studies-and-services-ms": "Students seeking advanced training in the scientific study of language — its structure, sound, and meaning, toward doctoral work, tech, or speech-science research.",
     "berkeley-microbiological-sciences-and-immunology-ms": "Students seeking advanced lab-based study of microbiology and immunology, toward research careers in biotech, medicine, or doctoral study.",
     "berkeley-music-ms": "Students seeking advanced study of musicology, theory, or composition within a research university, toward doctoral work, teaching, or professional music careers.",
