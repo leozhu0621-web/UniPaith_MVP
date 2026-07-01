@@ -80,7 +80,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "University of Chicago"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-17"
+ENRICHED_AT = "2026-07-01"
 
 _TEMPLATE_STUB_RE = re.compile(
     r" — a .+ (undergraduate|graduate|doctoral|certificate|professional|"
@@ -1522,15 +1522,387 @@ _WHO_GRAD_BASELINE = (
 )
 _HL_GRAD_BASELINE = ["Top-ranked UChicago degree", "World-class faculty", "Rigorous & data-driven"]
 
+# Program-distinct "Who it's for" — a field-specific 1–2 sentence statement of the
+# applicant each program fits (subject, who it suits, typical next step), derived from
+# each program's own published audience/fit material. Fills every slug so the
+# degree-type ``_WHO_*_BASELINE`` fallback is never reached (REPAIR_BACKLOG #3b:
+# ``who_its_for`` was type-gamed to one template per degree type — distinct/total ≈ 0.10;
+# each entry below is program-specific so a CS Ph.D. and a Public-Policy M.A. never read
+# alike).
 _WHO_BY_SLUG = {
+    # ── The College (undergraduate majors) ──
+    "uchicago-economics-bs": (
+        "Students who want a quantitatively rigorous economics education in the tradition "
+        "of the Chicago school, inside a research university, as a foundation for finance, "
+        "consulting, policy, or graduate study."
+    ),
+    "uchicago-computer-science-bs": (
+        "Students who want a theory-grounded computer science education — algorithms, "
+        "systems, machine learning, and programming languages — with a path into the MPCS "
+        "professional master's or a research Ph.D."
+    ),
+    "uchicago-mathematics-bs": (
+        "Students who love mathematical structure and proof and want rigorous training in "
+        "algebra, analysis, and geometry, often toward graduate study in mathematics, "
+        "economics, or physics."
+    ),
+    "uchicago-statistics-bs": (
+        "Students drawn to probability, statistical inference, and data-driven computation "
+        "who want a quantitative foundation for data science, research, or graduate study."
+    ),
+    "uchicago-political-science-bs": (
+        "Students interested in how power, institutions, and elections work who want "
+        "analytic training across American, comparative, and international politics and "
+        "political theory."
+    ),
+    "uchicago-biology-bs": (
+        "Students fascinated by living systems, from genes to ecosystems, who want "
+        "research-intensive preparation for medicine, graduate school, or the life sciences."
+    ),
+    "uchicago-neuroscience-bs": (
+        "Students curious about how the brain produces perception, cognition, and behavior "
+        "who want an interdisciplinary path spanning molecular, cognitive, and "
+        "computational neuroscience."
+    ),
+    "uchicago-english-bs": (
+        "Students who love close reading and writing across literary periods and want "
+        "rigorous training in criticism, literary history, and creative writing."
+    ),
+    "uchicago-history-bs": (
+        "Students who want to investigate the past through archives and argument, from "
+        "ancient to modern eras, building strong research and writing skills."
+    ),
+    "uchicago-public-policy-bs": (
+        "Undergraduates who want to analyze real public problems with economics, "
+        "statistics, and political science, working alongside Harris faculty and in "
+        "Chicago field placements."
+    ),
+    "uchicago-psychology-bs": (
+        "Students interested in the science of mind and behavior — cognitive, "
+        "developmental, social, and behavioral neuroscience — who want research experience "
+        "toward graduate or health careers."
+    ),
+    "uchicago-molecular-engineering-bs": (
+        "Students who want to apply engineering at the molecular scale — quantum, "
+        "materials, water, and immunoengineering — in the nation's first undergraduate "
+        "major in the field."
+    ),
+    "uchicago-natural-resources-conservation-and-research-bs": (
+        "Students who want to study cities, ecosystems, and sustainability together, "
+        "combining conservation biology and environmental science with urban field work."
+    ),
+    "uchicago-radio-television-and-digital-communication-bs": (
+        "Students who want to make and analyze media — broadcast, digital, and journalism "
+        "practice — through Cinema and Media Studies and the Logan Center's production "
+        "facilities."
+    ),
+    "uchicago-information-science-studies-bs": (
+        "Students interested in human-centered computing, data ethics, and information "
+        "systems who want a computing degree with a social and design emphasis."
+    ),
+    "uchicago-teacher-education-and-professional-development-specific-leve-bs": (
+        "Students who want to teach and earn Illinois certification through the Urban "
+        "Teacher Education Program's residency model in Chicago public schools."
+    ),
+    "uchicago-linguistic-comparative-and-related-language-studies-and-serv-bs": (
+        "Students fascinated by how language works who want training in phonetics, syntax, "
+        "and semantics with experimental labs and fieldwork."
+    ),
+    "uchicago-east-asian-languages-literatures-and-linguistics-bs": (
+        "Students who want deep language and literary study of China, Japan, and Korea, "
+        "combining advanced language work with cultural and historical scholarship."
+    ),
+    "uchicago-germanic-languages-literatures-and-linguistics-bs": (
+        "Students drawn to German language, literature, and intellectual history who want "
+        "to read major texts from the medieval period to the present in the original."
+    ),
+    "uchicago-romance-languages-literatures-and-linguistics-bs": (
+        "Students who want to study French, Italian, and Iberian literatures and "
+        "linguistics with training in philology and literary theory."
+    ),
+    "uchicago-middle-near-eastern-and-semitic-languages-literatures-and-li-bs": (
+        "Students drawn to Arabic, Hebrew, and ancient Near Eastern languages who want "
+        "philology and archaeology through the collections of the Institute for the Study "
+        "of Ancient Cultures."
+    ),
+    "uchicago-classics-and-classical-languages-literatures-and-linguistics-bs": (
+        "Students who want to read Greek and Latin closely and study the ancient "
+        "Mediterranean, with papyrology and museum work in one of the field's leading "
+        "departments."
+    ),
+    "uchicago-legal-research-and-advanced-professional-studies-bs": (
+        "Undergraduates interested in law, legal reasoning, and the law-and-policy "
+        "questions studied at the Law School, often as preparation for a J.D."
+    ),
+    "uchicago-liberal-arts-and-sciences-general-studies-and-humanities-bs": (
+        "Students who want the breadth of the College Core — humanities, civilization "
+        "studies, and the arts — before concentrating in a humanities field."
+    ),
+    "uchicago-biochemistry-biophysics-and-molecular-biology-bs": (
+        "Students drawn to the molecular mechanisms of life who want structural biology "
+        "and biophysics preparation for research or medicine."
+    ),
+    "uchicago-cell-cellular-biology-and-anatomical-sciences-bs": (
+        "Students interested in how cells are built and function who want "
+        "microscopy-intensive coursework feeding into research and pre-medical paths."
+    ),
+    "uchicago-microbiological-sciences-and-immunology-bs": (
+        "Students fascinated by microbes, immunity, and infectious disease who want "
+        "laboratory research with ties to the Pritzker School of Medicine."
+    ),
+    "uchicago-genetics-bs": (
+        "Students drawn to heredity and the genome who want training in Mendelian and "
+        "molecular genetics, genomics, and genetic epidemiology."
+    ),
+    "uchicago-physiology-pathology-and-related-sciences-bs": (
+        "Students interested in how the body works and fails — physiology, disease "
+        "mechanisms, and pathobiology — with research ties to the medical school."
+    ),
+    "uchicago-biomathematics-bioinformatics-and-computational-biology-bs": (
+        "Students who want to apply mathematics and computing to biology through "
+        "computational genomics, statistical genetics, and systems biology."
+    ),
+    "uchicago-ecology-evolution-systematics-and-population-biology-bs": (
+        "Students drawn to evolution, biodiversity, and conservation who want field and "
+        "genomic research with access to the Field Museum collections."
+    ),
+    "uchicago-applied-mathematics-bs": (
+        "Students who want to use mathematics to model the world — numerical analysis and "
+        "scientific computing applied to physics, economics, and data science."
+    ),
+    "uchicago-science-technology-and-society-bs": (
+        "Students who want to examine science and technology critically — their history, "
+        "ethics, and policy — across disciplines."
+    ),
+    "uchicago-nutrition-sciences-bs": (
+        "Students interested in human nutrition, metabolism, and diet-related disease who "
+        "want a science foundation for research or health careers."
+    ),
+    "uchicago-philosophy-bs": (
+        "Students who want rigorous training in logic, ethics, and philosophy of science "
+        "in a department central to the analytic tradition."
+    ),
+    "uchicago-physical-sciences-general-bs": (
+        "Students who want a broad physical-sciences foundation spanning physics, "
+        "chemistry, astronomy, and the geophysical sciences before specializing."
+    ),
+    "uchicago-astronomy-and-astrophysics-bs": (
+        "Students captivated by the cosmos who want observational and theoretical "
+        "astrophysics with ties to national observatories and Fermilab."
+    ),
+    "uchicago-chemistry-bs": (
+        "Students drawn to molecules and reactions who want research-intensive organic, "
+        "inorganic, and physical chemistry in a department with Nobel-laureate faculty."
+    ),
+    "uchicago-geological-and-earth-sciences-geosciences-bs": (
+        "Students interested in the Earth and planets — geology, paleoclimate, and "
+        "earth-system science — who want fieldwork and isotope-geochemistry labs."
+    ),
+    "uchicago-physics-bs": (
+        "Students who want rigorous experimental and theoretical physics — particle, "
+        "condensed matter, and astrophysics — with ties to the Fermi Institute and "
+        "Argonne."
+    ),
+    "uchicago-social-sciences-general-bs": (
+        "Students who want an interdisciplinary social-science education across economics, "
+        "sociology, and political science built on the Core."
+    ),
+    "uchicago-anthropology-bs": (
+        "Students curious about human cultures across time who want archaeology, "
+        "ethnography, and linguistic anthropology with hands-on field study."
+    ),
+    "uchicago-international-relations-and-national-security-studies-bs": (
+        "Students focused on grand strategy, security, and world politics who want area "
+        "expertise and analytic training in international relations."
+    ),
+    "uchicago-sociology-bs": (
+        "Students interested in inequality, cities, and organizations who want to study "
+        "society in the home of the Chicago school of sociology."
+    ),
+    "uchicago-film-video-and-photographic-arts-bs": (
+        "Students who want to study and make film, photography, and media in a program "
+        "pairing critical theory with production at the Logan Center."
+    ),
+    "uchicago-fine-and-studio-arts-bs": (
+        "Students who want serious studio practice — painting, sculpture, printmaking, and "
+        "new media — inside a research university and the Logan Center for the Arts."
+    ),
+    "uchicago-music-bs": (
+        "Students who want to study music history, theory, and performance, with concerts "
+        "in Mandel Hall and the Logan Center."
+    ),
+    # ── Graduate & professional ──
     "uchicago-mba": (
         "Ambitious professionals seeking the most flexible MBA among the top schools — a "
         "rigorous, analytical, discipline-based program with strong outcomes in finance, "
-        "consulting and technology."
+        "consulting, and technology."
     ),
-    "uchicago-economics-bs": (
-        "Students who want a quantitatively rigorous economics education in the tradition "
-        "of the Chicago school, inside a research university."
+    "uchicago-mpp": (
+        "Early- and mid-career professionals who want to turn economics, statistics, and "
+        "data analysis into evidence-based public policy through Harris's flagship degree."
+    ),
+    "uchicago-jd": (
+        "Aspiring lawyers who want an intellectually demanding legal education shaped by "
+        "the law-and-economics tradition, toward practice, clerkships, academia, or policy."
+    ),
+    "uchicago-md": (
+        "Future physician-scientists drawn to a small, research-intensive M.D. program "
+        "that pairs clinical training with strong mentored research at an academic medical "
+        "center."
+    ),
+    "uchicago-social-work-am": (
+        "Students committed to clinical or administrative social-work practice who want a "
+        "professional degree grounded in social science and Chicago community engagement."
+    ),
+    "uchicago-divinity-mdiv": (
+        "Students preparing for ministry, chaplaincy, or the academic study of religion "
+        "who want a professional degree combining scholarship with vocational formation."
+    ),
+    "uchicago-mpcs": (
+        "Working professionals and career-changers who want a rigorous professional "
+        "master's in computer science — software, systems, and machine learning — with "
+        "immersive and part-time options."
+    ),
+    "uchicago-statistics-ms": (
+        "Graduates seeking advanced training in statistical theory, methodology, and "
+        "computation toward data-science careers or doctoral study."
+    ),
+    "uchicago-cir-ma": (
+        "Students aiming for careers or doctoral study in international affairs who want a "
+        "rigorous one-year M.A. from the oldest program of its kind in the U.S."
+    ),
+    "uchicago-mapss-ma": (
+        "Students who want an intensive one-year interdisciplinary social-science M.A. to "
+        "strengthen a doctoral application or deepen applied research skills."
+    ),
+    "uchicago-maph-ma": (
+        "Students who want a focused one-year humanities M.A. — with creative-writing and "
+        "digital-studies options — to prepare for doctoral study or arts and culture work."
+    ),
+    "uchicago-natural-resources-conservation-and-research-ms": (
+        "Graduates who want to research cities, climate, and environmental justice, "
+        "combining geography, climate science, and policy."
+    ),
+    "uchicago-ethnic-cultural-minority-gender-and-group-studies-ms": (
+        "Students who want interdisciplinary graduate study of gender, sexuality, race, "
+        "and culture through the Center for the Study of Race, Politics, and Culture."
+    ),
+    "uchicago-radio-television-and-digital-communication-ms": (
+        "Graduates who want to advance computational media, data visualization, and "
+        "digital art practice through the Media Arts, Data, and Design program."
+    ),
+    "uchicago-linguistic-comparative-and-related-language-studies-and-serv-ms": (
+        "Graduates who want research training in phonology, syntax, semantics, and "
+        "language acquisition using empirical and formal methods."
+    ),
+    "uchicago-east-asian-languages-literatures-and-linguistics-ms": (
+        "Graduates pursuing scholarship in Chinese, Japanese, and Korean literature, "
+        "history, and thought toward doctoral or academic work."
+    ),
+    "uchicago-slavic-baltic-and-albanian-languages-literatures-and-linguis-ms": (
+        "Graduates drawn to Slavic and Baltic literatures and philology who want advanced "
+        "textual and linguistic research."
+    ),
+    "uchicago-romance-languages-literatures-and-linguistics-ms": (
+        "Graduates researching French, Italian, Spanish, and Portuguese literature and "
+        "linguistics in their cultural and historical contexts."
+    ),
+    "uchicago-middle-near-eastern-and-semitic-languages-literatures-and-li-ms": (
+        "Graduates studying ancient and modern Near Eastern texts and history with the "
+        "collections of the Institute for the Study of Ancient Cultures."
+    ),
+    "uchicago-classics-and-classical-languages-literatures-and-linguistics-ms": (
+        "Graduates advancing research in Greek and Latin philology, ancient history, and "
+        "archaeology in one of the field's oldest doctoral traditions."
+    ),
+    "uchicago-english-language-and-literature-general-ms": (
+        "Graduates pursuing literary scholarship, criticism, and theory from the medieval "
+        "period to the present with archival and digital research."
+    ),
+    "uchicago-rhetoric-and-composition-writing-studies-ms": (
+        "Graduates focused on academic writing, argumentation, and composition pedagogy "
+        "through the Writing Program."
+    ),
+    "uchicago-biology-general-ms": (
+        "Graduates seeking laboratory research across genetics, ecology, molecular "
+        "biology, and neurobiology in the Division of the Biological Sciences."
+    ),
+    "uchicago-neurobiology-and-neurosciences-ms": (
+        "Graduates pursuing research across molecular, systems, cognitive, and "
+        "computational neuroscience in the interdisciplinary neuroscience program."
+    ),
+    "uchicago-mathematics-ms": (
+        "Graduates seeking advanced study in algebra, analysis, geometry/topology, and "
+        "number theory in one of the country's most influential doctoral traditions."
+    ),
+    "uchicago-medieval-and-renaissance-studies-ms": (
+        "Graduates who want interdisciplinary medieval and Renaissance scholarship "
+        "combining history, literature, and art history."
+    ),
+    "uchicago-philosophy-ms": (
+        "Graduates researching logic, ethics, philosophy of science, and the history of "
+        "philosophy across analytic and continental traditions."
+    ),
+    "uchicago-astronomy-and-astrophysics-ms": (
+        "Graduates pursuing observational and theoretical research in cosmology, "
+        "high-energy astrophysics, and instrumentation."
+    ),
+    "uchicago-chemistry-ms": (
+        "Graduates advancing research across organic, inorganic, physical, and theoretical "
+        "chemistry in a department with Nobel-laureate faculty."
+    ),
+    "uchicago-geological-and-earth-sciences-geosciences-ms": (
+        "Graduates researching climate dynamics, geochemistry, paleobiology, and planetary "
+        "science in the geophysical sciences."
+    ),
+    "uchicago-physics-ms": (
+        "Graduates pursuing research in particle, condensed-matter, and astrophysics "
+        "through the Enrico Fermi and James Franck Institutes."
+    ),
+    "uchicago-anthropology-ms": (
+        "Graduates training in sociocultural, linguistic, and archaeological anthropology "
+        "with extended ethnographic and field research."
+    ),
+    "uchicago-economics-ms": (
+        "Graduates who want rigorous economic theory and empirical research — price "
+        "theory, econometrics, and applied micro — in the Kenneth C. Griffin Department of "
+        "Economics."
+    ),
+    "uchicago-geography-and-cartography-ms": (
+        "Graduates focused on cartography, remote sensing, and spatial analysis within the "
+        "social sciences."
+    ),
+    "uchicago-political-science-and-government-ms": (
+        "Graduates researching American and comparative politics, international relations, "
+        "and political theory with formal and quantitative methods."
+    ),
+    "uchicago-sociology-ms": (
+        "Graduates advancing research in stratification, urban sociology, and "
+        "organizations in the home of the Chicago school of sociology."
+    ),
+    "uchicago-social-sciences-other-ms": (
+        "Graduates pursuing specialized, interdisciplinary social-science topics across "
+        "the division and the Becker Friedman Institute."
+    ),
+    "uchicago-drama-theatre-arts-and-stagecraft-ms": (
+        "Graduates in acting, directing, dramaturgy, and stagecraft who want scholarship "
+        "and productions in the Logan Center for the Arts."
+    ),
+    "uchicago-film-video-and-photographic-arts-ms": (
+        "Graduates advancing film history, media theory, and screen-cultures research in "
+        "the Department of Cinema and Media Studies."
+    ),
+    "uchicago-fine-and-studio-arts-ms": (
+        "Artists pursuing an M.F.A.-level studio practice in painting, photography, and "
+        "new media, with the Logan Center and thesis exhibitions."
+    ),
+    "uchicago-music-ms": (
+        "Graduates advancing research and composition in music history, theory, "
+        "ethnomusicology, and composition, with performance at the Logan Center."
+    ),
+    "uchicago-history-ms": (
+        "Graduates training as historians in global, U.S., and intellectual history, with "
+        "dissertation research in the Special Collections Research Center."
     ),
 }
 _HL_BY_SLUG = {
