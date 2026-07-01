@@ -73,7 +73,7 @@ def _cost(spec: dict) -> dict:
             "funded": spec["degree_type"] == "phd",
             "source": "Boston College Office of Student Services",
             "source_url": p._TUITION_RATES_URL,
-            "year": "2025-26" if spec["degree_type"] == "bachelors" else "2024-25",
+            "year": "2024-25",
         }
     return {"tuition_usd": None, "omitted_reason": p._TUITION_OMIT_REASON}
 
