@@ -579,12 +579,12 @@ DEPTH_REVIEWS: dict[str, dict] = {
         ],
         "sources": [
             {
-                "label": "UC Davis GSM — Our Accolades (MSBA)",
+                "label": "UC Davis GSM — Our Accolades (MSBA rankings, QS 2026)",
                 "url": "https://gsm.ucdavis.edu/about-us/our-accolades",
             },
             {
-                "label": "UC Davis GSM — MSBA Ranked for Value for Money",
-                "url": "https://gsm.ucdavis.edu/news/msba-ranked-no-4-globally-value-money",
+                "label": "UC Davis GSM — Rankings",
+                "url": "https://gsm.ucdavis.edu/tags/rankings",
             },
         ],
         "disclaimer": _DISCLAIMER,
