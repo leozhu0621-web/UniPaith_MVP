@@ -166,20 +166,19 @@ def test_flagship_programs_carry_reviews():
         assert rev["summary"] and rev["themes"] and rev["sources"] and rev["disclaimer"]
 
 
-# Programs whose tuition is honestly omitted-with-reason rather than carrying a wrong value:
-# the Doctor of Audiology (variable graduate-tier schedule, no single published figure) and
-# the fee-based / self-sustaining online programs (program-specific per-credit rate, not the
-# state-supported sticker). Every other program must carry a published rate.
-_TUITION_OMITTED_SLUGS = {"uw-audiology-prof"} | {
-    spec["slug"] for spec in u.PROGRAMS if spec.get("delivery_format") == "online"
-}
+# The ONLY two programs whose tuition is honestly omitted-with-reason rather than carrying a
+# wrong value: the Doctor of Audiology (variable graduate-tier schedule, no single published
+# annual figure) and the online BA in Integrated Social Sciences (a per-credit degree-completion
+# program with no fixed credits-to-degree total). Every OTHER program — including the 14 fee-based
+# / self-sustaining programs, which publish their own residency-independent per-credit rate — must
+# carry a published rate (REPAIR_BACKLOG #1: a knowable matcher-core field is not an omission).
+_TUITION_OMITTED_SLUGS = {"uw-audiology-prof", "uw-integrated-social-sciences-bs"}
 
 
 def test_matcher_core_tuition_is_published_catalog_wide():
-    """REPAIR_BACKLOG #4: the catalog shipped 0% tuition (matcher-blind on budget).
-
-    Every program now carries UW's published WA-resident annual tuition except the one
-    honestly-omitted Doctor of Audiology, so the matcher reads a real budget signal.
+    """REPAIR_BACKLOG #1/#4: the catalog must not ship a matcher-core tuition null the
+    institution publishes. Every program carries a published annual tuition except the two
+    honestly-omitted programs, so the matcher reads a real budget signal for the rest.
     """
     missing = [
         spec["slug"]
@@ -187,12 +186,35 @@ def test_matcher_core_tuition_is_published_catalog_wide():
         if u._tuition_for(spec) is None and spec["slug"] not in _TUITION_OMITTED_SLUGS
     ]
     assert not missing, f"programs missing published tuition: {missing[:8]}"
-    # The only omission is recorded in that program's _standard.omitted (not a silent null).
+    # Exactly the two recorded omissions carry a null — each recorded in _standard.omitted.
+    nulls = {spec["slug"] for spec in u.PROGRAMS if u._tuition_for(spec) is None}
+    assert nulls == _TUITION_OMITTED_SLUGS, f"unexpected tuition nulls: {nulls ^ _TUITION_OMITTED_SLUGS}"  # noqa: E501
     for spec in u.PROGRAMS:
         if u._tuition_for(spec) is None:
-            assert spec["slug"] in _TUITION_OMITTED_SLUGS
             omitted = u._program_standard(spec["slug"], spec)["omitted"]
             assert "cost_data.tuition_usd" in omitted
+
+
+def test_fee_based_programs_carry_flat_published_tuition():
+    """REPAIR_BACKLOG #1: the 14 fee-based / self-sustaining programs each publish a
+    residency-independent per-credit rate, so a real annual figure is knowable and must be
+    stamped (never a matcher-blind null). The rate is flat, so the in-state and out-of-state
+    breakdown values are equal (no resident/non-resident split), and the cost record cites the
+    program's own published cost page."""
+    by_slug = {p["slug"]: p for p in u.PROGRAMS}
+    assert u._FEE_BASED_TUITION, "no fee-based tuition map"
+    for slug in u._FEE_BASED_TUITION:
+        assert slug in by_slug, f"fee-based slug not in catalog: {slug}"
+        spec = by_slug[slug]
+        annual = u._tuition_for(spec)
+        assert isinstance(annual, int) and annual > 0, f"{slug}: no positive annual tuition"
+        cost = u._undergrad_cost(spec) if spec["degree_type"] == "bachelors" else u._grad_cost(spec)
+        assert cost.get("tuition_usd") == annual, f"{slug}: cost card tuition != scalar"
+        bd = cost.get("breakdown", {})
+        assert bd.get("tuition_in_state") == bd.get("tuition_out_of_state") == annual, (
+            f"{slug}: fee-based breakdown must be flat (residency-independent)"
+        )
+        assert cost.get("source_url", "").startswith("http"), f"{slug}: missing cited source_url"
 
 
 def test_no_undergrad_sticker_copydown():

@@ -60,14 +60,17 @@ Matcher-core fields (2026-06-25 repair — REPAIR_BACKLOG #1 cip_code + #2 publi
    flat graduate operating fee per residency), and a funded research PhD keeps the published
    sticker because funding is a separate matcher signal, not a $0 budget. The bespoke professional
    schools carry their own published non-resident annual rates (Law $58,956, Medicine $102,319,
-   Dentistry $84,926, Pharmacy $51,582 [2026-27], DNP $50,037, DPT $43,461). Two classes keep
-   ``cost_data.tuition_usd`` omitted-with-reason rather than carrying a wrong value: the Doctor of
-   Audiology (bills on UW's variable graduate-tier schedule, no single published annual figure)
-   and the 15 fee-based / self-sustaining online programs (UW Professional & Continuing Education
-   bills these at a program-specific per-credit rate distinct from the state-supported sticker, so
-   they are omitted pending a program-specific figure rather than understated with the on-campus
-   rate). Tuition sources: UW OPB 2025-26 Seattle quarterly tuition & fees PDF + each professional
-   school's published cost page (resident figures verified against the prior repair).
+   Dentistry $84,926, Pharmacy $51,582 [2026-27], DNP $50,037, DPT $43,461). The 14 fee-based /
+   self-sustaining programs (2026-07-01 repair — REPAIR_BACKLOG #1 matcher-core coverage) now carry
+   their OWN published, residency-independent per-credit rate (``_FEE_BASED_TUITION``), annualized
+   over the program's length — a real figure exists and is knowable, so omit-never-guess requires it
+   (e.g. MSME $1,330/cr × 42 = $55,860, MSIM $1,132/cr × 65 = $73,580, MHA $950/cr × 76 = $72,200).
+   Only two programs keep ``cost_data.tuition_usd`` omitted-with-reason rather than a wrong value:
+   the Doctor of Audiology (bills on UW's variable graduate-tier schedule, no single published annual
+   figure) and the online BA in Integrated Social Sciences (a per-credit degree-completion program
+   with no fixed credits-to-degree total). Tuition sources: UW OPB 2025-26 Seattle quarterly tuition
+   & fees PDF + each professional school's published cost page + each fee-based program's own cost
+   page (resident figures verified against the prior repair).
 
     This repair (2026-06-20) replaces generic Wikipedia field definitions and credential-
     frame shared bodies with UW-specific field clauses (``uw_field_descriptions.py``),
@@ -98,7 +101,7 @@ from unipaith.profile_standard.anti_stub import field_of as _anti_stub_field
 from unipaith.profile_standard.anti_stub import frame_stripped_shared_body
 
 INSTITUTION_NAME = "University of Washington-Seattle Campus"
-ENRICHED_AT = "2026-06-25"
+ENRICHED_AT = "2026-07-01"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -3500,13 +3503,137 @@ _PROFESSIONAL_TUITION: dict[str, dict] = {
 }
 
 
+# Fee-based / self-sustaining programs (UW Professional & Continuing Education + the sponsoring
+# department) bill a program-specific PER-CREDIT rate that is the SAME for WA-resident, non-resident,
+# and international students — NOT the state-supported Tier I sticker (which would understate them).
+# Each program publishes its per-credit rate and total credits to the degree, so a real figure DOES
+# exist (REPAIR_BACKLOG #1 — a knowable matcher-core field is not an honest omission): omit-never-guess
+# requires the PUBLISHED number where one exists. The matcher reads program.tuition as an ANNUAL budget
+# signal, so the flat program cost (per_credit × credits) is annualized over the program's published
+# length (duration_months). Because the rate is residency-independent, the in-state and out-of-state
+# breakdown values are equal. Verified 2026-07-01 against each program's own published cost page.
+_FEE_BASED_TUITION: dict[str, dict] = {
+    "uw-aerospace-engineering-ms": {
+        "per_credit": 1203,
+        "credits": 45,
+        "year": "2025-26",
+        "source": "UW William E. Boeing Dept. of Aeronautics & Astronautics — Master of Aerospace Engineering (online, fee-based)",
+        "source_url": "https://www.aa.washington.edu/students/academics/mae",
+    },
+    "uw-applied-mathematics-ms": {
+        "per_credit": 1134,
+        "credits": 42,
+        "year": "2025-26",
+        "source": "UW Department of Applied Mathematics — Online MS in Applied & Computational Mathematics (self-sustaining, fee-based)",
+        "source_url": "https://amath.washington.edu/master-science-applied-and-computational-mathematics-online",
+    },
+    "uw-computational-finance-and-risk-management-ms": {
+        "per_credit": 1165,
+        "credits": 42,
+        "year": "2024-25",
+        "source": "UW Computational Finance & Risk Management — MS-CFRM (self-sustaining, fee-based)",
+        "source_url": "https://depts.washington.edu/compfin/cfrm-ms/",
+    },
+    "uw-computational-linguistics-ms": {
+        "per_credit": 1058,
+        "credits": 43,
+        "year": "2026-27",
+        "source": "UW Master of Science in Computational Linguistics (CLMS) — Costs & Aid (fee-based)",
+        "source_url": "https://www.compling.uw.edu/costs-aid",
+    },
+    "uw-construction-management-ms": {
+        "per_credit": 775,
+        "credits": 42,
+        "year": "2026-27",
+        "source": "UW Online MS in Construction Management — Costs & Financial Aid (fee-based)",
+        "source_url": "https://www.constructionmgmt.uw.edu/costs-aid",
+    },
+    "uw-health-administration-ms": {
+        "per_credit": 950,
+        "credits": 76,
+        "year": "2026-27",
+        "source": "UW Master of Health Administration (MHA) — Cost & Aid (fee-based)",
+        "source_url": "https://hspop.uw.edu/mha/cost-aid/",
+    },
+    "uw-health-informatics-and-health-information-management-ms": {
+        "per_credit": 990,
+        "credits": 54,
+        "year": "2026-27",
+        "source": "UW Master of Health Informatics & Health Information Management (MHIHIM) — Cost & Aid (fee-based)",
+        "source_url": "https://hspop.uw.edu/masterhihim/cost-aid/",
+    },
+    "uw-information-management-ms": {
+        "per_credit": 1132,
+        "credits": 65,
+        "year": "2025-26",
+        "source": "UW Information School — MSIM (Early-Career track) Tuition & Financial Aid (fee-based)",
+        "source_url": "https://ischool.uw.edu/programs/msim/tuition-financial-aid",
+    },
+    "uw-infrastructure-planning-and-management-ms-2": {
+        "per_credit": 745,
+        "credits": 45,
+        "year": "2026-27",
+        "source": "UW Online MS in Infrastructure Planning & Management — Costs & Aid (fee-based)",
+        "source_url": "https://www.infrastructure-management.uw.edu/costs-aid",
+    },
+    "uw-library-and-information-science-ms": {
+        "per_credit": 990,
+        "credits": 63,
+        "year": "2026-27",
+        "source": "UW Information School — MLIS Tuition & Financial Aid (fee-based)",
+        "source_url": "https://ischool.uw.edu/programs/mlis/tuition-financial-aid",
+    },
+    "uw-mechanical-engineering-ms": {
+        "per_credit": 1330,
+        "credits": 42,
+        "year": "2025-26",
+        "source": "UW Department of Mechanical Engineering — Online MSME Costs and Fees (fee-based)",
+        "source_url": "https://www.me.washington.edu/msme/tuition",
+    },
+    "uw-pharmaceutical-bioengineering-ms": {
+        "per_credit": 908,
+        "credits": 39,
+        "year": "2025-26",
+        "source": "UW Bioengineering — Online Master of Pharmaceutical Bioengineering, Tuition & Financial Information (fee-based)",
+        "source_url": "https://bioe.uw.edu/academic-programs/masters/pharmaceutical-bioengineering/pharbe-faq/",
+    },
+    "uw-supply-chain-transportation-and-logistics-ms": {
+        "per_credit": 1099,
+        "credits": 43,
+        "year": "2026-27",
+        "source": "UW Online MS in Supply Chain Transportation & Logistics — Costs & Aid (fee-based)",
+        "source_url": "https://www.supply-chain-transportation.uw.edu/costs-aid",
+    },
+    "uw-sustainable-transportation-ms": {
+        "per_credit": 844,
+        "credits": 43,
+        "year": "2026-27",
+        "source": "UW Online MS in Sustainable Transportation — Costs & Aid (fee-based)",
+        "source_url": "https://www.sustainable-transportation.uw.edu/costs-aid",
+    },
+}
+
+
+def _fee_based_years(spec: dict) -> int:
+    return max(1, round((spec.get("duration_months") or 24) / 12))
+
+
+def _fee_based_annual(spec: dict) -> int:
+    """Flat per-credit program cost annualized over the program's published length."""
+    fb = _FEE_BASED_TUITION[spec["slug"]]
+    total = fb["per_credit"] * fb["credits"]
+    return round(total / _fee_based_years(spec))
+
+
 def _tuition_for(spec: dict) -> int | None:
-    """Matcher budget scalar: UW's published NON-RESIDENT annual tuition for the program's tier
+    """Matcher budget scalar: UW's published annual tuition for the program's tier
     (REPAIR_BACKLOG #2 — public scalar), or None when honestly omitted."""
-    # Fee-based / self-sustaining online programs (UW Professional & Continuing Education)
-    # bill a distinct per-credit rate, NOT the state-supported sticker — stamping the state
-    # rate would understate them, so their tuition is omitted-with-reason pending a program-
-    # specific published figure rather than carrying a wrong budget signal.
+    # Fee-based / self-sustaining programs publish a real flat per-credit rate (residency-
+    # independent), so they carry the annualized program cost — NOT an omission (REPAIR_BACKLOG #1).
+    if spec["slug"] in _FEE_BASED_TUITION:
+        return _fee_based_annual(spec)
+    # A per-credit online program with no single published figure stays omitted-with-reason
+    # rather than understated with the state-supported sticker.
     if spec.get("delivery_format") == "online":
         return None
     if spec["degree_type"] == "professional":
@@ -3518,14 +3645,47 @@ def _tuition_for(spec: dict) -> int | None:
 
 
 def _online_cost(spec: dict) -> dict:
-    """Cost record for a fee-based / self-sustaining online program (tuition omitted-with-reason)."""
+    """Cost record for a fee-based / self-sustaining online program.
+
+    When the program publishes its per-credit rate + credits-to-degree (``_FEE_BASED_TUITION``),
+    the flat program cost is annualized over the program's length and stamped as a real, cited
+    figure (residency-independent, so in-state == out-of-state). Otherwise — a per-credit program
+    with no single published figure — tuition is omitted-with-reason rather than guessed.
+    """
+    if spec["slug"] in _FEE_BASED_TUITION:
+        fb = _FEE_BASED_TUITION[spec["slug"]]
+        total = fb["per_credit"] * fb["credits"]
+        years = _fee_based_years(spec)
+        annual = _fee_based_annual(spec)
+        return {
+            "tuition_usd": annual,
+            "breakdown": {
+                "tuition_in_state": annual,
+                "tuition_out_of_state": annual,
+            },
+            "funded": False,
+            "note": (
+                f"Self-sustaining, fee-based program (UW Professional & Continuing Education with "
+                f"the sponsoring department): a flat ${fb['per_credit']:,}/credit charged to WA-"
+                f"resident, non-resident, and international students alike, across {fb['credits']} "
+                f"credits to the degree (${total:,} total course fees, {fb['year']}). The cost card "
+                f"and the matcher budget signal (program.tuition) show this annualized over the "
+                f"program's typical {years}-year length (${annual:,}/year); because the rate is "
+                "residency-independent, the in-state and out-of-state breakdown values are equal. "
+                "Quarterly registration, technology, and U-PASS fees are additional."
+            ),
+            "source": fb["source"],
+            "source_url": fb["source_url"],
+            "year": fb["year"],
+        }
     return {
         "funded": False,
         "note": (
             "This is a fee-based / self-sustaining online program (UW Professional & Continuing "
             "Education), billed at a program-specific per-credit rate distinct from the state-"
-            "supported sticker. UW publishes no single state-rate annual figure for it, so its "
-            "tuition is omitted here rather than stamped with the on-campus rate."
+            "supported sticker. UW publishes no single fixed credits-to-degree total for it (a "
+            "variable-completion program), so a single annual figure is omitted here rather than "
+            "guessed."
         ),
         "source": "UW Professional & Continuing Education — program tuition page",
         "source_url": _website_for(spec),
@@ -4220,9 +4380,11 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
 
 
 def _program_standard(slug: str, spec: dict) -> dict:
-    # Every program now carries UW's published WA-resident tuition (REPAIR_BACKLOG #4) except
-    # the Doctor of Audiology, which bills on a variable graduate-tier schedule with no single
-    # published annual figure — so tuition is omitted-with-reason only for that program.
+    # Every program now carries UW's published tuition (state-supported sticker, bespoke
+    # professional rate, or fee-based per-credit rate) EXCEPT two: the Doctor of Audiology
+    # (variable graduate-tier schedule, no single published annual figure) and the online BA in
+    # Integrated Social Sciences (per-credit degree-completion, no fixed credits-to-degree total)
+    # — tuition is omitted-with-reason only for those two.
     omitted: list[str] = []
     if _tuition_for(spec) is None:
         omitted.append("cost_data.tuition_usd")
