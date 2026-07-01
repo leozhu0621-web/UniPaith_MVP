@@ -45,7 +45,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Dartmouth College"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-25"
+ENRICHED_AT = "2026-07-01"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -1739,6 +1739,512 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
         "disclaimer": (
             "Aggregated and paraphrased from public third-party sources (U.S. News, "
             "Student Doctor Network, Princeton Review) — not individual verbatim reviews."
+        ),
+    },
+    "dartmouth-engineering-management-ms": {
+        "summary": (
+            "Coverage of Thayer's Master of Engineering Management (MEM) — a joint "
+            "Thayer/Tuck program — highlights an unusually strong salary-and-placement "
+            "record, a small cohort with individual mentoring, and a curriculum that "
+            "pairs engineering depth with Tuck management coursework. Common cautions are "
+            "the rural Hanover setting, a recruiting footprint smaller than urban STEM-"
+            "management programs, and a cost that graduates generally recoup quickly but "
+            "which is high up front."
+        ),
+        "themes": [
+            {
+                "label": "Strong salary & placement",
+                "sentiment": "positive",
+                "detail": (
+                    "Thayer reports a 95% average job-placement rate over three years and "
+                    "a $129,000 average starting salary for the Class of 2025, with 100% "
+                    "of that class securing summer internships or projects."
+                ),
+            },
+            {
+                "label": "Tech, consulting & finance employers",
+                "sentiment": "positive",
+                "detail": (
+                    "Recent graduates place into technology (Amazon, Apple, Microsoft, "
+                    "Google), consulting (McKinsey, Bain, BCG), and financial services "
+                    "(JPMorgan Chase, Goldman Sachs)."
+                ),
+            },
+            {
+                "label": "Small, mentored cohort",
+                "sentiment": "positive",
+                "detail": (
+                    "A cohort of roughly 55 with assigned mentors and access to both "
+                    "Thayer and Tuck faculty gives individualized attention."
+                ),
+            },
+            {
+                "label": "Rural setting & recruiting reach",
+                "sentiment": "mixed",
+                "detail": (
+                    "Hanover's location supports a close community but means a smaller "
+                    "on-campus recruiting presence than engineering-management programs in "
+                    "major metros."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Dartmouth Engineering — MEM Graduate Outcomes",
+                "url": "https://engineering.dartmouth.edu/mem/graduate-outcomes",
+            },
+            {
+                "label": "Best-Masters — Dartmouth (Tuck/Thayer) master's ranking & reviews",
+                "url": (
+                    "https://www.best-masters.com/"
+                    "dartmouth-college-tuck-school-of-business-ranking.html"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources and the program's "
+            "published outcomes report — not individual verbatim reviews."
+        ),
+    },
+    "dartmouth-engineering-graduate-ms": {
+        "summary": (
+            "Reviewers describe Thayer's on-campus Master of Engineering (MEng) as a "
+            "flexible, project-oriented professional degree — nine courses across seven "
+            "specialization tracks — with the near-full placement typical of Thayer "
+            "graduate programs. Common cautions are a graduate-research profile more "
+            "moderate than the largest engineering schools and the small, applied scale "
+            "of the program."
+        ),
+        "themes": [
+            {
+                "label": "Flexible, track-based curriculum",
+                "sentiment": "positive",
+                "detail": (
+                    "The MEng is built from nine courses in one of seven specialization "
+                    "tracks, letting students concentrate across Thayer's applied fields."
+                ),
+            },
+            {
+                "label": "Strong placement",
+                "sentiment": "positive",
+                "detail": (
+                    "Thayer reports graduates of its advanced-degree programs reach nearly "
+                    "100% career placement within six months of graduation."
+                ),
+            },
+            {
+                "label": "Recognized engineering school",
+                "sentiment": "positive",
+                "detail": (
+                    "U.S. News ranks Dartmouth's Thayer School among its Best Engineering "
+                    "Schools (graduate); the on-campus MEng draws on that faculty and "
+                    "applied-research base."
+                ),
+            },
+            {
+                "label": "Moderate graduate-research scale",
+                "sentiment": "mixed",
+                "detail": (
+                    "Thayer places in the U.S. News top-tier-but-mid-range for graduate "
+                    "engineering, reflecting a smaller research footprint than the largest "
+                    "engineering schools."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Dartmouth Engineering — Graduate Degree Outcomes",
+                "url": "https://engineering.dartmouth.edu/graduate/graduate-outcomes",
+            },
+            {
+                "label": "U.S. News — Dartmouth (Thayer) Best Engineering Schools",
+                "url": (
+                    "https://www.usnews.com/best-graduate-schools/top-engineering-schools/"
+                    "dartmouth-college-02103"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources and the program's "
+            "published outcomes — not individual verbatim reviews."
+        ),
+    },
+    "dartmouth-public-health-ms": {
+        "summary": (
+            "The MPH at The Dartmouth Institute for Health Policy & Clinical Practice "
+            "(TDI) is widely regarded for a small, immersive, multidisciplinary cohort "
+            "and strengths in health policy, outcomes research, and implementation "
+            "science; U.S. News ranks Dartmouth highly among health/public-health "
+            "programs. Common cautions are the intensive one-year pace, a research-and-"
+            "policy orientation rather than a broad practitioner curriculum, and the "
+            "rural Hanover/Lebanon setting."
+        ),
+        "themes": [
+            {
+                "label": "Top-ranked, policy-focused",
+                "sentiment": "positive",
+                "detail": (
+                    "U.S. News ranks Dartmouth (TDI) near the top nationally for public "
+                    "health, with TDI known for health-policy and clinical-practice "
+                    "research."
+                ),
+            },
+            {
+                "label": "Small, immersive cohort",
+                "sentiment": "positive",
+                "detail": (
+                    "An 11–12 month immersive program with a roughly 12:1 student-to-"
+                    "faculty ratio keeps class sizes small for discussion and group work."
+                ),
+            },
+            {
+                "label": "Multidisciplinary approach",
+                "sentiment": "positive",
+                "detail": (
+                    "TDI's MPH draws on medicine, economics, and data science, and its "
+                    "graduates are prized by employers in health systems and research."
+                ),
+            },
+            {
+                "label": "Fast pace & rural setting",
+                "sentiment": "mixed",
+                "detail": (
+                    "The compressed one-year format is demanding, and the Hanover/Lebanon "
+                    "location offers less big-city public-health fieldwork than urban "
+                    "programs."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "U.S. News — Dartmouth Best Health Schools",
+                "url": (
+                    "https://www.usnews.com/best-graduate-schools/top-health-schools/"
+                    "dartmouth-college-182670"
+                ),
+            },
+            {
+                "label": "Dartmouth Health Sciences — Master of Public Health",
+                "url": (
+                    "https://healthsciences.dartmouth.edu/education/degree-programs/"
+                    "masters-in-public-health"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "dartmouth-liberal-studies-ms": {
+        "summary": (
+            "Dartmouth's Master of Arts in Liberal Studies (MALS), instituted in 1970 and "
+            "among the oldest programs of its kind, is described as a flexible, "
+            "interdisciplinary graduate degree in which students design an individual plan "
+            "of study with faculty advisors. Reviewers praise the intellectual breadth and "
+            "faculty access; common cautions are that it is a self-directed, non-"
+            "professional degree whose value depends heavily on how the student shapes it, "
+            "and that part-time/adult study is the norm."
+        ),
+        "themes": [
+            {
+                "label": "Established, well-regarded MALS",
+                "sentiment": "positive",
+                "detail": (
+                    "Instituted in 1970, Dartmouth's is among the oldest liberal-studies "
+                    "master's programs and is featured on third-party 'top MALS' lists."
+                ),
+            },
+            {
+                "label": "Self-designed, interdisciplinary",
+                "sentiment": "positive",
+                "detail": (
+                    "Students build an individual plan of study combining formal "
+                    "coursework and independent research with faculty advisors across "
+                    "disciplines."
+                ),
+            },
+            {
+                "label": "Flexible for working adults",
+                "sentiment": "positive",
+                "detail": (
+                    "The program serves experienced professionals and recent graduates "
+                    "alike, with part-time and summer study options."
+                ),
+            },
+            {
+                "label": "Non-professional, self-directed",
+                "sentiment": "mixed",
+                "detail": (
+                    "As a broad liberal-studies degree rather than a professional "
+                    "credential, its career payoff depends on how the student shapes and "
+                    "applies it."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "LiberalArtsEdu — Top Master of Arts in Liberal Studies degrees",
+                "url": (
+                    "https://liberalartsedu.org/editors-pick/"
+                    "top-ten-master-of-arts-liberal-studies-degrees/"
+                ),
+            },
+            {
+                "label": "Dartmouth Guarini — Master of Arts in Liberal Studies (MALS)",
+                "url": (
+                    "https://graduate.dartmouth.edu/admissions/programs/"
+                    "master-arts-liberal-studies-mals"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "dartmouth-economics-ab": {
+        "summary": (
+            "College-ranking outlets consistently place Dartmouth's undergraduate "
+            "economics major among the nation's strongest, praising analytical rigor, "
+            "close faculty engagement in small upper-level sections, and strong placement "
+            "into finance, consulting, and top PhD programs. Common cautions are the "
+            "major's popularity (large introductory courses, competitive seminars) and a "
+            "quantitative core heavier than students sometimes expect of a social science."
+        ),
+        "themes": [
+            {
+                "label": "Top-ranked, rigorous major",
+                "sentiment": "positive",
+                "detail": (
+                    "Niche ranks Dartmouth #10 of 540 for economics and College Factual "
+                    "#14 nationally (top 5%), reflecting an analytically demanding "
+                    "curriculum."
+                ),
+            },
+            {
+                "label": "Faculty access & research",
+                "sentiment": "positive",
+                "detail": (
+                    "Reviews note substantial office hours, personalized attention, and "
+                    "opportunities for undergraduate research with faculty."
+                ),
+            },
+            {
+                "label": "Finance / consulting / PhD placement",
+                "sentiment": "positive",
+                "detail": (
+                    "The major feeds strongly into finance, consulting, and doctoral study."
+                ),
+            },
+            {
+                "label": "Popular-major scale & quant load",
+                "sentiment": "mixed",
+                "detail": (
+                    "As one of Dartmouth's most-chosen majors, introductory courses are "
+                    "large and the quantitative requirements are demanding."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "College Factual — Economics at Dartmouth College",
+                "url": (
+                    "https://www.collegefactual.com/colleges/dartmouth-college/"
+                    "academic-life/academic-majors/social-sciences/economics/"
+                ),
+            },
+            {
+                "label": "Niche — Dartmouth College Rankings (Economics)",
+                "url": "https://www.niche.com/colleges/dartmouth-college/rankings/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party rankings and reviews — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "dartmouth-government-ab": {
+        "summary": (
+            "Coverage rates Dartmouth's government (political science) major among the "
+            "nation's best, citing an intimate 7:1 faculty ratio, seminar-scale classes, "
+            "and strong undergraduate-research participation. Common cautions are its "
+            "liberal-arts (non-professional) framing and the rural setting's distance from "
+            "a major political hub, bridged by off-campus and policy programs."
+        ),
+        "themes": [
+            {
+                "label": "Top-10 political science program",
+                "sentiment": "positive",
+                "detail": (
+                    "College Factual ranks Dartmouth #9 nationally for political science "
+                    "(top 5% of programs)."
+                ),
+            },
+            {
+                "label": "Small-class immersion",
+                "sentiment": "positive",
+                "detail": (
+                    "About 62% of course sections enroll under twenty students, supported "
+                    "by a 7:1 student-to-faculty ratio."
+                ),
+            },
+            {
+                "label": "Undergraduate research",
+                "sentiment": "positive",
+                "detail": (
+                    "A large share of students take part in undergraduate research, most "
+                    "reporting a rewarding faculty-mentored experience."
+                ),
+            },
+            {
+                "label": "Rural, liberal-arts framing",
+                "sentiment": "mixed",
+                "detail": (
+                    "Hanover is distant from Washington and major political centers, and "
+                    "the major is an academic rather than professional track."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "College Factual — Political Science at Dartmouth College",
+                "url": (
+                    "https://www.collegefactual.com/colleges/dartmouth-college/"
+                    "academic-life/academic-majors/social-sciences/"
+                    "political-science-and-government/"
+                ),
+            },
+            {
+                "label": "Political-Science-Schools — Dartmouth College ranking",
+                "url": "https://political-science-schools.com/dartmouth-college",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party rankings and reviews — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "dartmouth-computer-science-ab": {
+        "summary": (
+            "Reviewers regard Dartmouth's undergraduate computer science as a strong Ivy "
+            "program with excellent teaching, faculty access, and ties to the Thayer "
+            "School, ranked highly for undergraduates. Common cautions are a graduate-"
+            "research footprint more moderate than the largest CS departments and course "
+            "crowding as demand grows."
+        ),
+        "themes": [
+            {
+                "label": "Highly-ranked undergraduate CS",
+                "sentiment": "positive",
+                "detail": (
+                    "Niche ranks Dartmouth #13 of 893 for computer science in America."
+                ),
+            },
+            {
+                "label": "Teaching & faculty access",
+                "sentiment": "positive",
+                "detail": (
+                    "A small-college scale gives strong faculty access and close ties to "
+                    "engineering at Thayer."
+                ),
+            },
+            {
+                "label": "Moderate research scale",
+                "sentiment": "mixed",
+                "detail": (
+                    "Times Higher Education places Dartmouth CS in the #201–250 band "
+                    "globally — a smaller research output than the largest CS departments."
+                ),
+            },
+            {
+                "label": "Growing demand",
+                "sentiment": "mixed",
+                "detail": (
+                    "Rising enrollment in CS puts pressure on popular courses."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Niche — Dartmouth College Rankings (Computer Science)",
+                "url": "https://www.niche.com/colleges/dartmouth-college/rankings/",
+            },
+            {
+                "label": "Times Higher Education — Dartmouth College",
+                "url": (
+                    "https://www.timeshighereducation.com/world-university-rankings/"
+                    "dartmouth-college"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party rankings — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "dartmouth-engineering-ab": {
+        "summary": (
+            "The ABET-accredited Bachelor of Engineering (B.E.) at Thayer is praised for a "
+            "design-centered, project-based capstone through the Cook Engineering Design "
+            "Center, a liberal-arts-integrated path, and strong leadership and "
+            "entrepreneurship outcomes. Common cautions are the extra (typically fifth) "
+            "year to complete the professional B.E. beyond the A.B. and Thayer's moderate "
+            "graduate-research ranking."
+        ),
+        "themes": [
+            {
+                "label": "ABET-accredited professional degree",
+                "sentiment": "positive",
+                "detail": (
+                    "The B.E. is accredited by the Engineering Accreditation Commission of "
+                    "ABET, building on Dartmouth's A.B. in engineering sciences."
+                ),
+            },
+            {
+                "label": "Design-capstone focus",
+                "sentiment": "positive",
+                "detail": (
+                    "A two-term capstone in the Cook Engineering Design Center has student "
+                    "teams take industry-submitted projects from problem definition to "
+                    "prototype."
+                ),
+            },
+            {
+                "label": "Leadership & startup outcomes",
+                "sentiment": "positive",
+                "detail": (
+                    "Thayer reports more than 25% of engineering alumni reach C-suite roles "
+                    "within 5–10 years, and Dartmouth ranks highly for venture-backed "
+                    "alumni start-ups per capita."
+                ),
+            },
+            {
+                "label": "Extra fifth year",
+                "sentiment": "mixed",
+                "detail": (
+                    "The professional B.E. typically adds a year beyond the four-year A.B. "
+                    "in engineering sciences, so students weigh the added time against the "
+                    "accredited credential."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Dartmouth Engineering — Bachelor of Engineering (ABET)",
+                "url": "https://engineering.dartmouth.edu/undergraduate/be",
+            },
+            {
+                "label": "The Dartmouth — Two Colleges, Two Degrees: the dual-degree at Dartmouth",
+                "url": (
+                    "https://www.thedartmouth.com/article/2025/10/"
+                    "two-colleges-two-degrees-the-dual-degree-at-dartmouth-chowdhury"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources and the program's "
+            "published accreditation and outcomes — not individual verbatim reviews."
         ),
     },
 }
