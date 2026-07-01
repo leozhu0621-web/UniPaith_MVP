@@ -1193,15 +1193,228 @@ _WHO_BASELINE = (
     "uniquely devoted to undergraduate teaching, with full-need financial aid met by grants."
 )
 _HL_BASELINE = ["Ivy League", "5:1 student-faculty ratio", "Need-met-with-grants aid"]
+# Program-DISTINCT "Who it's for" — a field-specific 1–2 sentence fit statement per
+# program (subject · who it fits · typical next step), NOT a degree-type template. Every
+# Princeton program keyed here so distinct/total ≈ 1.0 (anti type-gaming, SKILL miss #3b);
+# a slug absent from this map falls back to _WHO_BASELINE. Derived from each program's own
+# field and Princeton's published department character — no invented centers/rankings.
 _WHO_BY_SLUG = {
+    # ── Humanities & interpretive social sciences (A.B.) ──
+    "princeton-ethnic-cultural-minority-gender-and-group-studies-bs": (
+        "Students who want to study the history, culture, literature and politics of "
+        "people of African descent through an interdisciplinary lens, on paths into law, "
+        "public policy, the arts or academia."
+    ),
+    "princeton-anthropology-bs": (
+        "Students curious about human societies and cultures who want ethnographic "
+        "fieldwork and cross-cultural theory, preparing for research, global health, "
+        "development, law or graduate study."
+    ),
+    "princeton-architecture-bs": (
+        "Students drawn to the built environment who want a liberal-arts approach to "
+        "architecture — design studios paired with history and theory — as a foundation "
+        "for a professional M.Arch. or work in design and urbanism."
+    ),
+    "princeton-fine-and-studio-arts-bs": (
+        "Students who want to study the history of art and archaeology alongside studio "
+        "practice, examining objects and cultures from antiquity to the present, toward "
+        "careers in museums, conservation, the arts or academia."
+    ),
+    "princeton-classics-and-classical-languages-literatures-and-linguistics-bs": (
+        "Students drawn to the languages, literature, history and philosophy of the "
+        "ancient Greek and Roman worlds, building rigorous analytical and linguistic "
+        "skills for law, academia and the humanities."
+    ),
+    "princeton-east-asian-studies-bs": (
+        "Students who want intensive language training and interdisciplinary study of "
+        "China, Japan or Korea, preparing for careers in diplomacy, business, journalism "
+        "or scholarship on East Asia."
+    ),
+    "princeton-english-bs": (
+        "Students who love literature and want to read closely and write critically "
+        "across genres and centuries, developing interpretive and argumentative skills "
+        "for law, publishing, teaching and the arts."
+    ),
+    "princeton-french-and-italian-bs": (
+        "Students who want advanced fluency in French or Italian and immersion in their "
+        "literatures and cultures, preparing for international work, translation, "
+        "education or graduate study."
+    ),
+    "princeton-germanic-languages-literatures-and-linguistics-bs": (
+        "Students who want advanced German language skills and study of its literature, "
+        "philosophy and intellectual history, on paths into international careers, "
+        "academia or the humanities."
+    ),
+    "princeton-history-bs": (
+        "Students who want to investigate the past through primary sources and rigorous "
+        "argument across regions and eras, building research and writing skills for law, "
+        "policy, journalism and scholarship."
+    ),
+    "princeton-multi-interdisciplinary-studies-other-bs": (
+        "Intellectually independent students whose interests cross departmental lines and "
+        "who want to design their own rigorous, faculty-supervised concentration "
+        "culminating in original independent work."
+    ),
+    "princeton-linguistic-comparative-and-related-language-studies-and-services-bs": (
+        "Students fascinated by the structure of human language — sound, meaning and "
+        "syntax — who want formal and experimental methods for careers in technology, "
+        "cognitive science or academia."
+    ),
+    "princeton-music-bs": (
+        "Students who want to combine musical performance and composition with the "
+        "scholarly study of music history and theory, preparing for careers in the arts, "
+        "education or academia."
+    ),
+    "princeton-near-eastern-studies-bs": (
+        "Students who want language training and interdisciplinary study of the Middle "
+        "East and North Africa — its history, politics and cultures — for careers in "
+        "diplomacy, journalism, policy or scholarship."
+    ),
+    "princeton-philosophy-bs": (
+        "Students drawn to fundamental questions of knowledge, ethics, mind and reality "
+        "who want rigorous argument and analysis, building reasoning skills valued in "
+        "law, policy and academia."
+    ),
+    "princeton-religion-religious-studies-bs": (
+        "Students who want to study religious traditions, texts and practices across "
+        "cultures and history through critical and comparative methods, on paths into "
+        "law, academia, journalism or public life."
+    ),
+    "princeton-slavic-baltic-and-albanian-languages-literatures-and-linguistics-bs": (
+        "Students who want advanced Russian or other Slavic language skills and study of "
+        "the region's literature and culture, preparing for careers in diplomacy, "
+        "international work or scholarship."
+    ),
+    "princeton-spanish-and-portuguese-bs": (
+        "Students who want advanced fluency in Spanish or Portuguese and immersion in the "
+        "literatures and cultures of the Iberian and Latin American worlds, for "
+        "international work, education or graduate study."
+    ),
+    # ── Quantitative & empirical social sciences (A.B.) ──
+    "princeton-economics-bs": (
+        "Analytically-minded students who want a rigorous, quantitative study of markets, "
+        "incentives and policy, preparing for careers in finance, consulting, government "
+        "or economics graduate study."
+    ),
+    "princeton-politics-bs": (
+        "Students who want to analyze power, institutions and political behavior across "
+        "American, comparative and international politics, preparing for law, government, "
+        "policy or graduate study."
+    ),
+    "princeton-psychology-bs": (
+        "Students interested in the science of mind and behavior who want empirical, "
+        "research-based training in cognition, neuroscience and social psychology, on "
+        "paths into research, clinical fields or medicine."
+    ),
+    "princeton-public-affairs-ab": (
+        "Students committed to public service who want an interdisciplinary policy "
+        "education grounded in economics, politics and sociology, preparing for careers "
+        "in government, nonprofits and international affairs."
+    ),
+    "princeton-sociology-bs": (
+        "Students who want to understand social structures, inequality and institutions "
+        "through empirical research and theory, preparing for careers in policy, law, "
+        "research or social-impact work."
+    ),
+    # ── Natural sciences & mathematics (A.B.) ──
+    "princeton-astronomy-and-astrophysics-bs": (
+        "Physics-minded students fascinated by stars, galaxies and cosmology who want a "
+        "research-intensive path toward graduate study or work in astrophysics and "
+        "data-rich science."
+    ),
+    "princeton-chemistry-bs": (
+        "Students who want to understand matter at the molecular level across organic, "
+        "inorganic, physical and biological chemistry, with laboratory research toward "
+        "graduate school, medicine or industry."
+    ),
+    "princeton-eeb-bs": (
+        "Students fascinated by biodiversity, evolution and ecosystems who want field and "
+        "lab research on how life works and changes, on paths into conservation, medicine, "
+        "environmental science or a PhD."
+    ),
+    "princeton-geological-and-earth-sciences-geosciences-bs": (
+        "Students interested in the Earth's systems — climate, oceans and the solid earth "
+        "— who want quantitative field and lab science for careers in environmental "
+        "science, energy or research."
+    ),
+    "princeton-mathematics-bs": (
+        "Students who love rigorous, abstract mathematics and proof, seeking deep "
+        "preparation for graduate study or quantitative careers in research, finance and "
+        "computing."
+    ),
+    "princeton-molecular-biology-bs": (
+        "Students fascinated by the molecular basis of life who want intensive laboratory "
+        "research in genetics, biochemistry and cell biology, on paths into medicine, "
+        "biotechnology or a PhD."
+    ),
+    "princeton-neuroscience-bs": (
+        "Students curious about how the brain gives rise to behavior and cognition who "
+        "want lab research spanning molecular, cellular and systems neuroscience, on "
+        "paths into medicine, research or a PhD."
+    ),
+    "princeton-physics-bs": (
+        "Students captivated by the fundamental laws of nature who want a research-"
+        "intensive path through classical and quantum physics, preparing for graduate "
+        "study or quantitative and technical careers."
+    ),
+    # ── Engineering (B.S.E.) ──
     "princeton-computer-science-bs": (
         "Technically exceptional students who want a rigorous computer science education "
         "— offered as the A.B. or the B.S.E. — with deep access to a leading CS faculty "
         "and its research."
     ),
+    "princeton-chemical-engineering-bs": (
+        "Students who want to engineer processes at the interface of chemistry and "
+        "biology — from energy and materials to pharmaceuticals — on a research-driven "
+        "B.S.E. path toward industry or graduate study."
+    ),
+    "princeton-civil-engineering-bs": (
+        "Students who want to design and analyze sustainable infrastructure and "
+        "environmental systems — structures, water and climate — through a research-"
+        "oriented engineering education."
+    ),
+    "princeton-electrical-engineering-bs": (
+        "Students who want to build the hardware and systems behind modern computing and "
+        "communication — from chips and circuits to signals and machine learning — with "
+        "deep research access."
+    ),
+    "princeton-mechanical-engineering-bs": (
+        "Students who want to design mechanical and aerospace systems — from robotics and "
+        "energy to flight and propulsion — grounded in a rigorous, research-rich B.S.E."
+    ),
+    "princeton-operations-research-bs": (
+        "Quantitatively-driven students who want to model uncertainty, optimization and "
+        "risk for finance, data science and decision-making, blending applied "
+        "mathematics, statistics and computing."
+    ),
+    # ── Graduate ──
     "princeton-public-affairs-mpa": (
         "Aspiring public-service leaders seeking a fully-funded, two-year policy degree "
         "grounded in the social sciences."
+    ),
+    "princeton-architecture-ms": (
+        "Students pursuing a professional path in architecture who want a design-"
+        "intensive, research-oriented master's grounded in Princeton's studio and theory "
+        "tradition, toward licensure and practice."
+    ),
+    "princeton-chemical-engineering-ms": (
+        "Engineers seeking advanced, research-focused graduate study at the interface of "
+        "chemistry and biology, building toward a PhD or research-intensive careers in "
+        "industry."
+    ),
+    "princeton-civil-engineering-ms": (
+        "Engineers who want graduate research in structures, environmental engineering "
+        "and sustainability, building toward a doctorate or advanced technical practice."
+    ),
+    "princeton-electrical-electronics-and-communications-engineering-ms": (
+        "Engineers who want advanced graduate training in electrical and computer "
+        "engineering — from devices and systems to computing and information — for "
+        "research or technical leadership."
+    ),
+    "princeton-mechanical-engineering-ms": (
+        "Engineers seeking advanced graduate research in mechanical and aerospace "
+        "engineering — dynamics, energy, materials and flight — on a path toward a PhD or "
+        "technical leadership."
     ),
 }
 _HL_BY_SLUG = {
@@ -1216,6 +1429,29 @@ _HL_BY_SLUG = {
         "Policy research seminars",
     ],
 }
+
+
+def _assert_who_its_for_complete(programs: list[dict]) -> None:
+    """who_its_for is a UNIVERSAL depth field: 100% coverage, program-DISTINCT (no type-gaming,
+    SKILL.md miss #3b). Field-specific gold catalogs run distinct/total ≈ 1.0; type-gaming
+    (one generic string across the catalog) collapses well under 0.5. This build-time gate makes
+    the distinctness regression that shipped ``_WHO_BASELINE`` on 41/43 programs impossible."""
+    missing = [p["slug"] for p in programs if not _WHO_BY_SLUG.get(p["slug"])]
+    if missing:
+        raise ValueError(
+            f"Princeton who_its_for missing on {len(missing)} programs: {missing[:5]}"
+        )
+    values = [_WHO_BY_SLUG[p["slug"]] for p in programs]
+    distinct = len(set(values))
+    if distinct < len(values):
+        dupes = sorted({v for v in values if values.count(v) > 1})
+        raise ValueError(
+            f"Princeton who_its_for is not program-distinct "
+            f"({distinct}/{len(values)}): {dupes[:3]}"
+        )
+
+
+_assert_who_its_for_complete(PROGRAMS)
 
 # ── Curriculum / research areas, where published (the flagship) ────────────
 # Princeton CS publishes 13 official research areas; quoted from the department's
