@@ -4601,13 +4601,13 @@ REVIEWS = {
     "georgetown-llm-international-legal-studies": {
         "summary": (
             "The International Legal Studies LL.M. sits within one of the strongest international-"
-            "law faculties in the country: Georgetown ties for #3 in the 2025-26 U.S. News "
-            "international-law specialty ranking (with Columbia and Yale, behind NYU and Harvard), "
-            "and the ABA Journal reports Georgetown finished #1 overall in the TaxProf omnibus of "
+            "law faculties in the country: Georgetown ties for #2 in the 2026-27 U.S. News "
+            "international-law specialty ranking (with Harvard, behind only NYU), and the ABA "
+            "Journal reports Georgetown finished #1 overall in the TaxProf omnibus of "
             "13 U.S. News specialties. Georgetown markets the broadest array of international and "
             "comparative-law courses of any U.S. school, and its D.C. setting connects students to "
             "agencies, embassies, and international organizations. The honest caution is that the "
-            "#3 figure is a peer-reputation survey measuring academic esteem, not job placement — "
+            "#2 figure is a peer-reputation survey measuring academic esteem, not job placement — "
             "this general LL.M. publishes no track-specific employment data, and outcomes for "
             "international graduates vary widely by home market and work-authorization rules."
         ),
@@ -4616,8 +4616,8 @@ REVIEWS = {
                 "label": "International-law specialty rank",
                 "sentiment": "positive",
                 "detail": (
-                    "Ties for #3 in the 2025-26 U.S. News international-law ranking (with Columbia "
-                    "and Yale), one of the top specialty faculties nationally."
+                    "Ties for #2 in the 2026-27 U.S. News international-law ranking (with "
+                    "Harvard, behind only NYU), one of the top specialty faculties nationally."
                 ),
             },
             {
@@ -4656,8 +4656,8 @@ REVIEWS = {
         ],
         "sources": [
             {
-                "label": "2025-26 U.S. News International Law Rankings — TaxProf Blog",
-                "url": "https://taxprofblog.aals.org/2025/04/19/2025-26-us-news-international-law-rankings/",
+                "label": "2026-27 U.S. News International Law Rankings — TaxProf Blog",
+                "url": "https://taxprofblog.aals.org/2026/04/18/2026-27-u-s-news-international-law-rankings/",
             },
             {
                 "label": "Law schools that did best in omnibus specialty rankings — ABA Journal",
@@ -4698,7 +4698,7 @@ REVIEWS = {
                 "label": "Below its other specialties",
                 "sentiment": "caution",
                 "detail": (
-                    "Unlike tax (#2) or international (#3), environmental is a relative weak spot "
+                    "Unlike tax (#2) or international (#2), environmental is a relative weak spot "
                     "versus dedicated environmental-law programs."
                 ),
             },
@@ -4735,6 +4735,13 @@ REVIEWS = {
                     "2026-27-u-s-news-environmental-law-rankings/"
                 ),
             },
+            {
+                "label": "Law schools that did best in omnibus specialty rankings — ABA Journal",
+                "url": (
+                    "https://www.abajournal.com/news/article/"
+                    "these-law-schools-did-best-in-blogs-omnibus-specialty-rankings-based-on-us-news-data"
+                ),
+            },
         ],
         "disclaimer": (
             "Aggregated and paraphrased from public third-party sources; not individual "
@@ -4743,10 +4750,10 @@ REVIEWS = {
     },
     "georgetown-llm-global-health": {
         "summary": (
-            "The National and Global Health Law LL.M. ranks #8 in the 2025-26 U.S. News health-"
+            "The National and Global Health Law LL.M. ranks #6 in the 2026-27 U.S. News health-"
             "care-law specialty ranking — solidly top-10 but behind specialty leaders St. Louis "
-            "(#1), Boston University (#2), Georgia State (#3), and even Harvard (#6) and Stanford "
-            "(#7). So while strong, it is not the dominant #1 that Georgetown's tax program is; "
+            "(#1), Boston University and Georgia State (#2), and Harvard and Loyola-Chicago (#4). "
+            "So while strong, it is not the dominant #1 that Georgetown's tax program is; "
             "several dedicated health-law schools outrank it on peer reputation. The program's "
             "real distinction is the O'Neill Institute for National and Global Health Law, which "
             "anchors the degree and a global-health-governance niche — health and human rights, "
@@ -4760,8 +4767,8 @@ REVIEWS = {
                 "label": "Health-care-law specialty rank",
                 "sentiment": "mixed",
                 "detail": (
-                    "#8 in the 2025-26 U.S. News health-care-law ranking — top-10 but behind St. "
-                    "Louis, BU, Georgia State, Harvard, and Stanford."
+                    "#6 in the 2026-27 U.S. News health-care-law ranking — top-10 but behind St. "
+                    "Louis, BU, Georgia State, Harvard, and Loyola-Chicago."
                 ),
             },
             {
@@ -4785,15 +4792,22 @@ REVIEWS = {
                 "sentiment": "caution",
                 "detail": (
                     "Unlike Georgetown's tax program, dedicated health-law schools outrank it on "
-                    "peer reputation; the #8 rank reflects reputation, not outcomes."
+                    "peer reputation; the #6 rank reflects reputation, not outcomes."
                 ),
             },
         ],
         "sources": [
             {
-                "label": "2025-26 U.S. News Health Care Law Rankings — TaxProf Blog",
+                "label": "2026-27 U.S. News Health Care Law Rankings — TaxProf Blog",
                 "url": (
-                    "https://taxprofblog.aals.org/2025/04/17/2025-26-us-news-health-care-law-rankings/"
+                    "https://taxprofblog.aals.org/2026/04/16/2026-27-u-s-news-health-care-law-rankings/"
+                ),
+            },
+            {
+                "label": "Law schools that did best in omnibus specialty rankings — ABA Journal",
+                "url": (
+                    "https://www.abajournal.com/news/article/"
+                    "these-law-schools-did-best-in-blogs-omnibus-specialty-rankings-based-on-us-news-data"
                 ),
             },
         ],
@@ -4873,154 +4887,6 @@ REVIEWS = {
             {
                 "label": "Georgetown McDonough Rankings (U.S. News part-time #11)",
                 "url": "https://msb.georgetown.edu/about/rankings/",
-            },
-        ],
-        "disclaimer": (
-            "Aggregated and paraphrased from public third-party sources; not individual "
-            "verbatim reviews."
-        ),
-    },
-    "georgetown-finance-ms": {
-        "summary": (
-            "Georgetown McDonough's M.S. in Finance is ranked 11th in the United States by QS, "
-            "which also placed it in the top tier nationally for alumni outcomes (5th) and value "
-            "for money (11th). It is positioned as a career-focused, blended-online program "
-            "serving "
-            "working professionals more than a purely pre-experience cohort. Coverage is genuine "
-            "but "
-            "comparatively thin: the strongest independent data point is the QS 11th-in-the-U.S. "
-            "ranking, and detailed program-specific employment and salary figures are not "
-            "published "
-            "in third-party coverage. Prospective students should weigh the mid-pack (versus "
-            "top-5) "
-            "national standing and confirm placement rates and salaries through the school's own "
-            "MSF employment report."
-        ),
-        "themes": [
-            {
-                "label": "QS finance ranking",
-                "sentiment": "positive",
-                "detail": (
-                    "Ranked 11th in the U.S. by QS for M.S. in Finance, with a top-tier national "
-                    "placement for alumni outcomes."
-                ),
-            },
-            {
-                "label": "Working-professional format",
-                "sentiment": "positive",
-                "detail": (
-                    "A blended-online MSF aimed at professionals advancing their careers rather "
-                    "than a purely pre-experience cohort."
-                ),
-            },
-            {
-                "label": "Value for money",
-                "sentiment": "mixed",
-                "detail": (
-                    "QS placed the MSF 11th in the U.S. for value for money — solid but not elite "
-                    "for a premium-priced Georgetown degree."
-                ),
-            },
-            {
-                "label": "National standing",
-                "sentiment": "caution",
-                "detail": (
-                    "An 11th-in-the-U.S. rank places the MSF outside the top-5 tier, below the "
-                    "strongest quantitative-finance names."
-                ),
-            },
-            {
-                "label": "Placement transparency",
-                "sentiment": "caution",
-                "detail": (
-                    "Program-specific independent employment and salary data were not surfaced in "
-                    "third-party coverage; verify via McDonough's own MSF employment report."
-                ),
-            },
-        ],
-        "sources": [
-            {
-                "label": "QS Ranks Georgetown Programs Among Best in the World — McDonough",
-                "url": (
-                    "https://msb.georgetown.edu/news-story/rankings/"
-                    "qs-ranks-georgetown-programs-among-best-in-the-world/"
-                ),
-            },
-        ],
-        "disclaimer": (
-            "Aggregated and paraphrased from public third-party sources; not individual "
-            "verbatim reviews."
-        ),
-    },
-    "georgetown-management-ms": {
-        "summary": (
-            "Georgetown McDonough's Master of Science in Management (MiM) is ranked 4th in the "
-            "U.S. "
-            "and 27th globally by QS on its first entry — a strong debut for an accelerated, ten-"
-            "month, STEM-designated program aimed at early-career professionals. QS ranked it 1st "
-            "in the U.S. for alumni outcomes and 1st for international representation and gender "
-            "diversity, alongside top-tier value-for-money and employability marks; the curriculum "
-            "blends business fundamentals with technical tooling (R, Tableau, SQL, analytics). The "
-            "main fit consideration is that this is a pre-experience program — applicants "
-            "typically "
-            "have zero to a few years of work experience — so it targets recent graduates rather "
-            "than seasoned managers, and standalone salary/placement figures are not published in "
-            "third-party coverage."
-        ),
-        "themes": [
-            {
-                "label": "QS management ranking",
-                "sentiment": "positive",
-                "detail": (
-                    "4th in the U.S. and 27th globally by QS on its first entry — a strong "
-                    "national "
-                    "placement for a management master's."
-                ),
-            },
-            {
-                "label": "Alumni outcomes & diversity",
-                "sentiment": "positive",
-                "detail": (
-                    "QS ranked the MiM 1st in the U.S. for alumni outcomes and 1st for "
-                    "international representation and gender diversity."
-                ),
-            },
-            {
-                "label": "STEM + tech curriculum",
-                "sentiment": "positive",
-                "detail": (
-                    "Accelerated ten-month, STEM-designated program integrating R, Tableau, SQL, "
-                    "and analytics with core business topics."
-                ),
-            },
-            {
-                "label": "Pre-experience fit",
-                "sentiment": "caution",
-                "detail": (
-                    "Designed for early-career candidates (roughly zero to three years of "
-                    "experience); not aimed at seasoned professionals — a fit consideration."
-                ),
-            },
-            {
-                "label": "Outcome transparency",
-                "sentiment": "caution",
-                "detail": (
-                    "Standalone salary and placement figures are not published in third-party "
-                    "coverage; confirm via McDonough's MiM employment data."
-                ),
-            },
-        ],
-        "sources": [
-            {
-                "label": "QS Ranks Georgetown Programs Among Best in the World — McDonough",
-                "url": (
-                    "https://msb.georgetown.edu/news-story/rankings/"
-                    "qs-ranks-georgetown-programs-among-best-in-the-world/"
-                ),
-            },
-            {
-                "label": "Master of Science in Management (MiM) — Georgetown McDonough",
-                "url": "https://msb.georgetown.edu/masters-in-management/",
             },
         ],
         "disclaimer": (
@@ -5175,6 +5041,10 @@ REVIEWS = {
                 "label": "Georgetown Ranks #1 in Foreign Policy 2024 Rankings — Georgetown SFS",
                 "url": "https://sfs.georgetown.edu/news/georgetown-ranks-1-in-foreign-policy-2024-rankings/",
             },
+            {
+                "label": "Georgetown Ranks #1 in Foreign Policy 2024 Rankings — APSIA",
+                "url": "https://apsia.org/community-stories/georgetown-ranks-1-in-foreign-policy-2024-rankings/",
+            },
         ],
         "disclaimer": (
             "Aggregated and paraphrased from public third-party sources; not individual "
@@ -5250,6 +5120,10 @@ REVIEWS = {
                 "label": "Georgetown Ranks #1 in Foreign Policy 2024 Rankings — Georgetown SFS",
                 "url": "https://sfs.georgetown.edu/news/georgetown-ranks-1-in-foreign-policy-2024-rankings/",
             },
+            {
+                "label": "Georgetown Ranks #1 in Foreign Policy 2024 Rankings — APSIA",
+                "url": "https://apsia.org/community-stories/georgetown-ranks-1-in-foreign-policy-2024-rankings/",
+            },
         ],
         "disclaimer": (
             "Aggregated and paraphrased from public third-party sources; not individual "
@@ -5316,6 +5190,10 @@ REVIEWS = {
             {
                 "label": "Georgetown Ranks #1 in Foreign Policy 2024 Rankings — Georgetown SFS",
                 "url": "https://sfs.georgetown.edu/news/georgetown-ranks-1-in-foreign-policy-2024-rankings/",
+            },
+            {
+                "label": "Georgetown Ranks #1 in Foreign Policy 2024 Rankings — APSIA",
+                "url": "https://apsia.org/community-stories/georgetown-ranks-1-in-foreign-policy-2024-rankings/",
             },
         ],
         "disclaimer": (
