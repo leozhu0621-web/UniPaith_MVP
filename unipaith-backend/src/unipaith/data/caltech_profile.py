@@ -58,7 +58,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "California Institute of Technology"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-17"
+ENRICHED_AT = "2026-07-01"
 
 _CLASSIFICATION_STUB_RE = re.compile(
     r"^.+ is (an undergraduate|a graduate|a doctoral|a graduate certificate|"
@@ -1393,10 +1393,226 @@ _HL_BY_TYPE = {
     "bachelors": ["Core curriculum", "3:1 student-faculty ratio", "Undergraduate research (SURF)"],
     "phd": ["Full funding & stipend", "World-class advisors", "Research apprenticeship"],
 }
+# Program-distinct "Who it's for" — a field-specific statement of the applicant each
+# program fits (subject · who it suits · typical trajectory), NOT a degree-type
+# template. Grounded in each option's real character (division, funded PhDs, named
+# labs/institutes already cited in the program descriptions above). One entry per
+# program so distinctness ≈ 1.0 (the _WHO_BY_TYPE fallback below is a safety net only).
 _WHO_BY_SLUG = {
+    # ── Engineering and Applied Science — bachelor's ──
     "caltech-cs-bs": (
         "Technically exceptional undergraduates who want a deeply rigorous CS "
         "education — theory, systems, and AI — with early access to faculty research."
+    ),
+    "caltech-ee-bs": (
+        "Undergraduates drawn to the physics of devices, signals, and systems who want "
+        "to build circuits and hardware on a heavy math-and-physics core, often heading "
+        "into hardware, communications, or electrical-engineering doctoral study."
+    ),
+    "caltech-me-bs": (
+        "Undergraduates who want to ground mechanical design, dynamics, and thermal-fluid "
+        "sciences in Caltech's math-and-physics core, aiming at robotics, aerospace, "
+        "energy, or graduate engineering."
+    ),
+    "caltech-aph-bs": (
+        "Undergraduates who love physics but want to aim it at engineering problems — "
+        "photonics, quantum devices, materials — bridging pure physics and applied research."
+    ),
+    "caltech-acm-bs": (
+        "Mathematically minded undergraduates who want to model and compute — numerical "
+        "methods, optimization, and applied analysis — for quantitative research, data "
+        "science, or applied-mathematics doctoral work."
+    ),
+    "caltech-ids-bs": (
+        "Undergraduates who want a rigorous, math-first foundation in data, machine "
+        "learning, and information theory rather than an applied analytics track, heading "
+        "toward research or quantitative industry roles."
+    ),
+    "caltech-mse-bs": (
+        "Undergraduates fascinated by how a material's atomic structure sets its "
+        "properties, who want lab-heavy training for careers in semiconductors, energy, "
+        "or materials-science research."
+    ),
+    "caltech-engineering-general-bs": (
+        "Undergraduates who want to design their own quantitative engineering path across "
+        "the Engineering and Applied Science departments after the shared core, rather than "
+        "commit to a single engineering discipline early."
+    ),
+    # ── Engineering and Applied Science — master's ──
+    "caltech-aerospace-aeronautical-and-astronautical-space-engineering-ms": (
+        "Students seeking a focused technical master's in aeronautics through GALCIT — "
+        "fluid mechanics, propulsion, and space systems — as preparation for aerospace "
+        "practice or continuation toward a doctorate."
+    ),
+    "caltech-electrical-electronics-and-communications-engineering-ms": (
+        "Students seeking a technical electrical-engineering master's — devices, photonics, "
+        "communications, and control — to deepen their expertise for industry or as a step "
+        "toward doctoral research."
+    ),
+    # ── Engineering and Applied Science — PhD ──
+    "caltech-cs-phd": (
+        "Researchers pursuing a fully funded computer-science doctorate in the CMS "
+        "department — algorithms, systems, machine learning, or theory — aiming at faculty "
+        "positions or advanced research labs."
+    ),
+    "caltech-ee-phd": (
+        "Researchers pursuing a fully funded electrical-engineering doctorate — photonics, "
+        "communications, control, and circuits — bound for academic or industrial-research "
+        "careers."
+    ),
+    "caltech-me-phd": (
+        "Researchers pursuing a fully funded mechanical-engineering doctorate in mechanics, "
+        "robotics, or thermal-fluid sciences, heading toward professorships or R&D leadership."
+    ),
+    "caltech-aero-phd": (
+        "Researchers pursuing a fully funded aeronautics doctorate at GALCIT — fluid "
+        "mechanics, propulsion, and space systems — often working with JPL, bound for "
+        "aerospace research."
+    ),
+    "caltech-cms-phd": (
+        "Researchers pursuing a fully funded doctorate spanning computing and the "
+        "mathematical sciences — applied mathematics, optimization, and computation — for "
+        "academic or quantitative-research careers."
+    ),
+    "caltech-bioengineering-phd": (
+        "Researchers pursuing a fully funded bioengineering doctorate at the biology–"
+        "engineering interface — synthetic biology and biomolecular devices — for research "
+        "careers in academia or biotech."
+    ),
+    "caltech-ese-phd": (
+        "Researchers pursuing a fully funded environmental-science-and-engineering doctorate "
+        "— atmospheric chemistry, climate, and hydrology — for climate and environmental "
+        "research careers."
+    ),
+    # ── Biology and Biological Engineering ──
+    "caltech-biology-bs": (
+        "Undergraduates who want a quantitative, molecules-to-systems biology grounded in "
+        "Caltech's physical-science core, typically preparing for research, biotech, or "
+        "medical and doctoral paths."
+    ),
+    "caltech-biology-phd": (
+        "Researchers pursuing a fully funded biology doctorate spanning molecules to neural "
+        "systems, aiming at academic biology, biotech research, or medical science."
+    ),
+    "caltech-bioengineering-bs": (
+        "Undergraduates who want to engineer at the interface of biology and the physical "
+        "sciences — synthetic biology and biomolecular devices — bound for bioengineering "
+        "research or biotech."
+    ),
+    "caltech-cns-phd": (
+        "Researchers pursuing a fully funded Computation and Neural Systems doctorate that "
+        "bridges neuroscience and computation — modeling brains and building brain-inspired "
+        "systems — for computational-neuroscience careers."
+    ),
+    "caltech-neurobiology-and-neurosciences-bs": (
+        "Undergraduates who want to study the brain across molecular, systems, and "
+        "computational levels through the Chen Institute, preparing for neuroscience "
+        "research or medicine."
+    ),
+    # ── Chemistry and Chemical Engineering ──
+    "caltech-chemistry-bs": (
+        "Undergraduates who want the full breadth of organic, inorganic, physical, and "
+        "theoretical chemistry with early bench research, preparing for chemistry doctoral "
+        "programs or the chemical and pharmaceutical industries."
+    ),
+    "caltech-chemistry-phd": (
+        "Researchers pursuing a fully funded chemistry doctorate across organic, inorganic, "
+        "physical, and theoretical chemistry, bound for academic or industrial chemical "
+        "research."
+    ),
+    "caltech-cheme-bs": (
+        "Undergraduates who want to turn chemistry into processes and products — reaction "
+        "engineering, transport, and design — heading into energy, materials, or "
+        "chemical-engineering graduate study."
+    ),
+    "caltech-cheme-phd": (
+        "Researchers pursuing a fully funded chemical-engineering doctorate — catalysis, "
+        "energy, and soft materials — aiming at faculty positions or advanced process R&D."
+    ),
+    # ── Geological and Planetary Sciences ──
+    "caltech-gps-bs": (
+        "Undergraduates curious about how Earth and other planets work — geology, "
+        "geochemistry, and planetary science — who want fieldwork and lab research toward "
+        "earth and planetary careers."
+    ),
+    "caltech-planetary-phd": (
+        "Researchers pursuing a fully funded planetary-science doctorate — planetary "
+        "formation, atmospheres, and exploration — often tied to JPL, bound for planetary "
+        "research."
+    ),
+    "caltech-geophysics-phd": (
+        "Researchers pursuing a fully funded geophysics doctorate — seismology, "
+        "geodynamics, and the deep Earth — supported by the Seismological Laboratory, for "
+        "earth-science research."
+    ),
+    "caltech-environmental-environmental-health-engineering-bs": (
+        "Undergraduates who want to study the atmosphere, climate, hydrology, and "
+        "geobiology with a physical-science and engineering toolkit, heading toward "
+        "environmental or climate-focused careers."
+    ),
+    # ── Physics, Mathematics and Astronomy ──
+    "caltech-physics-bs": (
+        "Undergraduates who want the most rigorous possible physics training and expect to "
+        "pursue a physics doctorate or research career, comfortable with a demanding "
+        "theory-and-lab core."
+    ),
+    "caltech-physics-phd": (
+        "Researchers pursuing a fully funded physics doctorate — from quantum matter and "
+        "particle physics to astrophysics and gravitational-wave science (LIGO) — aiming "
+        "at research careers."
+    ),
+    "caltech-math-bs": (
+        "Undergraduates with a deep love of mathematics who want proof-based pure and "
+        "applied coursework and research access, typically heading to mathematics doctoral "
+        "study or quantitative fields."
+    ),
+    "caltech-math-phd": (
+        "Researchers pursuing a fully funded mathematics doctorate in pure or applied "
+        "mathematics, bound for academic positions or mathematically intensive research."
+    ),
+    "caltech-astrophysics-bs": (
+        "Undergraduates fascinated by the universe who want observational and theoretical "
+        "astrophysics with access to Caltech's telescopes and space instrumentation, aiming "
+        "at astronomy and astrophysics research."
+    ),
+    # ── Humanities and Social Sciences ──
+    "caltech-bem-bs": (
+        "Undergraduates who want economics, finance, and management built on a quantitative, "
+        "data-driven core, aiming at finance, consulting, technology, or economics graduate "
+        "study."
+    ),
+    "caltech-economics-bs": (
+        "Undergraduates who want economics done Caltech-style — heavy on theory, "
+        "econometrics, and mathematics — as preparation for economics doctoral programs or "
+        "quantitative research roles."
+    ),
+    "caltech-polisci-bs": (
+        "Undergraduates drawn to political science as a formal, quantitative discipline — "
+        "game theory, voting, and experiments — heading toward social-science research or "
+        "policy analytics."
+    ),
+    "caltech-social-science-phd": (
+        "Researchers pursuing a fully funded social-science doctorate in Caltech's formal, "
+        "experimental tradition — economics, political science, and the science of "
+        "decision-making — bound for research faculty."
+    ),
+    "caltech-english-language-and-literature-general-bs": (
+        "Science-and-engineering undergraduates who want a serious grounding in literature "
+        "and writing through HSS seminars as the humanities complement to their technical "
+        "major."
+    ),
+    "caltech-philosophy-bs": (
+        "Undergraduates who want rigorous training in logic, philosophy of science, and "
+        "ethics through small HSS seminars alongside their technical coursework."
+    ),
+    "caltech-history-bs": (
+        "Undergraduates who want small seminars in American, European, and the history of "
+        "science, deepening the humanities side of a science-and-engineering education."
+    ),
+    "caltech-multi-interdisciplinary-studies-other-bs": (
+        "Undergraduates whose interests cross Caltech's divisions and who want to petition "
+        "for a faculty-supervised individualized curriculum culminating in senior thesis "
+        "research."
     ),
 }
 _HL_BY_SLUG = {

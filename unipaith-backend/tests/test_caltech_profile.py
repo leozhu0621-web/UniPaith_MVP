@@ -120,3 +120,18 @@ def test_every_program_maps_to_a_real_division():
     for spec in ct.PROGRAMS:
         assert spec["school"] in school_names, f"{spec['slug']} maps to unknown division"
     assert len(ct.PROGRAM_SLUGS) == len(set(ct.PROGRAM_SLUGS)), "duplicate program slug"
+
+
+def test_who_its_for_is_program_distinct_never_type_gamed():
+    """who_its_for must be a field-specific statement per program, not a degree-type
+    template (REPAIR_BACKLOG #3b). Every program resolves to a non-empty string via
+    _WHO_BY_SLUG, and distinctness must be ~1.0 — a CS PhD and a Physics PhD must not
+    read identically. Guards against regression to the _WHO_BY_TYPE type-gamed fallback.
+    """
+    whos = []
+    for spec in ct.PROGRAMS:
+        w = ct._WHO_BY_SLUG.get(spec["slug"])
+        assert w and w.strip(), f"{spec['slug']} has no program-specific who_its_for"
+        whos.append(w)
+    # Program-distinct: no two programs share a who_its_for string.
+    assert len(set(whos)) == len(whos), "who_its_for is not program-distinct (type-gaming)"
