@@ -157,19 +157,20 @@ DEPTH_REVIEWS: dict[str, dict] = {
         "summary": (
             "The UC Davis Graduate Group in Ecology is the largest and most comprehensive "
             "ecology doctoral program of its kind, spanning more than a hundred affiliated "
-            "faculty across departments; U.S. News has ranked UC Davis No. 1 in the nation "
-            "for ecology and evolutionary biology, ahead of programs such as UC Berkeley and "
-            "Harvard. Students praise the breadth of research and interdisciplinary reach. "
-            "Common cautions are that funding and advising vary by lab and that the "
-            "decentralized, very large group can feel diffuse."
+            "faculty across departments, and it has long been regarded as one of the "
+            "strongest ecology doctoral programs in the country — U.S. News has ranked UC "
+            "Davis's ecology and evolutionary biology at or near the top nationally. "
+            "Students praise the breadth of research and interdisciplinary reach. Common "
+            "cautions are that funding and advising vary by lab and that the decentralized, "
+            "very large group can feel diffuse."
         ),
         "themes": [
             {
-                "label": "Top-ranked in the nation",
+                "label": "Top-ranked nationally",
                 "sentiment": "positive",
                 "detail": (
-                    "U.S. News ranked UC Davis No. 1 nationally for ecology and "
-                    "evolutionary biology."
+                    "U.S. News has ranked UC Davis's ecology and evolutionary biology "
+                    "among the very best in the nation."
                 ),
             },
             {
@@ -231,8 +232,8 @@ DEPTH_REVIEWS: dict[str, dict] = {
                 "label": "World-leading department",
                 "sentiment": "positive",
                 "detail": (
-                    "Ranked No. 1 in the world in agricultural economics and policy in "
-                    "subject rankings."
+                    "Consistently ranked at or near the top of the world in agricultural "
+                    "and resource economics and policy in subject rankings."
                 ),
             },
             {
@@ -331,8 +332,8 @@ DEPTH_REVIEWS: dict[str, dict] = {
         ],
         "sources": [
             {
-                "label": "UC Davis — Department of Entomology Ranked One of Best in the World",
-                "url": "https://entomology.ucdavis.edu/news/UC_Davis_Department_of_Entomology_Ranked_One_of_Best_in_World",
+                "label": "UC Davis Entomology & Nematology — Ranked One of the Best in the World (UC ANR)",
+                "url": "https://ucanr.edu/blogs/blogcore/postdetail.cfm?postnum=23692",
             },
             {
                 "label": "UC Davis Entomology and Nematology — Graduate programs",
@@ -343,19 +344,20 @@ DEPTH_REVIEWS: dict[str, dict] = {
     },
     "ucdavis-plant-biology-phd": {
         "summary": (
-            "UC Davis is ranked No. 1 in the world in Plant and Animal Science by U.S. News "
-            "in its Best Global Universities subject rankings, and its plant-science "
-            "research base is among the largest anywhere. The Plant Biology Ph.D. offers "
-            "broad research options from molecular biology to whole-plant physiology and "
-            "ecology. Common cautions are the research-intensive path and advisor-dependent "
-            "funding typical of the sciences."
+            "UC Davis is ranked No. 1 in the nation in plant and animal sciences and No. 2 "
+            "in the world in Agriculture and Forestry (QS), and its plant-science research "
+            "base is among the largest anywhere. The Plant Biology Ph.D. offers broad "
+            "research options from molecular biology to whole-plant physiology and ecology. "
+            "Common cautions are the research-intensive path and advisor-dependent funding "
+            "typical of the sciences."
         ),
         "themes": [
             {
-                "label": "No. 1 in the world",
+                "label": "Top-ranked plant science",
                 "sentiment": "positive",
                 "detail": (
-                    "U.S. News ranks UC Davis No. 1 globally in Plant and Animal Science."
+                    "UC Davis is ranked No. 1 in the nation in plant and animal sciences "
+                    "and No. 2 in the world in Agriculture and Forestry (QS)."
                 ),
             },
             {
@@ -392,12 +394,12 @@ DEPTH_REVIEWS: dict[str, dict] = {
         ],
         "sources": [
             {
-                "label": "UC Davis — Rankings (Plant and Animal Science, U.S. News)",
-                "url": "https://www.ucdavis.edu/about/rankings",
+                "label": "UC Davis CAES — Rankings (plant and animal sciences)",
+                "url": "https://caes.ucdavis.edu/about/overview/rankings",
             },
             {
-                "label": "UC Davis — No. 1 Globally in Plant and Animal Science",
-                "url": "https://www.plantsciences.ucdavis.edu/news/uc-davis-ranked-no-1-globally-plant-and-animal-science",
+                "label": "UC Davis — Rankings",
+                "url": "https://www.ucdavis.edu/about/rankings",
             },
         ],
         "disclaimer": _DISCLAIMER,
@@ -405,18 +407,19 @@ DEPTH_REVIEWS: dict[str, dict] = {
     "ucdavis-animal-science-bs": {
         "summary": (
             "UC Davis's undergraduate Animal Science major sits in a university ranked No. 1 "
-            "in the world in Plant and Animal Science (U.S. News Best Global Universities), "
-            "with extensive on-campus animal facilities — dairy, equine, meat, and avian "
-            "units — and a strong pre-veterinary pipeline toward the No. 1-ranked vet school. "
-            "Common cautions are the large major size and the very competitive path into "
-            "veterinary school."
+            "in the nation in plant and animal sciences (and No. 2 in the world in "
+            "Agriculture and Forestry, QS), with extensive on-campus animal facilities — "
+            "dairy, equine, meat, and avian units — and a strong pre-veterinary pipeline "
+            "toward UC Davis's top-ranked veterinary school. Common cautions are the large "
+            "major size and the very competitive path into veterinary school."
         ),
         "themes": [
             {
                 "label": "Top-ranked field",
                 "sentiment": "positive",
                 "detail": (
-                    "UC Davis is ranked No. 1 in the world in Plant and Animal Science."
+                    "UC Davis is ranked No. 1 in the nation in plant and animal sciences "
+                    "and No. 2 in the world in Agriculture and Forestry (QS)."
                 ),
             },
             {
@@ -466,11 +469,11 @@ DEPTH_REVIEWS: dict[str, dict] = {
     "ucdavis-food-science-bs": {
         "summary": (
             "UC Davis is among the world's leading food-science programs, part of a college "
-            "ranked No. 2 globally in Agriculture and Forestry and among the most-published "
-            "and most-cited universities in food science and nutrition. The Food Science "
-            "major pairs a chemistry- and microbiology-based core with strong ties to "
-            "California's food and beverage industry. Common cautions are the demanding "
-            "science load and the specialized focus."
+            "ranked No. 2 globally in Agriculture and Forestry (QS) and among the top "
+            "programs nationally in food science and technology. The Food Science major "
+            "pairs a chemistry- and microbiology-based core with strong ties to California's "
+            "food and beverage industry. Common cautions are the demanding science load and "
+            "the specialized focus."
         ),
         "themes": [
             {
@@ -490,11 +493,11 @@ DEPTH_REVIEWS: dict[str, dict] = {
                 ),
             },
             {
-                "label": "Strong research base",
+                "label": "Top-ranked nationally",
                 "sentiment": "positive",
                 "detail": (
-                    "UC Davis is among the most-published and cited institutions in food "
-                    "science and nutrition."
+                    "UC Davis is ranked among the top programs in the nation in food "
+                    "science and technology."
                 ),
             },
             {
@@ -654,20 +657,19 @@ DEPTH_REVIEWS: dict[str, dict] = {
     },
     "ucdavis-creative-writing-mfa": {
         "summary": (
-            "UC Davis's Creative Writing Program, part of an English department whose "
-            "graduate program U.S. News ranks among the top 20 nationally, has a respected "
-            "workshop tradition dating to 1975 and award-winning faculty; alumni have "
-            "published books with major presses. Students value the small, faculty-close "
-            "workshops. Common cautions are the small cohort and that the formal M.F.A. "
-            "degree is relatively new."
+            "UC Davis's Creative Writing Program has a respected workshop tradition dating "
+            "to 1975 with award-winning faculty, and its alumni have published books with "
+            "major trade presses. Students value the small, faculty-close workshops. Common "
+            "cautions are the small cohort and that the formal M.F.A. degree is relatively "
+            "new, though the underlying program is long-established."
         ),
         "themes": [
             {
                 "label": "Respected program and faculty",
                 "sentiment": "positive",
                 "detail": (
-                    "A long workshop tradition with award-winning writers on the faculty; "
-                    "the graduate English program is ranked among the top 20 by U.S. News."
+                    "A long workshop tradition since 1975 with award-winning writers on "
+                    "the faculty."
                 ),
             },
             {
