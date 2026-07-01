@@ -62,6 +62,18 @@ as the MSITM filled above) likewise remain honestly omitted. This repair
 (2026-06-30) adds the verified ``news.utexas.edu/feed/`` RSS on every node,
 credential-disambiguated program names, field-specific descriptions, and coverable
 ``external_reviews``.
+
+Reviews depth pass (2026-07-01, REPAIR_BACKLOG #5): eight additional flagship programs
+received hand-gathered, program-specific ``external_reviews`` — the MS Finance, the online
+MS Data Science, the graduate MS Computer Science, the top-five undergraduate Aerospace,
+Chemical, and Civil Engineering majors, the professional Master of Architecture, and the
+Government (political science) B.A. — each summarized and cited from real third-party
+coverage (official McCombs employment reports, U.S. News / Financial Times / DesignIntelligence
+rankings, edX/independent student reviews). No synthesized-from-metadata reviews; every other
+program keeps ``external_reviews`` in its ``_standard.omitted`` until genuine coverage exists.
+The Pharm.D. annual tuition scalar remains honestly omitted — UT publishes it only via a
+login-gated calculator/PDF and the one concordant figure is an IPEDS-republisher echo, so it
+fails the two-independent-source gate (no-fabrication).
 """
 
 # ruff: noqa: E501
@@ -78,7 +90,7 @@ from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "The University of Texas at Austin"
-ENRICHED_AT = "2026-06-30"
+ENRICHED_AT = "2026-07-01"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -6656,6 +6668,370 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             {
                 "label": "U.S. News — UT Austin School of Nursing",
                 "url": "https://www.usnews.com/best-graduate-schools/top-nursing-schools/university-of-texas-austin-06122",
+            },
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, the trade press, official employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    # ── Reviews depth pass (2026-07-01, REPAIR_BACKLOG #5) — 8 additional coverable
+    # flagship programs, each gathered from real program-specific third-party coverage
+    # (official employment reports, U.S. News / Financial Times / DesignIntelligence
+    # rankings, edX/independent student reviews). No synthesized-from-metadata reviews.
+    "ut-austin-finance-ms": {
+        "summary": "The Texas McCombs MS Finance (MSF) is a STEM-designated, roughly 10-month program that independent rankings place among the top U.S. pre-experience finance master's (top five by the Financial Times and TFE Times). Per the school's official employment report, the Class of 2025 reported an average base salary of $82,986 (median $81,000) with an average signing bonus of $7,811. Placement is concentrated in financial services (52% of accepts, ~$86K average), with real estate (12%, ~$68K), consulting (9%, ~$85K), accounting, and manufacturing rounding out the mix. Reviewers cite strong quantitative training, corporate-finance and investment recruiting, and public-school value, while noting the compressed one-year timeline and a placement footprint that leans toward Texas and the South.",
+        "themes": [
+            {
+                "label": "Strong finance placement and salary",
+                "sentiment": "positive",
+                "detail": "Class of 2025 average base $82,986 (median $81,000); 52% of accepted offers were in financial services at roughly $86K average.",
+            },
+            {
+                "label": "STEM-designated, quantitative curriculum",
+                "sentiment": "positive",
+                "detail": "The 10-month STEM designation extends OPT work eligibility for international students and reflects the program's analytics-heavy coursework.",
+            },
+            {
+                "label": "Public-school value and McCombs network",
+                "sentiment": "positive",
+                "detail": "A top-ranked finance master's at public tuition, backed by the large Texas Exes and McCombs alumni network in energy, banking, and corporate finance.",
+            },
+            {
+                "label": "Compressed one-year timeline",
+                "sentiment": "mixed",
+                "detail": "The intensive ~10-month structure is efficient but leaves a short window to recruit, so students are advised to arrive prepared to interview early.",
+            },
+            {
+                "label": "Regionally weighted placement",
+                "sentiment": "caution",
+                "detail": "Hiring skews toward Texas and the South/Southwest (finance and real estate), a strength for that region and a consideration for students set on New York bulge-bracket finance.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "Texas McCombs — MS Finance Career Outcomes (Class of 2025, official employment report)",
+                "url": "https://www.mccombs.utexas.edu/graduate/specialized-masters/ms-finance/career-management/career-outcomes/",
+            },
+            {
+                "label": "Poets&Quants — McCombs School of Business profile",
+                "url": "https://poetsandquants.com/school-profile/mccombs-school-of-business-the-university-of-texas-at-austin/",
+            },
+            {
+                "label": "MastersBuddy — Texas McCombs MS Finance review (fees, admission, careers)",
+                "url": "https://www.mastersbuddy.com/blog/mfin/texas-mccombs-msf-review",
+            },
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, the trade press, official employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "ut-austin-aerospace-engineering-bsase": {
+        "summary": "UT Austin's undergraduate Aerospace Engineering program (Cockrell School, Department of Aerospace Engineering and Engineering Mechanics) is ranked No. 8 in the nation in the 2025-26 U.S. News undergraduate rankings, part of a Cockrell School that ranks No. 11 overall and No. 6 among public universities. Reviewers cite strengths in space systems, autonomy and flight, and hypersonics/computational research, plus access to Austin's aerospace and defense employers, while noting rigorous coursework and hiring that tracks the defense and space industry cycle (many roles require U.S. citizenship or clearance).",
+        "themes": [
+            {
+                "label": "Top-10 nationally ranked",
+                "sentiment": "positive",
+                "detail": "No. 8 in the 2025-26 U.S. News undergraduate aerospace rankings; the graduate program is also No. 8, reflecting sustained research depth.",
+            },
+            {
+                "label": "Space, autonomy, and flight research",
+                "sentiment": "positive",
+                "detail": "Strengths in spacecraft and space systems, guidance/navigation/control and autonomy, aerodynamics, and computational and hypersonics research.",
+            },
+            {
+                "label": "Austin and Texas industry access",
+                "sentiment": "positive",
+                "detail": "Proximity to a growing aerospace, space, and defense employer base in Texas supports internships and full-time placement.",
+            },
+            {
+                "label": "Rigorous, sequential curriculum",
+                "sentiment": "mixed",
+                "detail": "The engineering-mechanics and aerospace core is demanding and tightly sequenced; students describe a heavy problem-set and design workload.",
+            },
+            {
+                "label": "Cyclical, clearance-linked hiring",
+                "sentiment": "caution",
+                "detail": "Aerospace and defense hiring moves with government and space-industry budgets, and many positions require U.S. citizenship or a security clearance.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "Cockrell School — Program Rankings (U.S. News)",
+                "url": "https://cockrell.utexas.edu/about/facts-and-rankings/program-rankings/",
+            },
+            {
+                "label": "UT Aerospace Engineering — Program Ranks No. 8 in the Nation",
+                "url": "https://ae.utexas.edu/news/aerospace-engineering-program-ranks-no-8-in-nation/",
+            },
+            {
+                "label": "U.S. News — UT Austin (Cockrell) Engineering",
+                "url": "https://www.usnews.com/best-graduate-schools/top-engineering-schools/the-university-of-texas-at-austin-02178",
+            },
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, the trade press, official employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "ut-austin-chemical-engineering-bsche": {
+        "summary": "UT Austin's undergraduate Chemical Engineering program (Cockrell School, McKetta Department of Chemical Engineering) is ranked No. 5 in the nation in the 2025-26 U.S. News undergraduate rankings — one of three Cockrell programs in the national top five. Reviewers cite strong placement into energy, chemicals, and semiconductors (a natural fit for Texas industry), well-regarded process and materials research, and public-school value, while noting a demanding thermodynamics/transport core and outcomes that partly track the energy sector.",
+        "themes": [
+            {
+                "label": "Top-5 nationally ranked",
+                "sentiment": "positive",
+                "detail": "No. 5 in the 2025-26 U.S. News undergraduate chemical engineering rankings (No. 9 at the graduate level).",
+            },
+            {
+                "label": "Energy, chemicals, and semiconductor placement",
+                "sentiment": "positive",
+                "detail": "Graduates recruit strongly into oil and gas, chemicals and materials, and the expanding Texas semiconductor sector.",
+            },
+            {
+                "label": "Research strength and value",
+                "sentiment": "positive",
+                "detail": "Recognized process-systems, catalysis, and materials research at public tuition, with the McKetta department's large alumni base in industry.",
+            },
+            {
+                "label": "Demanding core curriculum",
+                "sentiment": "mixed",
+                "detail": "The thermodynamics, transport, and reaction-engineering core is rigorous; students describe a heavy workload and competitive grading.",
+            },
+            {
+                "label": "Energy-cycle exposure",
+                "sentiment": "caution",
+                "detail": "A meaningful share of chemical-engineering hiring is tied to the energy and chemicals sector, so early-career demand can move with those markets.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "Cockrell School — Program Rankings (U.S. News)",
+                "url": "https://cockrell.utexas.edu/about/facts-and-rankings/program-rankings/",
+            },
+            {
+                "label": "Cockrell School — Where Does UT Rank Among Top Undergraduate Engineering Programs?",
+                "url": "https://cockrell.utexas.edu/news/where-does-ut-rank-among-top-undergraduate-engineering-programs/",
+            },
+            {
+                "label": "U.S. News — UT Austin (Cockrell) Engineering",
+                "url": "https://www.usnews.com/best-graduate-schools/top-engineering-schools/the-university-of-texas-at-austin-02178",
+            },
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, the trade press, official employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "ut-austin-civil-engineering-bsce": {
+        "summary": "UT Austin's undergraduate Civil Engineering program (Cockrell School, Department of Civil, Architectural and Environmental Engineering) is ranked No. 5 in the nation in the 2025-26 U.S. News undergraduate rankings (No. 4 at the graduate level). Reviewers cite strong structural, transportation, environmental, and construction-engineering tracks, steady infrastructure and construction placement in a fast-growing Texas market, and public-school value, while noting that the professional-engineer (PE) licensure path adds time and that civil salaries run below computing and petroleum peers.",
+        "themes": [
+            {
+                "label": "Top-5 nationally ranked",
+                "sentiment": "positive",
+                "detail": "No. 5 in the 2025-26 U.S. News undergraduate civil engineering rankings; No. 4 at the graduate level.",
+            },
+            {
+                "label": "Broad, well-regarded specializations",
+                "sentiment": "positive",
+                "detail": "Structural, geotechnical, transportation, environmental and water resources, and construction engineering and project management tracks.",
+            },
+            {
+                "label": "Infrastructure and construction demand",
+                "sentiment": "positive",
+                "detail": "Texas's population and infrastructure growth supports steady placement into design firms, transportation agencies, and construction/development.",
+            },
+            {
+                "label": "Licensure path",
+                "sentiment": "mixed",
+                "detail": "Career progression in civil engineering typically runs through the FE and PE exams plus supervised experience, adding years to full licensure.",
+            },
+            {
+                "label": "Lower early-career pay than some peers",
+                "sentiment": "caution",
+                "detail": "Civil-engineering starting salaries generally trail computing and petroleum engineering, a trade-off for the field's stability and breadth.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "Cockrell School — Program Rankings (U.S. News)",
+                "url": "https://cockrell.utexas.edu/about/facts-and-rankings/program-rankings/",
+            },
+            {
+                "label": "Cockrell School — Facts and Rankings",
+                "url": "https://cockrell.utexas.edu/about/facts-and-rankings/",
+            },
+            {
+                "label": "U.S. News — UT Austin (Cockrell) Engineering",
+                "url": "https://www.usnews.com/best-graduate-schools/top-engineering-schools/the-university-of-texas-at-austin-02178",
+            },
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, the trade press, official employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "ut-austin-architecture-march": {
+        "summary": "The Master of Architecture at the UT Austin School of Architecture (UTSOA) is a NAAB-accredited professional degree that DesignIntelligence has repeatedly ranked among the country's most-admired programs and one whose graduates are among the 'most hired from' by practitioners. Reviewers cite a strong design-studio culture, standout resources (the school's materials lab, fabrication shop, and design-build offerings), and strong firm placement, while noting the long path to architectural licensure (AXP hours plus the ARE) and modest early-career salaries relative to the degree's time and cost.",
+        "themes": [
+            {
+                "label": "Highly regarded, practice-connected program",
+                "sentiment": "positive",
+                "detail": "DesignIntelligence has ranked UTSOA among the top programs and among those graduates are 'most hired from,' reflecting strong ties to hiring firms.",
+            },
+            {
+                "label": "Studio culture and fabrication resources",
+                "sentiment": "positive",
+                "detail": "A rigorous design-studio sequence supported by materials and fabrication labs, visiting critics, and design-build opportunities.",
+            },
+            {
+                "label": "Strong firm placement",
+                "sentiment": "positive",
+                "detail": "Graduates place into architecture and design practices nationally, aided by the school's reputation and alumni network.",
+            },
+            {
+                "label": "Long licensure path",
+                "sentiment": "mixed",
+                "detail": "Becoming a licensed architect requires the professional degree plus Architectural Experience Program (AXP) hours and passing the Architect Registration Examination (ARE).",
+            },
+            {
+                "label": "Modest early-career pay for the investment",
+                "sentiment": "caution",
+                "detail": "As across the profession, entry-level architecture salaries are modest relative to the studio workload and time-to-degree; the public-tuition cost helps the trade-off.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "UT School of Architecture — Why UTSOA (DesignIntelligence 'Most Hired From')",
+                "url": "https://soa.utexas.edu/apply/why-utsoa",
+            },
+            {
+                "label": "Architecture-Colleges.com — University of Texas at Austin architecture ranking",
+                "url": "https://architecture-colleges.com/the-university-of-texas-at-austin",
+            },
+            {
+                "label": "Peterson's — UT Austin School of Architecture (graduate programs)",
+                "url": "https://www.petersons.com/graduate-schools/the-university-of-texas-at-austin-school-of-architecture-000_10032082.aspx",
+            },
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, the trade press, official employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "ut-austin-data-science-ms": {
+        "summary": "UT Austin's online Master of Science in Data Science (part of Computer & Data Science Online, offered jointly by the Departments of Statistics and Data Sciences and Computer Science) is widely praised for combining UT Austin's academic reputation with an exceptionally low, fixed $10,000 total tuition ($1,000 per course). The same UT faculty and curriculum yield a diploma that does not say 'online.' Reviewers highlight affordability, flexibility (a 30-credit-hour, 10-course program most students complete part-time in about 18 to 36 months), and rigorous statistics-plus-computing coursework, while cautioning that the self-paced online format demands discipline and that fully online programs generally do not provide on-campus recruiting or F-1/OPT work authorization for international students.",
+        "themes": [
+            {
+                "label": "Exceptional affordability",
+                "sentiment": "positive",
+                "detail": "A fixed $10,000 total tuition ($1,000 per course) makes it one of the lowest-cost data-science master's from a major research university.",
+            },
+            {
+                "label": "UT faculty and full academic credit",
+                "sentiment": "positive",
+                "detail": "Taught by UT Austin Statistics/Data Sciences and Computer Science faculty; the awarded degree is identical to the on-campus credential and is not labeled 'online.'",
+            },
+            {
+                "label": "Flexible, self-paced format",
+                "sentiment": "positive",
+                "detail": "On-demand lectures let students complete the 30-credit-hour, 10-course program part-time, typically in about 18 to 36 months, while working.",
+            },
+            {
+                "label": "Rigorous but requires self-direction",
+                "sentiment": "mixed",
+                "detail": "Independent students report substantial statistics and machine-learning workload; success depends on self-discipline in an asynchronous format.",
+            },
+            {
+                "label": "No campus recruiting or OPT",
+                "sentiment": "caution",
+                "detail": "As an online program it does not offer on-campus recruiting or F-1 student status / OPT work authorization, so it best suits working professionals and career-changers.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "UT Austin — Computer & Data Science Online: Master's in Data Science",
+                "url": "https://cdso.utexas.edu/msds",
+            },
+            {
+                "label": "edX — UT Austin Master of Data Science Online: Top Peer Insights",
+                "url": "https://www.edx.org/resources/ut-austin-master-of-data-science-online-top-peer-insights",
+            },
+            {
+                "label": "ModalShift — UT Austin MSDS Online independent student review",
+                "url": "https://modalshift.co/msdso-review/",
+            },
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, the trade press, official employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "ut-austin-computer-science-ms": {
+        "summary": "UT Austin's graduate Computer Science program (Department of Computer Science, College of Natural Sciences) is ranked among the very top nationally by U.S. News — No. 9 in the 2025 rankings and No. 10 in the 2026 edition — with top-10 standing in artificial intelligence and theory. Reviewers cite world-class faculty and research (AI/ML, systems, theory, programming languages), strong industry and PhD placement, and access to Austin's fast-growing tech sector, while noting highly competitive admission and the research-oriented intensity of a top program.",
+        "themes": [
+            {
+                "label": "Top-10 nationally, elite in AI and theory",
+                "sentiment": "positive",
+                "detail": "Ranked No. 9 (2025) / No. 10 (2026) by U.S. News, with top-10 standing in artificial intelligence and in theory.",
+            },
+            {
+                "label": "Research breadth and faculty",
+                "sentiment": "positive",
+                "detail": "Recognized strength across AI/ML, systems, theory, and programming languages, with active research groups and industry collaboration.",
+            },
+            {
+                "label": "Austin tech-sector access",
+                "sentiment": "positive",
+                "detail": "A major and growing technology hub gives students strong internship and full-time recruiting access alongside national employers.",
+            },
+            {
+                "label": "Research-intensive rigor",
+                "sentiment": "mixed",
+                "detail": "The program is oriented toward research depth; students describe demanding coursework and high expectations.",
+            },
+            {
+                "label": "Highly competitive admission",
+                "sentiment": "caution",
+                "detail": "Admission to a top-10 CS graduate program is selective, with strong quantitative and research preparation expected.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "UT Austin Computer Science — Ranked 10th Best in the Country (2026)",
+                "url": "https://www.cs.utexas.edu/news/2026/ut-austin-computer-science-ranked-10th-best-country",
+            },
+            {
+                "label": "UT Austin CS — Ranked No. 9 Nationally, Top 10 in AI and Theory (2025)",
+                "url": "https://www.cs.utexas.edu/news/2025/ut-computer-science-ranked-no-9-nationally-top-10-ai-and-theory-us-news-world-report",
+            },
+            {
+                "label": "U.S. News — UT Austin Best Science Schools (Computer Science)",
+                "url": "https://www.usnews.com/best-graduate-schools/top-science-schools/the-university-of-texas-at-austin-228778",
+            },
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, the trade press, official employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "ut-austin-government-ba": {
+        "summary": "UT Austin's Government (political science) program sits in the Department of Government within a College of Liberal Arts at a university U.S. News ranks No. 7 among the nation's public universities (No. 30 overall) and No. 1 public university in Texas; the graduate political-science program ranks No. 18 (tie) nationally. Reviewers value the department's breadth (American politics, international relations, comparative politics, political theory, and public law), its fit for pre-law, policy, and public-service paths, and access to the Texas Capitol and public-affairs opportunities in Austin, while noting large introductory lecture courses and the modest early-career salaries typical of a liberal-arts major before graduate or professional study.",
+        "themes": [
+            {
+                "label": "Strong department at a top public university",
+                "sentiment": "positive",
+                "detail": "UT Austin is No. 7 among U.S. public universities (No. 30 overall) and No. 1 public university in Texas (U.S. News); its graduate political science program ranks No. 18 (tie).",
+            },
+            {
+                "label": "Breadth across the discipline",
+                "sentiment": "positive",
+                "detail": "Coverage of American politics, international relations, comparative politics, political theory, and public law supports varied academic and career paths.",
+            },
+            {
+                "label": "Pre-law, policy, and public service fit",
+                "sentiment": "positive",
+                "detail": "A common foundation for law school, policy analysis, government, and nonprofit work, aided by proximity to the Texas Capitol and Austin's public-affairs scene.",
+            },
+            {
+                "label": "Large introductory courses",
+                "sentiment": "mixed",
+                "detail": "As a popular major at a large flagship, lower-division lecture courses can be sizable; upper-division seminars are smaller.",
+            },
+            {
+                "label": "Graduate/professional study often expected",
+                "sentiment": "caution",
+                "detail": "Direct-from-bachelor's salaries in political science are modest; strong outcomes typically follow law school, graduate study, or targeted policy roles.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "UT Austin Graduate School — Rankings (U.S. News)",
+                "url": "https://gradschool.utexas.edu/about/why-ut/rankings",
+            },
+            {
+                "label": "U.S. News — UT Austin Best Social Sciences and Humanities Schools (Political Science)",
+                "url": "https://www.usnews.com/best-graduate-schools/top-humanities-schools/the-university-of-texas-at-austin-228778",
+            },
+            {
+                "label": "UT News — UT Ranks No. 1 Public University in Texas, No. 7 Nationally (U.S. News)",
+                "url": "https://news.utexas.edu/2025/09/23/ut-ranks-as-no-1-public-university-in-texas-no-7-nationally-in-u-s-news-world-report-rankings/",
             },
         ],
         "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, the trade press, official employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
