@@ -4447,6 +4447,523 @@ _FACULTY_BY_SLUG: dict[str, dict] = {
     },
 }
 _REVIEWS_BY_SLUG: dict[str, dict] = {
+    "mich-master-of-science-in-information-msi": {
+        "summary": "The University of Michigan School of Information's Master of Science in Information reports strong first-destination outcomes: UMSI's employment reports put the MSI employment rate at about 95% with an overall average starting salary near $90K ($96K in the private sector versus $63K in public/nonprofit roles) and roughly 90% of graduates reporting high job satisfaction. Graduates fan out across UX, data/analytics, product, and library/archives roles at tech companies, healthcare and nonprofit organizations, and Fortune 100 employers, and 99% of respondents in the 2024 report called their internship important to landing a job. U.S. News ranks Michigan's library and information studies program No. 5 in its 2026 Best Graduate Schools. Figures come from a self-reported survey (262 MSI graduates in the class of 2023, of whom about 58% responded), and the wide private-versus-public salary gap is worth weighing against a student's intended sector.",
+        "themes": [
+                {
+                        "label": "High employment and competitive salaries",
+                        "sentiment": "positive",
+                        "detail": "UMSI's employment reports show roughly 95% of MSI graduates employed with an overall average starting salary near $90K, which the school notes sits toward the top of comparable information-field averages."
+                },
+                {
+                        "label": "Strong reputation in the field",
+                        "sentiment": "positive",
+                        "detail": "U.S. News ranks Michigan's library and information studies program No. 5 nationally in its 2026 Best Graduate Schools edition."
+                },
+                {
+                        "label": "Versatile, multi-industry placement",
+                        "sentiment": "positive",
+                        "detail": "Graduates land UX, product, data/analytics, and information-management roles across tech, healthcare, nonprofits, libraries, and Fortune 100 firms rather than a single career track."
+                },
+                {
+                        "label": "Internships drive outcomes",
+                        "sentiment": "mixed",
+                        "detail": "In the 2024 report 99% of respondents said their internship mattered to their job outcome, so students who don't secure a strong internship may see weaker placement."
+                },
+                {
+                        "label": "Large public vs. private pay gap",
+                        "sentiment": "caution",
+                        "detail": "Average salary was about $96K in the private sector but roughly $63K in public/nonprofit roles, a gap that matters for students targeting mission-driven work."
+                },
+                {
+                        "label": "Self-reported survey base",
+                        "sentiment": "caution",
+                        "detail": "The outcomes reflect a survey of the class of 2023 (262 graduates) with roughly a 58% response rate, so reported figures represent responding graduates rather than the full cohort."
+                }
+        ],
+        "sources": [
+                {
+                        "label": "UMSI 2024 employment reports (news summary)",
+                        "url": "https://www.si.umich.edu/about-umsi/news/2024-umsi-employment-reports-show-versatility-information-science-degree"
+                },
+                {
+                        "label": "MSI 2023 Employment Report (PDF)",
+                        "url": "https://www.si.umich.edu/sites/default/files/inline-files/Employment%20report%20MSI%202023%20no%20crops.pdf"
+                },
+                {
+                        "label": "Master of Science in Information career outcomes",
+                        "url": "https://www.si.umich.edu/programs/master-science-information/career-outcomes"
+                }
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, the trade press, official employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements."
+    },
+    "mich-public-policy-ms": {
+        "summary": "The Gerald R. Ford School of Public Policy's professional public-policy master's is consistently ranked among the very best: U.S. News named it the No. 3 public affairs program, with the No. 1 specialty ranking in social policy and No. 2 in both policy analysis and health policy (No. 5 in environmental policy). The two-year, 48-credit curriculum pairs quantitative and economic methods with a required policy internship; recent classes have interned across 32 states and 22 countries, and alumni move into federal, state, and local government, leading nonprofits, and the private sector. One important credential note: the Ford School grants the Master of Public Policy (MPP) and a one-year Master of Public Affairs (MPA), not a degree titled \"Master of Science in Public Policy,\" so applicants should confirm which credential they are pursuing. As with public-service careers generally, early-career public-sector salaries can trail private-sector pay despite the program's elite standing.",
+        "themes": [
+                {
+                        "label": "Top-ranked public affairs program",
+                        "sentiment": "positive",
+                        "detail": "U.S. News ranks the Ford School No. 3 among public affairs programs in its latest edition, keeping it in the national top tier."
+                },
+                {
+                        "label": "Elite policy-analysis and social-policy specialties",
+                        "sentiment": "positive",
+                        "detail": "The school holds the No. 1 U.S. News specialty ranking in social policy and No. 2 in both policy analysis and health policy (No. 5 in environmental policy)."
+                },
+                {
+                        "label": "Required, broadly distributed internship",
+                        "sentiment": "positive",
+                        "detail": "The MPP builds in a policy internship; recent cohorts have interned across 32 states and 22 countries, giving applied experience across levels of government and sectors."
+                },
+                {
+                        "label": "Cross-sector career mobility",
+                        "sentiment": "positive",
+                        "detail": "Alumni move into federal, state, and local government, nonprofits, and private-sector and advocacy roles, reflecting the degree's transferability."
+                },
+                {
+                        "label": "Degree-name mismatch",
+                        "sentiment": "caution",
+                        "detail": "The Ford School confers the Master of Public Policy (MPP) and Master of Public Affairs (MPA); it does not offer a \"Master of Science in Public Policy,\" so applicants should verify the exact credential."
+                },
+                {
+                        "label": "Public-service pay ceilings",
+                        "sentiment": "caution",
+                        "detail": "Because many graduates enter government and nonprofit roles, early-career salaries can lag private-sector pay despite the program's ranking and rigor."
+                }
+        ],
+        "sources": [
+                {
+                        "label": "Ford School named #3 public affairs program (U.S. News)",
+                        "url": "https://fordschool.umich.edu/news/2025/ford-school-named-3-public-affairs-program-1-social-policy-and-2-policy-analysis-and-2"
+                },
+                {
+                        "label": "Master of Public Policy (MPP) at the Ford School",
+                        "url": "https://fordschool.umich.edu/mpp-mpa/mpp"
+                },
+                {
+                        "label": "Ford School careers – jobs in public policy",
+                        "url": "https://fordschool.umich.edu/careers-internships/mpp-mpa-jobs"
+                }
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, the trade press, official employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements."
+    },
+    "mich-data-science-ms": {
+        "summary": "Michigan's residential Master of Science in Data Science — a collaborative degree jointly owned by the Department of Statistics, Computer Science and Engineering, the School of Information, and Biostatistics — has become extraordinarily competitive. Fortune ranked it No. 1 among master's in data science programs and reported a 5.3% acceptance rate, lower than any MBA program Fortune ranks (including Stanford at 6.2% and MIT Sloan at 12%); in 2023 the program drew 1,555 applications and expected roughly 85 enrolled students, up from an initial 2018 cohort of 24. It sits within a statistics department U.S. News ranks No. 6 nationally (2026), and its design deliberately balances statistical and computational training, with graduates targeting finance, consulting, pharmaceuticals, and tech. The dominant caution is admissions difficulty: acceptance rates in the single digits make this a reach program even for strong quantitative applicants.",
+        "themes": [
+                {
+                        "label": "Nationally top-ranked program",
+                        "sentiment": "positive",
+                        "detail": "Fortune ranked Michigan's residential MS in Data Science No. 1 on its list of best master's in data science programs."
+                },
+                {
+                        "label": "Rooted in a top-6 statistics department",
+                        "sentiment": "positive",
+                        "detail": "The degree sits within a U-M Statistics department U.S. News ranks No. 6 among graduate statistics programs for 2026."
+                },
+                {
+                        "label": "Balanced statistics-plus-computation training",
+                        "sentiment": "positive",
+                        "detail": "Jointly owned by Statistics, CSE, the School of Information, and Biostatistics, the program requires balanced training in statistical and computational skills rather than one or the other."
+                },
+                {
+                        "label": "Broad industry demand for graduates",
+                        "sentiment": "positive",
+                        "detail": "Graduates pursue roles across finance, banking, pharmaceuticals, consulting, and tech, reflecting wide employer demand for the skill set."
+                },
+                {
+                        "label": "Extremely selective admissions",
+                        "sentiment": "caution",
+                        "detail": "Fortune reported a 5.3% acceptance rate — lower than any MBA program it ranks — with 1,555 applications in 2023 for roughly 85 seats, making admission a long shot even for strong applicants."
+                },
+                {
+                        "label": "Surging, unpredictable applicant volume",
+                        "sentiment": "caution",
+                        "detail": "Applications more than doubled from 679 in 2019 to 1,555 in 2023, so competitiveness has intensified year over year and may keep rising."
+                }
+        ],
+        "sources": [
+                {
+                        "label": "Fortune – Michigan data science program acceptance rate",
+                        "url": "https://fortune.com/education/articles/this-masters-in-data-science-program-has-a-lower-acceptance-rate-than-any-mba-program/"
+                },
+                {
+                        "label": "U-M LSA Data Science Master's Program",
+                        "url": "https://lsa.umich.edu/stats/masters_students/mastersprograms/data-science-masters-program.html"
+                },
+                {
+                        "label": "U-M Statistics ranked among top programs (U.S. News)",
+                        "url": "https://lsa.umich.edu/stats/news-events/all-news/search-news/u-m-statistics-is-ranked-as-one-of-the-top-programs-in-the-world.html"
+                }
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, the trade press, official employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements."
+    },
+    "mich-robotics-ms": {
+        "summary": "Michigan's Robotics graduate program (housed in the $75M Ford Robotics Building opened in 2021) is widely regarded as one of the strongest robotics programs in the U.S., alongside Carnegie Mellon and Northwestern. The department's own Careers & Outcomes reporting lists a deep, verifiable roster of employers who hire its MS graduates across automotive/mobility (Ford, GM, Tesla, Waymo, Aurora, Rivian, Zoox), aerospace and defense (SpaceX, Blue Origin, Boeing, NASA JPL, Northrop Grumman), big tech (Amazon, Apple, Google, NVIDIA, Meta, Microsoft) and robotics/medical firms (Boston Dynamics, Intuitive Surgical, Stryker). Common roles include perception, controls, autonomy, robotics-software and machine-learning engineering. A notable transparency gap: the program publicly states that program-specific salary and placement-rate data for the MS is not yet published, so compensation figures are not verifiable at the program level.",
+        "themes": [
+                {
+                        "label": "Strong industry demand for MS graduates",
+                        "sentiment": "positive",
+                        "detail": "The department's Careers & Outcomes page names dozens of hiring employers across mobility, aerospace, big tech and medical robotics, including Tesla, Waymo, SpaceX, NASA JPL, Boston Dynamics, NVIDIA and Intuitive Surgical."
+                },
+                {
+                        "label": "Purpose-built facilities",
+                        "sentiment": "positive",
+                        "detail": "MS students work in the $75M Ford Motor Company Robotics Building, completed in 2021, with hands-on access to real robotic systems."
+                },
+                {
+                        "label": "Interdisciplinary breadth",
+                        "sentiment": "positive",
+                        "detail": "The curriculum spans sensing, reasoning and acting, drawing on computer science, mechanical, and electrical engineering rather than a single home department."
+                },
+                {
+                        "label": "Role diversity",
+                        "sentiment": "positive",
+                        "detail": "Reported job titles range across perception, controls, autonomy, robotics-software and machine-learning/applied-scientist roles, plus research-lab and academic placements."
+                },
+                {
+                        "label": "Limited published MS outcomes data",
+                        "sentiment": "caution",
+                        "detail": "The program itself notes that program-specific salary and placement-rate figures for the MS are not yet available, so prospective students cannot verify median pay or placement percentages at the program level."
+                }
+        ],
+        "sources": [
+                {
+                        "label": "Michigan Robotics — Careers & Outcomes (employer roster)",
+                        "url": "https://robotics.umich.edu/academics/careers/"
+                },
+                {
+                        "label": "Michigan Robotics — Graduate Program (MS overview, Ford Robotics Building)",
+                        "url": "https://robotics.umich.edu/academics/graduate/"
+                }
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, the trade press, official employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements."
+    },
+    "mich-mechanical-engineering-ms": {
+        "summary": "The University of Michigan's mechanical engineering master's program is a large, highly ranked program that awards roughly 141 master's degrees per year. Independent aggregator College Factual ranks it #22 nationally out of mechanical-engineering master's programs, #1 among Michigan schools, and #4 in the Great Lakes region. On earnings, College Factual reports a median salary of about $93,716 for the program's master's graduates, modestly above the $92,526 national median for all mechanical-engineering master's holders. The program sits within Michigan's broader College of Engineering, whose graduate engineering placement is strong, though third-party program-specific placement-rate data for the ME MS specifically is thin.",
+        "themes": [
+                {
+                        "label": "Top-25 national standing",
+                        "sentiment": "positive",
+                        "detail": "College Factual ranks Michigan's mechanical engineering master's #22 out of national programs and #1 among Michigan schools."
+                },
+                {
+                        "label": "Above-median earnings",
+                        "sentiment": "positive",
+                        "detail": "Reported median salary of about $93,716 for master's graduates, slightly above the $92,526 national median for the same degree."
+                },
+                {
+                        "label": "Large, well-resourced program",
+                        "sentiment": "positive",
+                        "detail": "Roughly 141 master's degrees awarded per year, with a department of 70+ tenure-track faculty and 500+ graduate students."
+                },
+                {
+                        "label": "Regional strength",
+                        "sentiment": "positive",
+                        "detail": "Ranked #4 in the Great Lakes region for mechanical engineering master's programs by College Factual."
+                },
+                {
+                        "label": "Modest earnings premium",
+                        "sentiment": "mixed",
+                        "detail": "Despite the strong ranking, the reported median salary is only slightly above the national average for the degree, so the earnings edge over peer programs is small."
+                },
+                {
+                        "label": "Sparse program-level placement data",
+                        "sentiment": "caution",
+                        "detail": "Publicly available third-party sources report salary and graduate counts but little verifiable program-specific placement-rate data for the ME master's specifically."
+                }
+        ],
+        "sources": [
+                {
+                        "label": "College Factual — U-M MS in Mechanical Engineering (rankings & graduates)",
+                        "url": "https://www.collegefactual.com/graduate-schools/university-of-michigan-ann-arbor/masters-degrees/engineering/me-mechanical-engineering/"
+                },
+                {
+                        "label": "College Factual — U-M Mechanical Engineering major (median salary)",
+                        "url": "https://www.collegefactual.com/colleges/university-of-michigan-ann-arbor/academic-life/academic-majors/engineering/me-mechanical-engineering/"
+                }
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, the trade press, official employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements."
+    },
+    "mich-nursing-ug": {
+        "summary": "Third-party coverage places Michigan's Bachelor of Science in Nursing among the very top undergraduate nursing programs in the country: U.S. News & World Report ranked the BSN No. 6 nationally in its 2026 Best Colleges edition, and the program has held a top-10 spot for several consecutive years. The School of Nursing reports NCLEX-RN first-time pass rates near the high-90s (cited around 96.5-97% in recent reporting) against a national average in the mid-80s, and third-party ranking site Nursing Schools Almanac ranks it No. 1 in Michigan. Coverage consistently frames graduates as competitive for hospital roles, including Magnet-designated systems across the state. Reporting is strong but note that pass-rate figures are cohort- and quarter-specific and admission is highly selective.",
+        "themes": [
+                {
+                        "label": "Top-ranked BSN",
+                        "sentiment": "positive",
+                        "detail": "U.S. News ranked the undergraduate BSN No. 6 in the nation for 2026, part of a multi-year run inside the top 10."
+                },
+                {
+                        "label": "Strong NCLEX outcomes",
+                        "sentiment": "positive",
+                        "detail": "First-time NCLEX-RN pass rates are reported in the high-90s (about 96.5-97%), well above the national average in the mid-80s."
+                },
+                {
+                        "label": "Leading program in Michigan",
+                        "sentiment": "positive",
+                        "detail": "Third-party site Nursing Schools Almanac ranks the School of Nursing No. 1 among Michigan programs."
+                },
+                {
+                        "label": "Employment strength",
+                        "sentiment": "positive",
+                        "detail": "Coverage describes graduates as competitive hires for hospital roles, including Magnet-designated health systems across the state."
+                },
+                {
+                        "label": "Cohort-dependent pass rates",
+                        "sentiment": "caution",
+                        "detail": "Reported NCLEX figures are quarter- and cohort-specific; the 96.5-97% numbers vary by reporting period rather than being a single fixed rate."
+                },
+                {
+                        "label": "Highly selective entry",
+                        "sentiment": "mixed",
+                        "detail": "As a top-ranked program, admission is competitive; strong outcomes reflect a selective applicant pool as well as instruction."
+                }
+        ],
+        "sources": [
+                {
+                        "label": "U-M School of Nursing: Undergraduate program ranked No. 6 by U.S. News (2026)",
+                        "url": "https://nursing.umich.edu/about/news-portal/202509-u-m-school-nursing-undergraduate-program-ranked-no-6-nation-us-news-world"
+                },
+                {
+                        "label": "U-M School of Nursing: Impressive NCLEX Results",
+                        "url": "https://nursing.umich.edu/node/3797"
+                },
+                {
+                        "label": "Nursing Schools Almanac: Best Nursing Schools in Michigan (U-M No. 1)",
+                        "url": "https://www.nursingschoolsalmanac.com/rankings/michigan"
+                }
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, the trade press, official employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements."
+    },
+    "mich-master-of-architecture-march": {
+        "summary": "Taubman College's Master of Architecture has a strong national reputation in third-party coverage, though some of the most-cited recognition is now dated. DesignIntelligence historically ranked the M.Arch No. 1 in the nation (2011, overtaking Harvard's GSD) and rated it fifth most-admired by deans, and its 2020 survey named Taubman among the top-10 schools from which architecture firms hire the most graduates. The college reports that 98% of recent M.Arch graduates were employed or continuing their education within one year (95% employed, 3% continuing education), with alumni at firms such as Gensler, Perkins+Will, HOK, HKS and SOM. A meaningful caution: DesignIntelligence discontinued its comparative rankings in 2022 after deans from more than a dozen top schools, Michigan among them, signed a letter criticizing the survey's rigor, so the strongest ranking claims are historical rather than current.",
+        "themes": [
+                {
+                        "label": "Historically top-ranked M.Arch",
+                        "sentiment": "positive",
+                        "detail": "DesignIntelligence ranked the M.Arch No. 1 nationally in 2011 (over Harvard's GSD) and fifth most-admired by school deans."
+                },
+                {
+                        "label": "Highly recruited by firms",
+                        "sentiment": "positive",
+                        "detail": "DesignIntelligence's 2020 survey placed Taubman among the top-10 schools from which firms hire the greatest number of graduates."
+                },
+                {
+                        "label": "Strong placement",
+                        "sentiment": "positive",
+                        "detail": "The college reports 98% of recent M.Arch grads employed or continuing education within a year (95% employed, 3% continuing)."
+                },
+                {
+                        "label": "Alumni at leading firms",
+                        "sentiment": "positive",
+                        "detail": "Graduates hold positions at firms including Gensler, Perkins+Will, HOK, HKS, AECOM and SOM."
+                },
+                {
+                        "label": "Rankings now discontinued",
+                        "sentiment": "caution",
+                        "detail": "DesignIntelligence suspended its comparative rankings in 2022 after top deans (Michigan included) criticized the survey's rigor, so the strongest ranking claims are dated."
+                },
+                {
+                        "label": "Broad, selective applicant pool",
+                        "sentiment": "mixed",
+                        "detail": "Third-party program profiles list a large graduate cohort (~289) and roughly 65% acceptance across M.Arch tracks, with substantial international enrollment."
+                }
+        ],
+        "sources": [
+                {
+                        "label": "Taubman College: Ranked Among Top 10 Most-Hired-From Architecture Schools (DesignIntelligence 2020)",
+                        "url": "https://taubmancollege.umich.edu/news/2020/02/27/taubman-college-ranked-among-top-10-most-hired-from-architecture-schools/"
+                },
+                {
+                        "label": "Taubman College of Architecture and Urban Planning (Wikipedia) - M.Arch ranking history",
+                        "url": "https://en.wikipedia.org/wiki/Taubman_College_of_Architecture_and_Urban_Planning"
+                },
+                {
+                        "label": "Peterson's: University of Michigan Master of Architecture program profile",
+                        "url": "https://www.petersons.com/graduate-schools/university-of-michigan-taubman-college-of-architecture-and-urban-planning-master-of-architecture-program-000_10026927.aspx"
+                }
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, the trade press, official employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements."
+    },
+    "mich-industrial-and-operations-engineering-ms": {
+        "summary": "Michigan's Industrial and Operations Engineering department is one of the most highly rated in its field: U.S. News & World Report ranks its industrial/manufacturing/systems engineering graduate program No. 2 in the nation, and the department reports roughly 197 MS/MSE students enrolled (Fall 2025). Coverage describes the master's as a residential, human-centered program spanning operations research, optimization, statistics, data analytics and human factors, with graduates placing into healthcare, finance, technology and manufacturing. The department publishes a First Destination Survey with employers, job titles and salaries, but a program-specific published median salary figure was not independently resolvable in third-party coverage at the time of writing, so field-level salary context (e.g., NACE entry-level industrial-engineering figures near $75K) should be read as broad-field, not program-specific.",
+        "themes": [
+                {
+                        "label": "Elite graduate ranking",
+                        "sentiment": "positive",
+                        "detail": "U.S. News ranks Michigan's industrial/manufacturing/systems engineering graduate program No. 2 in the nation."
+                },
+                {
+                        "label": "Broad, flexible curriculum",
+                        "sentiment": "positive",
+                        "detail": "The residential MS/MSE spans operations research, optimization, statistics, data analytics and human factors, with wide course flexibility."
+                },
+                {
+                        "label": "Cross-industry placement",
+                        "sentiment": "positive",
+                        "detail": "Graduates place into healthcare, finance, technology and manufacturing, per program and career-center descriptions."
+                },
+                {
+                        "label": "Sizable, active cohort",
+                        "sentiment": "positive",
+                        "detail": "The department reports roughly 197 MS/MSE students enrolled as of Fall 2025."
+                },
+                {
+                        "label": "Limited program-specific salary transparency",
+                        "sentiment": "caution",
+                        "detail": "A verifiable program-specific published median salary was not independently resolvable; available salary context is field-level (NACE entry-level industrial-engineering figures near $75K), not IOE-master's-specific."
+                }
+        ],
+        "sources": [
+                {
+                        "label": "U-M Industrial & Operations Engineering: MS/MSE program page",
+                        "url": "https://ioe.engin.umich.edu/graduate/masters-programs/industrial-and-operations-engineering-masters/"
+                },
+                {
+                        "label": "U-M Industrial & Operations Engineering: By the Numbers",
+                        "url": "https://ioe.engin.umich.edu/about/by-the-numbers/"
+                }
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, the trade press, official employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements."
+    },
+    "mich-environment-and-sustainability-ms": {
+        "summary": "University of Michigan's School for Environment and Sustainability (SEAS) publishes an annual post-graduate survey for its Master of Science cohorts. For the Class of 2023, master's and PhD graduates reported an average salary of $75,158 and a median of $67,000, with reported figures spanning roughly $18,000 to $192,000. Outcomes vary sharply by specialization: Sustainable Systems graduates reported the highest pay (average about $91,887, median $80,500) while Ecosystem Science & Management reported the lowest (average about $59,704). SEAS graduates place across the government, nonprofit, and private sectors, with employers ranging from federal agencies (U.S. Fish & Wildlife Service, USDA NRCS) to environmental nonprofits (World Resources Institute, Ducks Unlimited).",
+        "themes": [
+                {
+                        "label": "Published, specialization-level outcomes",
+                        "sentiment": "positive",
+                        "detail": "SEAS releases a detailed annual employment report broken out by MS specialization, so prospective students can see real salary distributions rather than a single blended number."
+                },
+                {
+                        "label": "Cross-sector placement",
+                        "sentiment": "positive",
+                        "detail": "Graduates land across government (U.S. Fish & Wildlife, USDA NRCS, state agencies), nonprofits (World Resources Institute, Ducks Unlimited), and private-sector sustainability and consulting roles."
+                },
+                {
+                        "label": "Applied, client-based training",
+                        "sentiment": "positive",
+                        "detail": "Master's students complete 15 to 18 months of team-based work solving real environmental problems for external clients, and 30 to 40 percent pursue a dual degree in fields like business, engineering, public health, or law."
+                },
+                {
+                        "label": "Wide salary spread",
+                        "sentiment": "mixed",
+                        "detail": "Reported Class of 2023 salaries ranged from about $18,000 to $192,000, and the median ($67,000) sits well below the average ($75,158), signaling that early-career pay is uneven and depends heavily on sector and specialization."
+                },
+                {
+                        "label": "Lower pay in ecology-leaning tracks",
+                        "sentiment": "caution",
+                        "detail": "Ecosystem Science & Management graduates reported the lowest outcomes (average about $59,704), a reminder that environmental-mission roles, especially in nonprofits and government, often pay less than the Sustainable Systems / private-sector track."
+                }
+        ],
+        "sources": [
+                {
+                        "label": "SEAS Class of 2023 Post-Grad Survey Report (PDF)",
+                        "url": "https://seas.umich.edu/sites/default/files/2024-09/2023-SEAS-Post-Grad-Survey-Report.pdf"
+                },
+                {
+                        "label": "SEAS Career Services — Employment Data",
+                        "url": "https://seas.umich.edu/student-services/career-services/employment-data"
+                },
+                {
+                        "label": "SEAS Master of Science — Careers",
+                        "url": "https://seas.umich.edu/academics/master-science/sustainable-systems/careers"
+                }
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, the trade press, official employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements."
+    },
+    "mich-information-analysis-and-design-ug": {
+        "summary": "\"Information Analysis and Design\" is the University of Michigan undergraduate admissions name for the Bachelor of Science in Information (BSI) at the School of Information (UMSI), where students choose an Information Analysis or User Experience Design pathway. UMSI's 2025 BSI Employment Report (Class of 2024) states 94% of graduates were employed in their field of choice with an average starting salary of $87,000 and 97% reporting high job satisfaction, based on 82% of 231 graduates reporting outcomes. Top destinations were technology, consulting, financial services, and health, with UX designer/researcher and fast-growing product management roles among the leading outcomes. UMSI is widely recognized for information science, though its marquee U.S. News standing (No. 5 for library and information studies in 2026) is a graduate-program ranking rather than an undergraduate one.",
+        "themes": [
+                {
+                        "label": "Strong reported placement",
+                        "sentiment": "positive",
+                        "detail": "The 2025 BSI Employment Report cites 94% of graduates employed in their field of choice with an $87,000 average starting salary and 97% reporting high job satisfaction."
+                },
+                {
+                        "label": "In-demand tech and UX roles",
+                        "sentiment": "positive",
+                        "detail": "Top industries were technology, consulting, financial services, and health; UX designer and UX researcher remain top outcomes and product management is a fast-growing destination."
+                },
+                {
+                        "label": "Internship-to-offer pipeline",
+                        "sentiment": "positive",
+                        "detail": "UMSI reports internships are central to outcomes, with a large share of graduates crediting internship experience for their job and a meaningful share accepting return offers from an internship employer."
+                },
+                {
+                        "label": "Pathway-based, data-and-design focus",
+                        "sentiment": "mixed",
+                        "detail": "The BSI requires choosing the Information Analysis (evidence and data) or UX Design pathway, culminating in capstones; the structure gives depth but means students commit to a track rather than a broad, undifferentiated CS-style degree."
+                },
+                {
+                        "label": "Reputation skews graduate, not undergrad",
+                        "sentiment": "caution",
+                        "detail": "UMSI's headline rankings (e.g., No. 5 in library and information studies, 2026) and much of its national recognition are for its graduate programs; the undergraduate BSI is a younger, less independently ranked credential, so applicants should weigh program-specific outcomes over the school's grad-level prestige."
+                }
+        ],
+        "sources": [
+                {
+                        "label": "2025 BSI Employment Report (UMSI)",
+                        "url": "https://www.si.umich.edu/student-experience/career-outcomes/2025-bsi-employment-report"
+                },
+                {
+                        "label": "BSI Career Outcomes (UMSI)",
+                        "url": "https://www.si.umich.edu/programs/bachelor-science-information/bachelor-science-information-career-outcomes"
+                },
+                {
+                        "label": "BSI Curriculum — Information Analysis & UX pathways",
+                        "url": "https://www.si.umich.edu/programs/bachelor-science-information/bachelor-science-information-curriculum"
+                }
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, the trade press, official employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements."
+    },
+    "mich-sport-management-ug": {
+        "summary": "The University of Michigan's undergraduate Sport Management degree sits in the School of Kinesiology and is highly regarded in the field, with Michigan ranked No. 2 in the U.S. and No. 9 worldwide for sports-related subjects in the QS World University Rankings by Subject. Students select one of two concentrations by the end of sophomore year, Sport Marketing & Management or Sport Policy & Analytics, and complete required internship credits through the program's #BestNetworkInSports partner base, which includes the NBA, NFL, NHL, MLB, NCAA, and ESPN. Across the School of Kinesiology, 97% of 2024 bachelor's graduates were employed or continuing their education (90% response rate of 317 graduates); this is a school-wide figure rather than a sport-management-only statistic. The program does not publish a Sport-Management-specific starting-salary figure.",
+        "themes": [
+                {
+                        "label": "Elite subject reputation",
+                        "sentiment": "positive",
+                        "detail": "Michigan ranks No. 2 in the U.S. and No. 9 worldwide for sports-related subjects (QS World University Rankings by Subject), among the strongest sport-management brands in the country."
+                },
+                {
+                        "label": "Deep industry network",
+                        "sentiment": "positive",
+                        "detail": "The Partners Program (#BestNetworkInSports) connects students to the NBA, NFL, NHL, MLB, NCAA, ESPN, and teams like the Detroit Red Wings, feeding internships and full-time roles."
+                },
+                {
+                        "label": "Required internship + concentrations",
+                        "sentiment": "positive",
+                        "detail": "Students complete required internship credits and choose Sport Marketing & Management or Sport Policy & Analytics, pairing applied experience with a focused track."
+                },
+                {
+                        "label": "Placement figure is school-wide, not SM-specific",
+                        "sentiment": "mixed",
+                        "detail": "The frequently cited 97% employed-or-continuing rate covers all 317 School of Kinesiology bachelor's graduates in 2024, not the Sport Management major in isolation, so it should not be read as a program-level placement rate."
+                },
+                {
+                        "label": "No published program-specific salary",
+                        "sentiment": "caution",
+                        "detail": "Unlike SEAS or UMSI, the Sport Management program does not publish its own average starting salary; sports-industry entry roles are competitive and often modestly paid early on, so applicants can't verify pay outcomes from an official program report."
+                }
+        ],
+        "sources": [
+                {
+                        "label": "Michigan Sport Management — Undergraduate Program",
+                        "url": "https://www.kines.umich.edu/academics/sport-management/undergraduate"
+                },
+                {
+                        "label": "School of Kinesiology — Facts & Figures",
+                        "url": "https://www.kines.umich.edu/about/facts-figures"
+                },
+                {
+                        "label": "Michigan Sport Management — Partners Program",
+                        "url": "https://www.kines.umich.edu/academics/sport-management/partners-program"
+                },
+                {
+                        "label": "Inside Michigan's Sport Management Program (HighAmbition)",
+                        "url": "https://highambition.org/2025/02/12/inside-the-university-of-michigans-stellar-sports-management-undergraduate-program/"
+                }
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, the trade press, official employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements."
+    },
     "mich-master-of-business-administration-mba": {
         "summary": "The Michigan Ross Full-Time MBA is a top-tier program (consistently ranked in the U.S. top 10–15) known for its action-based learning (the Multidisciplinary Action Projects, MAP), deep consulting and general-management recruiting, and a collaborative culture. Reviewers cite a Class of 2024 median base salary of $170,000 with a $30,000 median signing bonus and strong placement into consulting, finance, and tech — while noting that 2024 was a softer hiring year (offers at three months fell to about 85% from 96%) and that pay dipped $5,000 from the prior class.",
         "themes": [
@@ -4756,26 +5273,385 @@ _WHO_BY_TYPE: dict[str, str] = {
     ),
 }
 _WHO_BY_SLUG: dict[str, str] = {
-    "mich-master-of-business-administration-mba": (
-        "Early-to-mid-career professionals targeting general management and leadership "
-        "through the Ross School of Business."
-    ),
-    "mich-business-ug": (
-        "Undergraduates seeking a top-ranked direct-admit business education through the "
-        "Ross School of Business (BBA)."
-    ),
+    "mich-aerospace-engineering-ug": "Undergraduates fascinated by how aircraft and spacecraft fly, who want to design, develop, and test vehicles across both aeronautics within the atmosphere and astronautics in space. A foundation for aerospace engineering roles or graduate study in flight and space systems.",
+    "mich-afroamerican-and-african-studies-ug": "Students drawn to the histories, cultures, politics, and social experiences of African and African-descended peoples across the continent and the diaspora, working across disciplines. Groundwork for careers in education, public service, and the arts, or graduate study.",
+    "mich-american-culture-ug": "Undergraduates who want to examine U.S. society, history, politics, and cultural production by drawing on history, literature, ethnic studies, and the social sciences. A base for work in media, public institutions, and culture, or continued graduate study.",
+    "mich-anthropology-ug": "Students curious about human behavior, biology, cultures, societies, and languages across both the present and the deep past, studying humanity through a scientific lens. Prepares for fieldwork-oriented careers, applied research, or graduate study in anthropology.",
+    "mich-applied-exercise-science-ug": "Undergraduates interested in how the body responds and adapts to physical activity, integrating physiology, biomechanics, and motor control to support health and performance. A path toward health and fitness professions or graduate and clinical programs.",
+    "mich-archaeology-of-the-ancient-mediterranean-ug": "Students drawn to reconstructing past Mediterranean societies through their material remains, working with artifacts, architecture, and excavated sites. A foundation for fieldwork, museum and heritage roles, or graduate study in archaeology.",
+    "mich-architecture-ug": "Undergraduates who want to design buildings and built environments, balancing aesthetic, structural, functional, and social considerations. A pre-professional foundation that typically leads toward a graduate architecture degree and the path to licensure.",
+    "mich-art-and-design-ug": "Studio-minded students who want to make visual work across media, joining conceptual development, craft, and critical inquiry to communicate ideas and shape objects and experiences. Prepares for professional creative practice or graduate art study.",
+    "mich-arts-and-ideas-in-the-humanities-ug": "Undergraduates who want to study the arts, literature, philosophy, and cultural movements together with the ideas that shape and connect them, across disciplines. A humanities foundation for work in culture and education or graduate study.",
+    "mich-asian-studies-ug": "Students interested in the peoples, cultures, languages, histories, and politics of Asia, studied across disciplines. A base for careers in international work, business, and public service, or graduate study focused on the region.",
+    "mich-astronomy-and-astrophysics-ug": "Undergraduates drawn to celestial objects and phenomena who want to apply the laws of physics to the nature, origin, and evolution of stars, galaxies, and the universe. A foundation for research roles or graduate study in astrophysics.",
+    "mich-biochemistry-ug": "Students fascinated by the chemical processes and substances within living organisms, studying biology and chemistry at the molecular level. Prepares for laboratory and health-related careers or graduate and professional study in the molecular life sciences.",
+    "mich-biology-ug": "Undergraduates curious about life and living organisms, from their structure and function to growth, evolution, and interactions with the environment. A broad foundation for health professions, research, or graduate study in the life sciences.",
+    "mich-biology-health-and-society-ug": "Students who want to connect the biological sciences with the social, ethical, and policy dimensions of human health and medicine. A path toward health professions, public health, or policy work, or graduate study bridging science and society.",
+    "mich-biomedical-engineering-ug": "Undergraduates who want to apply engineering principles to medicine and biology, developing devices, instruments, and systems for healthcare and the study of living systems. A foundation for medical-device work, health professions, or graduate engineering study.",
+    "mich-biomolecular-science-ug": "Students drawn to the molecules of life who want to study the structure, function, and interactions of proteins, nucleic acids, and lipids that underlie cellular processes. Prepares for laboratory research, health professions, or graduate study.",
+    "mich-biophysics-ug": "Undergraduates who want to apply the concepts and methods of physics to biological systems, from molecules and cells to whole organisms. A quantitative foundation for research careers or graduate study bridging physics and the life sciences.",
+    "mich-biopsychology-cognition-and-neuroscience-ug": "Students interested in the biological bases of behavior and mental processes, linking the brain and nervous system to perception, cognition, and action. A foundation for research, health professions, or graduate study in neuroscience and related fields.",
+    "mich-business-ug": "Undergraduates seeking a top-ranked direct-admit business education through the Ross School of Business (BBA).",
+    "mich-cellular-and-molecular-biomedical-science-ug": "Undergraduates focused on the cellular and molecular mechanisms behind human health and disease, and how that understanding informs diagnosis and treatment. Prepares for biomedical research, health professions, or graduate study.",
+    "mich-chemical-engineering-ug": "Students who want to apply chemistry, physics, and mathematics to design and run processes that convert raw materials into useful products, fuels, and chemicals at scale. A foundation for process and manufacturing careers or graduate engineering study.",
+    "mich-chemistry-ug": "Undergraduates drawn to matter itself, studying its properties, composition, structure, and the changes it undergoes in chemical reactions. A base for laboratory careers, health professions, or graduate study in chemistry.",
+    "mich-civil-engineering-ug": "Students who want to design, construct, and maintain the built environment, including buildings, bridges, roads, and water systems. A professional foundation for infrastructure careers and the path toward engineering licensure or graduate study.",
+    "mich-classical-civilization-ug": "Undergraduates drawn to the cultures, literatures, history, and societies of ancient Greece and Rome, studied largely in translation. A humanities foundation for careers in education, law, and writing, or graduate study of the ancient world.",
+    "mich-classical-languages-and-literatures-ug": "Students who want to read ancient Greek and Latin and study the literary works written in them in the original. A foundation for teaching, editing, and scholarly work, or graduate study in classics.",
+    "mich-climate-and-meteorology-ug": "Undergraduates interested in the atmosphere, weather processes, and the climate system, and how the atmosphere behaves and changes over time. A foundation for forecasting, environmental, and research careers or graduate study in the atmospheric sciences.",
+    "mich-cognitive-science-ug": "Students fascinated by the mind and intelligence who want to draw across psychology, neuroscience, linguistics, philosophy, and computer science. A foundation for work in technology, research, and design, or graduate study of cognition.",
+    "mich-communication-and-media-ug": "Undergraduates who want to understand how messages and media shape individuals, institutions, and society, examining communication processes, media systems, and their effects. Prepares for careers in media, communications, and related fields, or graduate study.",
+    "mich-community-and-global-public-health-ug": "Students who want to protect and improve the health of populations locally and worldwide through prevention, policy, and community-based approaches. A foundation for public-health careers or graduate study in the field.",
+    "mich-comparative-literature-arts-and-media-ug": "Undergraduates who want to study literary, visual, and media works across cultures and forms, examining how they create meaning and relate to one another. A humanities foundation for writing, culture, and media careers, or graduate study.",
+    "mich-composition-ug": "Students who want to create original musical works, developing the craft of writing, structuring, and notating music. A conservatory-style foundation for careers as composers or for graduate study in composition.",
+    "mich-computer-engineering-ug": "Undergraduates who want to join electrical engineering and computer science to design and build computer hardware and the systems and software that run on it. A foundation for hardware and systems careers or graduate engineering study.",
+    "mich-computer-science-ug": "Students drawn to computation, algorithms, and information who want a liberal-arts grounding in the theory of computation, software design, and the principles that make computing possible. A base for software careers or graduate study in computing.",
+    "mich-computer-science-ug-eng": "Undergraduates who want an engineering-based study of algorithms and computation alongside computing hardware and systems, spanning software, architecture, and theory. A foundation for software and systems engineering careers or graduate study.",
+    "mich-creative-writing-and-literature-ug": "Students who want to pair the practice of original literary composition with the critical study of literary works and traditions. A foundation for writing, editing, and publishing careers, or graduate study in creative writing or literature.",
+    "mich-dance-ug": "Undergraduates who want to study and practice structured human movement through performance, choreography, technique, and dance history and theory. A conservatory-style foundation for professional dance careers or graduate study.",
+    "mich-data-science-ug": "Students who want to apply statistics, machine learning, and computing to extract insight from data, with an engineering emphasis on scalable computational methods and systems. A foundation for data and engineering careers or graduate study.",
+    "mich-data-science-ug-lsa": "Undergraduates who want to apply statistics, machine learning, and computing to extract insight from data, grounded in mathematics, statistics, and computer science through a liberal-arts path. A base for analytics careers or graduate study.",
+    "mich-dental-hygiene-ug": "Students drawn to preventing and treating oral disease through cleanings, assessments, and patient education in a clinical setting. A licensure-oriented foundation for practice as a dental hygienist or for continued study in the oral-health professions.",
+    "mich-drama-ug": "Undergraduates who want to study and practice theatrical performance and dramatic literature, working across acting, production, and the analysis of plays. A foundation for careers in theater and the arts or graduate study in drama.",
+    "mich-earth-and-environmental-sciences-ug": "Students interested in the Earth's physical systems, materials, and processes and how they interact with the environment and human activity. A foundation for geoscience and environmental careers or graduate study in the earth sciences.",
+    "mich-ecology-evolution-and-biodiversity-ug": "Undergraduates who want to study how organisms interact with their environments, how populations evolve, and how the diversity of life is generated and sustained. A foundation for field and conservation careers or graduate study in ecology and evolution.",
+    "mich-economics-ug": "Students who want to understand how societies produce, distribute, and consume goods and services, and how individuals and institutions decide under scarcity. A foundation for careers in business, policy, and finance, or graduate study in economics.",
+    "mich-electrical-engineering-ug": "Undergraduates drawn to electricity, electronics, and electromagnetism who want to design devices, circuits, and systems. A foundation for engineering careers across hardware and systems, or graduate study in electrical engineering.",
+    "mich-elementary-teacher-education-ug": "Students preparing to teach the elementary grades, combining subject-matter content, pedagogy, child development, and supervised classroom practice. A licensure-oriented path directly into elementary teaching.",
+    "mich-engineering-physics-ug": "Undergraduates who want to apply fundamental physics and mathematics to engineering problems, bridging physical science with the design of advanced technologies. A foundation for research and development roles or graduate study in physics or engineering.",
+    "mich-english-ug": "Students drawn to literature, language, and writing in English who want to analyze texts and study literary history and rhetoric. A foundation for careers in writing, education, and publishing, or graduate study in English.",
+    "mich-environment-ug": "Undergraduates who want to examine the natural environment and human interactions with it across the natural sciences, social sciences, and humanities. A foundation for environmental and policy careers or graduate study.",
+    "mich-environmental-engineering-ug": "Undergraduates who want to apply engineering to environmental problems and study water and air quality, waste treatment, and pollution control. A foundation for entry-level environmental engineering roles or graduate study in the field.",
+    "mich-film-television-and-media-ug": "Undergraduates drawn to the history, theory, and production of moving-image and media culture and its role in society. Fits those heading toward media and screen industries or graduate study in film and media.",
+    "mich-french-and-francophone-studies-ug": "Undergraduates who want to build fluency in French and read the literatures and cultures of France and the French-speaking world. A path toward work needing the language or graduate study in the field.",
+    "mich-gender-and-health-ug": "Undergraduates interested in how gender shapes health, illness, and access to care, and how systems and policy respond. Fits future work in health, public health, or advocacy, or graduate study.",
+    "mich-general-studies-ug": "Undergraduates who want to design a broad, self-directed course of study spanning multiple academic fields rather than a single major. A flexible foundation for varied careers or further study.",
+    "mich-german-ug": "Undergraduates who want to build fluency in German and read the literatures and cultures of the German-speaking world. A path toward work needing the language or graduate study in the field.",
+    "mich-greek-language-and-literature-ug": "Undergraduates drawn to the ancient Greek language and the poetry, prose, and drama written in it. Fits those continuing into classics, teaching, or graduate study of the ancient world.",
+    "mich-greek-language-and-culture-ug": "Undergraduates who want to learn the Greek language alongside the literature, history, and civilization of the Greek world. A foundation for further study of antiquity or language-based careers.",
+    "mich-history-ug": "Undergraduates who want to examine and interpret the human past, analyzing evidence to understand events, societies, and change over time. A foundation for careers in research, law, or public work, or graduate study.",
+    "mich-history-of-art-ug": "Undergraduates who want to study works of visual art and architecture across cultures and periods, reading their forms, meanings, and historical contexts. Fits future work in museums and galleries or graduate study.",
+    "mich-human-origins-biology-and-behavior-ug": "Undergraduates curious about the biological and evolutionary origins of humans and the roots of human behavior, integrating biological anthropology and the life sciences. A base for graduate study or science-related work.",
+    "mich-industrial-and-operations-engineering-ug": "Undergraduates who want to design and improve complex systems of people, processes, and resources using optimization, applied probability, statistics, and human-factors methods. Grounded in operations research, ergonomics, and production systems through labs and team projects, it leads toward engineering roles or graduate study.",
+    "mich-information-analysis-and-design-ug": "Undergraduates who want to gather, analyze, and present information and design systems and interfaces that serve human needs. A foundation for work in information roles or graduate study.",
+    "mich-integrated-business-and-engineering-at-michigan-ug": "Undergraduates who want to lead at the intersection of technology and enterprise, joining engineering problem-solving with core business management. This engineering-based track suits those heading toward technical-management roles or further study.",
+    "mich-integrated-business-and-engineering-at-michigan-ug-ross": "Undergraduates who want to lead at the intersection of technology and enterprise, pairing core business management with engineering problem-solving. This business-school track suits those heading toward management and enterprise roles or further study.",
+    "mich-interarts-performance-ug": "Artists who want to integrate visual art, media, and live performance into original cross-disciplinary work. This studio-based fine-arts path fits those building a career in interdisciplinary art and performance.",
+    "mich-interarts-performance-ug-smtd": "Performers who want to combine theatre, music, dance, and media into original, cross-disciplinary performance work. This performing-arts path fits those building a career on stage and across the arts.",
+    "mich-interdisciplinary-astronomy-ug": "Undergraduates fascinated by celestial objects and the universe who also want ties to physics, data science, and instrumentation. A foundation for science-related work or graduate study in astronomy or allied fields.",
+    "mich-interdisciplinary-chemical-sciences-ug": "Undergraduates drawn to matter and its transformations who want to bridge chemistry with biology, materials, physics, and engineering. A base for laboratory and science careers or graduate study.",
+    "mich-interdisciplinary-physics-ug": "Undergraduates who want to study the fundamental principles of matter and energy while connecting physics to biology, engineering, or the earth sciences. A foundation for science-related work or graduate study.",
+    "mich-international-studies-ug": "Undergraduates interested in global affairs across politics, economics, history, and culture spanning nations and regions. Fits future work in international fields, policy, or graduate study.",
+    "mich-italian-ug": "Undergraduates who want to build fluency in Italian and read the literature and culture of Italy and the Italian-speaking world. A path toward work needing the language or graduate study in the field.",
+    "mich-jazz-and-contemporary-improvisation-ug": "Musicians who want to study and practice jazz and improvised music through performance, composition, and the traditions of the idiom. A path toward professional performing and creative careers.",
+    "mich-judaic-studies-ug": "Undergraduates drawn to Jewish history, religion, languages, literature, and culture across time and place. A foundation for graduate study or work in fields that value this interdisciplinary grounding.",
+    "mich-latin-american-and-caribbean-studies-ug": "Undergraduates interested in the histories, cultures, politics, and societies of Latin America and the Caribbean. Fits future work in international or regional fields or graduate study.",
+    "mich-latin-language-and-literature-ug": "Undergraduates drawn to the Latin language and the poetry, prose, and history written in it. Fits those continuing into classics, teaching, or graduate study of the ancient world and its texts.",
+    "mich-latina-latino-studies-ug": "Undergraduates interested in the histories, cultures, and social experiences of people of Latin American descent in the United States. A foundation for work in community-facing fields or graduate study.",
+    "mich-learning-equity-and-problem-solving-for-the-public-good-ug": "Undergraduates who want to use learning and education to advance equity and address social problems for the public good. Fits future work in education, community, or public-serving fields.",
+    "mich-linguistics-ug": "Undergraduates drawn to the scientific study of language, including its sounds, structure, meaning, and use, and how languages vary and change. A foundation for language-related work or graduate study.",
+    "mich-materials-science-and-engineering-ug": "Undergraduates who want to study the structure, properties, processing, and performance of materials and how they are designed and engineered for use. A foundation for engineering roles or graduate study in the field.",
+    "mich-mathematics-ug": "Undergraduates who want to study quantity, structure, space, and change through abstract concepts, logical reasoning, and proof. A foundation for quantitative careers or graduate study in mathematics.",
+    "mich-mechanical-engineering-ug": "Undergraduates who want to design, analyze, and manufacture mechanical systems, machines, and devices, drawing on physics and materials. A foundation for engineering roles or graduate study in the field.",
+    "mich-microbiology-ug": "Undergraduates drawn to the study of bacteria, viruses, fungi, and protozoa and their roles in health, disease, and the environment. A base for laboratory and health-science careers or graduate study.",
+    "mich-middle-east-studies-ug": "Undergraduates interested in the languages, histories, politics, religions, and cultures of the Middle East. Fits future work in international or regional fields or graduate study.",
+    "mich-middle-eastern-and-north-african-studies-ug": "Undergraduates drawn to the languages, histories, politics, and cultures of the Middle East and North Africa. Fits future work in international or regional fields or graduate study.",
+    "mich-molecular-cellular-and-developmental-biology-ug": "Undergraduates fascinated by the molecules and cells of living organisms and the processes by which they grow and develop. A base for laboratory and health-science careers or graduate study.",
+    "mich-movement-science-ug": "Undergraduates interested in human movement and physical activity, integrating biomechanics, physiology, and motor control to understand performance, health, and rehabilitation. A foundation for health, rehabilitation, or research careers, or graduate study.",
+    "mich-music-ug": "Musicians who want to study the art of organizing sound through melody, harmony, rhythm, and timbre, working across performance, composition, and scholarship. A foundation for musical careers or further study.",
+    "mich-music-education-ug": "Undergraduates who want to teach music and study how it is taught and learned across schools and communities. A practice-oriented path toward becoming a music educator in classrooms and community settings.",
+    "mich-music-theory-ug": "Undergraduates drawn to the structures, elements, and principles that underlie how music is composed, organized, and understood. A foundation for careers in music or graduate study in theory.",
+    "mich-musical-theatre-ug": "Performers who want to combine acting, singing, and dance, building craft through performance, technique, and repertoire. A studio-based path toward a professional musical-theatre career.",
+    "mich-musicology-ug": "Undergraduates drawn to the scholarly study of music, including its history, repertoire, and cultural contexts. A foundation for research, teaching, or graduate study in musicology.",
+    "mich-naval-architecture-and-marine-engineering-ug": "Undergraduates who want to design, build, and operate ships and other marine vehicles and structures. A foundation for engineering roles in the marine field or continued graduate study in the discipline.",
+    "mich-neuroscience-ug": "Undergraduates fascinated by the nervous system and how the brain gives rise to behavior and cognition. A base for laboratory and health-science careers or graduate study in neuroscience.",
+    "mich-nuclear-engineering-and-radiological-sciences-ug": "Undergraduates drawn to nuclear processes and radiation, including reactors, radiation detection, and medical and energy uses. A foundation for engineering roles or graduate study in the field.",
+    "mich-nursing-ug": "Undergraduates who want to care for individuals, families, and communities to promote health and to prevent and treat illness. A practice-oriented path toward becoming a registered nurse.",
+    "mich-organ-ug": "Musicians who want to study the organ, developing performance, repertoire, and command of the instrument's pipe-and-air technique. A path toward professional performance and further musical study.",
+    "mich-organizational-studies-ug": "Undergraduates curious about how organizations form, run, and change, who want to draw on psychology, sociology, and economics to study them. A foundation for roles in management, consulting, and human resources, or graduate work in business or the social sciences.",
+    "mich-performing-arts-technology-ug": "Musicians and makers drawn to the technology behind sound, who want to work in recording, sound design, electronic music, and media production. Prepares graduates for careers in audio production and music technology, or continued study in the field.",
+    "mich-pharmaceutical-sciences-ug": "Science-minded undergraduates interested in how drugs are discovered, formulated, delivered, and act in the body, blending chemistry, biology, and pharmacology. A foundation for careers in the pharmaceutical industry or further study in pharmacy or the health sciences.",
+    "mich-philosophy-ug": "Students who like to reason carefully about existence, knowledge, values, mind, and language, and want to build skills in critical argument. A strong foundation for law, public life, or graduate study across the humanities.",
+    "mich-philosophy-politics-and-economics-ug": "Undergraduates who want to analyze social, political, and economic questions through more than one lens, integrating philosophy, politics, and economics. A foundation for careers in policy, law, government, or graduate study across these fields.",
+    "mich-physics-ug": "Students fascinated by matter, energy, and the fundamental forces governing everything from subatomic particles to the cosmos, who want rigorous grounding in physical law. A foundation for graduate research or technical work in science and engineering.",
+    "mich-piano-ug": "Pianists ready to deepen performance technique, repertoire, and musicianship at the keyboard through focused undergraduate study. Prepares graduates for performing and teaching careers, or advanced conservatory and graduate study.",
+    "mich-plant-biology-ug": "Undergraduates drawn to the scientific study of plants, from their structure and function to growth, reproduction, evolution, and ecological roles. A foundation for careers in botany, conservation, and environmental science, or graduate study in the life sciences.",
+    "mich-polish-ug": "Students who want to master the Polish language and explore the literature, history, and culture of Poland. Opens paths in international work, translation, and cultural fields, or graduate study in Slavic and area studies.",
+    "mich-political-science-ug": "Undergraduates interested in politics, government, and power, who want to study political institutions, behavior, public policy, and international relations. A foundation for careers in government, law, and advocacy, or graduate study in the field.",
+    "mich-psychology-ug": "Students drawn to the scientific study of mind and behavior, examining perception, cognition, emotion, development, and social interaction. A foundation for careers in human services and research, or graduate study in psychology and related fields.",
+    "mich-public-health-sciences-ug": "Undergraduates who want to protect and improve population health by analyzing disease, behavior, environment, and health systems. A foundation for public health practice or graduate study in the health sciences.",
+    "mich-public-policy-ug": "Students interested in how governments address public problems, who want to learn to analyze, design, and evaluate policies. A foundation for careers in government and the nonprofit sector, or graduate study in public policy.",
+    "mich-robotics-ug": "Undergraduates who want to design, build, and control robots by integrating mechanical engineering, electronics, computer science, and control theory. Prepares graduates for engineering careers in robotics and automation, or graduate study in the field.",
+    "mich-romance-languages-and-literatures-ug": "Students drawn to the languages descended from Latin\u2014French, Spanish, Italian, and others\u2014and the literatures written in them. Opens paths in translation, international work, and education, or graduate study in literature and languages.",
+    "mich-russian-ug": "Undergraduates who want to master Russian and explore the literature, history, and culture of Russia and the Russian-speaking world. Opens paths in international work, translation, and cultural fields, or graduate study in Slavic studies.",
+    "mich-russian-east-european-and-eurasian-studies-ug": "Students interested in the languages, histories, politics, and cultures of Russia, Eastern Europe, and Eurasia, who want an interdisciplinary lens on the region. A foundation for international careers, policy work, or graduate study in area studies.",
+    "mich-secondary-teacher-education-ug": "Future middle and high school teachers who want to combine subject-matter content, pedagogy, and supervised classroom practice. Leads toward teaching careers in secondary schools.",
+    "mich-social-theory-and-practice-ug": "Undergraduates who want to understand society through concepts and frameworks and apply them to real social problems and action. A foundation for careers in advocacy, community work, and the social sector, or graduate study in the social sciences.",
+    "mich-sociology-ug": "Students drawn to the scientific study of society, social relationships, institutions, and the patterns of human behavior. A foundation for careers in research, human services, and public work, or graduate study in sociology.",
+    "mich-space-sciences-and-engineering-ug": "Undergraduates fascinated by the space environment and the instruments, spacecraft, and systems used to observe and explore it. Prepares graduates for engineering careers in the space sector, or graduate study in space science and engineering.",
+    "mich-spanish-ug": "Students who want to master Spanish and explore the literatures and cultures of Spain and the Spanish-speaking world. Opens paths in translation, international work, and education, or graduate study in Hispanic studies.",
+    "mich-sport-management-ug": "Undergraduates interested in the business side of sport\u2014organizations, marketing, finance, and operations within the sport industry. Prepares graduates for careers in sport administration and management.",
+    "mich-statistics-ug": "Students who enjoy collecting, analyzing, and interpreting data and drawing inferences under uncertainty. A foundation for careers in data analysis and quantitative work, or graduate study in statistics and data science.",
+    "mich-strings-ug": "String players ready to develop technique and repertoire on the violin, viola, cello, or double bass through focused undergraduate study. Prepares graduates for performing and teaching careers, or advanced conservatory and graduate study.",
+    "mich-theatre-and-drama-ug": "Students drawn to theatrical performance and dramatic literature, who want to study acting, production, and the analysis of plays. A foundation for careers in theatre and the performing arts, or graduate and conservatory study.",
+    "mich-translation-ug": "Undergraduates fluent across languages who want to practice rendering meaning between them and study the theory, methods, and cultural dimensions of translation. Opens paths in translation and language services, or graduate study in the field.",
+    "mich-urban-technology-ug": "Students interested in how digital technology and data shape cities, who want to design technology-enabled solutions for urban life and systems. Prepares graduates for careers at the intersection of technology and cities, or graduate study in urban fields.",
+    "mich-user-experience-design-ug": "Undergraduates who want to design products, systems, and services that are useful, usable, and meaningful for the people who use them. Prepares graduates for careers in UX and product design, or graduate study in the field.",
+    "mich-voice-and-opera-ug": "Singers ready to develop vocal technique, languages, repertoire, and dramatic interpretation for the operatic and concert stage. Prepares graduates for performing careers, or advanced conservatory and graduate study.",
+    "mich-winds-and-percussion-ug": "Woodwind, brass, and percussion players who want to build technique, repertoire, and ensemble artistry through focused undergraduate study. Prepares graduates for performing and teaching careers, or advanced conservatory and graduate study.",
+    "mich-women-s-and-gender-studies-ug": "Undergraduates who want to study gender, women's experiences, and sexuality and how they shape culture, society, and power. A foundation for careers in advocacy, education, and the social sector, or graduate study in the field.",
+    "mich-aerospace-engineering-phd": "Engineers pursuing original research in the design and development of aerospace systems, working through faculty mentorship, qualifying examinations, and a dissertation. The path to research careers in academia, industry, or national labs.",
+    "mich-aerospace-engineering-ms": "Engineers who want advanced expertise in aerospace design and development through graduate seminars, methods training, and a thesis or capstone. Prepares graduates for specialized engineering roles or further doctoral study.",
+    "mich-american-culture-phd": "Scholars pursuing original research on American society, history, and politics, working through faculty mentorship, qualifying examinations, and a dissertation. The path to faculty positions and academic research careers.",
+    "mich-ancient-history-phd": "Scholars who want to research the recorded human past from the earliest civilizations through late antiquity, examining ancient politics, societies, economies, and cultures. The path to faculty positions and academic research careers in the field.",
+    "mich-ancient-mediterranean-art-and-archaeology-phd": "Scholars pursuing original research on the art, architecture, and material remains of the ancient Mediterranean\u2014Greece, Rome, and the Near East. The path to faculty positions, museum roles, and academic research careers.",
+    "mich-anthropology-phd": "Scholars pursuing original research into human behavior, biology, cultures, and societies, working through faculty mentorship, qualifying examinations, and a dissertation. The path to faculty positions and academic research careers in anthropology.",
+    "mich-anthropology-and-history-phd": "Scholars who want to join anthropological and historical methods to study how societies, cultures, and power relations form and change over time. The path to faculty positions and academic research careers across both fields.",
+    "mich-applied-and-interdisciplinary-mathematics-phd": "Mathematically minded researchers who want to develop and use mathematical methods to model and solve problems across the sciences, working through qualifying examinations and a dissertation. The path to faculty positions and research careers.",
+    "mich-applied-and-interdisciplinary-mathematics-ms": "Students who want to develop and apply mathematical methods to model and solve problems arising in the physical, biological, engineering, and social sciences. Prepares graduates for quantitative careers or further doctoral study.",
+    "mich-applied-economics-ms": "Students who want to use economic theory and econometric methods to analyze practical problems in labor, health, public policy, finance, and industry. Prepares graduates for analytical roles in the public and private sectors, or further doctoral study.",
+    "mich-applied-physics-phd": "Researchers who want to apply the principles and methods of physics to develop technologies and solve problems, working through qualifying examinations and a dissertation. The path to research careers in academia, industry, or national labs.",
+    "mich-applied-physics-ms": "Students who want to apply the principles and methods of physics to develop technologies and solve scientific and engineering problems, bridging physics and engineering. Prepares graduates for technical roles or further doctoral study.",
+    "mich-applied-statistics-ms": "Students who want to apply statistical theory and methods to collect, analyze, and interpret data and draw inferences in scientific, industrial, and social settings. Prepares graduates for data-analysis and statistical roles, or further doctoral study.",
+    "mich-arabic-studies-ms": "Students who want focused, interdisciplinary study of the Arabic language, literature, and the history and cultures of the Arab world. Prepares graduates for careers in research, education, and international work, or further doctoral study.",
+    "mich-architecture-phd": "Scholars pursuing original research on the design of buildings and built environments, integrating aesthetic and technical concerns through faculty mentorship, qualifying examinations, and a dissertation. The path to faculty positions and academic research careers.",
+    "mich-architecture-ms": "Designers who want advanced grounding in shaping buildings and built environments, weighing aesthetic and technical concerns through graduate seminars, methods training, and a thesis or capstone. Suits those moving toward specialized architectural practice or continued design research.",
+    "mich-art-ms": "Artists ready to deepen their studio practice while engaging the making, history, and critical interpretation of work across a wide range of media. Fits those advancing an independent creative practice or preparing for further study in art.",
+    "mich-asian-languages-and-cultures-phd": "Scholars committed to original research on the languages, literatures, religions, histories, and cultures of Asia, advancing through qualifying exams and a dissertation. The path toward faculty and academic research careers in Asian studies.",
+    "mich-astronomy-and-astrophysics-phd": "Researchers drawn to celestial objects and phenomena who will pursue original investigation under faculty mentorship, clear qualifying examinations, and complete a dissertation. Prepares for faculty positions and research careers in astronomy and astrophysics.",
+    "mich-athletic-training-ms": "Students entering the allied-health profession focused on preventing, evaluating, treating, and rehabilitating injuries and illnesses tied to physical activity and sport. A practice-oriented path toward certified athletic-training roles in clinical and sport settings.",
+    "mich-bioinformatics-phd": "Researchers who want to build and apply computational methods to analyze biological data, advancing original work through faculty mentorship, qualifying exams, and a dissertation. Prepares for faculty positions and research careers in computational biology.",
+    "mich-bioinformatics-ms": "Students who want to develop and apply computational methods across biology, computer science, and statistics to analyze genomic and molecular data. Suits those moving into analyst and research roles or continuing toward doctoral study.",
+    "mich-bioinformatics-pibs-phd": "Researchers focused on computational and statistical methods for large-scale biological and biomedical data, from genome sequences to gene-expression profiles, working through qualifying exams and a dissertation. The path to academic and research careers in the field.",
+    "mich-biological-chemistry-ms": "Students drawn to the chemistry of living systems who want focused study of the structure, function, and interactions of the molecules behind biological processes. Suits those advancing into laboratory research roles or preparing for doctoral work.",
+    "mich-biological-chemistry-pibs-phd": "Researchers investigating the molecular chemistry of living systems, including the structure, mechanism, and regulation of proteins, nucleic acids, and metabolic pathways, through qualifying exams and a dissertation. Leads to faculty and research careers in the discipline.",
+    "mich-biomedical-engineering-phd": "Engineers who want to apply engineering principles and design to medicine and biology through original research, faculty mentorship, qualifying examinations, and a dissertation. Prepares for faculty positions and research careers in biomedical engineering.",
+    "mich-biomedical-engineering-ms": "Engineers seeking advanced, focused expertise in applying engineering principles and design to medicine and biology, built through graduate seminars, methods training, and a thesis or capstone. Suits those advancing in industry or moving toward doctoral study.",
+    "mich-biomedical-sciences-pibs-phd": "Researchers studying the biological mechanisms of human health and disease at molecular, cellular, and systems levels, advancing original work through qualifying exams and a dissertation. The path toward faculty and biomedical research careers.",
+    "mich-biophysics-phd": "Researchers who want to bring the concepts and methods of physics to understanding biological systems, pursuing original work through faculty mentorship, qualifying examinations, and a dissertation. Leads to faculty positions and research careers in biophysics.",
+    "mich-biostatistics-phd": "Researchers who want to develop statistical theory and methods for questions in biology and medicine, advancing original work through qualifying exams and a dissertation. Prepares for faculty positions and research careers in biostatistics.",
+    "mich-biostatistics-ms": "Students who want to apply statistical theory and methods to biology, medicine, and public health, including the design and analysis of experiments and clinical studies. Suits those entering biostatistician roles or continuing toward doctoral study.",
+    "mich-biostatistics-health-data-science-ms": "Students drawn to applying statistical and computational methods to large-scale health and biomedical data supporting research and clinical decision-making. Fits those moving into health-data-science and analytics roles across research and care.",
+    "mich-business-administration-phd": "Researchers who want to study how organizations are managed and operated, spanning fields such as accounting, through original work, qualifying examinations, and a dissertation. The path toward faculty positions and academic research in business.",
+    "mich-business-and-economics-phd": "Researchers who want to join the analytical methods of economics with the study of firms and markets to examine decision-making, organizations, and the economy, working through qualifying exams and a dissertation. Leads to faculty and research careers.",
+    "mich-cancer-biology-pibs-phd": "Researchers studying how normal cells become malignant, how tumors grow and spread, and how cancer can be detected and treated, advancing original work through qualifying exams and a dissertation. Prepares for faculty and cancer-research careers.",
+    "mich-cell-and-developmental-biology-pibs-phd": "Researchers drawn to the structure and function of cells and how organisms grow from a single cell into complex tissues, pursuing original work through qualifying exams and a dissertation. The path toward faculty and research careers in the field.",
+    "mich-cellular-and-molecular-biology-pibs-phd": "Researchers focused on the molecular machinery and processes governing the structure, function, and regulation of cells, advancing original work through qualifying exams and a dissertation. Leads to faculty positions and research careers in cell and molecular biology.",
+    "mich-chemical-biology-phd": "Researchers who want to apply the tools and principles of chemistry to study and manipulate biological systems, probing the molecules and reactions of living cells through qualifying exams and a dissertation. Prepares for faculty and research careers.",
+    "mich-chemical-biology-of-cancer-ms": "Students who want to apply chemical and molecular approaches to understanding cancer biology and to discovering and developing new diagnostics and therapeutics. Suits those entering research roles in drug discovery or preparing for doctoral study.",
+    "mich-chemical-engineering-phd": "Researchers grounded in chemistry and physics who want to pursue original work through faculty mentorship, qualifying examinations, and a dissertation. Prepares for faculty positions and research careers in chemical engineering.",
+    "mich-chemical-engineering-ms": "Engineers seeking advanced, focused expertise built on chemistry and physics through graduate seminars, methods training, and a thesis or capstone. Suits those advancing in industry practice or moving toward doctoral research.",
+    "mich-chemistry-phd": "Researchers drawn to matter and its properties, composition, and structure who will pursue original investigation through faculty mentorship, qualifying examinations, and a dissertation. Leads to faculty positions and research careers in chemistry.",
+    "mich-chemistry-ms": "Students who want advanced, focused study of matter and its properties, composition, and structure, built through graduate seminars, methods training, and a thesis or capstone. Suits those entering chemistry-based roles or continuing toward doctoral work.",
+    "mich-civil-engineering-phd": "Researchers in the discipline of design and construction who want to pursue original work through faculty mentorship, qualifying examinations, and a dissertation. Prepares for faculty positions and research careers in civil engineering.",
+    "mich-civil-engineering-ms": "Engineers seeking advanced, focused expertise in the design and construction of the built environment through graduate seminars, methods training, and a thesis or capstone. Suits those advancing in professional practice or moving toward doctoral study.",
+    "mich-classical-studies-phd": "Researchers drawn to the languages, literature, history, and art of the ancient world who will pursue original work through faculty mentorship, qualifying examinations, and a dissertation. The path toward faculty and academic research careers in classics.",
+    "mich-classical-studies-ms": "Students who want focused, interdisciplinary study of the languages, literature, history, art, and archaeology of ancient Greece and Rome. Suits those deepening expertise before doctoral work or scholarly and cultural-heritage roles.",
+    "mich-climate-and-space-sciences-and-engineering-phd": "Researchers studying the Earth's atmosphere, climate, and the space environment who will pursue original work through faculty mentorship, qualifying examinations, and a dissertation. Prepares for faculty positions and research careers in the field.",
+    "mich-climate-and-space-sciences-and-engineering-ms": "Students drawn to the Earth's atmosphere, climate, and space environment who want to develop the instruments and models used to observe and predict them. Suits those entering technical and research roles or continuing toward doctoral study.",
+    "mich-clinical-pharmacy-translational-science-phd": "Researchers who want to study how medications act in patients and how laboratory discoveries become safe, effective drug therapy and clinical practice, working through qualifying exams and a dissertation. The path toward faculty and translational-research careers.",
+    "mich-clinical-research-design-and-statistical-analysis-ms": "Students who want to learn how to design clinical investigations and analyze their data to produce valid, reliable medical evidence. Suits clinicians and researchers moving into study-design and clinical-data-analysis roles.",
+    "mich-communication-and-media-phd": "Researchers drawn to how messages and media shape individuals, institutions, and society who will pursue original work through faculty mentorship, qualifying examinations, and a dissertation. Leads to faculty positions and research careers in communication.",
+    "mich-comparative-literature-phd": "Researchers who want to study literature across languages, national boundaries, and historical periods, often alongside other arts and disciplines, through qualifying exams and a dissertation. The path toward faculty and academic research careers.",
+    "mich-composition-phd": "Composers who want to pursue original creative and scholarly work in writing musical works, advancing through faculty mentorship, qualifying examinations, and a dissertation. Prepares for faculty positions and research-oriented careers in composition.",
+    "mich-composition-ms": "Composers who want focused, advanced work in the craft of writing, structuring, and notating original musical works. Suits those developing an independent compositional voice or preparing for further study in music.",
+    "mich-composition-and-music-theory-phd": "Composers and theorists who want to join the creation of original works with analytical study of how music is structured, organized, and understood, working through qualifying exams and a dissertation. The path toward faculty and academic careers.",
+    "mich-computational-epidemiology-and-systems-modeling-ms": "Students who want to use mathematical and computer models to study how diseases spread through populations and to evaluate public-health interventions. Suits those entering modeling and analytics roles in public health or continuing to doctoral study.",
+    "mich-computer-science-and-engineering-phd": "Researchers who want to join the study of computation and algorithms with the design of computing systems, advancing original work through faculty mentorship, qualifying examinations, and a dissertation. Prepares for faculty and research careers.",
+    "mich-computer-science-and-engineering-ms": "Students who want advanced work joining computation and algorithms with the design of computing hardware and systems, spanning software, architecture, and theory. Suits those moving into technical roles or continuing toward doctoral study.",
+    "mich-conducting-band-wind-ensemble-phd": "Conductors who want advanced study and practice of leading wind bands and ensembles, from score study and gesture to interpretation, working through qualifying exams and a dissertation. The path toward faculty and leading ensemble-directing careers.",
+    "mich-conducting-choral-phd": "Conductors who want advanced study and practice of leading choirs and vocal ensembles, spanning score study, vocal technique, rehearsal craft, and interpretation, through qualifying exams and a dissertation. Prepares for faculty and choral-directing careers.",
+    "mich-conducting-orchestral-phd": "Conductors who want advanced study and practice of leading orchestras in rehearsal and performance, from score study and gesture to musical interpretation, working through qualifying exams and a dissertation. The path toward faculty and orchestral-directing careers.",
+    "mich-construction-engineering-and-management-ms": "Engineering graduates who want to plan, design, and oversee infrastructure and building projects, blending technical engineering with the management principles that keep large projects on schedule and budget. Suits future project engineers, construction managers, and firm-side leaders.",
+    "mich-creative-writing-ms": "Writers ready to devote graduate study to original literary composition in fiction, poetry, and creative nonfiction, developing craft and a substantial body of work. Fits those aiming for a writing life, publication, or teaching.",
+    "mich-dance-ms": "Committed dance artists who want advanced study of structured human movement, combining graduate seminars, methods training, and a thesis or capstone project. Suits performers, choreographers, and educators deepening their practice.",
+    "mich-data-science-ms": "Quantitatively minded students who want to combine statistics, computation, and domain knowledge to extract insight and build predictive models from data. Prepares graduates for data scientist and analytics roles across industry and research.",
+    "mich-dental-hygiene-ms": "Practicing hygienists ready to advance beyond clinical care into the science of preventing and treating oral disease, through graduate seminars, methods training, and a thesis or capstone. Opens paths in education, research, and clinical leadership.",
+    "mich-design-ms": "Designers who want to plan and create objects, systems, and experiences that integrate function, aesthetics, and human needs at a graduate level. Suits practitioners deepening their craft toward studio, product, or experience-design careers.",
+    "mich-design-science-phd": "Researchers who want to study the principles, processes, and methods behind design and generate original scholarship through qualifying exams and a dissertation, with faculty mentorship. The path to academic and research careers in design science.",
+    "mich-design-science-ms": "Students drawn to the principles, processes, and methods of design across disciplines, who want systematic, research-based approaches to creating products and systems. Suits those advancing toward applied design-research and development roles.",
+    "mich-earth-and-environmental-sciences-phd": "Scientists who want to investigate the Earth's physical systems and materials through original research, qualifying exams, and a dissertation guided by faculty mentors. The path to faculty positions and research careers in the Earth sciences.",
+    "mich-earth-and-environmental-sciences-ms": "Students who want advanced study of the Earth's physical systems and materials, combining graduate seminars, methods training, and a thesis or capstone. Suits those advancing into environmental, geoscience, or resource-focused careers, or further doctoral study.",
+    "mich-ecology-and-evolutionary-biology-phd": "Biologists who want to research how organisms interact with one another and their environment and the evolutionary processes shaping biological diversity, through original research and a dissertation. The path to faculty and research careers.",
+    "mich-ecology-and-evolutionary-biology-ms": "Students focused on the interactions of organisms with their environment and the evolutionary processes behind biological diversity, at the graduate level. Suits those advancing toward research, conservation, or further doctoral study.",
+    "mich-economics-phd": "Scholars who want to study how societies produce and distribute resources through rigorous original research, qualifying exams, and a dissertation with faculty mentorship. The path to faculty positions and research careers in economics.",
+    "mich-education-and-psychology-phd": "Researchers who want to apply psychological theory and methods to learning, development, and educational practice, producing original scholarship. Prepares graduates for faculty positions and research careers at the intersection of education and psychology.",
+    "mich-educational-leadership-and-policy-ms": "Educators who want to understand how schools and systems are led, organized, and governed, and how policy shapes teaching and learning. Suits aspiring school and district leaders and those moving into policy and administration.",
+    "mich-educational-studies-phd": "Scholars who want to research teaching, learning, and education as a social institution through original inquiry, qualifying exams, and a dissertation. The path to faculty positions and research careers in education.",
+    "mich-educational-studies-ms": "Students drawn to the interdisciplinary study of teaching, learning, and education as a social institution, drawing on the social sciences and humanities. Suits educators and future researchers building analytic depth in the field.",
+    "mich-electrical-and-computer-engineering-phd": "Engineers who want to research the design of electrical and electronic systems and computing hardware, from circuits to computer systems, through original work and a dissertation. The path to faculty positions and advanced research careers.",
+    "mich-electrical-and-computer-engineering-ms": "Engineering graduates who want deeper mastery of electrical and electronic systems and computing hardware, spanning circuits, signals, communications, and computer systems. Prepares graduates for specialized engineering roles in industry.",
+    "mich-endodontics-ms": "Dentists pursuing specialty training in diagnosing and treating diseases of the dental pulp and the tissues around tooth roots. The path toward practice as an endodontist and specialty-level clinical expertise.",
+    "mich-engineering-education-research-phd": "Researchers who want to study how engineering is taught and learned and generate original scholarship through qualifying exams and a dissertation. The path to faculty positions and research careers in engineering education.",
+    "mich-engineering-education-research-ms": "Students who want to apply educational theory and methods to how engineering is taught, working to improve engineering teaching, curricula, and outcomes. Suits engineers and educators moving toward curriculum, assessment, and instructional roles.",
+    "mich-english-and-education-phd": "Scholars who want to join the study of literature and language with educational theory and practice, producing original research through qualifying exams and a dissertation. Prepares graduates as scholars of English teaching and learning.",
+    "mich-english-and-women-s-and-gender-studies-phd": "Researchers who want to join the study of English literature and language with the analysis of gender and women's experiences across culture and society, through original scholarship and a dissertation. The path to faculty positions in the field.",
+    "mich-english-language-and-literature-phd": "Scholars who want to research works written in English and the English language itself, spanning literary analysis, history, and linguistics, through original work and a dissertation. The path to faculty positions and research careers.",
+    "mich-environment-and-sustainability-ms": "Students focused on the interactions between human societies and natural systems and the policies and practices that support a sustainable future. Suits future practitioners in sustainability, conservation, and environmental policy.",
+    "mich-environment-and-sustainability-phd": "Researchers who want to study the interactions between human societies and natural systems through original scholarship, qualifying exams, and a dissertation with faculty mentorship. The path to faculty positions and research careers in sustainability.",
+    "mich-environmental-engineering-phd": "Engineers who want to research how engineering principles can protect and improve the environment, through original work, qualifying exams, and a dissertation. The path to faculty positions and advanced environmental-engineering research careers.",
+    "mich-environmental-engineering-ms": "Engineering graduates who want advanced expertise applying engineering principles to protect and improve the environment, through graduate seminars, methods training, and a thesis or capstone. Prepares graduates for specialized environmental-engineering roles.",
+    "mich-environmental-health-sciences-phd": "Researchers who want to study how physical, chemical, and biological factors in the environment affect human health, generating original scholarship through qualifying exams and a dissertation. The path to faculty and research careers in environmental health.",
+    "mich-environmental-health-sciences-ms": "Students focused on how physical, chemical, and biological factors in the environment affect human health and how those risks are assessed and controlled. Suits future practitioners in environmental and public-health science, or doctoral study.",
+    "mich-epidemiologic-science-phd": "Researchers who want to study the distribution and determinants of health and disease in populations and apply that work to prevention and control, through original scholarship and a dissertation. The path to faculty and research careers in epidemiology.",
+    "mich-film-television-and-media-phd": "Scholars who want to research the history and theory of film, television, and media, producing original scholarship through qualifying exams and a dissertation with faculty mentorship. The path to faculty positions and research careers.",
+    "mich-genetic-counseling-ms": "Students preparing for a health profession that helps individuals and families understand and adapt to the medical, psychological, and familial implications of genetic conditions. The path toward practice as a genetic counselor.",
+    "mich-genetics-and-genomics-pibs-phd": "Researchers who want to study heredity and the structure, function, and evolution of genomes, including how genes shape traits, development, and disease, through original work and a dissertation. The path to faculty and research careers.",
+    "mich-germanic-languages-and-literatures-phd": "Scholars who want to research the German and other Germanic languages and the literary and cultural works written in them, through original scholarship and a dissertation. The path to faculty positions and research careers in the field.",
+    "mich-greek-ms": "Students who want advanced study of the ancient Greek language and the literature, philosophy, and history of the ancient Greek world. Suits those deepening classical scholarship toward teaching or further doctoral study.",
+    "mich-health-and-health-care-research-ms": "Students who want to study the organization, delivery, quality, and outcomes of health care and the factors shaping population health. Suits clinicians and analysts moving into health-services research and evidence-based practice.",
+    "mich-health-behavior-and-health-equity-phd": "Researchers who want to study the social, behavioral, and structural factors that influence health and the persistent disparities across populations, through original scholarship and a dissertation. The path to faculty and research careers in the field.",
+    "mich-health-behavior-and-health-equity-ms": "Students focused on the social, behavioral, and structural factors that shape health and the disparities across populations. Suits future practitioners in public health, health promotion, and equity-focused program work.",
+    "mich-health-infrastructures-and-learning-systems-phd": "Researchers who want to study how data, information technology, and learning processes can be built into health-care systems to continuously improve care, through original scholarship and a dissertation. The path to faculty and research careers.",
+    "mich-health-infrastructures-and-learning-systems-ms": "Clinicians and health professionals who want to study how data, information technology, and learning processes can be embedded in care systems to continuously improve them. Suits those moving into learning-health-system and informatics roles.",
+    "mich-health-infrastructures-and-learning-systems-online-ms": "Working health professionals who want to study, fully online, how data, information technology, and continuous-learning processes can be embedded in care systems to improve care. Suits practitioners advancing into learning-health-system and informatics roles.",
+    "mich-health-services-organization-and-policy-phd": "Researchers who want to study how health-care delivery is organized, financed, and governed and how policy shapes access, cost, and quality, through original scholarship and a dissertation. The path to faculty and research careers in health policy.",
+    "mich-higher-education-phd": "Scholars who want to research colleges and universities as organizations and the policies, leadership, and practices shaping them, through original work and a dissertation. The path to faculty positions and research careers in higher education.",
+    "mich-higher-education-ms": "Students who want to study colleges and universities as organizations and the policies, leadership, and practices that shape postsecondary teaching, access, and outcomes. Suits future administrators and student-affairs and policy professionals.",
+    "mich-history-phd": "Scholars who want to research the human past, examining and interpreting events and societies through original scholarship, qualifying exams, and a dissertation with faculty mentorship. The path to faculty positions and research careers in history.",
+    "mich-history-and-women-s-and-gender-studies-phd": "Scholars who want to join historical inquiry with the analysis of gender and women's experiences across time and across societies. This interdisciplinary doctoral path leads toward faculty positions and research careers in history and gender studies.",
+    "mich-history-of-art-phd": "Researchers drawn to visual art and architecture across cultures and periods who want to pursue original scholarship through faculty mentorship, qualifying examinations, and a dissertation. The path toward academic and museum-based art-historical careers.",
+    "mich-human-genetics-ms": "Students fascinated by human inheritance who want focused graduate grounding in how genes shape traits, variation, and disease. A specialized master's for those advancing into genetics-related research, clinical, or counseling roles, or continuing toward doctoral study.",
+    "mich-immunology-pibs-phd": "Aspiring researchers who want to investigate how the body defends against disease and how immune responses malfunction or can be harnessed therapeutically. Through qualifying exams and a dissertation, the path toward academic and biomedical immunology research careers.",
+    "mich-industrial-and-operations-engineering-phd": "Researchers drawn to operations research and optimization, healthcare systems engineering, human factors and ergonomics, financial engineering, and data-driven decision making. Working with faculty advisers through qualifying exams and a dissertation, they prepare for careers in academia, industry research, and national laboratories.",
+    "mich-industrial-and-operations-engineering-ms": "Engineers and analysts who want advanced skill in operations research, stochastic modeling, data analytics, and ergonomics applied to healthcare, supply chains, and financial engineering. Through seminars and a project or thesis, the path toward analytics, consulting, operations, and systems-engineering roles or doctoral study.",
+    "mich-information-phd": "Researchers who want to study how information is created, organized, stored, and retrieved through original scholarship, guided by faculty mentorship, qualifying examinations, and a dissertation. The path toward academic and research careers in information.",
+    "mich-integrated-pharmaceutical-sciences-ms": "Students drawn to how drugs are discovered, formulated, delivered, and act in the body, spanning medicinal chemistry, pharmaceutics, and pharmacology. A specialized master's for those advancing into pharmaceutical research and industry roles or continuing toward doctoral study.",
+    "mich-international-and-regional-studies-ms": "Students who want interdisciplinary depth in world regions and global affairs, integrating language, history, politics, and culture. A focused master's for those moving into international-facing careers in policy, government, or nonprofits, or continuing to doctoral work.",
+    "mich-intraoperative-neurophysiology-ms": "Students preparing for the clinical field that monitors the nervous system during surgery to detect and prevent neurological injury. A practice-oriented master's for those entering intraoperative neuromonitoring roles in surgical and clinical settings.",
+    "mich-jazz-and-contemporary-improvisation-phd": "Accomplished musicians who want to study and practice jazz and improvised music at the highest level, spanning performance, composition, and the history of the idiom. The doctoral path toward careers as performing artist-scholars and university faculty.",
+    "mich-landscape-architecture-ms": "Designers drawn to shaping outdoor spaces, landscapes, and public environments by integrating ecology, art, and planning. A professional master's for those entering landscape architecture practice and land-focused design careers.",
+    "mich-latin-ms": "Students devoted to the Latin language and the literature, history, and culture of ancient Rome and the broader Latin tradition. A focused master's for those advancing toward teaching, further classical study, or doctoral work.",
+    "mich-linguistics-phd": "Researchers fascinated by language, including its sounds, structure, meaning, and use, who want to pursue original scholarship through faculty mentorship, qualifying examinations, and a dissertation. The path toward academic and research careers in linguistics.",
+    "mich-macromolecular-science-and-engineering-phd": "Researchers drawn to polymers and other large molecules and the study of their structure who want to conduct original research through faculty mentorship, qualifying examinations, and a dissertation. The path toward academic, industry, and research careers in macromolecular science.",
+    "mich-macromolecular-science-and-engineering-ms": "Scientists and engineers who want advanced study of polymers and other large molecules, examining their structure, properties, and uses in materials and technology. A specialized master's for those advancing into materials-focused industry roles or continuing to doctoral study.",
+    "mich-materials-science-and-engineering-phd": "Researchers drawn to the structure, properties, and processing of materials who want to conduct original research through faculty mentorship, qualifying examinations, and a dissertation. The path toward academic, industry, and research careers in materials science.",
+    "mich-materials-science-and-engineering-ms": "Engineers who want advanced expertise in the structure, properties, and processing of materials through graduate seminars, methods training, and a thesis or capstone. A specialized master's for those advancing into materials-focused industry roles or doctoral study.",
+    "mich-mathematics-phd": "Researchers drawn to quantity, structure, space, and change who want to pursue original mathematical scholarship through faculty mentorship, qualifying examinations, and a dissertation. The path toward academic and research careers in mathematics.",
+    "mich-mathematics-ms": "Students who want advanced expertise in quantity, structure, space, and change through graduate seminars, methods training, and a thesis or capstone. A focused master's for those deepening quantitative skills for technical careers or continuing toward doctoral study.",
+    "mich-mechanical-engineering-phd": "Researchers drawn to the design and analysis of mechanical systems who want to conduct original research through faculty mentorship, qualifying examinations, and a dissertation. The path toward academic, industry, and research careers in mechanical engineering.",
+    "mich-mechanical-engineering-ms": "Engineers who want advanced expertise in the design and analysis of mechanical systems through graduate seminars, methods training, and a thesis or capstone. A specialized master's for those advancing into engineering roles or doctoral study.",
+    "mich-media-arts-ms": "Artists drawn to the creative practice of digital and time-based media, encompassing video, sound, interactivity, and emerging technologies as artistic forms. A specialized master's for those developing media-arts practices in creative and production careers.",
+    "mich-medical-scientist-training-program-phd": "Aspiring physician-scientists who want combined training in medicine and biomedical research toward the M.D. and Ph.D. degrees. The path toward careers that bridge clinical practice and biomedical research.",
+    "mich-medicinal-chemistry-phd": "Researchers drawn to the intersection of chemistry and pharmacology who want to design, synthesize, and develop drugs through original doctoral research. The path toward academic and pharmaceutical research careers in drug discovery.",
+    "mich-microbiology-and-immunology-ms": "Students drawn to microorganisms and the immune system, including how microbes cause disease and how the body defends against infection. A specialized master's for those advancing into microbiology and immunology research or continuing toward doctoral study.",
+    "mich-microbiology-and-immunology-pibs-phd": "Researchers who want to investigate microorganisms and the immune system, including host-pathogen interactions and the molecular basis of infection and immunity. Through qualifying exams and a dissertation, the path toward academic and biomedical research careers.",
+    "mich-middle-east-studies-phd": "Scholars drawn to the languages, histories, politics, and religions of the Middle East who want to pursue original research through faculty mentorship, qualifying examinations, and a dissertation. The path toward academic and research careers in the field.",
+    "mich-molecular-and-cellular-pathology-pibs-phd": "Researchers drawn to the molecular and cellular mechanisms of disease and how cells and tissues are altered in illness. Through qualifying exams and a dissertation, the path toward academic and biomedical research careers in pathology.",
+    "mich-molecular-and-integrative-physiology-ms": "Students fascinated by how the molecules, cells, and organ systems of the body function and interact to sustain life and health. A specialized master's for those advancing into physiology research or continuing toward doctoral and professional study.",
+    "mich-molecular-and-integrative-physiology-pibs-phd": "Researchers who want to investigate how molecular and cellular processes integrate to govern the function of organs and whole organisms. Through qualifying exams and a dissertation, the path toward academic and biomedical research careers in physiology.",
+    "mich-molecular-cellular-and-developmental-biology-phd": "Researchers drawn to the molecules and cells of living organisms and the processes that shape them who want to conduct original research through faculty mentorship, qualifying examinations, and a dissertation. The path toward academic and research careers in the life sciences.",
+    "mich-molecular-cellular-and-developmental-biology-ms": "Students who want advanced expertise in the molecules and cells of living organisms and the processes that shape them, through graduate seminars, methods training, and a thesis or capstone. A specialized master's for those advancing into research or doctoral study.",
+    "mich-molecular-cellular-and-developmental-biology-pibs-phd": "Researchers who want to investigate the molecular and cellular mechanisms underlying cell function, growth, and the development of organisms. Through qualifying exams and a dissertation, the path toward academic and biomedical research careers.",
+    "mich-movement-science-phd": "Researchers drawn to human movement and physical activity, integrating biomechanics, who want to conduct original research through faculty mentorship, qualifying examinations, and a dissertation. The path toward academic and research careers in movement science.",
+    "mich-movement-science-ms": "Students who want advanced expertise in human movement and physical activity, integrating biomechanics, through graduate seminars, methods training, and a thesis or capstone. A specialized master's for those advancing into applied roles or doctoral study.",
+    "mich-music-education-phd": "Experienced music educators who want to study how music is taught and learned across schools and communities through original doctoral research. The path toward academic, faculty, and leadership careers in music education.",
+    "mich-music-theory-phd": "Scholars drawn to the structures, elements, and principles that underlie how music is composed, organized, and understood. The doctoral path toward academic and research careers in music theory.",
+    "mich-musicology-phd": "Researchers drawn to the scholarly study of music, including its history, repertoire, and cultural contexts. The doctoral path toward academic and research careers in musicology.",
+    "mich-musicology-ethnomusicology-phd": "Researchers who want to study music in its cultural and social contexts through original scholarship, guided by faculty mentorship, qualifying examinations, and a dissertation. The path toward academic and research careers in ethnomusicology.",
+    "mich-musicology-ethnomusicology-ms": "Students drawn to music in its cultural and social contexts and the musical traditions of peoples and communities around the world. A focused master's for those deepening ethnomusicological study or continuing toward doctoral work.",
+    "mich-musicology-history-phd": "Scholars drawn to the history of music, including its repertoire, styles, composers, and cultural contexts. The doctoral path toward academic and research careers in historical musicology.",
+    "mich-naval-architecture-and-marine-engineering-phd": "Researchers drawn to the design and construction of ships and marine systems who want to conduct original research through faculty mentorship, qualifying examinations, and a dissertation. The path toward academic, industry, and research careers in the field.",
+    "mich-naval-architecture-and-marine-engineering-ms": "Engineers who want advanced expertise in the design and construction of ships and marine systems through graduate seminars, methods training, and a thesis or capstone. A specialized master's for those advancing into marine-engineering roles or doctoral study.",
+    "mich-neuroscience-phd": "Researchers drawn to the nervous system who want to pursue original scholarship through faculty mentorship, qualifying examinations, and a dissertation. The path toward academic and research careers in neuroscience.",
+    "mich-neuroscience-pibs-phd": "Researchers who want to investigate the molecular, cellular, and systems-level workings of the nervous system and how it produces perception, cognition, and behavior. Through qualifying exams and a dissertation, the path toward academic and biomedical neuroscience research careers.",
+    "mich-nuclear-engineering-and-radiological-sciences-phd": "Researchers drawn to the application of nuclear processes and radiation, including reactors, who want to conduct original research through faculty mentorship, qualifying examinations, and a dissertation. The path toward academic, industry, and national-laboratory research careers.",
+    "mich-nuclear-engineering-and-radiological-sciences-ms": "Engineering graduates who want advanced grounding in nuclear processes and radiation, from reactors to methods training, working through graduate seminars toward a thesis or capstone. Suits those moving into nuclear-industry roles or continuing to doctoral research.",
+    "mich-nursing-ph-d-phd": "Nurses and health scholars who want to treat nursing science as a research discipline, building the evidence on health, illness, and care that guides practice and improves outcomes. The path to faculty positions and research careers in nursing science.",
+    "mich-nutritional-sciences-phd": "Researchers investigating how nutrients and diet shape health, growth, and disease, progressing through faculty-mentored study, qualifying examinations, and a dissertation. For those aiming at academic or research careers in nutritional science.",
+    "mich-nutritional-sciences-ms": "Students who want focused graduate depth in how nutrients and diet affect health, growth, and disease, integrating biochemistry, physiology, and public health. Suits those advancing into applied nutrition roles or continuing toward doctoral research.",
+    "mich-oral-health-sciences-phd": "Investigators drawn to the biology of the mouth and the prevention and diagnosis of oral disease, working through faculty mentorship, qualifying examinations, and a dissertation. For those pursuing academic and research careers in oral health science.",
+    "mich-oral-health-sciences-ms": "Students seeking focused graduate study of the biology of the mouth and the prevention, diagnosis, and treatment of oral and dental disease. Suits clinicians deepening their science or those preparing for doctoral research.",
+    "mich-orthodontics-ms": "Dentists specializing in the diagnosis, prevention, and correction of misaligned teeth and jaws, building focused clinical and scientific depth. The path toward practice as an orthodontic specialist.",
+    "mich-pediatric-dentistry-ms": "Dentists focused on the oral health and dental care of infants, children, and adolescents, building specialized clinical and scientific expertise. The path toward practice as a pediatric dental specialist.",
+    "mich-performance-bassoon-phd": "Bassoonists who want to develop technique, repertoire, and both solo and ensemble artistry on the double-reed woodwind at the highest level. For those pursuing careers as performers and studio or ensemble artists.",
+    "mich-performance-cello-phd": "Cellists refining technique, repertoire, and solo and ensemble artistry on the bowed string instrument at the doctoral level. For those aiming at careers as concert performers and studio or ensemble musicians.",
+    "mich-performance-clarinet-phd": "Clarinetists who want to develop technique, tone, repertoire, and solo and ensemble artistry on the single-reed woodwind at the doctoral level. For those pursuing performance careers and studio or ensemble work.",
+    "mich-performance-collaborative-piano-phd": "Pianists drawn to partnering with singers and instrumentalists through accompanying, chamber music, and coaching. For those building careers as collaborative artists, chamber musicians, and vocal or instrumental coaches.",
+    "mich-performance-double-bass-phd": "Bassists who want to develop technique, repertoire, and ensemble artistry on the largest bowed string instrument, anchoring the bass line at the doctoral level. For those pursuing careers as orchestral and ensemble performers.",
+    "mich-performance-euphonium-phd": "Euphonium players developing technique, repertoire, and solo and ensemble artistry on the warm-toned conical brass instrument at the doctoral level. For those aiming at performance careers and studio or ensemble work.",
+    "mich-performance-flute-phd": "Flutists who want to develop technique, tone, repertoire, and artistry on the woodwind at the doctoral level. For those pursuing careers as concert performers and studio or ensemble musicians.",
+    "mich-performance-french-horn-phd": "Horn players refining technique, repertoire, and ensemble artistry on the mellow-toned brass instrument at the doctoral level. For those building careers as orchestral and ensemble performers.",
+    "mich-performance-harp-phd": "Harpists who want to develop technique, repertoire, and solo and ensemble artistry across the plucked string instrument's wide range. For those pursuing careers as concert performers and ensemble musicians.",
+    "mich-performance-harpsichord-phd": "Keyboardists drawn to the harpsichord who want to develop technique, repertoire, and historical performance practice on the early plucked-string instrument. For those pursuing careers in early-music performance and scholarship.",
+    "mich-performance-oboe-phd": "Oboists who want to develop technique, repertoire, and artistry on the expressive double-reed woodwind at the doctoral level. For those pursuing performance careers and studio or ensemble work.",
+    "mich-performance-organ-phd": "Organists developing technique, repertoire, and solo and liturgical artistry on the pipe organ at the doctoral level. For those building careers as concert and liturgical performers.",
+    "mich-performance-organ-sacred-music-phd": "Organists who want to join the technique and repertoire of the pipe organ with the study and practice of music for worship and the liturgy. For those pursuing careers in liturgical and concert organ performance.",
+    "mich-performance-percussion-phd": "Percussionists who want to develop technique, repertoire, and solo and ensemble artistry across the many struck instruments at the doctoral level. For those pursuing careers as performers and ensemble musicians.",
+    "mich-performance-piano-phd": "Pianists who want to develop technique, repertoire, and artistry across the keyboard's wide dynamic and expressive range at the doctoral level. For those pursuing careers as concert performers and studio musicians.",
+    "mich-performance-piano-pedagogy-and-performance-phd": "Pianists who want to join the art of performance with the study and practice of teaching the instrument. For those building careers as performing artists and studio or collegiate piano teachers.",
+    "mich-performance-saxophone-phd": "Saxophonists who want to develop technique, repertoire, and artistry across classical and jazz idioms on the single-reed woodwind. For those pursuing careers as performers and studio or ensemble musicians.",
+    "mich-performance-trombone-phd": "Trombonists who want to develop technique, repertoire, and solo and ensemble artistry on the slide brass instrument at the doctoral level. For those pursuing careers as orchestral and ensemble performers.",
+    "mich-performance-trumpet-phd": "Trumpeters developing technique, repertoire, and solo and ensemble artistry on the brilliant-toned brass instrument at the doctoral level. For those pursuing careers as concert and ensemble performers.",
+    "mich-performance-tuba-phd": "Tubists who want to develop technique, repertoire, and solo and ensemble artistry on the largest and lowest brass instrument. For those building careers as orchestral and ensemble performers.",
+    "mich-performance-viola-phd": "Violists who want to develop technique, repertoire, and solo and ensemble artistry on the bowed string instrument pitched below the violin. For those pursuing careers as concert and ensemble performers.",
+    "mich-performance-violin-phd": "Violinists who want to develop technique, repertoire, and solo and ensemble artistry on the high, agile bowed string instrument at the doctoral level. For those pursuing careers as concert performers and ensemble musicians.",
+    "mich-performance-voice-phd": "Singers who want to develop vocal technique, repertoire, languages, and interpretation for solo and operatic performance. For those pursuing careers as recital, concert, and opera performers.",
+    "mich-performing-arts-technology-phd": "Artists and technologists drawn to the technology of music and performance, including recording, sound design, electronic music, and media production. For those pursuing research and creative careers at the intersection of music and technology.",
+    "mich-periodontics-ms": "Dentists specializing in the supporting structures of the teeth and the diagnosis and treatment of gum disease, building focused clinical and scientific depth. The path toward practice as a periodontal specialist.",
+    "mich-pharmaceutical-sciences-phd": "Researchers investigating how drugs are discovered, formulated, delivered, and act in the body, progressing through faculty mentorship, qualifying examinations, and a dissertation. For those pursuing academic or industry research careers in pharmaceutical science.",
+    "mich-pharmacology-ms": "Students seeking focused graduate study of drugs and their effects on living systems, including how drugs act, how the body processes them, and their therapeutic uses. Suits those advancing in research roles or preparing for doctoral study.",
+    "mich-pharmacology-pibs-phd": "Researchers investigating how drugs and chemicals act on biological systems at the molecular, cellular, and whole-organism levels to inform therapeutics. For those pursuing academic and industry research careers in pharmacology.",
+    "mich-philosophy-phd": "Scholars pursuing original research into fundamental questions about existence and knowledge, working through faculty mentorship, qualifying examinations, and a dissertation. The path to faculty positions and research careers in philosophy.",
+    "mich-philosophy-ms": "Students seeking advanced graduate depth in the systematic study of fundamental questions about existence and knowledge, through graduate seminars, methods training, and a thesis or capstone. Suits those continuing toward doctoral research or scholarly work.",
+    "mich-physics-phd": "Researchers pursuing original inquiry into matter and energy, working through faculty mentorship, qualifying examinations, and a dissertation. For those aiming at academic, national-laboratory, or research careers in physics.",
+    "mich-pibs-program-in-biomedical-sciences-phd": "Researchers drawn to the molecular, cellular, and systems-level study of human health and disease through an umbrella doctoral program. For those pursuing academic and research careers across the biomedical sciences.",
+    "mich-political-science-phd": "Researchers examining politics, government, power, and political institutions, working through faculty mentorship, qualifying examinations, and a dissertation. The path to faculty positions and research careers in political science.",
+    "mich-political-science-and-public-policy-phd": "Researchers who want to join the study of political institutions, behavior, and governance with the analysis and design of public policy. For those pursuing academic and research careers spanning political science and policy.",
+    "mich-population-and-health-sciences-ms": "Students focused on the determinants of health across populations and the methods used to measure and improve population health. Suits those advancing into public-health research or analytic roles, or continuing toward doctoral study.",
+    "mich-prosthodontics-ms": "Dentists specializing in the restoration and replacement of teeth with prostheses such as crowns, bridges, and dentures, building focused clinical and scientific depth. The path toward practice as a prosthodontic specialist.",
+    "mich-psychology-phd": "Researchers examining the mind and behavior across perception, cognition, and emotion, working through faculty mentorship, qualifying examinations, and a dissertation. The path to faculty positions and research careers in psychology.",
+    "mich-psychology-ms": "Students seeking advanced graduate depth in the mind and behavior across perception, cognition, and emotion, through graduate seminars, methods training, and a thesis or capstone. Suits those advancing in applied roles or continuing toward doctoral research.",
+    "mich-psychology-and-women-s-and-gender-studies-phd": "Researchers who want to join psychological inquiry with the study of gender and women's experiences across mind, behavior, and society. For those pursuing academic and research careers at this interdisciplinary intersection.",
+    "mich-public-affairs-ms": "For graduates drawn to government, public policy, and the management of public and nonprofit organizations who want to tackle societal problems from the inside. Prepares leaders and managers for careers running public and nonprofit programs.",
+    "mich-public-policy-ms": "For those who want advanced skill in how governments address public problems, built through graduate seminars, methods training, and a thesis or capstone project. Fits future policy analysts and program staff moving into more senior public-sector roles.",
+    "mich-public-policy-and-economics-phd": "For students who want to research the design and effects of policy using economic methods to weigh its costs, benefits, and outcomes. A doctoral path with qualifying exams and a dissertation, aimed at faculty and research careers in policy economics.",
+    "mich-public-policy-and-political-science-phd": "For those who want to study policy design alongside political institutions, behavior, and governance through original doctoral research. Leads to academic and research careers bridging public policy and political science.",
+    "mich-public-policy-and-sociology-phd": "For students investigating how policy intersects with social structures, institutions, and inequality, pursued through qualifying exams and a dissertation. The path to faculty and research careers spanning policy and sociology.",
+    "mich-quantitative-finance-and-risk-management-ms": "For quantitatively minded graduates who want to apply mathematics, statistics, and computation to model markets, price assets, and measure and manage financial risk. Prepares analysts and quants for careers in finance and risk.",
+    "mich-restorative-dentistry-ms": "For dentists focused on restoring the function and appearance of damaged or missing teeth who want specialized graduate depth in restorative practice. A path toward advanced clinical careers in restorative dentistry.",
+    "mich-robotics-phd": "For engineers pursuing original research at the intersection of designing, building, and controlling robots, guided by faculty mentorship, qualifying exams, and a dissertation. Leads to academic and advanced research careers in robotics.",
+    "mich-robotics-ms": "For engineering graduates who want advanced, hands-on expertise in designing, building, and controlling robots through graduate seminars, methods training, and a capstone or thesis. Prepares roboticists for industry and further research.",
+    "mich-romance-languages-and-literatures-french-phd": "For scholars of French who want to research the language and the literatures and cultures of France and the French-speaking world within the Romance tradition. A doctoral path toward faculty and research careers in French studies.",
+    "mich-romance-languages-and-literatures-italian-phd": "For students devoted to Italian who want to research the language and the literature and culture of Italy within the Romance tradition. The doctoral path to academic and research careers in Italian studies.",
+    "mich-romance-languages-and-literatures-spanish-phd": "For scholars of Spanish who want to research the language and the literatures and cultures of Spain and the Spanish-speaking world within the Romance tradition. Leads to faculty and research careers in Hispanic studies.",
+    "mich-scientific-computing-phd": "For students who want to develop and apply computational methods and high-performance computing to model and solve problems across science and engineering, through original doctoral research. The path to research and faculty careers in scientific computing.",
+    "mich-slavic-languages-and-literatures-phd": "For those who want to research the Slavic languages and the literary and cultural works written in them at the doctoral level. Leads to academic and research careers in Slavic studies.",
+    "mich-social-work-and-anthropology-phd": "For students integrating social work with anthropology to study human well-being, culture, and social systems in ways that inform practice and policy. A joint doctoral path toward faculty and research careers across both fields.",
+    "mich-social-work-and-psychology-phd": "For those joining social work with psychology to research human behavior, well-being, and intervention across individuals and communities. A joint doctoral path leading to academic and research careers spanning both disciplines.",
+    "mich-social-work-and-social-welfare-phd": "For students who want to pair social work practice with the study of social welfare, examining how policies and systems support well-being. A doctoral path toward faculty and research careers in social welfare.",
+    "mich-social-work-and-sociology-phd": "For those integrating social work with sociology to research social structures, inequality, and interventions that improve well-being. A joint doctoral path leading to academic and research careers across both fields.",
+    "mich-sociology-phd": "For students who want to conduct original research on society, social relationships, and institutions through qualifying exams and a dissertation. The path to faculty and research careers in sociology.",
+    "mich-sociology-and-public-policy-phd": "For scholars joining the sociological study of social structures and inequality with the analysis and design of public policy. A doctoral path toward academic and research careers bridging sociology and policy.",
+    "mich-sport-management-phd": "For students researching the business and administration of sport, including its organizations, through faculty-mentored doctoral study, qualifying exams, and a dissertation. Leads to faculty and research careers in sport management.",
+    "mich-sport-management-ms": "For graduates who want advanced expertise in the business and administration of sport organizations, built through graduate seminars, methods training, and a thesis or capstone. Prepares administrators and managers for careers across the sport industry.",
+    "mich-statistics-phd": "For students who want to conduct original research in the science of collecting, analyzing, interpreting, and presenting data, through qualifying exams and a dissertation. The path to faculty and research careers in statistics.",
+    "mich-survey-and-data-science-phd": "For researchers who want to advance how surveys are designed and how data is collected and analyzed, pursued through qualifying exams and dissertation work. Leads to faculty and research careers in survey and data science.",
+    "mich-survey-and-data-science-ms": "For graduates who want to master how to design surveys and collect, analyze, and interpret data to measure populations and inform research and policy. Prepares survey methodologists and data professionals for applied careers.",
+    "mich-toxicology-phd": "For scientists researching the adverse effects of chemical, physical, and biological agents on living organisms, through faculty-mentored study, qualifying exams, and a dissertation. Leads to research and faculty careers in toxicology.",
+    "mich-toxicology-ms": "For graduates focused on the adverse effects of chemical, physical, and biological agents on living organisms and the environment who want specialized scientific depth. Prepares toxicologists for applied and laboratory careers, or further doctoral study.",
+    "mich-transcultural-studies-ms": "For graduates who want to examine how cultures interact, mix, and transform across borders, drawing on both the humanities and social sciences. Fits those pursuing culturally engaged careers or further study across disciplines.",
+    "mich-urban-and-regional-planning-phd": "For students who want to research the study and practice of shaping the development of cities and regions, through faculty mentorship, qualifying exams, and a dissertation. The path to faculty and research careers in planning.",
+    "mich-urban-and-regional-planning-ms": "For those drawn to shaping cities and regions through land use, transportation, housing, and environmental policy who want professional planning training. Prepares planners for careers in public agencies and practice.",
+    "mich-master-of-architecture-march": "For those pursuing licensure as architects through design studios, building technology, history and theory, and professional practice. This professional degree prepares graduates to enter the architecture profession.",
+    "mich-master-of-urban-design-mud": "For designers focused on cities and public spaces who want to shape the form, function, and experience of the built environment at the scale of neighborhoods and districts. Prepares practitioners for careers in urban design.",
+    "mich-master-of-business-administration-mba": "Early-to-mid-career professionals targeting general management and leadership through the Ross School of Business.",
+    "mich-doctor-of-dental-surgery-dds": "Future dentists pursuing clinical practice or academic dentistry.",
+    "mich-master-of-engineering-meng": "For engineers who want advanced applied and professional study, using science and mathematics to design and build structures, machines, systems, and processes. Prepares graduates for applied and leadership roles in engineering practice.",
+    "mich-doctor-of-engineering-deng": "For engineers pursuing original research that applies science and mathematics to design and build structures, machines, and systems, through faculty mentorship, qualifying exams, and a dissertation. Leads to advanced research and technical leadership careers.",
+    "mich-master-of-health-informatics-mhi": "For those who want to acquire, store, and use health information and technology to improve health care, research, and decision-making. Prepares professionals for careers at the intersection of health and information systems.",
+    "mich-master-of-science-in-information-msi": "For graduates studying how information is created, organized, stored, retrieved, and used by people and systems, blending computing, design, and the social sciences. Prepares information professionals for a range of technology and design roles.",
     "mich-juris-doctor-jd": "Aspiring lawyers and legal scholars across every field of law.",
+    "mich-master-of-laws-llm": "For law graduates seeking specialized or comparative study of legal systems and rules beyond their first degree. This advanced credential deepens expertise for legal practice and scholarship, often for internationally trained lawyers.",
     "mich-doctor-of-medicine-md": "Future physicians and physician-scientists.",
-    "mich-doctor-of-dental-surgery-dds": (
-        "Future dentists pursuing clinical practice or academic dentistry."
-    ),
+    "mich-master-of-music-mm": "For musicians pursuing advanced study across performance, composition, theory, and scholarship. This professional graduate degree prepares them for careers as performing and creating musicians.",
+    "mich-specialist-in-music-smus": "For musicians who want advanced applied training and pedagogy beyond the bachelor's, focused on performance repertoire, studio teaching, and professional musicianship rather than dissertation research. Prepares performers and teaching artists for professional practice.",
+    "mich-master-of-science-in-nursing-msn": "For nurses who want advanced expertise in caring for individuals and families, built through graduate seminars, methods training, and a thesis or capstone. Prepares them for advanced roles in the nursing profession.",
     "mich-doctor-of-pharmacy-pharmd": "Future pharmacists and pharmaceutical-care leaders.",
-    "mich-master-of-public-health-mph": (
-        "Clinicians, scientists, and leaders advancing population health."
-    ),
-    "mich-master-of-social-work-msw": (
-        "Future social workers and community-practice leaders."
-    ),
+    "mich-master-of-public-health-mph": "Clinicians, scientists, and leaders advancing population health.",
+    "mich-master-of-health-services-administration-mhsa": "For those who want to plan, organize, finance, and manage health-care organizations and systems. Prepares administrators and managers for leadership careers across health services.",
+    "mich-doctor-of-public-health-drph": "For experienced practitioners who want to lead in protecting and improving the health of populations at the highest level. This doctoral degree prepares advanced public-health leaders.",
+    "mich-master-of-social-work-msw": "Future social workers and community-practice leaders.",
 }
 
 # Program highlights (manifest required=False) — verified U-M institution facts by
@@ -4813,6 +5689,23 @@ _HL_PHD_UNFUNDED: list[str] = [
 # ``tracks`` is honestly omitted (recorded in _standard.omitted) catalog-wide — routed
 # through this (empty) lookup rather than a literal ``= None`` (FLAG #4).
 _TRACKS_BY_SLUG: dict[str, list] = {}
+
+
+# ``who_its_for`` is a UNIVERSAL depth field — a field-specific, PROGRAM-DISTINCT fit
+# statement is authored for EVERY program in ``_WHO_BY_SLUG`` (grounded in each program's
+# own description + credential level), so the ``_WHO_BY_TYPE`` degree-type fallback is a
+# safety net that is provably never reached. The assertion below fails the build if a slug
+# is ever left to the type fallback (which would re-introduce the REPAIR_BACKLOG #3b
+# type-gaming defect, distinct/total collapsing to ~one template per degree-type).
+_missing_who = [s for s in PROGRAM_SLUGS if s not in _WHO_BY_SLUG]
+if _missing_who:
+    raise ValueError(
+        f"Michigan who_its_for missing on {len(_missing_who)} rows "
+        f"(would type-game via _WHO_BY_TYPE): {_missing_who[:5]}"
+    )
+_stray_who = [s for s in _WHO_BY_SLUG if s not in set(PROGRAM_SLUGS)]
+if _stray_who:
+    raise ValueError(f"Michigan who_its_for stray slugs: {_stray_who[:5]}")
 
 
 def _who_for(slug: str, degree_type: str) -> str | None:
