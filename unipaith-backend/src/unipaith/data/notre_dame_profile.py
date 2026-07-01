@@ -21,8 +21,18 @@ honestly omitted (recorded in that node's ``_standard.omitted``) — never guess
     official site (Mendoza, Keough, School of Architecture, the Law School, Sacred Music).
   * A verified 5-photo Wikimedia Commons campus gallery (author + license confirmed via
     the Commons extmetadata API).
-  * Verified third-party coverage for flagship coverable programs (Mendoza MBA, MS in
-    Business Analytics, the Law School J.D.).
+  * Verified third-party coverage for the flagship coverable programs.
+
+Reviews depth pass (2026-07-01, REPAIR_BACKLOG #5): twelve additional flagship programs
+received hand-gathered, program-specific ``external_reviews`` (raising the reviewed set to
+fifteen) — the Mendoza MS in Accountancy, MS in Finance, undergraduate Accountancy and
+Finance majors, the School of Architecture B.Arch and M.Arch, the Keough Master of Global
+Affairs, the Philosophy and Theology Ph.D.s, ESTEEM, the Program of Liberal Studies, and the
+Kroc Institute Peace Studies Ph.D. — each summarized and cited from real third-party or
+official program coverage (Poets&Quants, U.S. News, the QS and Philosophical Gourmet
+rankings, and official Mendoza/Keough/Kroc employment and outcomes reports) with honest
+cautions, no synthesized-from-metadata reviews. Every remaining program keeps
+``external_reviews`` in its ``_standard.omitted`` until genuine coverage exists.
 
 Honest caveats stamped into ``_standard.omitted``: Notre Dame does not publish a single
 university-wide placement rate or a uniform top-employer-industries list, so those two
@@ -1342,6 +1352,264 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
         "sources": [
             {"label": "U.S. News — Notre Dame Law School", "url": "https://www.usnews.com/best-graduate-schools/top-law-schools/university-of-notre-dame-03086"},
             {"label": "Notre Dame Law School — Employment & ABA disclosures", "url": "https://law.nd.edu/careers/employment-statistics/"},
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "notre-dame-accountancy-ms": {
+        "summary": (
+            "Mendoza's MS in Accountancy (MSA) is a nationally elite specialized master's known for "
+            "an exceptional public-accounting pipeline. The Class of 2025 reported 99% of graduates "
+            "accepting full-time offers within six months at an average base salary of about $79,700 "
+            "(median $82,000), and historically more than 80% of MSA graduates accept an offer from a "
+            "Big Four firm — with the Public Accounting Report rating Notre Dame among the top four "
+            "MSA/MAcc programs in the nation, though outcomes concentrate in audit, tax, and advisory "
+            "rather than the higher-paying tech or finance master's tracks."
+        ),
+        "themes": [
+            {"label": "Placement", "sentiment": "positive", "detail": "99% of the Class of 2025 accepted full-time offers within six months of graduation (Mendoza MSA employment data)."},
+            {"label": "Big Four pipeline", "sentiment": "positive", "detail": "More than 80% of MSA graduates historically accept an offer from a Big Four accounting firm."},
+            {"label": "Reputation", "sentiment": "positive", "detail": "Rated among the top four MSA/MAcc programs nationally by the Public Accounting Report."},
+            {"label": "Compensation ceiling", "sentiment": "mixed", "detail": "Average base near $79,700 is strong for accounting but below top data-analytics or finance master's; outcomes skew to audit/tax/advisory."},
+        ],
+        "sources": [
+            {"label": "Mendoza College of Business — MS in Accountancy (MSA) outcomes", "url": "https://mendoza.nd.edu/graduate-programs/accountancy-msa/"},
+            {"label": "U.S. News — Mendoza College of Business (Notre Dame)", "url": "https://www.usnews.com/best-graduate-schools/top-business-schools/university-of-notre-dame-01082"},
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "notre-dame-finance-ms": {
+        "summary": (
+            "Mendoza's one-year, STEM-designated MS in Finance (MSF) posts strong early-career "
+            "outcomes: the Class of 2025 reported 100% of graduates accepting full-time offers within "
+            "six months at an average base salary of about $88,800. The curriculum concentrates on "
+            "investment management, corporate finance, and fintech within Mendoza's ethics-forward "
+            "framing, and STEM status gives international students a 36-month OPT window — though the "
+            "compressed one-year pace and a mid-sized brand relative to the largest finance hubs are "
+            "trade-offs applicants weigh."
+        ),
+        "themes": [
+            {"label": "Placement", "sentiment": "positive", "detail": "100% of the Class of 2025 accepted full-time offers within six months (Mendoza MSF employment report)."},
+            {"label": "Compensation", "sentiment": "positive", "detail": "Average base salary around $88,800 for recent graduates."},
+            {"label": "STEM designation", "sentiment": "positive", "detail": "STEM-certified with a 36-month OPT eligibility window for international students."},
+            {"label": "Pace and scale", "sentiment": "mixed", "detail": "A demanding one-year format and a mid-sized program relative to the largest national finance master's brands."},
+        ],
+        "sources": [
+            {"label": "Mendoza College of Business — MS in Finance (MSF)", "url": "https://mendoza.nd.edu/graduate-programs/finance-msf/"},
+            {"label": "Mendoza Specialized Master's — Annual Employment Reports", "url": "https://mendoza-mscareers.nd.edu/about-us/employment-reports/"},
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "notre-dame-accountancy-bba": {
+        "summary": (
+            "Notre Dame's undergraduate Accountancy major sits inside Mendoza, ranked No. 9 among U.S. "
+            "undergraduate business programs by Poets&Quants for 2026 (No. 6 for academic experience, "
+            "No. 8 for career outcomes), and the accounting program itself is rated No. 4 in the nation "
+            "by the Public Accounting Report. Students report heavy Big Four and corporate recruiting "
+            "and a distinctive ethics-centered culture, with the main trade-offs being an intense "
+            "recruiting cycle and outcomes concentrated in public accounting."
+        ),
+        "themes": [
+            {"label": "National reputation", "sentiment": "positive", "detail": "Mendoza ranked No. 9 undergraduate business program by Poets&Quants (2026); accountancy rated No. 4 nationally by the Public Accounting Report."},
+            {"label": "Recruiting", "sentiment": "positive", "detail": "Strong Big Four and corporate recruiting pipeline for accounting majors."},
+            {"label": "Culture and ethics", "sentiment": "positive", "detail": "Distinctive 'Ask More of Business' ethics focus and a tight-knit undergraduate cohort."},
+            {"label": "Recruiting intensity", "sentiment": "mixed", "detail": "An early, competitive recruiting cycle with outcomes concentrated in public accounting and audit."},
+        ],
+        "sources": [
+            {"label": "Poets&Quants for Undergrads — University of Notre Dame (Mendoza)", "url": "https://poetsandquantsforundergrads.com/school-profile/university-notre-dame-mendoza-college-business/"},
+            {"label": "Mendoza College of Business — Undergraduate Accountancy", "url": "https://mendoza.nd.edu/undergraduate-programs/"},
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "notre-dame-finance-bba": {
+        "summary": (
+            "Finance is one of Mendoza's largest undergraduate majors, housed in a business school "
+            "ranked No. 9 nationally by Poets&Quants for 2026 (No. 8 for career outcomes). Notre Dame "
+            "finance majors are heavily recruited into investment banking, asset management, and "
+            "consulting, supported by a famously loyal alumni network; the trade-offs are a competitive, "
+            "front-loaded recruiting process and a smaller cohort than the largest public undergraduate "
+            "business programs."
+        ),
+        "themes": [
+            {"label": "Reputation", "sentiment": "positive", "detail": "Mendoza ranked No. 9 undergraduate business program and No. 8 for career outcomes by Poets&Quants (2026)."},
+            {"label": "Recruiting pipeline", "sentiment": "positive", "detail": "Strong placement into investment banking, asset management, and consulting."},
+            {"label": "Alumni network", "sentiment": "positive", "detail": "An unusually engaged Notre Dame alumni base that supports finance recruiting."},
+            {"label": "Competition and scale", "sentiment": "mixed", "detail": "A front-loaded, competitive recruiting cycle within a mid-sized cohort relative to the largest business programs."},
+        ],
+        "sources": [
+            {"label": "Poets&Quants for Undergrads — University of Notre Dame (Mendoza)", "url": "https://poetsandquantsforundergrads.com/school-profile/university-notre-dame-mendoza-college-business/"},
+            {"label": "Mendoza College of Business — Undergraduate Finance", "url": "https://mendoza.nd.edu/undergraduate-programs/"},
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "notre-dame-architecture-barch": {
+        "summary": (
+            "Notre Dame's five-year Bachelor of Architecture is widely regarded as the leading U.S. "
+            "program in classical and traditional architecture and urbanism. Its signature feature is a "
+            "required third-year in Rome — the only American architecture program that mandates a full "
+            "year of study abroad for all students — and firms surveyed by DesignIntelligence have "
+            "singled out its graduates for exceptional communication skills and licensure readiness. The "
+            "central trade-off is focus: the classical/traditional emphasis is a poor fit for applicants "
+            "seeking a mainstream modernist or computational-design education."
+        ),
+        "themes": [
+            {"label": "Classical/traditional distinction", "sentiment": "positive", "detail": "Recognized as the premier U.S. program in classical and traditional architecture and urbanism."},
+            {"label": "Rome Studies year", "sentiment": "positive", "detail": "A required full third year in Rome — the only U.S. architecture program mandating a year abroad for all students."},
+            {"label": "Practice readiness", "sentiment": "positive", "detail": "Firms surveyed by DesignIntelligence have praised graduates' communication skills and preparation for licensure."},
+            {"label": "Narrow design philosophy", "sentiment": "caution", "detail": "The classical/traditional focus is a poor match for students who want mainstream modernist or computational design; the five-year B.Arch is a long commitment."},
+        ],
+        "sources": [
+            {"label": "Notre Dame School of Architecture — Undergraduate & Rome Studies", "url": "https://architecture.nd.edu/academics/rome-studies-program/"},
+            {"label": "Notre Dame School of Architecture — Wikipedia (classical focus, DesignIntelligence)", "url": "https://en.wikipedia.org/wiki/Notre_Dame_School_of_Architecture"},
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "notre-dame-march": {
+        "summary": (
+            "The Master of Architecture at Notre Dame is a NAAB-accredited professional degree that "
+            "extends the school's classical and traditional design identity to the graduate level, with "
+            "distinctive strengths in traditional urbanism and access to the school's Rome resources. It "
+            "suits students committed to classical practice or a career change into architecture; as with "
+            "the undergraduate program, the traditional emphasis is a deliberate specialization rather "
+            "than a general modernist education."
+        ),
+        "themes": [
+            {"label": "Professional accreditation", "sentiment": "positive", "detail": "A NAAB-accredited professional M.Arch, including tracks for students without a prior architecture degree."},
+            {"label": "Classical urbanism", "sentiment": "positive", "detail": "Graduate strengths in classical/traditional design and urban design, with the school's Rome resources."},
+            {"label": "Specialized identity", "sentiment": "caution", "detail": "The traditional focus is a deliberate specialization — applicants seeking mainstream modernist practice should weigh fit carefully."},
+        ],
+        "sources": [
+            {"label": "Notre Dame School of Architecture — Graduate Programs", "url": "https://architecture.nd.edu/academics/graduate-programs/"},
+            {"label": "Notre Dame School of Architecture — Wikipedia (classical focus)", "url": "https://en.wikipedia.org/wiki/Notre_Dame_School_of_Architecture"},
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "notre-dame-global-affairs-mga": {
+        "summary": (
+            "The Keough School's Master of Global Affairs is a practice-oriented degree built around "
+            "required global fieldwork. Across the Classes of 2019-2024 (99% knowledge rate), 97% of "
+            "graduates were employed or pursuing further education within six months, with 26% based in "
+            "Washington, DC and alumni working in 24 countries at organizations such as Amnesty "
+            "International, Oxfam, UNICEF, USAID, the U.S. Department of State, and Boston Consulting "
+            "Group. Outcomes skew heavily toward the non-profit and public sectors, so applicants "
+            "prioritizing private-sector compensation should weigh the sector mix."
+        ),
+        "themes": [
+            {"label": "Employment", "sentiment": "positive", "detail": "97% of the Classes of 2019-2024 employed or in further education within six months (Keough MGA outcomes)."},
+            {"label": "Global fieldwork", "sentiment": "positive", "detail": "A required international fieldwork/policy component distinguishes the program."},
+            {"label": "Sector mix", "sentiment": "mixed", "detail": "65% enter non-profit/NGO roles, 18% public sector, 13% private — strong for public-interest careers, less so for private-sector pay."},
+            {"label": "Geography", "sentiment": "mixed", "detail": "Placement concentrates in Washington, DC (26%) and international postings across 24 countries."},
+        ],
+        "sources": [
+            {"label": "Keough School of Global Affairs — MGA Alumni Outcomes", "url": "https://keough.nd.edu/careers-and-alumni/alumni-outcomes/mga-outcomes/"},
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "notre-dame-philosophy-phd": {
+        "summary": (
+            "Notre Dame's Philosophy PhD is one of the strongest in the English-speaking world, ranked "
+            "13th overall in the 2021 Philosophical Gourmet Report and No. 1 in philosophy of religion, "
+            "with additional strength in the history of philosophy (ancient, medieval, and modern), "
+            "metaphysics, and logic. Doctoral students are fully funded through the Graduate School. As "
+            "with all philosophy doctorates, the academic job market is highly competitive, and the "
+            "department's profile skews toward philosophy of religion and history relative to some "
+            "contemporary analytic subfields."
+        ),
+        "themes": [
+            {"label": "Reputation", "sentiment": "positive", "detail": "Ranked 13th overall and No. 1 in philosophy of religion in the 2021 Philosophical Gourmet Report."},
+            {"label": "Areas of strength", "sentiment": "positive", "detail": "Distinctive depth in philosophy of religion, history of philosophy, metaphysics, and logic."},
+            {"label": "Funding", "sentiment": "positive", "detail": "Fully funded doctoral study with a tuition scholarship and multi-year stipend."},
+            {"label": "Job market", "sentiment": "caution", "detail": "The academic philosophy market is highly competitive, and the department's strengths skew toward philosophy of religion and history."},
+        ],
+        "sources": [
+            {"label": "The Philosophical Gourmet Report — Overall Rankings", "url": "https://philosophicalgourmet.com/overall-rankings/"},
+            {"label": "Notre Dame News — Philosophy department ranks high in biennial survey", "url": "https://news.nd.edu/news/notre-damersquos-philosophy-department-ranks-high-in-biennial-survey/"},
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "notre-dame-theology-phd": {
+        "summary": (
+            "Notre Dame's Department of Theology was ranked No. 1 in the world for theology, divinity, "
+            "and religious studies by the 2025 QS World University Rankings — its second consecutive "
+            "year and fifth No. 1 since 2020 — with an overall score of 93.4, ahead of Harvard, Oxford, "
+            "Cambridge, and Duke. The doctoral program is fully funded, spans six research areas from "
+            "biblical studies to systematic and moral theology, and places a high share of graduates in "
+            "tenure-track academic positions. Its balanced but distinctly Catholic-tradition emphasis is "
+            "a strength for students in that field and a fit consideration for others."
+        ),
+        "themes": [
+            {"label": "World reputation", "sentiment": "positive", "detail": "Ranked No. 1 in the world for theology/divinity/religious studies by QS (2025), score 93.4, ahead of Harvard and Oxford."},
+            {"label": "Academic placement", "sentiment": "positive", "detail": "A high share of graduates place into academic positions, the majority tenure-track."},
+            {"label": "Breadth", "sentiment": "positive", "detail": "Six research areas: biblical studies, history of Christianity, systematic theology, moral theology, liturgy, and world religions."},
+            {"label": "Field and career focus", "sentiment": "caution", "detail": "A Catholic-tradition emphasis and an academically-oriented program with relatively few non-academic career paths."},
+        ],
+        "sources": [
+            {"label": "Notre Dame News — Theology ranked best in the world (QS, second consecutive year)", "url": "https://news.nd.edu/news/notre-dame-department-of-theology-ranked-best-in-the-world-for-second-consecutive-year/"},
+            {"label": "Department of Theology — Doctor of Philosophy (Ph.D.)", "url": "https://theology.nd.edu/graduate/phd/"},
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "notre-dame-esteem-ms": {
+        "summary": (
+            "ESTEEM is Notre Dame's distinctive 11-month Master of Science in Engineering, Science, and "
+            "Technology Entrepreneurship — a joint program of the Colleges of Science and Engineering and "
+            "Mendoza that pairs business coursework with a year-long technology-commercialization thesis "
+            "built around a real venture. Roughly 34% of graduates enter consulting and about 20% launch "
+            "or join startups, with placements ranging from Apple and Uber to early-stage companies. It "
+            "is best for STEM graduates who want to pivot toward innovation and leadership roles rather "
+            "than a deep technical specialization."
+        ),
+        "themes": [
+            {"label": "Entrepreneurial pivot", "sentiment": "positive", "detail": "A joint Science/Engineering/Mendoza degree designed to translate technical backgrounds into venture and innovation roles."},
+            {"label": "Applied thesis", "sentiment": "positive", "detail": "A year-long technology-commercialization thesis anchored to a real company or invention."},
+            {"label": "Outcomes", "sentiment": "mixed", "detail": "About 34% enter consulting and 20% work in or found startups; outcomes skew to business/innovation rather than technical roles."},
+            {"label": "Fit", "sentiment": "caution", "detail": "Best for STEM graduates seeking a business/innovation pivot — not a research-depth technical master's."},
+        ],
+        "sources": [
+            {"label": "ESTEEM Graduate Program — University of Notre Dame", "url": "https://esteem.nd.edu/graduate-program-technology-entrepreneurship/"},
+            {"label": "Notre Dame Graduate School — ESTEEM (MS, Professional)", "url": "https://graduateschool.nd.edu/degree-programs/engineering-science-and-technology-entrepreneurship-esteem-ms---masters-professional/"},
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "notre-dame-liberal-studies-ba": {
+        "summary": (
+            "The Program of Liberal Studies (PLS) is Notre Dame's Great Books major: small primary-text "
+            "seminars spanning ancient Greece to twentieth-century America, a required tutorial sequence "
+            "across the disciplines, and a 35-60 page senior thesis. It has long been esteemed as one of "
+            "the country's leading Great Books programs — Yale's Louis Dupré called it 'the best Great "
+            "Books program' in the nation. It is intellectually demanding and deliberately not "
+            "pre-professional, so students typically pair it with plans for law, graduate study, or a "
+            "second major."
+        ),
+        "themes": [
+            {"label": "Great Books pedagogy", "sentiment": "positive", "detail": "Textbook-free seminars built on primary works, with author-led discussion and a required tutorial sequence."},
+            {"label": "External esteem", "sentiment": "positive", "detail": "Long praised by scholars at Yale and Princeton as among the nation's leading Great Books programs."},
+            {"label": "Intellectual breadth", "sentiment": "positive", "detail": "A cross-disciplinary humanities and science foundation capped by an independent senior thesis."},
+            {"label": "Not pre-professional", "sentiment": "caution", "detail": "A humanities-intensive major best paired with a plan for law, graduate school, or a complementary second major."},
+        ],
+        "sources": [
+            {"label": "Program of Liberal Studies — The Major (Great Books Seminars)", "url": "https://pls.nd.edu/the-major/"},
+            {"label": "Program of Liberal Studies — About / History", "url": "https://pls.nd.edu/about/history/"},
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "notre-dame-peace-studies-phd": {
+        "summary": (
+            "The Kroc Institute's PhD in Peace Studies is an internationally recognized, interdisciplinary "
+            "doctorate — one of the world's leading programs on the causes of violent conflict and "
+            "strategies for sustainable peace — with an option to combine peace studies with political "
+            "science. Doctoral students are fully funded and join a global network of more than 2,000 "
+            "Kroc alumni working in over 100 countries. As a niche interdisciplinary field, it spans "
+            "academic and policy/NGO paths and a correspondingly specialized job market."
+        ),
+        "themes": [
+            {"label": "Field leadership", "sentiment": "positive", "detail": "The Kroc Institute is among the world's leading centers for peace research and strategic peacebuilding."},
+            {"label": "Interdisciplinary training", "sentiment": "positive", "detail": "Combines methods across anthropology, history, political science, sociology, and theology, with a joint political-science option."},
+            {"label": "Funding and network", "sentiment": "positive", "detail": "Fully funded doctorate with a global alumni network of 2,000+ across more than 100 countries."},
+            {"label": "Specialized field", "sentiment": "caution", "detail": "A niche interdisciplinary field spanning academic and policy/NGO careers, with a specialized job market."},
+        ],
+        "sources": [
+            {"label": "Kroc Institute for International Peace Studies — Ph.D. in Peace Studies", "url": "https://kroc.nd.edu/ph-d/"},
+            {"label": "Kroc Institute — About", "url": "https://kroc.nd.edu/about-us/"},
         ],
         "disclaimer": _REVIEWS_DISCLAIMER,
     },
