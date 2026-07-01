@@ -53,12 +53,13 @@ from datetime import date
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.ucdavis_reviews_depth import DEPTH_REVIEWS
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of California-Davis"
 
-ENRICHED_AT = "2026-06-30"
+ENRICHED_AT = "2026-07-01"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -3304,6 +3305,9 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "official school information, not individual verbatim reviews."
         ),
     },
+    # 2026-07-01 depth pass: twelve program-specific flagship reviews merged in
+    # (SKILL.md miss #8 / REPAIR_BACKLOG #5, coverage-gated). See ucdavis_reviews_depth.py.
+    **DEPTH_REVIEWS,
 }
 
 
