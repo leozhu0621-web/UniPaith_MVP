@@ -30,6 +30,7 @@ from unipaith.profile_standard.anti_stub import (
 SCRAPE_DEBRIS_CLEAN = [
     "mit", "usc", "uiuc", "nyu", "columbia", "michigan", "cornell", "bu", "brown",
     "vanderbilt", "dartmouth", "georgetown", "washu", "uva", "unc", "ucdavis", "uci",
+    "boston_college",
 ]
 
 # Catalogs whose per-program descriptions have been verified gold-equal (every metric 0).
@@ -150,6 +151,17 @@ CERTIFIED_CLEAN = [
     #             rates in the breakdown, registrar professional rates, funded PhDs,
     #             self-supporting omits-with-reason); sourced reviews on the MBA / JD / MD
     #             (uciprof1)
+    "boston_college",  # institution seed (0 programs, dead feed) → gold + verified 103-program
+    #             catalog across the eight schools (Morrissey Arts & Sciences, Carroll Management,
+    #             Lynch Education, Connell Nursing, Social Work, Law, Clough Theology & Ministry,
+    #             Woods Advancing Studies); BC University Catalog conferred B.A./B.S./M.A./M.S./
+    #             M.B.A./Ph.D./J.D./D.N.P. names resolved from the College Scorecard CIP list,
+    #             real owning departments, field-specific per-program descriptions, cip_code +
+    #             program-distinct who_its_for on every row; official Localist events.bc.edu
+    #             feeds (RSS + iCal) on every node, seed's 4-photo verified gallery; published
+    #             2024-25 tuition (undergrad $70,702 scalar, J.D. $69,600, full-time MBA
+    #             $65,080, funded PhDs=0, per-credit graduate rows omitted-with-reason)
+    #             (bostoncollegeprof1)
     # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
     # junk; re-added after stanfordprof11 regeneration matching Michigan/UW repair model.
 ]
@@ -223,6 +235,7 @@ _FRAME_STRIPPED_CLEAN = [
     "ut_austin", "columbia", "michigan", "duke", "georgia_tech", "ucla", "berkeley",
     "stanford",     "penn", "cornell", "notre_dame", "bu", "vanderbilt", "ucsd",
     "dartmouth", "georgetown", "washu", "uva", "unc", "ucdavis", "uci",
+    "boston_college",
 ]
 
 
