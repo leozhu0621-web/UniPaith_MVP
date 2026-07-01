@@ -122,7 +122,10 @@ SCHOOL_OUTCOMES: dict = {
     },
     "financial_aid": {
         "pell_grant_rate": 0.1725,
-        "cost_of_attendance": 85962,
+        # 2026-27 residential-undergraduate total cost of attendance (University of
+        # Rochester financial-aid office), matching the 2026-27 tuition scalar; the
+        # average net price is the (lagging) College Scorecard federal figure.
+        "cost_of_attendance": 96022,
         "avg_net_price": 29278,
     },
     "demographics": {
@@ -409,6 +412,15 @@ _SIMON_TUITION: dict[str, int] = {
     "rochester-accountancy-ms": 49000,
 }
 _SIMON_TUITION_SRC = "https://simon.rochester.edu/programs/full-time-ms/tuition-financial-aid"
+
+# Simon programs billed on a published total-program (not annual) basis are annualized over
+# the nominal duration so budget matching keeps a sourced value. The Executive MBA total is
+# $107,955 over ~22 months → ~$58,884/year. The part-time Professional MBA is billed per
+# credit ($2,366) with no single published program total verified this pass, so it stays an
+# honest omission rather than a guessed credit count.
+_SIMON_TOTAL_TUITION: dict[str, tuple[int, int, str]] = {
+    "rochester-mba-executive": (107955, 22, "https://simon.rochester.edu/programs/emba/admissions-curriculums"),
+}
 
 # Arts, Sciences & Engineering / SMD academic graduate tuition: verified published
 # per-credit rate ($2,234, 2026-27) × the standard 30-credit academic master's load,
@@ -1346,10 +1358,11 @@ def _tuition_omit_reason(spec: dict) -> str:
 
 # Research doctorates that carry Rochester's standard full-funding guarantee (tuition
 # waived + stipend): Arts & Sciences, Hajim Engineering, the biomedical-science PhDs of the
-# School of Medicine and Dentistry, and the Simon Business School PhD (5-year fellowship).
-# Eastman and Warner PhD funding is partial-to-full and NOT guaranteed, so those carry an
-# honest tuition omission rather than a $0 that would misrepresent them as free.
-_FUNDED_PHD_SCHOOLS = (_ASE, _HAJIM, _SMD, _SIMON)
+# School of Medicine and Dentistry, the Simon Business School PhD (5-year fellowship), and
+# the School of Nursing PhD (full-time students receive a tuition waiver + stipend). Only
+# Eastman and Warner PhD funding is partial-to-full and NOT guaranteed, so those two carry
+# an honest tuition omission rather than a $0 that would misrepresent them as free.
+_FUNDED_PHD_SCHOOLS = (_ASE, _HAJIM, _SMD, _SIMON, _SON)
 _TUITION_OMIT_PHD_FUNDING = (
     "Doctoral funding in this school is awarded as scholarships or assistantships that range "
     "from partial to full tuition and is not guaranteed at admission, so no single annual "
@@ -1369,6 +1382,9 @@ def _resolve_tuition(spec: dict) -> int | None:
     school = spec["school"]
     if slug in _SIMON_TUITION:
         return _SIMON_TUITION[slug]
+    if slug in _SIMON_TOTAL_TUITION:
+        total, months, _ = _SIMON_TOTAL_TUITION[slug]
+        return round(total * 12 / months)
     if dt == "phd":
         return 0 if school in _FUNDED_PHD_SCHOOLS else None  # Eastman/Warner PhD → omit
     if slug == "rochester-md":
@@ -1393,6 +1409,18 @@ def _cost_data(spec: dict) -> dict:
             "funded": False,
             "source": "Simon Business School — tuition & financial aid (2026-27)",
             "source_url": _SIMON_TUITION_SRC,
+            "year": "2026-27",
+        }
+    if slug in _SIMON_TOTAL_TUITION:
+        total, months, src = _SIMON_TOTAL_TUITION[slug]
+        return {
+            "tuition_usd": round(total * 12 / months),
+            "funded": False,
+            "total_program_usd": total,
+            "program_years": round(months / 12, 2),
+            "basis": "Annualized from Simon's published total program tuition over the nominal duration",
+            "source": "Simon Business School — Executive MBA tuition (plus program fees)",
+            "source_url": src,
             "year": "2026-27",
         }
     if slug == "rochester-md":
