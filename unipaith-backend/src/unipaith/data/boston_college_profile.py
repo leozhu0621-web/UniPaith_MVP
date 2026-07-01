@@ -1085,7 +1085,7 @@ def _program_standard(spec: dict) -> dict:
         omitted += ["cost_data.tuition_usd", "cost_data.source"]
     # Woods College hybrid/online programs admit on a rolling basis with no fixed
     # deadline (they use _REQ_OPEN, which carries no deadlines) → honest omission.
-    if spec.get("delivery_format") in ("online", "hybrid"):
+    if spec["school"] == _WOODS:
         omitted.append("application_requirements.deadlines")
     kind = _outcomes_kind(spec)
     if kind == "fos":
@@ -1229,7 +1229,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         dt = spec["degree_type"]
         if spec["school"] == _LAW and dt == "professional":
             p.application_requirements = dict(_REQ_LAW)
-        elif spec.get("delivery_format") in ("online", "hybrid"):
+        elif spec["school"] == _WOODS:
             p.application_requirements = dict(_REQ_OPEN)
         elif dt == "bachelors":
             p.application_requirements = dict(_REQ_UNDERGRAD)
