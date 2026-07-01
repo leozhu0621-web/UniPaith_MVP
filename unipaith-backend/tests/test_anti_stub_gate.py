@@ -30,7 +30,7 @@ from unipaith.profile_standard.anti_stub import (
 SCRAPE_DEBRIS_CLEAN = [
     "mit", "usc", "uiuc", "nyu", "columbia", "michigan", "cornell", "bu", "brown",
     "vanderbilt", "dartmouth", "georgetown", "washu", "uva", "unc", "ucdavis", "uci",
-    "boston_college",
+    "boston_college", "tufts",
 ]
 
 # Catalogs whose per-program descriptions have been verified gold-equal (every metric 0).
@@ -162,6 +162,17 @@ CERTIFIED_CLEAN = [
     #             2024-25 tuition (undergrad $70,702 scalar, J.D. $69,600, full-time MBA
     #             $65,080, funded PhDs=0, per-credit graduate rows omitted-with-reason)
     #             (bostoncollegeprof1)
+    "tufts",  # institution seed (0 programs, dead feed) → gold + verified 136-program catalog
+    #             across the eight schools (Arts & Sciences, Engineering, The Fletcher School,
+    #             Friedman Nutrition, Medicine + GSBS, Dental Medicine, Cummings Veterinary, SMFA);
+    #             Bulletin conferred B.A./B.S./B.F.A./M.A./M.S./M.P.P./Ph.D./M.D./D.M.D./D.V.M./
+    #             O.T.D. names resolved from the College Scorecard CIP list, real owning
+    #             departments, field-specific per-program descriptions, cip_code + program-distinct
+    #             who_its_for on every row; Tufts Now RSS + Trumba events.tufts.edu feeds, seed's
+    #             5-photo verified gallery; published 2025-26 tuition (undergrad $70,704, M.D.
+    #             $74,118, D.M.D. $104,601, D.V.M. $68,908, Fletcher $61,450, funded AS&E PhDs=0,
+    #             AS&E/Engineering master's per-credit-annualized, Friedman/Med/SMFA master's
+    #             omitted-with-reason) (tuftsprof1)
     # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
     # junk; re-added after stanfordprof11 regeneration matching Michigan/UW repair model.
 ]
@@ -235,7 +246,7 @@ _FRAME_STRIPPED_CLEAN = [
     "ut_austin", "columbia", "michigan", "duke", "georgia_tech", "ucla", "berkeley",
     "stanford",     "penn", "cornell", "notre_dame", "bu", "vanderbilt", "ucsd",
     "dartmouth", "georgetown", "washu", "uva", "unc", "ucdavis", "uci",
-    "boston_college",
+    "boston_college", "tufts",
 ]
 
 
@@ -265,7 +276,7 @@ def test_credential_siblings_have_no_frame_stripped_shared_body(name: str):
 _ABS_FLOOR_CLEAN = [
     "nyu", "mit", "columbia", "michigan", "ucla", "jhu", "berkeley", "uf", "stanford",
     "penn", "cornell", "ut_austin", "notre_dame", "bu", "vanderbilt", "ucsd", "dartmouth",
-    "georgetown", "washu", "uva", "unc", "ucdavis", "uci",
+    "georgetown", "washu", "uva", "unc", "ucdavis", "uci", "tufts",
 ]
 
 
