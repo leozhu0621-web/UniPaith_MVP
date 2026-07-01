@@ -1389,6 +1389,11 @@ _ROLLUP_META_OVERRIDE: dict[str, dict] = {
         "duration_months": 12,
         "delivery_format": "hybrid",
     },
+    # The full-time Fels MPA is a one-year (9-c.u.) degree, not the generic 24-month master's
+    # the IPEDS row defaults to — matching its one-year tuition. Verified at fels.upenn.edu.
+    "penn-public-administration-ms": {
+        "duration_months": 12,
+    },
 }
 
 # (rollup title, degree_type) → real OWNING school override (the IPEDS row tags these to
@@ -3332,11 +3337,14 @@ _NURSING_FT_TUITION = _NURSING_CU * 8  # 57,280
 _MPH_CU = 5490
 _MPH_FT_TUITION = _MPH_CU * 8  # 43,920
 # Fels MPA (School of Social Policy & Practice / Fels Institute of Government): $7,322 per
-# course unit, 2026-27. Fels bills four c.u. in the fall and four in the spring, so a
-# full-time academic year is 8 c.u. = $58,576 in tuition; the 9-c.u. degree (a one-summer-
-# course one-year program) totals $65,898. Per-year, not degree total (matcher convention).
+# course unit, 2026-27. Unlike the multi-year per-c.u. masters above, the full-time Fels MPA
+# is a ONE-YEAR degree — four c.u. in the fall, four in the spring, and one in the summer
+# (9 c.u. total) — so the whole degree is completed within a single year and the annual
+# tuition IS the full 9-c.u. degree tuition ($65,898), not an 8-c.u. academic-year slice
+# (there is no multi-year total to avoid stuffing into the annual matcher field).
 _FELS_MPA_CU = 7322
-_FELS_MPA_FT_TUITION = _FELS_MPA_CU * 8  # 58,576
+_FELS_MPA_DEGREE_CU = 9
+_FELS_MPA_TUITION = _FELS_MPA_CU * _FELS_MPA_DEGREE_CU  # 65,898 (one-year full degree)
 
 
 def _grad_cost(spec: dict) -> dict | None:
@@ -3380,21 +3388,19 @@ def _grad_cost(spec: dict) -> dict | None:
     # published rate, so it is filled rather than omitted (REPAIR_BACKLOG #1, matcher-core).
     if spec["slug"] == "penn-public-administration-ms":
         return {
-            "tuition_usd": _FELS_MPA_FT_TUITION,
+            "tuition_usd": _FELS_MPA_TUITION,
             "breakdown": {
                 "tuition_per_course_unit": _FELS_MPA_CU,
-                "full_time_course_units_per_year": 8,
-                "tuition": _FELS_MPA_FT_TUITION,
-                "degree_course_units": 9,
-                "estimated_degree_tuition": _FELS_MPA_CU * 9,
+                "degree_course_units": _FELS_MPA_DEGREE_CU,
+                "tuition": _FELS_MPA_TUITION,
             },
             "funded": False,
             "note": (
                 "The Fels Institute of Government (School of Social Policy & Practice) bills "
-                "the M.P.A. per course unit ($7,322 per c.u., 2026-27) — four c.u. in the fall "
-                "and four in the spring, so a full-time academic year (8 c.u.) is $58,576 in "
-                "tuition; the 9-c.u. degree (one summer course) totals about $65,898. Fels "
-                "awards merit-based scholarships."
+                "the M.P.A. per course unit ($7,322 per c.u., 2026-27). The full-time MPA is a "
+                "one-year degree — four c.u. in the fall, four in the spring, and one in the "
+                "summer (9 c.u. total) — so the full degree tuition of $65,898 is paid within "
+                "a single year. Fels awards merit-based scholarships."
             ),
             "source": "Fels Institute of Government — Tuition and Financial Aid, 2026-27",
             "source_url": "https://www.fels.upenn.edu/admissions/tuition-and-financial-aid",

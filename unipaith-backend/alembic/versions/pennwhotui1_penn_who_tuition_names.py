@@ -60,7 +60,13 @@ depends_on = None
 def upgrade() -> None:
     bind = op.get_bind()
     session = Session(bind=bind)
-    penn_profile.apply(session)
+    # Delete DERIVED program preferences for Penn's existing rows BEFORE apply(), so the two
+    # placeholder rows apply() reconciles away have no ProgramPreference dependents and are
+    # genuinely DELETED (not merely unpublished) — ``_program_has_dependents`` scans every FK
+    # into ``programs.id``, which includes ``program_preferences`` from the prior fleet
+    # backfill. A row that a student actually references (a saved list, application, or match)
+    # still trips a real dependent and is safely unpublished instead. First-party/claimed
+    # preferences are left untouched (only ``source == "derived"`` is cleared).
     inst = session.scalar(
         select(Institution).where(Institution.name == penn_profile.INSTITUTION_NAME)
     )
@@ -76,6 +82,8 @@ def upgrade() -> None:
                 )
             )
             session.flush()
+    penn_profile.apply(session)
+    if inst is not None:
         backfill_program_preferences(session, institution_id=inst.id)
     session.flush()
 
