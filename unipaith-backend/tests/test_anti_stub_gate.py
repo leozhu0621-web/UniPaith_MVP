@@ -30,7 +30,7 @@ from unipaith.profile_standard.anti_stub import (
 SCRAPE_DEBRIS_CLEAN = [
     "mit", "usc", "uiuc", "nyu", "columbia", "michigan", "cornell", "bu", "brown",
     "vanderbilt", "dartmouth", "georgetown", "washu", "uva", "unc", "ucdavis", "uci",
-    "boston_college", "tufts",
+    "boston_college", "tufts", "rochester",
 ]
 
 # Catalogs whose per-program descriptions have been verified gold-equal (every metric 0).
@@ -173,6 +173,18 @@ CERTIFIED_CLEAN = [
     #             $74,118, D.M.D. $104,601, D.V.M. $68,908, Fletcher $61,450, funded AS&E PhDs=0,
     #             AS&E/Engineering master's per-credit-annualized, Friedman/Med/SMFA master's
     #             omitted-with-reason) (tuftsprof1)
+    "rochester",  # institution seed (0 programs, dead feed) → gold + verified 179-program catalog
+    #             across the seven degree-granting schools (Arts & Sciences, Hajim Engineering,
+    #             Eastman School of Music, Simon Business, Warner Education, Medicine & Dentistry,
+    #             Nursing); official catalog conferred B.A./B.S./B.M./M.A./M.S./M.M./M.B.A./Ph.D./
+    #             D.M.A./M.D./D.N.P. names resolved from the College Scorecard CIP list (UNITID
+    #             195030), real owning departments, field-specific per-program descriptions,
+    #             cip_code + program-distinct who_its_for on every row; Rochester News Center RSS +
+    #             official Localist events.rochester.edu iCal feeds on every node, seed's verified
+    #             campus-photo gallery; published tuition (undergrad $67,080 scalar, M.D. $75,690,
+    #             Simon MBA/MS annual rates, AS&E/SMD academic master's per-credit-annualized at
+    #             the $2,234/credit rate, funded PhDs=0, Eastman/Warner/Nursing/certificate rows
+    #             omitted-with-reason) (rochesterprof1)
     # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
     # junk; re-added after stanfordprof11 regeneration matching Michigan/UW repair model.
 ]
@@ -246,7 +258,7 @@ _FRAME_STRIPPED_CLEAN = [
     "ut_austin", "columbia", "michigan", "duke", "georgia_tech", "ucla", "berkeley",
     "stanford",     "penn", "cornell", "notre_dame", "bu", "vanderbilt", "ucsd",
     "dartmouth", "georgetown", "washu", "uva", "unc", "ucdavis", "uci",
-    "boston_college", "tufts",
+    "boston_college", "tufts", "rochester",
 ]
 
 
@@ -276,7 +288,7 @@ def test_credential_siblings_have_no_frame_stripped_shared_body(name: str):
 _ABS_FLOOR_CLEAN = [
     "nyu", "mit", "columbia", "michigan", "ucla", "jhu", "berkeley", "uf", "stanford",
     "penn", "cornell", "ut_austin", "notre_dame", "bu", "vanderbilt", "ucsd", "dartmouth",
-    "georgetown", "washu", "uva", "unc", "ucdavis", "uci", "tufts",
+    "georgetown", "washu", "uva", "unc", "ucdavis", "uci", "tufts", "rochester",
 ]
 
 
