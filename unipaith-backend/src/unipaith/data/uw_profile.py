@@ -64,7 +64,9 @@ Matcher-core fields (2026-06-25 repair — REPAIR_BACKLOG #1 cip_code + #2 publi
    self-sustaining programs (2026-07-01 repair — REPAIR_BACKLOG #1 matcher-core coverage) now carry
    their OWN published, residency-independent per-credit rate (``_FEE_BASED_TUITION``), annualized
    over the program's length — a real figure exists and is knowable, so omit-never-guess requires it
-   (e.g. MSME $1,330/cr × 42 = $55,860, MSIM $1,132/cr × 65 = $73,580, MHA $950/cr × 76 = $72,200).
+   (e.g. MSME $1,330/cr × 42 = $55,860, MSIM $1,177/cr × 65 = $76,505, MHA $950/cr × 76 = $72,200;
+   the annualization length is each program's own published typical completion — 2 years for a
+   standard master's, 3 for MAE's continuous-enrollment part-time track).
    Only two programs keep ``cost_data.tuition_usd`` omitted-with-reason rather than a wrong value:
    the Doctor of Audiology (bills on UW's variable graduate-tier schedule, no single published annual
    figure) and the online BA in Integrated Social Sciences (a per-credit degree-completion program
@@ -3516,13 +3518,14 @@ _FEE_BASED_TUITION: dict[str, dict] = {
     "uw-aerospace-engineering-ms": {
         "per_credit": 1203,
         "credits": 45,
+        "years": 3,  # continuous-enrollment part-time completion (UW A&A: finish in three years)
         "year": "2025-26",
         "source": "UW William E. Boeing Dept. of Aeronautics & Astronautics — Master of Aerospace Engineering (online, fee-based)",
         "source_url": "https://www.aa.washington.edu/students/academics/mae",
     },
     "uw-applied-mathematics-ms": {
         "per_credit": 1134,
-        "credits": 42,
+        "credits": 36,  # minimum credits required to the degree (UW AMath online)
         "year": "2025-26",
         "source": "UW Department of Applied Mathematics — Online MS in Applied & Computational Mathematics (self-sustaining, fee-based)",
         "source_url": "https://amath.washington.edu/master-science-applied-and-computational-mathematics-online",
@@ -3563,9 +3566,9 @@ _FEE_BASED_TUITION: dict[str, dict] = {
         "source_url": "https://hspop.uw.edu/masterhihim/cost-aid/",
     },
     "uw-information-management-ms": {
-        "per_credit": 1132,
+        "per_credit": 1177,
         "credits": 65,
-        "year": "2025-26",
+        "year": "2026-27",
         "source": "UW Information School — MSIM (Early-Career track) Tuition & Financial Aid (fee-based)",
         "source_url": "https://ischool.uw.edu/programs/msim/tuition-financial-aid",
     },
@@ -3591,7 +3594,7 @@ _FEE_BASED_TUITION: dict[str, dict] = {
         "source_url": "https://www.me.washington.edu/msme/tuition",
     },
     "uw-pharmaceutical-bioengineering-ms": {
-        "per_credit": 908,
+        "per_credit": 968,
         "credits": 39,
         "year": "2025-26",
         "source": "UW Bioengineering — Online Master of Pharmaceutical Bioengineering, Tuition & Financial Information (fee-based)",
@@ -3615,6 +3618,11 @@ _FEE_BASED_TUITION: dict[str, dict] = {
 
 
 def _fee_based_years(spec: dict) -> int:
+    # Prefer the program's OWN published typical completion length (e.g. MAE's continuous-
+    # enrollment 3 years); fall back to the catalog duration for the standard 2-year master's.
+    fb = _FEE_BASED_TUITION.get(spec["slug"], {})
+    if fb.get("years"):
+        return int(fb["years"])
     return max(1, round((spec.get("duration_months") or 24) / 12))
 
 

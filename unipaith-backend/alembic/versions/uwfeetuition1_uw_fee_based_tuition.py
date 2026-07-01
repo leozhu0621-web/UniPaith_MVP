@@ -24,10 +24,11 @@ schedule, no single published annual figure) and the online BA in Integrated Soc
 departments, descriptions, or programs changed — this is a cost-field-only fill.
 
 Idempotent: re-applies ``uw_profile.apply()`` (updates existing rows by slug; no programs added
-or removed) and re-derives DERIVED program preferences so ``pref_*`` stay consistent; claimed /
-first-party rows are never touched. Direct apply (no lock-timeout SAVEPOINT) — the update is a
-plain per-row cost rewrite, so the apply genuinely runs in prod (avoids the self-skipping-
-migration stranding, FLAG #1).
+or removed). Tuition is NOT an input to the derived program-preference target, so existing
+``program_preferences`` are left intact — the migration only fills a row for any program that
+lacks one (``backfill_program_preferences`` skips claimed/first-party programs). Direct apply
+(no lock-timeout SAVEPOINT) — the update is a plain per-row cost rewrite, so the apply genuinely
+runs in prod (avoids the self-skipping-migration stranding, FLAG #1).
 
 Revision ID: uwfeetuition1
 Revises: princetonwho1
@@ -36,12 +37,12 @@ Create Date: 2026-07-01
 
 from __future__ import annotations
 
-from sqlalchemy import delete, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from alembic import op
 from unipaith.data import uw_profile
-from unipaith.models.institution import Institution, Program, ProgramPreference
+from unipaith.models.institution import Institution
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "uwfeetuition1"
@@ -58,17 +59,8 @@ def upgrade() -> None:
         select(Institution).where(Institution.name == uw_profile.INSTITUTION_NAME)
     )
     if inst is not None:
-        prog_ids = session.scalars(
-            select(Program.id).where(Program.institution_id == inst.id)
-        ).all()
-        if prog_ids:
-            session.execute(
-                delete(ProgramPreference).where(
-                    ProgramPreference.program_id.in_(prog_ids),
-                    ProgramPreference.source == "derived",
-                )
-            )
-            session.flush()
+        # Fill a derived target-applicant row for any program lacking one; claimed/first-party
+        # rows are skipped and existing derived rows are preserved (tuition does not feed them).
         backfill_program_preferences(session, institution_id=inst.id)
     session.flush()
 
