@@ -406,6 +406,7 @@ _WHO_BY_SLUG: dict[str, str] = {
     "uw-madison-nursing-bs": "Students pursuing registered nursing who want UW–Madison's BSN with UW Hospital clinical rotations and a foundation for advanced-practice or research careers.",
     "uw-madison-psychology-bs": "Undergraduates interested in clinical, cognitive, and social psychology who want a research-active UW–Madison foundation for graduate study or health and human-services work.",
     "uw-madison-economics-bs": "Students drawn to economic analysis, policy, and data who want UW–Madison's quantitative economics training and a path to business, government, or graduate study.",
+    "uw-madison-zoology-animal-biology-ms": "Graduates pursuing thesis-based research in organismal, ecological, evolutionary, or cellular biology who want UW–Madison's Integrative Biology M.S., with faculty across animal behavior, physiology, and evolution and a path to a PhD or research career.",
 }
 
 

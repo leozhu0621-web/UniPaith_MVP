@@ -472,6 +472,9 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
 }
 
 SLUG_DESCRIPTIONS: dict[str, str] = {
+    "uw-madison-zoology-animal-biology-ms": (
+        "The Department of Integrative Biology's graduate M.S., conferred as Integrative Biology, offers thesis-based research training in the College of Letters & Science spanning cellular and molecular biology, physiology, neuroscience, ecology, evolution, and animal behavior, with fieldwork at the UW Arboretum and Lakeshore Nature Preserve."
+    ),
     "uw-madison-area-studies-bs": (
         "The LACIS undergraduate major surveys Latin America, the Caribbean, Spain, and Portugal across anthropology, history, political science, and Spanish and Portuguese, pairing breadth and depth coursework with language study in one of the major U.S. centers for Latin American research."
     ),

@@ -179,7 +179,12 @@ _IPEDS_CATALOG: list[tuple] = [
     ('uw-madison-microbiological-sciences-and-immunology-cert', 'College of Letters and Science', 'Microbiological Sciences and Immunology', 'certificate', '26.05', 12, 'on_campus', 'Microbiological Sciences and Immunology — a University of Wisconsin-Madison certificate program offered through the College of Letters and Science.'),
     ('uw-madison-microbiological-sciences-and-immunology-ms', 'College of Letters and Science', 'Microbiological Sciences and Immunology', 'masters', '26.05', 24, 'on_campus', 'Microbiological Sciences and Immunology — a University of Wisconsin-Madison masters program offered through the College of Letters and Science.'),
     ('uw-madison-zoology-animal-biology-bs', 'College of Letters and Science', 'Zoology/Animal Biology', 'bachelors', '26.07', 48, 'on_campus', 'Zoology/Animal Biology — a University of Wisconsin-Madison bachelors program offered through the College of Letters and Science.'),
-    ('uw-madison-zoology-animal-biology-cert', 'College of Letters and Science', 'Zoology/Animal Biology', 'certificate', '26.07', 12, 'on_campus', 'Zoology/Animal Biology — a University of Wisconsin-Madison certificate program offered through the College of Letters and Science.'),
+    # CIP 26.07 certificate row DROPPED: UW-Madison's Department of Integrative Biology confers
+    # no graduate certificate in Zoology / Animal Biology / Integrative Biology (verified
+    # guide.wisc.edu/graduate/integrative-biology/ — only MS, PhD, and a doctoral minor), so this
+    # was an IPEDS×award-level artifact whose only real degree would be a fabricated name. The
+    # master's row below is UW-Madison's real "Integrative Biology, MS" (mapped per-slug in
+    # uw_madison_catalog_maps.py). REPAIR_BACKLOG #4c / Codex review PR #1252.
     ('uw-madison-zoology-animal-biology-ms', 'College of Letters and Science', 'Zoology/Animal Biology', 'masters', '26.07', 24, 'on_campus', 'Zoology/Animal Biology — a University of Wisconsin-Madison masters program offered through the College of Letters and Science.'),
     ('uw-madison-genetics-bs', 'College of Letters and Science', 'Genetics', 'bachelors', '26.08', 48, 'on_campus', 'Genetics — a University of Wisconsin-Madison bachelors program offered through the College of Letters and Science.'),
     ('uw-madison-genetics-cert', 'College of Letters and Science', 'Genetics', 'certificate', '26.08', 12, 'on_campus', 'Genetics — a University of Wisconsin-Madison certificate program offered through the College of Letters and Science.'),
