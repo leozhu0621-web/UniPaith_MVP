@@ -933,7 +933,7 @@ PROGRAMS: list[dict] = [
        "Department of Measurement, Evaluation, Statistics, and Assessment", "13.06",
        "Doctoral research in educational measurement, psychometrics, and quantitative methods. Funded.",
        "Students pursuing research careers in measurement, assessment, and applied statistics. Funded with a stipend."),
-    _p("bc-edd-educational-leadership", _LYNCH, "Doctor of Education in Educational Leadership", "Educational Leadership", "phd", 36,
+    _p("bc-edd-educational-leadership", _LYNCH, "Doctor of Education in Educational Leadership", "Educational Leadership", "professional", 36,
        "Department of Educational Leadership and Higher Education", "13.04",
        "A practitioner doctorate developing leaders to drive equity and improvement in schools and educational organizations.",
        "Experienced educators and administrators seeking a leadership doctorate for systems-level roles."),
