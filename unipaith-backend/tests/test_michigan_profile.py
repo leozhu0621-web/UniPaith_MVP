@@ -203,6 +203,20 @@ def test_who_its_for_full_coverage_no_hard_null():
         assert f"p.{field} = None" not in src, f"hard-null p.{field} = None must be removed"
 
 
+def test_who_its_for_is_program_distinct_not_type_gamed():
+    """who_its_for must be PROGRAM-DISTINCT, not a per-degree-type template
+    (REPAIR_BACKLOG #3b type-gaming). A field-specific statement is authored for
+    every program in ``_WHO_BY_SLUG``, so the ``_WHO_BY_TYPE`` fallback is never
+    reached and distinct-strings/total approaches 1.0 (the 25 field-specific gold
+    catalogs' bar), never collapsing to ~one template per degree-type (< 0.5)."""
+    # Every program resolves via _WHO_BY_SLUG, not the degree-type fallback.
+    via_type = [p["slug"] for p in m.PROGRAMS if p["slug"] not in m._WHO_BY_SLUG]
+    assert not via_type, f"programs falling back to _WHO_BY_TYPE (type-gaming): {via_type[:10]}"
+    values = [m._who_for(p["slug"], p["degree_type"]) for p in m.PROGRAMS]
+    ratio = len(set(values)) / len(values)
+    assert ratio >= 0.95, f"who_its_for distinct/total {ratio:.2f} < 0.95 (type-gamed)"
+
+
 def test_public_tuition_scalar_is_non_resident():
     """Public-university budget signal (REPAIR_BACKLOG #2): the matcher scalar
     ``p.tuition`` is the NON-RESIDENT rate while cost_data keeps the resident basis
