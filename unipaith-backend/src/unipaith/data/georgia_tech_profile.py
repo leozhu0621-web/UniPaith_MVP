@@ -77,7 +77,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Georgia Institute of Technology-Main Campus"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-18"
+ENRICHED_AT = "2026-06-30"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -1213,6 +1213,191 @@ def _assert_anti_stub_clean(programs: list[dict]) -> None:
 
 _assert_anti_stub_clean(PROGRAMS)
 
+# ── "Who it's for" — a UNIVERSAL depth field (enrich-profile miss #2 who_its_for rule) ────────
+# Every program carries a PROGRAM-DISTINCT 1–2 sentence statement of the applicant it fits
+# (subject, who it suits, typical next step), derived from that program's own published
+# field/level/audience material — NOT a degree-type template (a CS PhD and a Public-Policy PhD
+# must not read identically). Keyed on the full program slug; coverage must be 100% and the
+# strings near-fully distinct (the bar the field-specific gold catalogs meet, distinct/total ≈ 1.0).
+_WHO_BY_SLUG: dict[str, str] = {
+    # ── College of Computing ──
+    "gatech-computer-science-bs": "Undergraduates who want to build software and systems from first principles — algorithms, machine learning, systems, and theory — and who like Georgia Tech's Threads model of pairing computing with a second area of application. Most graduates head into software engineering or further CS study.",
+    "gatech-computational-media-bs": "Students who live at the intersection of computing and the arts — game design, interactive narrative, animation, and digital media — and want the technical depth to build experiences, not just critique them. A path into games, UX, and creative-technology roles.",
+    "gatech-computer-science-ms": "Working engineers and recent CS graduates who want graduate depth in a specialization (machine learning, systems, security, or interactive computing) before moving into senior technical roles; best for those who already have a computing foundation.",
+    "gatech-cybersecurity-ms": "Technically grounded students aiming for security-engineering, policy, or research careers who want to combine deep systems and network security with cyber-policy and information-security management across computing, ECE, and public policy.",
+    "gatech-human-computer-interaction-ms": "Designers, psychologists, and computer scientists who want rigorous, research-driven training in how people use technology — interaction design, user research, and evaluation — heading into UX research and product-design roles.",
+    "gatech-bioinformatics-ms": "Life-scientists and computationally minded students who want to apply data science, genomics, and algorithms to biological problems, preparing for industry roles in biotech, pharma, and computational genomics.",
+    "gatech-computational-science-engineering-ms": "Engineers and scientists who want to master high-performance computing, modeling, and large-scale data analysis to solve computationally intensive problems across the sciences and engineering.",
+    "gatech-robotics-ms": "Students from CS, ECE, ME, or aerospace backgrounds who want interdisciplinary training in perception, control, autonomy, and machine learning to build robots and autonomous systems for industry or further research.",
+    "gatech-computer-science-phd": "Researchers pursuing original contributions to computer science — from theory and systems to AI — who intend to lead academic, national-lab, or industrial research.",
+    "gatech-human-centered-computing-phd": "Scholars who want to do original research on how computing systems are designed, used, and embedded in social contexts, bridging HCI, the learning sciences, and social computing.",
+    "gatech-machine-learning-phd": "Researchers focused on the foundations and applications of machine learning — drawn from CS, ECE, ISyE, and mathematics — who want an interdisciplinary doctorate aimed at academic or research-lab careers.",
+    "gatech-computational-science-engineering-phd": "Doctoral researchers developing the algorithms, models, and high-performance-computing methods that drive computational discovery across science and engineering.",
+    "gatech-bioinformatics-phd": "Researchers integrating computation, statistics, and biology to study genomes and biological systems, aiming for faculty or research-scientist roles in computational biology.",
+    "gatech-robotics-phd": "Doctoral students advancing the science of autonomous machines — perception, planning, manipulation, and human-robot interaction — across an interdisciplinary robotics faculty.",
+    "gatech-algorithms-combinatorics-optimization-phd": "Mathematically inclined researchers who want a rigorous doctorate spanning discrete mathematics, theoretical CS, and operations research, run jointly by mathematics, computing, and ISyE.",
+    "gatech-online-ms-computer-science-omscs": "Working software professionals worldwide who want a fully accredited Georgia Tech CS master's they can complete part-time and remotely for a few thousand dollars — provided they are ready for genuinely rigorous, self-directed coursework.",
+    "gatech-online-ms-cybersecurity": "Employed IT and security practitioners who want an affordable, fully online Georgia Tech security master's that combines technical and policy coursework while they keep working.",
+    # ── College of Engineering ── bachelors
+    "gatech-aerospace-engineering-bs": "Undergraduates drawn to flight and space — aerodynamics, propulsion, structures, and controls — who want one of the country's largest aerospace programs as a path into the aerospace and defense industries.",
+    "gatech-biomedical-engineering-bs": "Students who want to apply engineering to medicine and human health in a top-ranked joint program with Emory, heading toward medical devices, healthcare, or medical school.",
+    "gatech-chemical-biomolecular-bs": "Undergraduates fascinated by how molecules and processes scale up — energy, materials, and biotechnology — preparing for the chemical, pharmaceutical, and energy industries or graduate study.",
+    "gatech-civil-engineering-bs": "Students who want to design and build the infrastructure people depend on — structures, transportation, and water systems — and pursue licensure as professional engineers.",
+    "gatech-computer-engineering-bs": "Undergraduates who want to work at the hardware-software boundary — embedded systems, processors, and computing devices — bridging electrical engineering and computing.",
+    "gatech-electrical-engineering-bs": "Students drawn to electronics, power, signals, and communications who want a broad ECE foundation for industry or graduate study.",
+    "gatech-environmental-engineering-bs": "Undergraduates committed to clean water, air, and sustainable systems who want to engineer solutions to environmental problems.",
+    "gatech-industrial-engineering-bs": "Students who want to optimize complex systems — supply chains, logistics, manufacturing, and operations — in the nation's top-ranked IE program, heading into consulting, analytics, and operations roles.",
+    "gatech-materials-science-bs": "Undergraduates curious about why materials behave as they do — metals, polymers, ceramics, and nanomaterials — preparing for the materials industries or research.",
+    "gatech-mechanical-engineering-bs": "Students drawn to how things move and work — mechanics, thermodynamics, design, and manufacturing — in one of the largest ME programs in the U.S.",
+    "gatech-nuclear-radiological-bs": "Undergraduates interested in nuclear power, radiation, and medical physics who want a path into the nuclear-energy, medical, and national-security sectors.",
+    # ── College of Engineering ── master's
+    "gatech-aerospace-engineering-ms": "Engineers seeking advanced specialization in aerodynamics, propulsion, structures, or autonomy for senior roles in the aerospace and defense industry.",
+    "gatech-bioengineering-ms": "Graduate students applying engineering across biology and medicine through an interdisciplinary bioengineering program spanning several colleges.",
+    "gatech-biomedical-engineering-ms": "Engineers and scientists pursuing advanced training in medical devices, imaging, and biomechanics in the joint Georgia Tech–Emory program.",
+    "gatech-chemical-engineering-ms": "Graduates deepening expertise in reaction engineering, separations, energy, and biomolecular processes for industry or doctoral study.",
+    "gatech-civil-engineering-ms": "Practicing and aspiring civil engineers specializing in structures, geotechnics, transportation, or water and environmental systems and moving toward professional licensure.",
+    "gatech-electrical-computer-engineering-ms": "ECE graduates specializing in areas from microelectronics and power to communications, signal processing, and machine learning for advanced industry roles.",
+    "gatech-engineering-science-mechanics-ms": "Students seeking the mechanics and applied-physics foundations — solid mechanics, dynamics, and the behavior of materials — that underpin advanced engineering.",
+    "gatech-environmental-engineering-ms": "Engineers focusing on water quality, air, and sustainable environmental systems for consulting, utility, or agency careers.",
+    "gatech-health-systems-ms": "Industrial engineers and analysts who want to apply operations-research and systems methods to healthcare delivery, improving the quality and efficiency of health systems.",
+    "gatech-industrial-engineering-ms": "Engineers specializing in operations research, supply chain, analytics, or human factors in a top-ranked program with strong industry placement.",
+    "gatech-materials-science-engineering-ms": "Graduates specializing in the design and characterization of advanced materials for energy, electronics, and manufacturing.",
+    "gatech-mechanical-engineering-ms": "Engineers deepening expertise in design, controls, thermal and fluid sciences, or manufacturing for advanced industry roles.",
+    "gatech-mechanical-engineering-undesignated-ms": "Mechanical-engineering students who want a flexible, self-directed master's spanning the breadth of ME rather than a single named specialization.",
+    "gatech-medical-physics-ms": "Physics and engineering graduates preparing for careers in clinical and radiation medical physics — therapy and imaging — in healthcare settings.",
+    "gatech-nuclear-engineering-ms": "Engineers specializing in reactor physics, radiation, and nuclear systems for the energy, medical, and national-security sectors.",
+    "gatech-operations-research-ms": "Quantitatively strong graduates who want rigorous training in optimization, stochastics, and statistics to solve decision problems across industries.",
+    "gatech-statistics-ms": "Graduates seeking applied and theoretical statistics — modeling, inference, and data analysis — for analytics and data-science careers.",
+    "gatech-supply-chain-engineering-ms": "Engineers and analysts specializing in logistics, supply-chain design, and operations in the nation's leading supply-chain program.",
+    # ── College of Engineering ── professional
+    "gatech-applied-systems-engineering-pmase": "Mid-career engineers, often in defense and aerospace, who want an INCOSE-recognized professional master's in systems engineering delivered for working professionals (PMASE).",
+    "gatech-manufacturing-leadership-pmml": "Experienced engineers moving into manufacturing leadership who want a professional master's combining advanced manufacturing with management.",
+    # ── College of Engineering ── PhD
+    "gatech-aerospace-engineering-phd": "Researchers pursuing original work in aerospace — fluid dynamics, structures, propulsion, and autonomy — for academic, national-lab, or industry-research careers.",
+    "gatech-bioengineering-phd": "Doctoral researchers working across engineering and the life sciences in an interdisciplinary bioengineering program.",
+    "gatech-biomedical-engineering-phd": "Researchers advancing medical devices, regenerative medicine, and imaging in the joint Georgia Tech–Emory BME doctorate.",
+    "gatech-chemical-engineering-phd": "Doctoral researchers in catalysis, energy, soft matter, and biomolecular engineering aiming for faculty or industrial-research roles.",
+    "gatech-civil-engineering-phd": "Researchers advancing structures, geosystems, transportation, or environmental engineering through original doctoral work.",
+    "gatech-electrical-computer-engineering-phd": "Doctoral researchers across ECE — from nanoelectronics to communications and machine learning — pursuing academic or research-lab careers.",
+    "gatech-engineering-science-mechanics-phd": "Researchers in solid mechanics, dynamics, and the mechanics of materials that underpin advanced engineering.",
+    "gatech-environmental-engineering-phd": "Doctoral researchers in water, air, and sustainability engineering aiming for academic or research careers.",
+    "gatech-industrial-engineering-phd": "Researchers in operations research, optimization, statistics, and systems pursuing faculty or research roles in a top-ranked program.",
+    "gatech-materials-science-phd": "Doctoral researchers designing and studying advanced materials for energy, electronics, and structural applications.",
+    "gatech-mechanical-engineering-phd": "Researchers advancing the mechanical sciences — robotics, energy, manufacturing, and biomechanics — toward academic or research careers.",
+    "gatech-nuclear-engineering-phd": "Doctoral researchers in reactor physics, radiation transport, and nuclear systems for energy and security applications.",
+    "gatech-operations-research-phd": "Researchers developing the mathematics of optimization and stochastic systems, jointly across ISyE, mathematics, and computing.",
+    # ── College of Sciences ── bachelors
+    "gatech-applied-physics-bs": "Undergraduates who want physics aimed at real devices and technologies — optics, materials, and electronics — bridging fundamental science and engineering.",
+    "gatech-astrophysics-bs": "Students captivated by stars, galaxies, and cosmology who want a physics-grounded path into astronomy research or graduate study.",
+    "gatech-atmospheric-oceanic-sciences-bs": "Undergraduates drawn to weather, climate, and the oceans who want quantitative training for environmental science or graduate research.",
+    "gatech-biochemistry-bs": "Students fascinated by the chemistry of living systems — proteins, metabolism, and molecular mechanisms — preparing for the health professions or research.",
+    "gatech-biology-bs": "Undergraduates exploring life from molecules to ecosystems who want a research-oriented foundation for graduate study, the health professions, or biotech.",
+    "gatech-chemistry-bs": "Students drawn to how matter transforms — synthesis, analysis, and physical chemistry — heading into the chemical industry, research, or professional school.",
+    "gatech-environmental-science-bs": "Undergraduates focused on earth systems and sustainability who want interdisciplinary science to address environmental challenges.",
+    "gatech-mathematics-bs": "Students who love rigorous reasoning and abstraction across pure and applied mathematics, preparing for graduate study, analytics, or quantitative careers.",
+    "gatech-mathematics-computing-bs": "Undergraduates who want to combine mathematical rigor with computation — algorithms, modeling, and data — for quantitative and computing careers.",
+    "gatech-neuroscience-bs": "Students fascinated by the brain and behavior who want an interdisciplinary, research-driven path toward neuroscience, medicine, or graduate study.",
+    "gatech-physics-bs": "Undergraduates drawn to the fundamental laws of nature who want a strong foundation for graduate study or technical careers in science and industry.",
+    "gatech-psychology-bs": "Students interested in mind, behavior, and human factors who want a quantitative, research-oriented psychology degree.",
+    "gatech-solid-earth-planetary-sciences-bs": "Undergraduates fascinated by the Earth and planets — geology, geophysics, and planetary science — preparing for earth-science research or industry.",
+    # ── College of Sciences ── master's
+    "gatech-biology-ms": "Graduates seeking advanced training in molecular, cellular, or organismal biology for research, biotech, or further doctoral study.",
+    "gatech-chemistry-ms": "Graduates deepening expertise in a chemistry subfield for industry or as a step toward doctoral research.",
+    "gatech-earth-atmospheric-sciences-ms": "Students advancing their study of the atmosphere, oceans, and solid earth with quantitative and computational methods.",
+    "gatech-mathematics-ms": "Graduates strengthening their mathematical depth — pure or applied — for quantitative careers or doctoral preparation.",
+    "gatech-physics-ms": "Graduates deepening their physics training for technical industry roles or as a step toward a doctorate.",
+    "gatech-psychology-ms": "Graduates advancing in areas such as cognition, engineering psychology, or quantitative methods toward research or applied roles.",
+    # ── College of Sciences ── PhD
+    "gatech-applied-physiology-phd": "Researchers studying how the human body responds to exercise, stress, and the environment, aiming for academic or health-research careers.",
+    "gatech-biology-phd": "Doctoral researchers pursuing original work from genomics to ecology and evolution for faculty or research-scientist roles.",
+    "gatech-chemistry-phd": "Researchers advancing organic, inorganic, physical, or analytical chemistry toward academic or industrial-research careers.",
+    "gatech-earth-atmospheric-sciences-phd": "Doctoral researchers in climate, atmospheric, ocean, and earth sciences pursuing original quantitative work.",
+    "gatech-mathematics-phd": "Researchers pursuing original work in pure or applied mathematics who intend to enter academia or quantitative research.",
+    "gatech-ocean-science-engineering-phd": "Interdisciplinary researchers studying ocean systems where science meets engineering, from biogeochemistry to marine technology.",
+    "gatech-physics-phd": "Doctoral researchers across condensed matter, biophysics, astrophysics, and quantum science pursuing academic or research-lab careers.",
+    "gatech-psychology-phd": "Researchers in cognition, engineering psychology, neuroscience, or quantitative methods aiming for faculty or applied-research roles.",
+    "gatech-quantitative-biosciences-phd": "Researchers integrating biology with mathematics, physics, and computation to study living systems quantitatively.",
+    # ── College of Design ── bachelors
+    "gatech-arts-entertainment-creative-technologies-bs": "Students working at the intersection of art and technology — interactive media, performance, and creative computing — who want to build the tools and experiences of entertainment.",
+    "gatech-construction-science-and-management-bs": "Undergraduates aiming for careers managing how buildings get built — construction methods, project management, and the built environment.",
+    "gatech-industrial-design-bs": "Students who want to design the products and experiences people use, blending creativity, human-centered research, and engineering.",
+    "gatech-music-technology-bs": "Undergraduates who combine music with engineering and computing — audio, instruments, and interactive sound — for careers in music technology.",
+    "gatech-urban-planning-and-spatial-analytics-bs": "Students interested in shaping cities through planning and data — land use, transportation, and spatial analysis.",
+    # ── College of Design ── master's
+    "gatech-architecture-ms": "Designers and researchers pursuing advanced, often computational or technology-focused study of architecture beyond the professional degree.",
+    "gatech-march": "Students pursuing the accredited professional degree required to become a licensed architect, combining design studios with building technology and history.",
+    "gatech-masters-industrial-design": "Designers advancing their practice in product and experience design through research-driven, human-centered methods.",
+    "gatech-building-construction-facility-management-ms": "Professionals advancing in construction management, facility operations, and building technology for leadership in the architecture-engineering-construction industry.",
+    "gatech-gist-ms": "Students who want to master geographic information science — spatial data, GIS, and remote sensing — for analytics and planning careers.",
+    "gatech-mcrp": "Aspiring urban and regional planners who want a professional planning degree spanning land use, transportation, housing, and community development.",
+    "gatech-urban-analytics-ms": "Planners and analysts who want to apply data science and spatial methods to urban problems and decision-making.",
+    "gatech-urban-design-msud": "Architects and planners focused on the design of public space and the form of cities at the neighborhood and district scale.",
+    "gatech-music-technology-ms": "Graduates combining music, engineering, and computing to research and build new musical instruments, audio systems, and interactive sound.",
+    # ── College of Design ── professional
+    "gatech-master-real-estate-development": "Professionals entering real-estate development who want an interdisciplinary degree spanning design, finance, and construction.",
+    "gatech-occupational-safety-health-pmosh": "Working safety and health professionals who want a professional master's to advance into occupational-safety leadership roles.",
+    # ── College of Design ── PhD
+    "gatech-architecture-phd": "Researchers pursuing original scholarship in architecture — design computing, building technology, or history and theory.",
+    "gatech-building-construction-phd": "Doctoral researchers advancing the science of construction, building technology, and facility management.",
+    "gatech-city-regional-planning-phd": "Researchers studying cities and regions — land use, transportation, environment, and policy — for academic or research careers.",
+    "gatech-music-technology-phd": "Researchers at the frontier of music, computing, and engineering, building and studying new musical technologies.",
+    # ── Ivan Allen College of Liberal Arts ── bachelors
+    "gatech-applied-language-intercultural-studies-bs": "Students who want to combine fluency in a second language and culture with technical and professional skills for global careers.",
+    "gatech-economics-bs": "Undergraduates who want a quantitative, policy-relevant economics degree with strong analytical and data skills.",
+    "gatech-economics-international-affairs-bs": "Students combining economic analysis with international relations for careers in policy, trade, and global business.",
+    "gatech-global-economics-modern-languages-bs": "Undergraduates pairing economics with advanced language and cultural study for international careers.",
+    "gatech-history-technology-society-bs": "Students interested in how technology shapes — and is shaped by — society, history, and policy.",
+    "gatech-international-affairs-bs": "Undergraduates focused on global politics, security, and development who want a technology-aware international-affairs degree.",
+    "gatech-international-affairs-modern-language-bs": "Students combining international affairs with deep language and regional expertise for global careers.",
+    "gatech-literature-media-communication-bs": "Students who want to analyze and produce across literature, media, and digital communication, bridging the humanities and technology.",
+    "gatech-public-policy-bs": "Undergraduates who want to analyze and shape public decisions on technology, science, and society using evidence and policy tools.",
+    # ── Ivan Allen College of Liberal Arts ── master's
+    "gatech-applied-languages-intercultural-studies-ms": "Graduates advancing professional language and intercultural competence for translation, localization, and global communication careers.",
+    "gatech-digital-media-ms": "Designers and researchers who want to study and build interactive and digital media, games, and emerging communication forms.",
+    "gatech-economics-ms": "Graduates seeking rigorous applied economics — econometrics and policy analysis — for analyst and research roles.",
+    "gatech-global-development-ms": "Students focused on the policy, economics, and technology of international development and global problem-solving.",
+    "gatech-global-media-cultures-ms": "Graduates studying media, culture, and communication across borders, often with a comparative or global focus.",
+    "gatech-history-sociology-technology-science-ms": "Graduates studying the historical and social dimensions of science and technology for research, policy, or further doctoral study.",
+    "gatech-international-affairs-ms": "Graduates pursuing careers in diplomacy, security, and global policy with a science-and-technology orientation.",
+    "gatech-international-affairs-science-technology-ms": "Students focused on where international affairs meets science and technology policy — security, energy, and innovation.",
+    "gatech-international-security-ms": "Graduates specializing in security studies — defense, intelligence, and conflict — for policy and analytic careers.",
+    "gatech-public-policy-ms": "Graduates who want rigorous policy analysis — economics, statistics, and program evaluation — for government, nonprofit, and private-sector roles.",
+    # ── Ivan Allen College of Liberal Arts ── professional
+    "gatech-master-sustainable-energy-environmental-management": "Working professionals who want to lead in energy and environmental management, combining policy, economics, and technology.",
+    # ── Ivan Allen College of Liberal Arts ── PhD
+    "gatech-digital-media-phd": "Researchers studying and building interactive and digital media, games, and computational creativity.",
+    "gatech-economics-phd": "Researchers pursuing original work in economics with strong quantitative methods for academic or policy-research careers.",
+    "gatech-history-sociology-technology-science-phd": "Doctoral researchers in the history and sociology of science and technology aiming for faculty or research careers.",
+    "gatech-international-affairs-science-technology-phd": "Researchers studying the intersection of global affairs, security, and science-and-technology policy.",
+    "gatech-public-policy-phd": "Researchers developing original policy scholarship — especially on science, technology, and innovation — for academic or think-tank careers.",
+    # ── Scheller College of Business ──
+    "gatech-business-administration-bs": "Undergraduates who want a technology-focused, analytics-driven business degree from a top public business school, heading into consulting, finance, and technology management.",
+    "gatech-mba": "Early-career professionals who want a smaller, technology-focused full-time MBA in Atlanta's Tech Square, with strong career services and top specializations in analytics, IT, and operations.",
+    "gatech-mba-global-business-executive": "Experienced managers who want an executive MBA emphasizing global business while continuing to work.",
+    "gatech-mba-management-technology-executive": "Experienced technical professionals and managers who want an executive MBA focused on leading technology and innovation.",
+    "gatech-analytics-ms": "Quantitatively strong graduates who want an interdisciplinary analytics master's spanning computing, statistics, and business for data-science and analytics careers.",
+    "gatech-management-ms": "Recent graduates, often from technical backgrounds, who want a one-year business foundation before entering management and consulting roles.",
+    "gatech-quantitative-computational-finance-ms": "Mathematically and computationally strong graduates aiming for quantitative finance — trading, risk, and financial engineering — in a top-ranked QCF program.",
+    "gatech-management-phd": "Researchers pursuing original scholarship in management — strategy, operations, IT, finance, or marketing — for business-school faculty careers.",
+    "gatech-online-ms-analytics": "Working professionals who want Georgia Tech's top-ranked analytics master's fully online and affordably, while continuing to work and provided they are ready for rigorous, self-directed study.",
+}
+
+
+def _assert_who_its_for_complete(programs: list[dict]) -> None:
+    """who_its_for is a UNIVERSAL depth field: 100% coverage, program-DISTINCT (no type-gaming)."""
+    missing = [p["slug"] for p in programs if not _WHO_BY_SLUG.get(p["slug"])]
+    if missing:
+        raise ValueError(f"GT who_its_for missing on {len(missing)} programs: {missing[:5]}")
+    values = [_WHO_BY_SLUG[p["slug"]] for p in programs]
+    distinct = len(set(values))
+    # Field-specific gold catalogs run distinct/total ≈ 1.0; type-gaming collapses well under 0.5.
+    if distinct < len(values):
+        dupes = sorted({v for v in values if values.count(v) > 1})
+        raise ValueError(f"GT who_its_for is not program-distinct ({distinct}/{len(values)}): {dupes[:3]}")
+
+
+_assert_who_its_for_complete(PROGRAMS)
+
 # Per-program catalog website (catalog.gatech.edu/programs/<catalog_slug>/) or a verified
 # program homepage for the online degrees.
 _PROGRAM_WEBSITE: dict[str, str] = {
@@ -2190,7 +2375,10 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
         p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
-        p.who_its_for = None
+        # who_its_for is a UNIVERSAL depth field — never hard-null it (that bakes the 0% starvation
+        # into the build and reverts any value on every replace=True re-apply); fill the
+        # program-distinct statement researched per program.
+        p.who_its_for = _WHO_BY_SLUG[slug]
         p.highlights = None
         p.application_deadline = date(2027, 1, 4) if spec["degree_type"] == "bachelors" else None
     session.flush()

@@ -209,3 +209,18 @@ def test_no_synthesized_depth_reviews_module():
 
     with pytest.raises(ModuleNotFoundError):
         importlib.import_module("unipaith.data.georgia_tech_reviews_depth")
+
+
+def test_who_its_for_is_complete_and_program_distinct():
+    """who_its_for is a UNIVERSAL depth field (REPAIR_BACKLOG #3a / SKILL.md miss #2): filled
+    on every program (a catalog-wide 0% is a depth FAILURE, never an honest omission) AND
+    program-DISTINCT, never a degree-type template (a CS PhD and a Public-Policy PhD must not
+    read identically). The field-specific gold catalogs run distinct/total ≈ 1.0; the GT build
+    already asserts 1.0, so the CI floor below is the durable anti-type-gaming guard."""
+    missing = [
+        spec["slug"] for spec in g.PROGRAMS if not (g._WHO_BY_SLUG.get(spec["slug"]) or "").strip()
+    ]
+    assert not missing, f"programs missing who_its_for: {missing[:8]}"
+    vals = [g._WHO_BY_SLUG[spec["slug"]] for spec in g.PROGRAMS]
+    ratio = len(set(vals)) / max(len(vals), 1)
+    assert ratio >= 0.9, f"who_its_for type-gamed: distinct/total {ratio:.2f} < 0.9"
