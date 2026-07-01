@@ -466,8 +466,8 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
     "Writing Studies": (
         "College of Letters and Science writing-studies and rhetoric courses support the Writing Center and professional communication across disciplines."
     ),
-    "Zoology/Animal Biology": (
-        "Zoology at CALS covers comparative anatomy, animal behavior, and field ecology with UW Arboretum and Lakeshore Nature Preserve research sites."
+    "Zoology": (
+        "Zoology in the College of Letters & Science covers comparative anatomy, animal behavior, and field ecology with UW Arboretum and Lakeshore Nature Preserve research sites."
     ),
 }
 

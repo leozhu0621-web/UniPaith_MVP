@@ -110,6 +110,12 @@ FIELD_ALIASES: dict[str, str] = {
     "Veterinary Biomedical and Clinical Sciences": "Veterinary Biomedical Sciences",
     "Visual and Performing Arts, Other": "Visual Arts",
     "Wildlife and Wildlands Science and Management": "Wildlife Ecology",
+    # Federal CIP 26.07 title "Zoology/Animal Biology" (an embedded-slash CIP rollup TITLE,
+    # byte-identical to CIP 26.0701) → UW-Madison's real conferred field name "Zoology".
+    # The undergraduate major is published as "Zoology, BS" (College of Letters & Science,
+    # Department of Integrative Biology); this mirrors the "Botany/Plant Biology" → "Plant
+    # Biology" alias above so the CIP title never renders as a program name (REPAIR_BACKLOG #4c).
+    "Zoology/Animal Biology": "Zoology",
 }
 
 DEPARTMENT_BY_FIELD: dict[str, str] = {
@@ -264,7 +270,7 @@ DEPARTMENT_BY_FIELD: dict[str, str] = {
     "Visual Arts": "Department of Art",
     "Wildlife Ecology": "Department of Forest and Wildlife Ecology",
     "Writing Studies": "Department of English",
-    "Zoology/Animal Biology": "Department of Integrative Biology",
+    "Zoology": "Department of Integrative Biology",
 }
 
 SLUG_PROGRAM_NAMES: dict[str, str] = {

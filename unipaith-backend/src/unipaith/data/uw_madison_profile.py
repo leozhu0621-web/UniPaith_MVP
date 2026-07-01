@@ -109,7 +109,7 @@ from unipaith.profile_standard.anti_stub import analyze as _anti_stub_analyze
 from unipaith.profile_standard.anti_stub import field_of as _anti_stub_field
 
 INSTITUTION_NAME = "University of Wisconsin-Madison"
-ENRICHED_AT = "2026-06-26"
+ENRICHED_AT = "2026-07-01"
 
 # Per-credential body: each credential level of a field gets its OWN researched body
 # describing what THAT degree level studies, so credential siblings share no
@@ -263,7 +263,7 @@ _FIELD_FOCUS: dict[str, str] = {
     "Urban Planning": "GIS and policy analysis for Madison revitalization",
     "Veterinary Biomedical Sciences": "infectious disease and comparative oncology",
     "Wildlife Ecology": "population management and conservation policy",
-    "Zoology/Animal Biology": "comparative anatomy, animal behavior, and field ecology",
+    "Zoology": "comparative anatomy, animal behavior, and field ecology",
 }
 
 # Order in which a field's credentials are considered: the lowest-priority level present
