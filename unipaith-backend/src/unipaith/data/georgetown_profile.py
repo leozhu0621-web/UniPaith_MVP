@@ -22,7 +22,7 @@ from unipaith.models import Institution, Program, School
 from unipaith.profile_standard.manifest import STANDARD_VERSION
 
 INSTITUTION_NAME = "Georgetown University"
-ENRICHED_AT = "2026-06-30"
+ENRICHED_AT = "2026-07-01"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -132,8 +132,7 @@ SCHOOL_OUTCOMES: dict = {
         "athletics_division": "NCAA Division I (Big East Conference)",
         "mascot": "Georgetown Hoyas (Jack the Bulldog)",
         "housing": (
-            "Residential campus on the Hilltop above the Potomac in the "
-            "Georgetown neighborhood"
+            "Residential campus on the Hilltop above the Potomac in the Georgetown neighborhood"
         ),
         "resources": [
             {"label": "Georgetown Hoyas Athletics", "url": "https://guhoyas.com/"},
@@ -4522,6 +4521,1025 @@ REVIEWS = {
         "disclaimer": "Aggregated and paraphrased from public "
         "third-party sources; not individual "
         "verbatim reviews.",
+    },
+    "georgetown-llm-taxation": {
+        "summary": (
+            "Georgetown's Graduate Tax Program is a consensus top-two U.S. tax LL.M., ranked "
+            "#2 nationally in the 2026-27 U.S. News tax-law specialty ranking (behind NYU, "
+            "ahead of a Florida/Northwestern tie) and #2 in National Jurist's survey of "
+            "corporate tax-department heads. Its signature strength is scale: Georgetown "
+            "advertises the most comprehensive tax curriculum in the country, with certificate "
+            "tracks in employee benefits, estate planning, international tax, and state and local "
+            "tax, and its Washington, D.C. location feeds IRS, Treasury, and Big Four pipelines. "
+            "The recurring cautions are cost (LL.M. tuition and fees run roughly $78,000 before "
+            "aid) and market fit: forum sentiment holds that NYU carries more weight for national "
+            "and New York BigLaw, while Georgetown dominates the D.C. and government/accounting "
+            "market."
+        ),
+        "themes": [
+            {
+                "label": "U.S. News tax specialty rank",
+                "sentiment": "positive",
+                "detail": (
+                    "#2 in the 2026-27 U.S. News tax-law specialty ranking, a peer-assessment "
+                    "survey of tax faculty, so genuinely program-specific rather than a general "
+                    "law-school rank."
+                ),
+            },
+            {
+                "label": "Curriculum breadth",
+                "sentiment": "positive",
+                "detail": (
+                    "Georgetown markets the most comprehensive tax curriculum in the U.S., with "
+                    "specialty certificates in employee benefits, estate planning, international "
+                    "tax, and state and local tax."
+                ),
+            },
+            {
+                "label": "D.C. hiring pipeline",
+                "sentiment": "positive",
+                "detail": (
+                    "The Washington, D.C. location gives strong access to the IRS, Treasury, and "
+                    "Big Four accounting firms; Georgetown reports the large majority of U.S.-"
+                    "trained tax LL.M. graduates employed at or near graduation."
+                ),
+            },
+            {
+                "label": "Cost",
+                "sentiment": "caution",
+                "detail": (
+                    "LL.M. tuition and fees around $78,000 before scholarships weigh heavily "
+                    "against cheaper specialist programs such as Florida."
+                ),
+            },
+            {
+                "label": "Market fit vs. NYU",
+                "sentiment": "mixed",
+                "detail": (
+                    "Forum sentiment consistently rates NYU stronger for national and NYC BigLaw, "
+                    "while Georgetown is seen as dominant for D.C., government, and "
+                    "accounting-firm "
+                    "tax roles."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "2026-27 U.S. News Tax Law Rankings — TaxProf Blog",
+                "url": "https://taxprofblog.aals.org/2026/04/08/2026-27-u-s-news-tax-rankings/",
+            },
+            {
+                "label": "Best Tax LL.M. Programs — National Jurist",
+                "url": "https://nationaljurist.com/best-tax-llm-programs/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources; not individual "
+            "verbatim reviews."
+        ),
+    },
+    "georgetown-llm-international-legal-studies": {
+        "summary": (
+            "The International Legal Studies LL.M. sits within one of the strongest international-"
+            "law faculties in the country: Georgetown ties for #3 in the 2025-26 U.S. News "
+            "international-law specialty ranking (with Columbia and Yale, behind NYU and Harvard), "
+            "and the ABA Journal reports Georgetown finished #1 overall in the TaxProf omnibus of "
+            "13 U.S. News specialties. Georgetown markets the broadest array of international and "
+            "comparative-law courses of any U.S. school, and its D.C. setting connects students to "
+            "agencies, embassies, and international organizations. The honest caution is that the "
+            "#3 figure is a peer-reputation survey measuring academic esteem, not job placement — "
+            "this general LL.M. publishes no track-specific employment data, and outcomes for "
+            "international graduates vary widely by home market and work-authorization rules."
+        ),
+        "themes": [
+            {
+                "label": "International-law specialty rank",
+                "sentiment": "positive",
+                "detail": (
+                    "Ties for #3 in the 2025-26 U.S. News international-law ranking (with Columbia "
+                    "and Yale), one of the top specialty faculties nationally."
+                ),
+            },
+            {
+                "label": "Overall specialty depth",
+                "sentiment": "positive",
+                "detail": (
+                    "ABA Journal reports Georgetown ranked #1 across the TaxProf omnibus of 13 "
+                    "U.S. News specialties, reflecting unusual breadth of top-tier programs."
+                ),
+            },
+            {
+                "label": "Course breadth",
+                "sentiment": "positive",
+                "detail": (
+                    "Georgetown offers one of the widest ranges of international and comparative-"
+                    "law courses of any U.S. law school, with a D.C. location near agencies and "
+                    "international organizations."
+                ),
+            },
+            {
+                "label": "Rank reflects reputation, not outcomes",
+                "sentiment": "mixed",
+                "detail": (
+                    "The U.S. News number is a peer-faculty survey of academic esteem, not a "
+                    "measure of employment results."
+                ),
+            },
+            {
+                "label": "General-track outcomes unclear",
+                "sentiment": "caution",
+                "detail": (
+                    "This broad LL.M. publishes no track-specific placement data; results depend "
+                    "heavily on the student's home market, goals, and visa status."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "2025-26 U.S. News International Law Rankings — TaxProf Blog",
+                "url": "https://taxprofblog.aals.org/2025/04/19/2025-26-us-news-international-law-rankings/",
+            },
+            {
+                "label": "Law schools that did best in omnibus specialty rankings — ABA Journal",
+                "url": (
+                    "https://www.abajournal.com/news/article/"
+                    "these-law-schools-did-best-in-blogs-omnibus-specialty-rankings-based-on-us-news-data"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources; not individual "
+            "verbatim reviews."
+        ),
+    },
+    "georgetown-llm-environmental-energy": {
+        "summary": (
+            "The Environmental and Energy Law LL.M. is the honest reality-check among Georgetown's "
+            "specialty programs: in the 2026-27 U.S. News environmental-law ranking Georgetown "
+            "ties for #14 (with Arizona State), well behind specialty leaders Pace (#1), a Lewis & "
+            "Clark/UC-Berkeley tie at #2, and UCLA (#4). Unlike its top-tier tax and international "
+            "programs, this is an area where dedicated environmental schools outrank Georgetown on "
+            "peer reputation. Its genuine counterweight is D.C.-based practical access — the "
+            "Georgetown Climate Center lets students work on national climate and energy policy, "
+            "and the program offers externships at federal agencies, energy companies, and NGOs. "
+            "Prospective students should weigh the mid-tier specialty rank against the real "
+            "advantage of federal-policy proximity."
+        ),
+        "themes": [
+            {
+                "label": "Environmental-law specialty rank",
+                "sentiment": "caution",
+                "detail": (
+                    "Ties for #14 in the 2026-27 U.S. News environmental-law ranking, behind "
+                    "specialty leaders Pace, Lewis & Clark, UC-Berkeley, and UCLA."
+                ),
+            },
+            {
+                "label": "Below its other specialties",
+                "sentiment": "caution",
+                "detail": (
+                    "Unlike tax (#2) or international (#3), environmental is a relative weak spot "
+                    "versus dedicated environmental-law programs."
+                ),
+            },
+            {
+                "label": "Georgetown Climate Center",
+                "sentiment": "positive",
+                "detail": (
+                    "Students can work on advancing national climate and energy policy through the "
+                    "Georgetown Climate Center."
+                ),
+            },
+            {
+                "label": "D.C. policy access",
+                "sentiment": "positive",
+                "detail": (
+                    "Externships at federal agencies, energy companies, NGOs, and international "
+                    "organizations from the Washington, D.C. location."
+                ),
+            },
+            {
+                "label": "Breadth doesn't lift the rank",
+                "sentiment": "mixed",
+                "detail": (
+                    "Georgetown markets an extensive environmental course range, but breadth has "
+                    "not moved its peer-reputation rank into the specialty top tier."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "2026-27 U.S. News Environmental Law Rankings — TaxProf Blog",
+                "url": (
+                    "https://taxprofblog.aals.org/2026/04/15/"
+                    "2026-27-u-s-news-environmental-law-rankings/"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources; not individual "
+            "verbatim reviews."
+        ),
+    },
+    "georgetown-llm-global-health": {
+        "summary": (
+            "The National and Global Health Law LL.M. ranks #8 in the 2025-26 U.S. News health-"
+            "care-law specialty ranking — solidly top-10 but behind specialty leaders St. Louis "
+            "(#1), Boston University (#2), Georgia State (#3), and even Harvard (#6) and Stanford "
+            "(#7). So while strong, it is not the dominant #1 that Georgetown's tax program is; "
+            "several dedicated health-law schools outrank it on peer reputation. The program's "
+            "real distinction is the O'Neill Institute for National and Global Health Law, which "
+            "anchors the degree and a global-health-governance niche — health and human rights, "
+            "food and drug law, infectious disease — that the U.S. News reputational rank does not "
+            "capture. Cost and the reputation-based (not outcomes-based) nature of the rank are "
+            "the "
+            "main cautions."
+        ),
+        "themes": [
+            {
+                "label": "Health-care-law specialty rank",
+                "sentiment": "mixed",
+                "detail": (
+                    "#8 in the 2025-26 U.S. News health-care-law ranking — top-10 but behind St. "
+                    "Louis, BU, Georgia State, Harvard, and Stanford."
+                ),
+            },
+            {
+                "label": "O'Neill Institute",
+                "sentiment": "positive",
+                "detail": (
+                    "The O'Neill Institute for National and Global Health Law anchors the LL.M., a "
+                    "distinctive global-health-law hub."
+                ),
+            },
+            {
+                "label": "Global-governance niche",
+                "sentiment": "positive",
+                "detail": (
+                    "Strength in global health governance, health and human rights, food and drug "
+                    "law, and infectious disease — a niche the U.S. News rank does not measure."
+                ),
+            },
+            {
+                "label": "Not a dominant #1",
+                "sentiment": "caution",
+                "detail": (
+                    "Unlike Georgetown's tax program, dedicated health-law schools outrank it on "
+                    "peer reputation; the #8 rank reflects reputation, not outcomes."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "2025-26 U.S. News Health Care Law Rankings — TaxProf Blog",
+                "url": (
+                    "https://taxprofblog.aals.org/2025/04/17/2025-26-us-news-health-care-law-rankings/"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources; not individual "
+            "verbatim reviews."
+        ),
+    },
+    "georgetown-mba-flex": {
+        "summary": (
+            "Georgetown McDonough's Flex MBA (its evening/part-time format, offered in-person and "
+            "online) is ranked 11th in the United States for part-time MBA by U.S. News. Poets & "
+            "Quants covered the program's 2022 launch of an online Flex option spanning two to "
+            "five "
+            "years with a mix of synchronous and asynchronous classes plus mandatory campus "
+            "residencies; the in-person Flex cohort at the time enrolled 128 students (40% women), "
+            "sharing the same curriculum and faculty as the full-time MBA. Cost is a real caution "
+            "— "
+            "at the 2022 launch the in-person Flex MBA was reported near $98,000 per year — and "
+            "market research at launch found almost 90% of then-current Flex students opposed "
+            "adding "
+            "an online option, revealing internal skepticism about diluting the on-campus "
+            "experience."
+        ),
+        "themes": [
+            {
+                "label": "Part-time MBA ranking",
+                "sentiment": "positive",
+                "detail": (
+                    "Ranked 11th in the U.S. for part-time MBA by U.S. News — a strong national "
+                    "position among evening/part-time programs."
+                ),
+            },
+            {
+                "label": "Format flexibility",
+                "sentiment": "positive",
+                "detail": (
+                    "Offered in-person and online (two-to-five-year completion, synchronous plus "
+                    "asynchronous), with the same curriculum and faculty as the full-time MBA."
+                ),
+            },
+            {
+                "label": "Working-professional fit",
+                "sentiment": "positive",
+                "detail": (
+                    "Designed for professionals advancing while employed full time; the in-person "
+                    "Flex cohort was 128 students, 40% women, with government and healthcare well "
+                    "represented."
+                ),
+            },
+            {
+                "label": "Cost",
+                "sentiment": "caution",
+                "detail": (
+                    "The in-person Flex MBA was reported around $98,000 per year at launch — a "
+                    "high "
+                    "sticker price for a part-time degree."
+                ),
+            },
+            {
+                "label": "Online-rollout skepticism",
+                "sentiment": "mixed",
+                "detail": (
+                    "Market research at launch found almost 90% of then-current Flex students "
+                    "opposed an online option, revealing tension over format dilution."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Georgetown Takes Part-Time 'Flex' MBA Online — Poets & Quants",
+                "url": (
+                    "https://poetsandquants.com/2022/08/24/"
+                    "breaking-georgetown-takes-part-time-flex-mba-online/"
+                ),
+            },
+            {
+                "label": "Georgetown McDonough Rankings (U.S. News part-time #11)",
+                "url": "https://msb.georgetown.edu/about/rankings/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources; not individual "
+            "verbatim reviews."
+        ),
+    },
+    "georgetown-finance-ms": {
+        "summary": (
+            "Georgetown McDonough's M.S. in Finance is ranked 11th in the United States by QS, "
+            "which also placed it in the top tier nationally for alumni outcomes (5th) and value "
+            "for money (11th). It is positioned as a career-focused, blended-online program "
+            "serving "
+            "working professionals more than a purely pre-experience cohort. Coverage is genuine "
+            "but "
+            "comparatively thin: the strongest independent data point is the QS 11th-in-the-U.S. "
+            "ranking, and detailed program-specific employment and salary figures are not "
+            "published "
+            "in third-party coverage. Prospective students should weigh the mid-pack (versus "
+            "top-5) "
+            "national standing and confirm placement rates and salaries through the school's own "
+            "MSF employment report."
+        ),
+        "themes": [
+            {
+                "label": "QS finance ranking",
+                "sentiment": "positive",
+                "detail": (
+                    "Ranked 11th in the U.S. by QS for M.S. in Finance, with a top-tier national "
+                    "placement for alumni outcomes."
+                ),
+            },
+            {
+                "label": "Working-professional format",
+                "sentiment": "positive",
+                "detail": (
+                    "A blended-online MSF aimed at professionals advancing their careers rather "
+                    "than a purely pre-experience cohort."
+                ),
+            },
+            {
+                "label": "Value for money",
+                "sentiment": "mixed",
+                "detail": (
+                    "QS placed the MSF 11th in the U.S. for value for money — solid but not elite "
+                    "for a premium-priced Georgetown degree."
+                ),
+            },
+            {
+                "label": "National standing",
+                "sentiment": "caution",
+                "detail": (
+                    "An 11th-in-the-U.S. rank places the MSF outside the top-5 tier, below the "
+                    "strongest quantitative-finance names."
+                ),
+            },
+            {
+                "label": "Placement transparency",
+                "sentiment": "caution",
+                "detail": (
+                    "Program-specific independent employment and salary data were not surfaced in "
+                    "third-party coverage; verify via McDonough's own MSF employment report."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "QS Ranks Georgetown Programs Among Best in the World — McDonough",
+                "url": (
+                    "https://msb.georgetown.edu/news-story/rankings/"
+                    "qs-ranks-georgetown-programs-among-best-in-the-world/"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources; not individual "
+            "verbatim reviews."
+        ),
+    },
+    "georgetown-management-ms": {
+        "summary": (
+            "Georgetown McDonough's Master of Science in Management (MiM) is ranked 4th in the "
+            "U.S. "
+            "and 27th globally by QS on its first entry — a strong debut for an accelerated, ten-"
+            "month, STEM-designated program aimed at early-career professionals. QS ranked it 1st "
+            "in the U.S. for alumni outcomes and 1st for international representation and gender "
+            "diversity, alongside top-tier value-for-money and employability marks; the curriculum "
+            "blends business fundamentals with technical tooling (R, Tableau, SQL, analytics). The "
+            "main fit consideration is that this is a pre-experience program — applicants "
+            "typically "
+            "have zero to a few years of work experience — so it targets recent graduates rather "
+            "than seasoned managers, and standalone salary/placement figures are not published in "
+            "third-party coverage."
+        ),
+        "themes": [
+            {
+                "label": "QS management ranking",
+                "sentiment": "positive",
+                "detail": (
+                    "4th in the U.S. and 27th globally by QS on its first entry — a strong "
+                    "national "
+                    "placement for a management master's."
+                ),
+            },
+            {
+                "label": "Alumni outcomes & diversity",
+                "sentiment": "positive",
+                "detail": (
+                    "QS ranked the MiM 1st in the U.S. for alumni outcomes and 1st for "
+                    "international representation and gender diversity."
+                ),
+            },
+            {
+                "label": "STEM + tech curriculum",
+                "sentiment": "positive",
+                "detail": (
+                    "Accelerated ten-month, STEM-designated program integrating R, Tableau, SQL, "
+                    "and analytics with core business topics."
+                ),
+            },
+            {
+                "label": "Pre-experience fit",
+                "sentiment": "caution",
+                "detail": (
+                    "Designed for early-career candidates (roughly zero to three years of "
+                    "experience); not aimed at seasoned professionals — a fit consideration."
+                ),
+            },
+            {
+                "label": "Outcome transparency",
+                "sentiment": "caution",
+                "detail": (
+                    "Standalone salary and placement figures are not published in third-party "
+                    "coverage; confirm via McDonough's MiM employment data."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "QS Ranks Georgetown Programs Among Best in the World — McDonough",
+                "url": (
+                    "https://msb.georgetown.edu/news-story/rankings/"
+                    "qs-ranks-georgetown-programs-among-best-in-the-world/"
+                ),
+            },
+            {
+                "label": "Master of Science in Management (MiM) — Georgetown McDonough",
+                "url": "https://msb.georgetown.edu/masters-in-management/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources; not individual "
+            "verbatim reviews."
+        ),
+    },
+    "georgetown-bsba-international-business": {
+        "summary": (
+            "Georgetown McDonough's undergraduate business program is a consistent national "
+            "top-ten "
+            "school in the Poets & Quants undergraduate ranking (7th in the most recent cycle, as "
+            "high as 2nd in prior years, and 2nd for career outcomes), and its international-"
+            "business concentration is a signature strength — U.S. News ranks Georgetown 2nd "
+            "nationally for undergraduate international business. Poets & Quants weighs admissions "
+            "standards, academic experience, and employment outcomes equally, and Georgetown's "
+            "D.C. "
+            "location and global orientation feed strong consulting, finance, and international-"
+            "organization recruiting. Cautions: the Poets & Quants rank has swung across cycles "
+            "(so "
+            "no single fixed number should be relied on), admissions selectivity trails the "
+            "program's outcomes rank, and full placement and salary specifics require the school's "
+            "own employment report."
+        ),
+        "themes": [
+            {
+                "label": "International-business strength",
+                "sentiment": "positive",
+                "detail": (
+                    "U.S. News ranks Georgetown 2nd nationally for undergraduate international "
+                    "business — a signature distinction of this concentration."
+                ),
+            },
+            {
+                "label": "Poets & Quants standing",
+                "sentiment": "positive",
+                "detail": (
+                    "McDonough's undergraduate program is a national top-ten school (7th recently, "
+                    "as high as 2nd) and 2nd for career outcomes."
+                ),
+            },
+            {
+                "label": "D.C. recruiting",
+                "sentiment": "positive",
+                "detail": (
+                    "The Washington, D.C. location and global orientation support strong "
+                    "consulting, finance, and international-organization recruiting."
+                ),
+            },
+            {
+                "label": "Rank volatility",
+                "sentiment": "caution",
+                "detail": (
+                    "The Poets & Quants placement has moved across cycles (2nd to 7th), so a "
+                    "single fixed rank number is unreliable."
+                ),
+            },
+            {
+                "label": "Admissions vs. outcomes",
+                "sentiment": "mixed",
+                "detail": (
+                    "The admissions sub-rank trails the 2nd-place career-outcomes rank in the "
+                    "Poets & Quants model — the outcome edge outpaces the admissions-standards "
+                    "score."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Best Undergraduate Business Schools of 2025 — Poets & Quants",
+                "url": (
+                    "https://poetsandquants.com/2025/03/17/"
+                    "poetsquants-best-undergraduate-business-schools-of-2025/"
+                ),
+            },
+            {
+                "label": "Georgetown McDonough Rankings (U.S. News #2 international business)",
+                "url": "https://msb.georgetown.edu/about/rankings/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources; not individual "
+            "verbatim reviews."
+        ),
+    },
+    "georgetown-security-studies-ma": {
+        "summary": (
+            "The M.A. in Security Studies (SSP) is a flagship graduate program of the Walsh School "
+            "of Foreign Service, whose master's programs Foreign Policy magazine's 2024 survey of "
+            "1,500 foreign-policy professionals ranked #1 in the world for international "
+            "relations. "
+            "SSP itself is a 36-credit multidisciplinary defense/security degree with large "
+            "cohorts "
+            "(roughly 400 enrolled), distributive requirements across area, economics, and "
+            "technology-and-security, and mostly evening classes built for working professionals; "
+            "the program reports 96% of graduates employed or not seeking work within six months "
+            "(classes of 2021-2025). The main cautions are a heavy Washington-defense placement "
+            "pipeline that suits students targeting D.C. national-security roles more than "
+            "academia "
+            "or outside-the-Beltway careers, high D.C. tuition, and that the 96% figure is program-"
+            "reported."
+        ),
+        "themes": [
+            {
+                "label": "#1-ranked SFS master's umbrella",
+                "sentiment": "positive",
+                "detail": (
+                    "SFS master's programs were ranked #1 worldwide by faculty, policymakers, and "
+                    "think-tank staff in Foreign Policy's 2024 survey; SSP is one of its flagship "
+                    "degrees."
+                ),
+            },
+            {
+                "label": "Strong reported employment",
+                "sentiment": "positive",
+                "detail": (
+                    "The program reports 96% of graduates employed or not seeking work within six "
+                    "months (classes of 2021-2025), across government, defense, research, and NGOs."
+                ),
+            },
+            {
+                "label": "Professional, evening format",
+                "sentiment": "positive",
+                "detail": (
+                    "A 36-credit degree with mostly evening classes and a ~400-student community "
+                    "built for working national-security professionals."
+                ),
+            },
+            {
+                "label": "D.C.-centric placement",
+                "sentiment": "mixed",
+                "detail": (
+                    "The curriculum and pipeline orient toward Washington defense/security roles — "
+                    "excellent for that path, narrower for academia or non-D.C. careers."
+                ),
+            },
+            {
+                "label": "Cost and self-reported outcomes",
+                "sentiment": "caution",
+                "detail": (
+                    "Georgetown D.C. graduate tuition is high, and the 96% employment figure is "
+                    "reported by the program rather than independently audited."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "M.A. in Security Studies — Georgetown SFS",
+                "url": "https://sfs.georgetown.edu/ma-security-studies/",
+            },
+            {
+                "label": "Georgetown Ranks #1 in Foreign Policy 2024 Rankings — Georgetown SFS",
+                "url": "https://sfs.georgetown.edu/news/georgetown-ranks-1-in-foreign-policy-2024-rankings/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources; not individual "
+            "verbatim reviews."
+        ),
+    },
+    "georgetown-latin-american-studies-ma": {
+        "summary": (
+            "The M.A. in Latin American Studies (MALAS), run by the Center for Latin American "
+            "Studies within the Walsh School of Foreign Service, is the best-documented "
+            "area-studies "
+            "program at Georgetown on outcomes: the program's careers page reports a 98% "
+            "employment "
+            "rate (five-year, classes of 2021-2025), a Class-of-2024 sector split of 40% public / "
+            "33% nonprofit / 27% private (with 10% continuing to further study), and named "
+            "employers "
+            "including the World Bank, Chemonics, the National Democratic Institute, the U.S. "
+            "Department of Defense, and Albright Stonebridge. It is a 36-credit interdisciplinary "
+            "degree offered as coursework-plus-capstone or thesis, under an SFS umbrella that "
+            "Foreign Policy ranked #1 in the world for master's international relations in 2024. "
+            "Cautions: placement skews toward D.C. public and nonprofit development roles, D.C. "
+            "tuition is high, and the outcome figures are program-reported."
+        ),
+        "themes": [
+            {
+                "label": "Strong published outcomes",
+                "sentiment": "positive",
+                "detail": (
+                    "The careers page reports 98% employment (five-year, classes of 2021-2025) "
+                    "with a Class-of-2024 split of 40% public / 33% nonprofit / 27% private."
+                ),
+            },
+            {
+                "label": "Named, credible employers",
+                "sentiment": "positive",
+                "detail": (
+                    "Sample employers include the World Bank, Chemonics, the National Democratic "
+                    "Institute, the U.S. Department of Defense, and Albright Stonebridge."
+                ),
+            },
+            {
+                "label": "#1-ranked SFS master's umbrella",
+                "sentiment": "positive",
+                "detail": (
+                    "SFS master's programs were ranked #1 worldwide for international relations by "
+                    "Foreign Policy's 2024 survey of foreign-policy professionals."
+                ),
+            },
+            {
+                "label": "D.C.-skewed placement",
+                "sentiment": "mixed",
+                "detail": (
+                    "The roughly 73% public-plus-nonprofit split reflects a Washington development/"
+                    "policy pipeline — excellent for that path, less so for in-region or private-"
+                    "sector careers."
+                ),
+            },
+            {
+                "label": "Cost and self-reported outcomes",
+                "sentiment": "caution",
+                "detail": (
+                    "Georgetown D.C. tuition is high, and the employment figures are reported by "
+                    "the program rather than independently audited."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "M.A. in Latin American Studies — Career Paths, Georgetown SFS",
+                "url": "https://sfs.georgetown.edu/ma-latin-american-studies/career-paths/",
+            },
+            {
+                "label": "Georgetown Ranks #1 in Foreign Policy 2024 Rankings — Georgetown SFS",
+                "url": "https://sfs.georgetown.edu/news/georgetown-ranks-1-in-foreign-policy-2024-rankings/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources; not individual "
+            "verbatim reviews."
+        ),
+    },
+    "georgetown-international-politics-bsfs": {
+        "summary": (
+            "Georgetown's Walsh School of Foreign Service undergraduate program — of which "
+            "International Politics is the core major — was ranked #1 in the world for "
+            "undergraduate "
+            "international relations by Foreign Policy magazine's 2024 rankings, conducted by "
+            "William & Mary's Global Research Institute through a survey of 1,500 foreign-policy "
+            "professionals. Georgetown placed #1 among policymakers and think-tank staff, but #3 "
+            "among IR faculty (behind Harvard and Princeton), so the top result is driven by "
+            "practitioner reputation rather than the academic-peer view. The main cautions are "
+            "that "
+            "the ranking is reputational and survey-based rather than a measure of individual "
+            "student outcomes, and that SFS is a highly selective, high-cost private program."
+        ),
+        "themes": [
+            {
+                "label": "#1 undergraduate IR (Foreign Policy 2024)",
+                "sentiment": "positive",
+                "detail": (
+                    "Foreign Policy's 2024 rankings placed Georgetown SFS #1 in the world for "
+                    "undergraduate international relations."
+                ),
+            },
+            {
+                "label": "Top among practitioners",
+                "sentiment": "positive",
+                "detail": (
+                    "Georgetown ranked #1 among the policymakers and think-tank staff surveyed — a "
+                    "signal of strong professional reputation."
+                ),
+            },
+            {
+                "label": "Faculty rate it lower",
+                "sentiment": "mixed",
+                "detail": (
+                    "IR faculty ranked Georgetown #3, behind Harvard and Princeton; the #1 result "
+                    "is driven by practitioner reputation, not the academic-peer view."
+                ),
+            },
+            {
+                "label": "Survey / reputation basis",
+                "sentiment": "mixed",
+                "detail": (
+                    "The ranking reflects perceived prestige from a 1,500-person professional "
+                    "survey, not measured student outcomes or salaries."
+                ),
+            },
+            {
+                "label": "Cost and competitiveness",
+                "sentiment": "caution",
+                "detail": (
+                    "SFS is a highly selective, high-cost private undergraduate school; the "
+                    "coverage speaks to reputation, not affordability or admit rates."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Georgetown Ranks #1 in Foreign Policy 2024 Rankings — Georgetown SFS",
+                "url": "https://sfs.georgetown.edu/news/georgetown-ranks-1-in-foreign-policy-2024-rankings/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources; not individual "
+            "verbatim reviews."
+        ),
+    },
+    "georgetown-nursing-bsn": {
+        "summary": (
+            "Georgetown's traditional four-year Bachelor of Science in Nursing is a well-regarded "
+            "program with very strong licensure outcomes: Nursing Schools Almanac's 2024 national "
+            "ranking places Georgetown #31 among U.S. nursing schools, citing a 97% NCLEX-RN pass "
+            "rate for the traditional BSN over the past decade, and Georgetown's School of Nursing "
+            "reports a typical 96-100% first-time NCLEX-RN pass rate with 800+ combined clinical, "
+            "lab, simulation, and experiential hours (including placements at MedStar Georgetown "
+            "University Hospital). The main cautions are that the widely-cited U.S. News nursing "
+            "ranking is graduate-level (so the bachelor's-level standing here comes from Nursing "
+            "Schools Almanac plus first-party data), and the School of Nursing does not publish "
+            "cohort size or admit-rate selectivity for the BSN."
+        ),
+        "themes": [
+            {
+                "label": "Ranked nursing program",
+                "sentiment": "positive",
+                "detail": (
+                    "Nursing Schools Almanac's 2024 national ranking lists Georgetown at #31 among "
+                    "U.S. nursing schools."
+                ),
+            },
+            {
+                "label": "Very strong NCLEX outcomes",
+                "sentiment": "positive",
+                "detail": (
+                    "97% NCLEX-RN pass rate over the past decade (Almanac); 96-100% typical first-"
+                    "time pass rate per Georgetown's School of Nursing."
+                ),
+            },
+            {
+                "label": "Extensive clinical training",
+                "sentiment": "positive",
+                "detail": (
+                    "800+ total clinical, lab, simulation, and experiential hours, with "
+                    "D.C.-region "
+                    "placements including MedStar Georgetown University Hospital."
+                ),
+            },
+            {
+                "label": "No BSN-specific U.S. News rank",
+                "sentiment": "mixed",
+                "detail": (
+                    "U.S. News's nursing ranking is graduate-level; the bachelor's-level standing "
+                    "here comes from Nursing Schools Almanac plus first-party data."
+                ),
+            },
+            {
+                "label": "Selectivity not disclosed",
+                "sentiment": "caution",
+                "detail": (
+                    "The School of Nursing does not publish cohort size, admit rate, or GPA/test "
+                    "thresholds for the BSN."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "2024 National Nursing School Rankings — Nursing Schools Almanac",
+                "url": "https://www.nursingschoolsalmanac.com/rankings/national",
+            },
+            {
+                "label": "Bachelor of Science in Nursing (BSN) — Georgetown School of Nursing",
+                "url": "https://nursing.georgetown.edu/degree-programs/bachelor-of-science-nursing-bsn/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources; not individual "
+            "verbatim reviews."
+        ),
+    },
+    "georgetown-nursing-ms": {
+        "summary": (
+            "Georgetown's online M.S. in Nursing (Nursing@Georgetown) trains nurse practitioners "
+            "across family, adult-gerontology acute care, women's health, and nurse-midwifery "
+            "tracks; the CCNE-accredited coursework is delivered online with two to three required "
+            "on-campus intensives and locally-arranged clinical placements. On the independent "
+            "review site GradReports, Georgetown's Nursing Master's carries a 4.3-star aggregate "
+            "rating (from programs with five or more reviews), with featured alumni praising the "
+            "instructors, the on-campus intensives, and responsive advising. The biggest caution "
+            "is "
+            "cost: estimated total tuition runs roughly $115,000-plus at around $1,800 per credit "
+            "hour, plus technology fees and travel to intensives, and GradReports' displayed "
+            "reviews "
+            "skew positive, so a balanced picture requires reading beyond the featured entries."
+        ),
+        "themes": [
+            {
+                "label": "Independent GradReports rating",
+                "sentiment": "positive",
+                "detail": (
+                    "GradReports shows a 4.3-star aggregate for Georgetown's Nursing Master's — "
+                    "genuine independent student sentiment, not a Georgetown-hosted rating."
+                ),
+            },
+            {
+                "label": "CCNE-accredited NP tracks",
+                "sentiment": "positive",
+                "detail": (
+                    "The nurse-practitioner tracks are accredited by the Commission on Collegiate "
+                    "Nursing Education."
+                ),
+            },
+            {
+                "label": "Online with required intensives",
+                "sentiment": "mixed",
+                "detail": (
+                    "Coursework is delivered online but requires two to three on-campus visits and "
+                    "locally-arranged clinical practicums."
+                ),
+            },
+            {
+                "label": "High cost",
+                "sentiment": "caution",
+                "detail": (
+                    "Estimated total tuition around $115,000-plus at roughly $1,800 per credit "
+                    "hour, plus technology fees and travel for intensives."
+                ),
+            },
+            {
+                "label": "Review skew",
+                "sentiment": "caution",
+                "detail": (
+                    "The displayed GradReports reviews are predominantly positive; a balanced view "
+                    "requires reading beyond the featured entries."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Georgetown University Reviews (Nursing Master's 4.3) — GradReports",
+                "url": "https://www.gradreports.com/colleges/georgetown-university",
+            },
+            {
+                "label": "Family Nurse Practitioner / M.S. in Nursing — Nursing@Georgetown",
+                "url": "https://online.nursing.georgetown.edu/academics/family-nurse-practitioner-fnp/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources; not individual "
+            "verbatim reviews."
+        ),
+    },
+    "georgetown-computer-science-ms": {
+        "summary": (
+            "Georgetown's M.S. in Computer Science is a 30-credit, STEM-designated program that "
+            "the "
+            "independent site TechGuide ranked #15 nationwide in its 2025 Best Master's in "
+            "Computer "
+            "Science list, scoring tuition affordability, student-to-faculty ratio, admission and "
+            "graduation rates, and alumni outcomes from IPEDS/College Navigator data. Georgetown "
+            "highlights a low student-to-faculty ratio with almost all graduate classes taught by "
+            "research-active faculty, and coursework spanning AI, cybersecurity, privacy-enhancing "
+            "technologies, systems, and data science. The honest cautions: the #15 result is a "
+            "metrics-based (affordability-and-outcomes) ranking rather than the reputational U.S. "
+            "News CS-graduate ranking, and Georgetown appears in TechGuide's 2025 list but not its "
+            "2026 list, so the placement is a single-year result."
+        ),
+        "themes": [
+            {
+                "label": "TechGuide #15 (2025)",
+                "sentiment": "positive",
+                "detail": (
+                    "TechGuide ranked Georgetown #15 in its 2025 Best Master's in Computer Science "
+                    "list — a genuine independent, program-specific placement."
+                ),
+            },
+            {
+                "label": "Small-cohort, faculty-taught",
+                "sentiment": "positive",
+                "detail": (
+                    "Georgetown cites a low student-to-faculty ratio with almost all graduate "
+                    "classes taught by research-active faculty."
+                ),
+            },
+            {
+                "label": "STEM designation",
+                "sentiment": "positive",
+                "detail": (
+                    "The 30-credit program is STEM-designated, relevant for international-student "
+                    "OPT eligibility."
+                ),
+            },
+            {
+                "label": "Metrics-based, not reputational",
+                "sentiment": "mixed",
+                "detail": (
+                    "TechGuide scores affordability, faculty ratio, and outcomes from IPEDS data — "
+                    "not peer-assessment prestige like the U.S. News CS-graduate ranking."
+                ),
+            },
+            {
+                "label": "Single-year placement",
+                "sentiment": "caution",
+                "detail": (
+                    "Georgetown appears in TechGuide's 2025 list but not its 2026 list, so the #15 "
+                    "is a one-year result rather than a durable ranking."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Georgetown CS Master's Ranked #15 in the U.S. (TechGuide 2025)",
+                "url": (
+                    "https://cs.georgetown.edu/news-story/"
+                    "georgetown-university-computer-science-masters-program-ranked-15-in-us/"
+                ),
+            },
+            {
+                "label": "Best Master's in Computer Science — TechGuide",
+                "url": "https://techguide.org/computer-science/masters-in-computer-science/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources; not individual "
+            "verbatim reviews."
+        ),
     },
 }
 
