@@ -50,7 +50,7 @@ WHO_ITS_FOR: dict[str, str] = {
     "berkeley-biomedical-medical-engineering-ms": "Students who want advanced graduate training in bioengineering — devices, imaging, and therapeutics — toward biomedical industry, medicine, or doctoral research.",
     "berkeley-chemical-engineering-ms": "Students seeking advanced graduate study in chemical and biomolecular engineering, toward technical leadership in industry or doctoral research.",
     "berkeley-civil-engineering-ms": "Students seeking advanced graduate study in civil engineering — structures, transportation, and geosystems, toward technical-leadership roles or doctoral research.",
-    "berkeley-electrical-electronics-and-communications-engineering-ms": "Students seeking advanced graduate study in electrical engineering and computer sciences — signals, circuits, and systems, toward industry R&D or doctoral research.",
+    "berkeley-electrical-electronics-and-communications-engineering-ms": "Students seeking advanced graduate study in electrical engineering — signals, circuits, systems, and devices, toward industry R&D or doctoral research.",
     "berkeley-nuclear-engineering-ms": "Students seeking advanced graduate study in nuclear engineering — reactors, radiation, and applications, toward energy, national-lab, or doctoral research.",
     "berkeley-operations-research-ms": "Students seeking advanced training in optimization, stochastic modeling, and decision analysis, toward analytics, operations, and quantitative careers or doctoral study.",
     "berkeley-biomedical-medical-engineering-phd": "Aspiring researchers pursuing a funded doctorate in bioengineering, developing devices, imaging, and therapeutics, toward academic or biomedical-industry research.",
