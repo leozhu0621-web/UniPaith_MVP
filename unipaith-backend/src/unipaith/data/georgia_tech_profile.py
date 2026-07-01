@@ -46,10 +46,21 @@ external_reviews minted one-per-row from program metadata + institution rankings
 institution-level themes repeated across the MS/PhD rows under a false "aggregated from public
 sources" disclaimer) is REMOVED; a review fabricated-by-synthesis lends a row false third-party
 credibility and is worse than an honest blank (SKILL.md miss #8), so those programs now record
-``external_reviews`` in ``_standard.omitted``. Only the four hand-gathered, program-specific
-flagship reviews remain (OMSCS, Online MS Analytics, the Scheller Full-Time MBA, and
-undergraduate Computer Science); the genuine program-specific reviews depth pass is deferred to
-a later run (structure-before-depth). An enforced anti-stub gate (``test_anti_stub_gate``,
+``external_reviews`` in ``_standard.omitted``. The structure is clean fleet-wide, so the
+structure-before-depth gate now unblocks the reviews DEPTH pass (gatechreviews1): the four
+original flagship reviews (OMSCS, Online MS Analytics, the Scheller Full-Time MBA, and
+undergraduate Computer Science) are joined by 13 more hand-gathered, program-specific reviews
+across the coverable flagship set — BS/MS Industrial Engineering, BS/MS Aerospace Engineering,
+BS Biomedical Engineering, MS Mechanical Engineering, MS Electrical & Computer Engineering, MS
+Quantitative & Computational Finance, the residential MS in Analytics, the Executive MBA in
+Management of Technology, MS Human-Computer Interaction, the Online MS in Cybersecurity, and MS
+Supply Chain Engineering. Each summarizes real third-party coverage (U.S. News specialty ranks,
+official employment reports, QuantNet, Financial Times, Poets&Quants, OMSCentral course reviews,
+College Factual, College Confidential), pairs praise with the common cautions, and cites
+resolvable program-specific sources. Programs with no verifiable program-specific third-party
+coverage (the residential MSCS and MS-Cybersecurity, MCRP, MS Public Policy, and the research
+MS/PhD tail) stay honestly recorded in ``_standard.omitted``, never synthesized. An enforced
+anti-stub gate (``test_anti_stub_gate``,
 ``georgia_tech`` certified) and an anti-synthesis test (``test_georgia_tech_profile``) block any
 future stub-swap or one-sweep review mint. Georgia Tech's events calendar
 (events.gatech.edu) exposes no verified public iCalendar/RSS feed, so the verified Institute
@@ -2153,6 +2164,619 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             {
                 "label": "Georgia Tech College of Computing — BS in Computer Science",
                 "url": "https://www.cc.gatech.edu/threads-better-way-learn-computing",
+            },
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    # ── Depth-pass reviews (gatechreviews1) — each hand-gathered from program-specific
+    # third-party coverage (U.S. News specialty ranks, official employment reports, QuantNet,
+    # Financial Times, OMSCentral course reviews, College Factual, College Confidential),
+    # summarizing praise AND common cautions, never synthesized from metadata. Programs with
+    # no verifiable program-specific coverage (residential MSCS/MS-Cybersecurity, MCRP, MS
+    # Public Policy, and the research MS/PhD tail) remain honestly recorded in _standard.omitted.
+    "gatech-industrial-engineering-bs": {
+        "summary": (
+            "Georgia Tech's undergraduate industrial engineering program, in the H. Milton "
+            "Stewart School of Industrial and Systems Engineering (ISyE), has been ranked No. 1 "
+            "in the nation by U.S. News for 25 consecutive years (2026 edition) — the longest "
+            "top-ranked run of any Georgia Tech program. Reviewers point to its broad, "
+            "quantitative curriculum and unusually strong recruiting into consulting, analytics, "
+            "supply-chain, and finance roles, while cautioning that the workload is demanding and "
+            "the peer environment competitive."
+        ),
+        "themes": [
+            {
+                "label": "No. 1 undergraduate IE program for 25 straight years",
+                "sentiment": "positive",
+                "detail": "U.S. News has ranked ISyE's undergraduate program first in the nation for 25 consecutive years (2026), the field's longest continuous No. 1 streak.",
+            },
+            {
+                "label": "Versatile, quantitative curriculum",
+                "sentiment": "positive",
+                "detail": "The degree's core in optimization, probability, statistics, and computing opens careers well beyond manufacturing — roughly 40% of graduates enter consulting, alongside analytics, supply-chain, and finance roles.",
+            },
+            {
+                "label": "Strong recruiting and starting pay",
+                "sentiment": "positive",
+                "detail": "ISyE reports a median starting salary of $74,000 on its placement page and $82,000 with 88.5% of students holding an offer before graduation on its facts page; employers include McKinsey, Bain, Deloitte, Apple, Google, UPS, and Delta.",
+            },
+            {
+                "label": "Demanding, fast-paced workload",
+                "sentiment": "caution",
+                "detail": "Advising write-ups describe a rigorous curriculum that requires disciplined time management to keep up with.",
+            },
+            {
+                "label": "Prestige brings a competitive peer culture",
+                "sentiment": "mixed",
+                "detail": "The program's reputation draws high-achieving peers, so students describe a competitive atmosphere in which proactive networking matters.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "ISyE (CASE) — Undergraduate program ranked No. 1 for 2025",
+                "url": "https://case.isye.gatech.edu/news/industrial-and-systems-engineering-undergraduate-program-ranked-no-1-nation-2025",
+            },
+            {
+                "label": "Georgia Tech News — Multiple No. 1 rankings (ISyE undergrad, 25 straight years, 2026)",
+                "url": "https://news.gatech.edu/news/2025/09/23/georgia-tech-secures-multiple-no-1-rankings",
+            },
+            {
+                "label": "ISyE — Facts & Rankings (88.5% offer rate, $82,000 median)",
+                "url": "https://www.isye.gatech.edu/about/school/facts-rankings",
+            },
+            {
+                "label": "ISyE — BSIE Placement ($74,000 median; employer list)",
+                "url": "https://isye.gatech.edu/academics/bachelors/industrial-engineering/placement",
+            },
+            {
+                "label": "CollegeVine — Industrial Engineering at Georgia Tech (strengths and cautions)",
+                "url": "https://www.collegevine.com/faq/39422/industrial-engineering-at-georgia-tech-any-pro-tips",
+            },
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "gatech-industrial-engineering-ms": {
+        "summary": (
+            "Georgia Tech's graduate industrial engineering program (ISyE) has been ranked No. 1 "
+            "in the nation by U.S. News for 35 consecutive years — the longest No. 1 streak in "
+            "the discipline. Reviewers value its rigorous methodological core and broad employer "
+            "pipeline, while noting selective admissions, a competitive peer culture, and that "
+            "Georgia Tech publishes no program-specific salary data for the master's."
+        ),
+        "themes": [
+            {
+                "label": "No. 1 graduate IE program for 35 consecutive years",
+                "sentiment": "positive",
+                "detail": "U.S. News has ranked ISyE's graduate program first nationally for 35 straight years — the longest sustained No. 1 in the field.",
+            },
+            {
+                "label": "Rigorous methodological core",
+                "sentiment": "positive",
+                "detail": "The curriculum is built on optimization, stochastic modeling, statistics, and computing, with specialization breadth across supply chain, analytics, and operations.",
+            },
+            {
+                "label": "Broad employer pipeline",
+                "sentiment": "positive",
+                "detail": "The master's placement page lists employers spanning Apple, Boeing, Coca-Cola, Delta, Ford, Google, McKinsey, Nike, Tesla, and UPS.",
+            },
+            {
+                "label": "Selective and competitive",
+                "sentiment": "caution",
+                "detail": "Georgia Tech notes applicants below a 3.0 GPA may find admission difficult, and the program's prestige fosters a competitive environment among peers.",
+            },
+            {
+                "label": "No published master's-specific outcomes",
+                "sentiment": "caution",
+                "detail": "The school lists sample titles and employers but no master's-level salary or placement rate, so ROI must be weighed against the program's own cost pages.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "Georgia Tech News — ISyE graduate No. 1, 35th consecutive year (2025)",
+                "url": "https://www.gatech.edu/news/2025/04/08/h-milton-stewart-school-industrial-and-systems-engineering-graduate-program-ranked",
+            },
+            {
+                "label": "Georgia Tech College of Engineering — Facts & Rankings (IE graduate No. 1, 2026)",
+                "url": "https://coe.gatech.edu/about/facts-and-rankings",
+            },
+            {
+                "label": "ISyE — MS in Industrial Engineering Placement (titles and employers)",
+                "url": "https://www.isye.gatech.edu/academics/masters/ms-industrial-engineering/placement",
+            },
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "gatech-aerospace-engineering-bs": {
+        "summary": (
+            "The Daniel Guggenheim School's undergraduate aerospace engineering program is ranked "
+            "No. 2 in the nation and No. 1 among public universities for the 11th consecutive year "
+            "(2026 U.S. News). Third-party outcome data reports a strong bachelor's median salary, "
+            "though independent student-review coverage specific to the undergraduate program is "
+            "limited."
+        ),
+        "themes": [
+            {
+                "label": "No. 2 undergraduate AE, No. 1 public",
+                "sentiment": "positive",
+                "detail": "U.S. News ranks the undergraduate aerospace program No. 2 nationally and No. 1 among public institutions for the 11th year running (2026).",
+            },
+            {
+                "label": "Strong reported starting salary",
+                "sentiment": "positive",
+                "detail": "College Factual reports a bachelor's median salary near $101,367, placing the program #6 of 73 nationally and #1 in the Southeast by that source's methodology.",
+            },
+            {
+                "label": "Math- and physics-heavy, demanding curriculum",
+                "sentiment": "caution",
+                "detail": "Aerospace engineering is a rigorous, technical major; prospective students should weigh the heavy coursework and the value of Georgia Tech's co-op pipeline.",
+            },
+            {
+                "label": "Thin undergraduate-specific student reviews",
+                "sentiment": "mixed",
+                "detail": "Beyond rankings and outcome data, openly-published student-voice reviews specific to the BS are sparse, so campus visits and current-student conversations are worthwhile.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "Guggenheim School (AE) — Undergraduate program No. 2, No. 1 public (2026)",
+                "url": "https://ae.gatech.edu/news/2025/09/aerospace-engineering-ranks-no-2-2026-undergraduate-rankings",
+            },
+            {
+                "label": "College Factual — Georgia Tech Aerospace Engineering (bachelor's median $101,367)",
+                "url": "https://www.collegefactual.com/colleges/georgia-institute-of-technology-main-campus/academic-life/academic-majors/engineering/aerospace-and-aeronautical-engineering/",
+            },
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "gatech-aerospace-engineering-ms": {
+        "summary": (
+            "The Daniel Guggenheim School's graduate aerospace engineering program is ranked No. 2 "
+            "in the nation (tied with Caltech, Purdue, and Stanford) and No. 1 among public "
+            "universities (2025 U.S. News). It is a fast-growing, well-funded program, though the "
+            "school is explicit that graduate funding, while common, is not guaranteed, and "
+            "admission is selective."
+        ),
+        "themes": [
+            {
+                "label": "No. 2 graduate AE, No. 1 public",
+                "sentiment": "positive",
+                "detail": "U.S. News ranks the graduate aerospace program No. 2 nationally — tied with Caltech, Purdue, and Stanford — and No. 1 among public institutions (2025).",
+            },
+            {
+                "label": "Rapidly growing, well-resourced program",
+                "sentiment": "positive",
+                "detail": "Graduate enrollment roughly doubled from about 490 to 900 students over five years, expanding research capacity across autonomy, space, and propulsion.",
+            },
+            {
+                "label": "Funding is common but not guaranteed",
+                "sentiment": "mixed",
+                "detail": "Over 70% of AE graduate students held a GRA/GTA/fellowship as of Fall 2021, but the school states assistantships are limited and not guaranteed, especially in the first semester.",
+            },
+            {
+                "label": "Selective admissions",
+                "sentiment": "caution",
+                "detail": "A recent cycle admitted roughly 304 of 652 applicants (~47%), and applicants report real rejections on GradCafe — the master's is not a safety admit.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "Guggenheim School (AE) — Remains No. 2 in 2025 graduate rankings",
+                "url": "https://www.ae.gatech.edu/news/2025/04/ae-school-remains-no-2-2025-graduate-rankings",
+            },
+            {
+                "label": "Guggenheim School (AE) — Graduate research & teaching funding (>70%, not guaranteed)",
+                "url": "https://ae.gatech.edu/graduate-research-and-teaching-opportunities",
+            },
+            {
+                "label": "Peterson's — Georgia Tech School of Aerospace Engineering (admissions funnel)",
+                "url": "https://www.petersons.com/graduate-schools/georgia-institute-of-technology-college-of-engineering-school-of-aerospace-engineering-000_10029377.aspx",
+            },
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "gatech-biomedical-engineering-bs": {
+        "summary": (
+            "The Wallace H. Coulter Department of Biomedical Engineering — a joint Georgia "
+            "Tech/Emory program — is tied for No. 1 in the nation for undergraduate biomedical "
+            "engineering (2026 U.S. News), and its graduate program also returned to No. 1 "
+            "(tied with Johns Hopkins). Reviewers praise the engineering-plus-medicine partnership "
+            "and outcomes, while raising the field-wide caution that BME bachelor's-only job "
+            "prospects can be narrower than other engineering majors."
+        ),
+        "themes": [
+            {
+                "label": "Tied for No. 1 undergraduate BME",
+                "sentiment": "positive",
+                "detail": "U.S. News ties the Coulter Department for the No. 1 undergraduate biomedical engineering program nationally (2026); its graduate program is also No. 1, tied with Johns Hopkins.",
+            },
+            {
+                "label": "Georgia Tech/Emory partnership",
+                "sentiment": "positive",
+                "detail": "The joint department pairs an engineering campus with a major medical school, and College Factual reports a bachelor's median salary near $89,405 with median debt around $22,750.",
+            },
+            {
+                "label": "BME bachelor's job-market caution",
+                "sentiment": "caution",
+                "detail": "A widely-echoed field caution (seen on College Confidential) is that biomedical engineering bachelor's-only roles can be narrower than other engineering fields, so many graduates pursue graduate school or a second engineering skill.",
+            },
+            {
+                "label": "Large cohort, pre-med-adjacent rigor",
+                "sentiment": "mixed",
+                "detail": "With roughly 1,100 undergraduates and a strong alumni network, the program is sizable but carries a demanding, science-heavy workload.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "GT Biomedical Engineering — Rankings & Academic Data (undergrad tied No. 1, 2026)",
+                "url": "https://bme.gatech.edu/about-us/rankings-academic-data",
+            },
+            {
+                "label": "College Factual — Georgia Tech Biomedical Engineering (bachelor's median $89,405)",
+                "url": "https://www.collegefactual.com/colleges/georgia-institute-of-technology-main-campus/academic-life/academic-majors/engineering/biomedical-engineering/",
+            },
+            {
+                "label": "College Confidential — Georgia Tech vs Duke for Biomedical Engineering",
+                "url": "https://talk.collegeconfidential.com/t/georgia-tech-vs-duke-for-biomedical-engineering/2048015",
+            },
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "gatech-mechanical-engineering-ms": {
+        "summary": (
+            "The George W. Woodruff School's graduate mechanical engineering program reached No. 3 "
+            "nationally — its highest-ever ranking — and No. 1 among public universities in the "
+            "2026 U.S. News graduate rankings. It is one of the largest ME programs in the country "
+            "with broad research breadth, though Georgia Tech publishes no master's-specific "
+            "outcome figures."
+        ),
+        "themes": [
+            {
+                "label": "Highest-ever No. 3 graduate ranking",
+                "sentiment": "positive",
+                "detail": "U.S. News ranked the Woodruff School's graduate mechanical engineering program No. 3 nationally in 2026 — its highest ever — and No. 1 among public universities.",
+            },
+            {
+                "label": "Large program, wide research breadth",
+                "sentiment": "positive",
+                "detail": "With roughly 831 graduate students, the school spans robotics, energy, manufacturing, acoustics, and bioengineering research.",
+            },
+            {
+                "label": "No published master's-specific outcomes",
+                "sentiment": "caution",
+                "detail": "Georgia Tech does not publish an MS-ME salary or placement rate, so prospective students should weigh cost and outcomes against the program's own pages.",
+            },
+            {
+                "label": "Research-intensive, limited MS student reviews",
+                "sentiment": "mixed",
+                "detail": "The master's sits within a large, research-driven school; openly-published student-voice reviews specific to the MS are sparse.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "Georgia Tech College of Engineering — Graduate programs, 2026 U.S. News (ME No. 3)",
+                "url": "https://coe.gatech.edu/news/2026/04/engineering-grad-programs-remain-no-4-2026-rankings",
+            },
+            {
+                "label": "Woodruff School of Mechanical Engineering — Program Facts (enrollment)",
+                "url": "https://www.me.gatech.edu/program-facts",
+            },
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "gatech-electrical-computer-engineering-ms": {
+        "summary": (
+            "Georgia Tech's School of Electrical and Computer Engineering is a top-tier ECE "
+            "program — electrical engineering ranked No. 7 (No. 4 public) and computer engineering "
+            "No. 5 (No. 2 public) in the 2026 U.S. News graduate rankings. It is one of the "
+            "largest ECE schools in the U.S., but is explicit that master's funding is very "
+            "limited and admission is capacity-constrained."
+        ),
+        "themes": [
+            {
+                "label": "Top-tier ECE rankings",
+                "sentiment": "positive",
+                "detail": "U.S. News ranks electrical engineering No. 7 (No. 4 public) and computer engineering No. 5 (No. 2 public) in its 2026 graduate rankings.",
+            },
+            {
+                "label": "Large scale, deep research, GRE-optional",
+                "sentiment": "positive",
+                "detail": "One of the biggest ECE schools in the country — roughly 372 EE degrees awarded per year — with broad research breadth and no GRE requirement.",
+            },
+            {
+                "label": "Master's funding is limited and not guaranteed",
+                "sentiment": "caution",
+                "detail": "The school states GTA/GRA funding is very limited and not guaranteed for MS students, who should have an alternative plan to fund the degree — most self-fund.",
+            },
+            {
+                "label": "Capacity-limited admissions",
+                "sentiment": "caution",
+                "detail": "The school notes it denies admission to many excellent applicants because of program-capacity limits.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "Georgia Tech School of ECE — Among top graduate programs, 2026 rankings",
+                "url": "https://ece.gatech.edu/news/2026/04/ece-among-top-graduate-programs-2026-rankings",
+            },
+            {
+                "label": "Georgia Tech School of ECE — Graduate Admissions (funding not guaranteed)",
+                "url": "https://ece.gatech.edu/future-students/graduate-admissions",
+            },
+            {
+                "label": "College Factual — Georgia Tech Electrical Engineering (372 master's/yr)",
+                "url": "https://www.collegefactual.com/colleges/georgia-institute-of-technology-main-campus/academic-life/academic-majors/engineering/ee-electrical-engineering/",
+            },
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "gatech-quantitative-computational-finance-ms": {
+        "summary": (
+            "Georgia Tech's MS in Quantitative and Computational Finance (QCF) — a joint program "
+            "of Scheller, ISyE, and Mathematics — is ranked No. 8 nationally by QuantNet (2026) "
+            "and No. 13 by TFE Times. It reports strong, transparent employment outcomes at public "
+            "tuition, though the most recent cohort's placement softened and the curriculum is "
+            "intensely quantitative."
+        ),
+        "themes": [
+            {
+                "label": "Top-10 financial engineering ranking",
+                "sentiment": "positive",
+                "detail": "QuantNet ranks QCF No. 8 nationally for 2026 (its second straight year at No. 8), and TFE Times ranks it No. 13.",
+            },
+            {
+                "label": "Strong, transparently-reported outcomes",
+                "sentiment": "positive",
+                "detail": "Official statistics show 85–97% of graduates placed within three months across recent cohorts, with average first-year total compensation of roughly $134K–$148K at firms including Goldman Sachs, BlackRock, JPMorgan, and Millennium Management.",
+            },
+            {
+                "label": "Exceptional ROI at public tuition",
+                "sentiment": "positive",
+                "detail": "The program pairs public-university tuition with six-figure quant-finance compensation, which Scheller highlights as an unusually strong return on investment.",
+            },
+            {
+                "label": "Recent placement softened",
+                "sentiment": "caution",
+                "detail": "The most recent (Fall 2025) cohort's three-month placement dipped to 85%, down from 96–97% a couple of years earlier, reflecting a tighter quant-hiring market.",
+            },
+            {
+                "label": "Intensely quantitative and coding-heavy",
+                "sentiment": "caution",
+                "detail": "The curriculum spans stochastic modeling, optimization, and programming, demanding strong mathematical and computational preparation.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "Scheller College of Business — QCF top-10 QuantNet ranking (No. 8, 2026)",
+                "url": "https://www.scheller.gatech.edu/news/2025/georgia-tech-qcf-top-10-national-ranking.html",
+            },
+            {
+                "label": "QCF — Employment Statistics by cohort (placement, salary, employers)",
+                "url": "https://qcf.gatech.edu/careers/employment-stats",
+            },
+            {
+                "label": "TFE Times — Best Financial Engineering Program Ranking (No. 13, 2026)",
+                "url": "https://tfetimes.com/best-financial-engineering-program-ranking/",
+            },
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "gatech-analytics-ms": {
+        "summary": (
+            "Georgia Tech's residential (on-campus) MS in Analytics is an interdisciplinary "
+            "program across ISyE, Computing, and Scheller. Georgia Tech's business analytics is "
+            "ranked No. 3 nationally by U.S. News (2025 specialty ranking), and the on-campus "
+            "cohort reports strong official placement and salary outcomes — though it should not "
+            "be confused with the much larger, low-cost Online MS Analytics."
+        ),
+        "themes": [
+            {
+                "label": "No. 3 business analytics ranking",
+                "sentiment": "positive",
+                "detail": "U.S. News ranks Georgia Tech's business analytics No. 3 nationally (2025), reflecting the strength of the interdisciplinary analytics faculty across ISyE, Computing, and Scheller.",
+            },
+            {
+                "label": "Strong reported residential outcomes",
+                "sentiment": "positive",
+                "detail": "Official statistics show 84–100% of job-seeking residential graduates received full-time offers across 2021–2024, with average base salary near $113K in 2024 at employers including Amazon, Apple, Deloitte, Goldman Sachs, McKinsey, Microsoft, and Netflix.",
+            },
+            {
+                "label": "Distinct from the online program",
+                "sentiment": "mixed",
+                "detail": "The small, full-time, in-person cohort is separate from the far larger and cheaper Online MS Analytics (OMS Analytics); the two differ sharply in scale, cost, and format.",
+            },
+            {
+                "label": "Limited independent residential-specific reviews",
+                "sentiment": "caution",
+                "detail": "Most openly-published discussion concerns the online program, so third-party review coverage of the residential cohort specifically is thin.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "Georgia Tech News — 2025 U.S. News graduate rankings (Business Analytics No. 3)",
+                "url": "https://www.gatech.edu/news/2025/04/08/georgia-tech-shines-2025-us-news-graduate-program-rankings",
+            },
+            {
+                "label": "MS in Analytics — Reports & Statistics (placement, salary, employers)",
+                "url": "https://www.analytics.gatech.edu/inside-our-program/reports-statistics",
+            },
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "gatech-mba-management-technology-executive": {
+        "summary": (
+            "The Scheller College of Business Executive MBA, with its Management of Technology "
+            "specialization, ranked in the Financial Times' top 15 U.S. programs (2024). Alumni "
+            "report strong salary gains, and student profiles praise the global capstone and "
+            "weekend format, while noting the intensity of studying alongside a full-time job."
+        ),
+        "themes": [
+            {
+                "label": "Financial Times top-15 U.S. EMBA",
+                "sentiment": "positive",
+                "detail": "The Financial Times ranked Scheller's Executive MBA among the top 15 U.S. programs (2024), with a Management of Technology track covering emerging technology, change management, and technology forecasting.",
+            },
+            {
+                "label": "Strong salary outcomes",
+                "sentiment": "positive",
+                "detail": "The Class of 2021 reported an average salary of $209,350 three years after graduation — a 47% average increase, per Financial Times data cited by Scheller.",
+            },
+            {
+                "label": "Weekend format and hands-on capstone",
+                "sentiment": "positive",
+                "detail": "The 17-month Friday/Saturday format suits working professionals, and Poets&Quants student profiles describe the global capstone — solving real problems with real companies — as invaluable, hands-on experience.",
+            },
+            {
+                "label": "Intensity of balancing work and study",
+                "sentiment": "caution",
+                "detail": "Students describe the constant reprioritization of a rigorous curriculum against a full-time job, and some wish for more depth in finance and strategy electives.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "Scheller College of Business — Financial Times ranks EMBA top 15 in the U.S.",
+                "url": "https://www.scheller.gatech.edu/news/2024/the-financial-times-ranks-georgia-tech-executive-mba-top-15-in-the-us.html",
+            },
+            {
+                "label": "Poets&Quants for Execs — Best & Brightest EMBA (Georgia Tech Scheller profile)",
+                "url": "https://poetsandquantsforexecs.com/students/2025-best-brightest-executive-mba-isha-vasavada-georgia-tech-scheller/",
+            },
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "gatech-human-computer-interaction-ms": {
+        "summary": (
+            "Georgia Tech's MS in Human-Computer Interaction (MS-HCI) is a distinctive "
+            "interdisciplinary program spanning four schools, known for placing graduates into "
+            "top UX and product roles. It is highly selective — the program states it admits fewer "
+            "than 10% of applicants — and its placement report lists employers but no salary data."
+        ),
+        "themes": [
+            {
+                "label": "Interdisciplinary across four schools",
+                "sentiment": "positive",
+                "detail": "The degree spans Interactive Computing, Industrial Design, Literature/Media/Communication, and Psychology, producing versatile UX and product designers and researchers.",
+            },
+            {
+                "label": "Strong UX and product placement",
+                "sentiment": "positive",
+                "detail": "The 2024 report lists 41 graduate placements at employers including Amazon, Microsoft, Duolingo, Palantir, SpaceX, Delta, and The Home Depot, and the program cites 200+ notable hiring organizations.",
+            },
+            {
+                "label": "Highly selective admission",
+                "sentiment": "caution",
+                "detail": "The program states it admits fewer than 10% of applicants in recent cycles, turning away many qualified candidates.",
+            },
+            {
+                "label": "No published compensation figures",
+                "sentiment": "caution",
+                "detail": "The placement report lists employers and titles but no salary figures or aggregate placement rate, so compensation must be researched separately.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "Georgia Tech MS-HCI — 2024 Graduate Placement Report",
+                "url": "https://mshci.gatech.edu/news/2024-graduate-placement-report",
+            },
+            {
+                "label": "Georgia Tech MS-HCI — Career Outcomes (200+ employers)",
+                "url": "https://mshci.gatech.edu/program/career-outcomes",
+            },
+            {
+                "label": "Georgia Tech MS-HCI — Admissions FAQ (<10% acceptance)",
+                "url": "https://medium.com/georgia-tech-mshci/georgia-techs-ms-hci-program-some-frequently-asked-questions-about-program-admissions-d25f3a03d5c",
+            },
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "gatech-online-ms-cybersecurity": {
+        "summary": (
+            "Georgia Tech's Online MS in Cybersecurity (OMS Cybersecurity) delivers an accredited "
+            "master's fully online for under $12,000 total — a fraction of comparable programs. "
+            "OMSCentral course reviews praise its hands-on, project-based courses but recurringly "
+            "criticize minimal instructor presence and variable teaching support, making it best "
+            "suited to disciplined, self-directed learners."
+        ),
+        "themes": [
+            {
+                "label": "Exceptional affordability, fully online",
+                "sentiment": "positive",
+                "detail": "Total tuition is under $12,000 ($373 per credit-hour × 32 credits), delivered 100% online over two to three years (extendable to six).",
+            },
+            {
+                "label": "Hands-on, project-based courses",
+                "sentiment": "positive",
+                "detail": "Core courses such as Introduction to Information Security (rated 3.44/5 on OMSCentral) use capture-the-flag-style assignments that students find engaging and practical.",
+            },
+            {
+                "label": "Minimal instructor presence in some courses",
+                "sentiment": "caution",
+                "detail": "A recurring OMSCentral criticism is that some core courses have little instructor involvement — lectures that don't track the projects — pushing students onto peer forums and self-study.",
+            },
+            {
+                "label": "Variable TA and course quality",
+                "sentiment": "mixed",
+                "detail": "Support and course quality vary widely across the catalog, so students lean on OMSCentral reviews to choose courses carefully.",
+            },
+            {
+                "label": "Rewards self-directed learners",
+                "sentiment": "caution",
+                "detail": "The asynchronous, self-paced format suits disciplined, independent learners rather than those wanting structured guidance.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "Georgia Tech Professional Education — Online MS Cybersecurity (cost, format)",
+                "url": "https://pe.gatech.edu/degrees/cybersecurity",
+            },
+            {
+                "label": "OMSCentral — Introduction to Information Security (CS-6035) reviews",
+                "url": "https://www.omscentral.com/courses/introduction-to-information-security/reviews",
+            },
+            {
+                "label": "School of Cybersecurity and Privacy — Graduate Programs (tracks)",
+                "url": "https://scp.cc.gatech.edu/graduate-programs",
+            },
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "gatech-supply-chain-engineering-ms": {
+        "summary": (
+            "Georgia Tech's MS in Supply Chain Engineering is a specialized one-year master's from "
+            "the No. 1-ranked H. Milton Stewart School of ISyE, focused specifically on designing "
+            "and optimizing global supply chains. It feeds a strong named employer pipeline in "
+            "logistics and operations, though it is a small, niche program with limited independent "
+            "review coverage."
+        ),
+        "themes": [
+            {
+                "label": "Specialized supply-chain master's from the No. 1 ISyE",
+                "sentiment": "positive",
+                "detail": "The one-year degree comes from the top-ranked ISyE and concentrates on supply-chain optimization and logistics, distinct from the broader MS in Industrial Engineering.",
+            },
+            {
+                "label": "Strong named employer pipeline",
+                "sentiment": "positive",
+                "detail": "The program's placement page lists supply-chain and logistics employers including Amazon, FedEx, UPS, Maersk, DHL, Intel, Coca-Cola, and The Home Depot.",
+            },
+            {
+                "label": "Intensive one-year, Atlanta-only format",
+                "sentiment": "mixed",
+                "detail": "The fast-paced Fall–Spring–Summer program runs only on the Atlanta campus and is aimed at business-savvy engineers ready for a demanding pace.",
+            },
+            {
+                "label": "Niche program, limited public outcome data",
+                "sentiment": "caution",
+                "detail": "It is a small, specialized program; Georgia Tech publishes no SCE-specific salary or placement rate and independent third-party reviews are sparse, so outcomes should be verified case by case.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "ISyE — MS in Supply Chain Engineering (format, employers)",
+                "url": "https://www.isye.gatech.edu/academics/masters/degrees/ms-supply-chain-engineering",
+            },
+            {
+                "label": "Georgia Tech Supply Chain & Logistics Institute — MS Supply Chain Engineering",
+                "url": "https://www.scl.gatech.edu/ms-supply-chain-engineering",
             },
         ],
         "disclaimer": _REVIEWS_DISCLAIMER,
