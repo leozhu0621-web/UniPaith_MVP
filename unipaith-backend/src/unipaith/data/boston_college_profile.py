@@ -46,10 +46,12 @@ Honest caveats stamped into ``_standard.omitted``:
   as the annual matcher scalar (documented in ``cost_data``); research doctorates are
   funded (0). Only BC's Earth & Environmental Sciences M.S. — which prescribes no fixed
   credit total — keeps a sourced ``cost_data`` omission rather than a guessed figure.
-- ``external_reviews`` (MBAn shape, gathered → summarized → cited) are attached to the
-  programs with genuine third-party coverage (MBA, MS Finance, MS Accounting, MSW, J.D.,
-  MSN, DNP, Economics PhD); programs without program-specific coverage record an honest
-  ``external_reviews`` omission (coverage-gated).
+- ``external_reviews`` (MBAn shape, gathered → summarized → cited, each backed by ≥2
+  independent third-party domains per the manifest's authoritative_2x rule) are attached
+  to the programs with genuine independent coverage (MBA, MS Finance, MSW, J.D.); programs
+  whose only signal is first-party pages or a single ranking domain record an honest
+  ``external_reviews`` omission (coverage-gated) rather than presenting under-sourced
+  material as a review.
 - Deeper per-program fields (tracks, class profile, named faculty, review themes,
   program-level employment conditions) are published only for a few flagships; the
   rest are honestly omitted, never guessed — the same breadth-first pattern as the
@@ -1207,21 +1209,11 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             ("Poets&Quants — Carroll specialized master's", "https://poetsandquants.com/specialized-master/boston-colleges-carroll-school-management-ms-finance/"),
         ],
     ),
-    "bc-msa": _reviews(
-        "BC's STEM-designated MS in Accounting is a short (9-12 month) program whose graduates post "
-        "a first-time CPA-exam pass rate well above the national average; standalone third-party "
-        "review coverage is thin.",
-        [
-            ("CPA-exam performance", "positive", "BC reports graduates' first-time CPA pass rate is more than 30% above the national average — the program's most-cited distinction."),
-            ("Short, STEM-designated", "positive", "The full program is STEM-designated and completes in 9-12 months (30 credits, 10+ courses) with a September start."),
-            ("U.S. News Accounting specialty", "positive", "U.S. News lists BC #9 in Accounting among its business-school specialty rankings."),
-            ("Thin standalone coverage", "caution", "Program-specific third-party reviews and public placement/salary data for the MSA are limited; BC's Facts & Figures reports MBA outcomes but not MSA employment."),
-        ],
-        [
-            ("BC Carroll — MS in Accounting", "https://www.bc.edu/bc-web/schools/carroll-school/graduate/ms-programs/ms-in-accounting.html"),
-            ("BC Carroll — Facts & Figures", "https://www.bc.edu/bc-web/schools/carroll-school/about/facts-and-figures.html"),
-        ],
-    ),
+    # bc-msa and bc-economics-phd are OMITTED (external_reviews is coverage-gated):
+    # their only independent signals are a single ranking with no independent qualitative
+    # review coverage — a first-party-only source list does not meet the manifest's
+    # authoritative_2x bar, so an honest omission is correct, never first-party marketing
+    # dressed as a review.
     "bc-msw": _reviews(
         "BC's School of Social Work MSW is a top-ranked, CSWE-accredited program (U.S. News #8, 2024) "
         "with strong employment outcomes and a structured clinical/macro specialization path; field "
@@ -1234,10 +1226,10 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             ("Field-placement burden", "caution", "All students complete unpaid or stipended field placements (the school logged 293,520 field hours in 2024-25); BC notes all admitted MSW students receive a scholarship."),
         ],
         [
+            ("U.S. News — Best Social Work Schools", "https://www.usnews.com/best-graduate-schools/top-health-schools/social-work-rankings"),
+            ("GradReports — BC Social Work", "https://www.gradreports.com/colleges/boston-college"),
             ("BC SSW — Facts & Figures", "https://www.bc.edu/bc-web/schools/ssw/about/facts-and-figures.html"),
             ("BC SSW — MSW accreditation", "https://www.bc.edu/bc-web/schools/ssw/academics/msw-program/accreditation.html"),
-            ("GradReports — BC Social Work", "https://www.gradreports.com/colleges/boston-college"),
-            ("BC News — U.S. News graduate rankings", "https://www.bc.edu/bc-web/sites/bc-news/articles/2025/spring/bc-graduate-programs-strong-in-us-news-rankings.html"),
         ],
     ),
     "bc-jd": _reviews(
@@ -1252,60 +1244,16 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             ("Cost and market pull", "caution", "Full-time tuition is among the higher tier nationally, and graduates cluster in Massachusetts and New York — a consideration for students targeting other markets."),
         ],
         [
+            ("U.S. News — Best Law Schools (Boston College)", "https://www.usnews.com/best-graduate-schools/top-law-schools/boston-college-03072"),
+            ("Law School Transparency / LawHub — BC", "https://app.lawhub.org/schools/bc"),
             ("BC Law Magazine — #20 in U.S. News", "https://lawmagazine.bc.edu/2026/04/bc-law-moves-to-20-in-us-news-ranking/"),
             ("BC Law — Employment statistics", "https://www.bc.edu/bc-web/schools/law/careers/employment-statistics.html"),
-            ("Law School Transparency / LawHub — BC", "https://app.lawhub.org/schools/bc"),
         ],
     ),
-    "bc-nursing-ms": _reviews(
-        "The Connell School's MS in Nursing prepares advanced-practice nurses across five NP "
-        "specialties (often via an accelerated Direct-Entry path) with excellent certification "
-        "pass rates; cost and thin standalone review coverage are the cautions.",
-        [
-            ("Advanced-practice focus", "positive", "The 48-credit MS prepares nurse practitioners in five specialties (Adult-Gerontology, Family, Pediatric, Psychiatric/Mental Health, Women's Health), commonly through an accelerated Direct-Entry route for non-nursing bachelor's holders."),
-            ("Certification outcomes", "positive", "BC reports 100% first-time advanced-practice certification pass rates (2024-25) and 99% of graduate students employed or continuing education within one year (school-reported)."),
-            ("Strong U.S. News standing", "positive", "U.S. News ranks the master's nursing program in the #20s nationally (BC pages cite #29 of 147; its April 2025 release cited #26)."),
-            ("Cost", "caution", "Even positive reviewers describe BC nursing as expensive; per-credit graduate billing means budgeting carefully."),
-            ("Thin standalone reviews", "caution", "Aggregators (GradReports, Niche) carry little program-specific review content for BC nursing graduate programs; most detail comes from BC's own reporting."),
-        ],
-        [
-            ("BC Connell — Facts & Figures", "https://www.bc.edu/bc-web/schools/cson/about/facts.html"),
-            ("BC Connell — Master's programs", "https://www.bc.edu/bc-web/schools/cson/academics/masters-program.html"),
-            ("BC News — U.S. News graduate rankings", "https://www.bc.edu/bc-web/sites/bc-news/articles/2025/spring/bc-graduate-programs-strong-in-us-news-rankings.html"),
-        ],
-    ),
-    "bc-nursing-dnp": _reviews(
-        "The Connell School's Doctor of Nursing Practice (launched 2019) is a clinically intensive "
-        "practice doctorate with multiple entry routes and strong certification outcomes; its "
-        "relative youth and cost are the cautions.",
-        [
-            ("Clinically intensive", "positive", "Post-baccalaureate DNP students complete a minimum of 1,000 clinical hours — double the master's requirement — plus a scholarly practice-change project across multiple clinical sites."),
-            ("Multiple entry routes", "positive", "Entry paths include post-baccalaureate, post-master's, and RN-to-DNP, plus a distinct Nurse Anesthesia track."),
-            ("Certification and employment", "positive", "BC reports 100% first-time NP certification pass rates (2024-25) and 99% of graduate students employed or continuing education within a year (school-reported)."),
-            ("U.S. News standing", "positive", "U.S. News ranks the DNP in the mid-teens to low-#20s nationally (BC pages cite #21 of 154; its April 2025 release cited #14)."),
-            ("Newer program, higher cost", "caution", "BC launched the DNP in fall 2019, younger than many peers; per-credit doctoral billing makes cost a real consideration and dedicated third-party reviews are scarce."),
-        ],
-        [
-            ("BC Connell — DNP program", "https://www.bc.edu/bc-web/schools/cson/academics/DNP-program.html"),
-            ("BC Connell — Facts & Figures", "https://www.bc.edu/bc-web/schools/cson/about/facts.html"),
-            ("BC News — U.S. News graduate rankings", "https://www.bc.edu/bc-web/sites/bc-news/articles/2025/spring/bc-graduate-programs-strong-in-us-news-rankings.html"),
-        ],
-    ),
-    "bc-economics-phd": _reviews(
-        "BC's Economics PhD is a solid mid-tier doctoral program (U.S. News #29, 2025) with five-year "
-        "funding and broad placement across academia, policy institutions, and industry; independent "
-        "qualitative review coverage is thin.",
-        [
-            ("Mid-tier doctoral reputation", "positive", "U.S. News ranked BC Economics #29 in its 2025 Best Graduate Schools edition."),
-            ("Funding", "positive", "Admitted PhD students receive five years of stipend plus tuition remission, contingent on academic benchmarks."),
-            ("Broad placement", "positive", "The department's placement record spans ranked universities worldwide, policy institutions (IMF, World Bank, Federal Reserve, ECB), and private-sector economic consulting."),
-            ("Thin third-party reviews", "caution", "There is little independent qualitative review coverage specific to the Economics PhD; aggregated graduate ratings cover all BC programs, not this department."),
-        ],
-        [
-            ("BC News — U.S. News graduate rankings", "https://www.bc.edu/bc-web/sites/bc-news/articles/2025/spring/bc-graduate-programs-strong-in-us-news-rankings.html"),
-            ("BC Economics — PhD placements", "https://www.bc.edu/bc-web/schools/morrissey/departments/economics/graduate/placements.html"),
-        ],
-    ),
+    # bc-nursing-ms and bc-nursing-dnp are OMITTED (coverage-gated): their only independent
+    # source is a single U.S. News nursing ranking (one domain), with no second independent
+    # qualitative source — so they do not meet the manifest's authoritative_2x (>=2 distinct
+    # independent domains) bar and are honestly omitted rather than shipped under-sourced.
 }
 
 
@@ -1471,7 +1419,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 "funded": spec["degree_type"] == "phd",
                 "source": "Boston College Office of Student Services",
                 "source_url": _TUITION_RATES_URL,
-                "year": "2025-26" if spec["degree_type"] == "bachelors" else "2024-25",
+                "year": "2024-25",
             }
         else:
             p.cost_data = {"tuition_usd": None, "omitted_reason": _TUITION_OMIT_REASON}

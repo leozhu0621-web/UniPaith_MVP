@@ -73,7 +73,7 @@ def _cost(spec: dict) -> dict:
             "funded": spec["degree_type"] == "phd",
             "source": "Boston College Office of Student Services",
             "source_url": p._TUITION_RATES_URL,
-            "year": "2025-26" if spec["degree_type"] == "bachelors" else "2024-25",
+            "year": "2024-25",
         }
     return {"tuition_usd": None, "omitted_reason": p._TUITION_OMIT_REASON}
 
@@ -191,15 +191,24 @@ def test_graduate_tuition_is_not_the_undergrad_sticker():
             assert t != p._BC_TUITION_UG, f"{spec['slug']} carries the undergrad sticker"
 
 
+def _domain(url: str) -> str:
+    return url.split("/")[2].replace("www.", "")
+
+
 def test_coverable_programs_have_reviews():
     reviewed = [s for s in p._REVIEWS_BY_SLUG if s in p.PROGRAM_SLUGS]
-    assert len(reviewed) >= 8, f"only {len(reviewed)} programs reviewed"
+    assert len(reviewed) >= 4, f"only {len(reviewed)} programs reviewed"
     for slug, rev in p._REVIEWS_BY_SLUG.items():
         assert rev["summary"] and rev["themes"] and rev["sources"] and rev["disclaimer"]
         # cautions present — not praise-only
         assert any(t["sentiment"] in ("caution", "mixed") for t in rev["themes"]), slug
         for src in rev["sources"]:
             assert src["url"].startswith("http"), slug
+        # authoritative_2x: >= 2 INDEPENDENT (non-bc.edu) source DOMAINS — never first-party
+        # marketing, and never a lone single-domain ranking, dressed as a review (manifest
+        # external_reviews sourcing rule). A program that can't clear this bar is omitted.
+        indep = {_domain(s["url"]) for s in rev["sources"] if "bc.edu" not in _domain(s["url"])}
+        assert len(indep) >= 2, f"{slug} lacks 2 independent source domains: {indep}"
 
 
 def test_institution_is_gold_except_recorded_omission():
