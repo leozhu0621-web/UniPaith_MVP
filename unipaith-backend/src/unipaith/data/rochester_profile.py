@@ -23,10 +23,10 @@ Sourcing (verified 2026-07-01, cited in ``SCHOOL_OUTCOMES['sources']``):
   (2026); Times Higher Education World #127 (2026); QS World #251 (2027); QS Music #15
   (2026, Eastman); U.S. News Simon full-time MBA #34, School of Nursing master's #11 & DNP
   #41, School of Medicine & Dentistry Research Tier 1 (2026).
-- Tuition: undergraduate sticker $67,080 (College Scorecard 195030). Arts, Sciences &
+- Tuition: undergraduate sticker $71,750 (2026-27, University of Rochester). Arts, Sciences &
   Engineering / School of Medicine & Dentistry academic master's annualized from the
   published AS&E graduate rate ($2,234/credit, 2026-27) × the standard 30-credit academic
-  master's load ÷ program-years. M.D. $75,690 (2025-26). Simon Business School master's at
+  master's load ÷ program-years. M.D. $74,050 (2026-27). Simon Business School master's at
   their own published annual rates (MBA $60,000; MS Finance $78,000; MS Business Analytics
   $68,000; MS Accountancy $49,000, 2026-27). Research doctorates are funded (tuition=0).
 - Feeds: the University of Rochester News Center RSS (rochester.edu/newscenter/feed) and the
@@ -334,10 +334,10 @@ _REQ_UNDERGRAD = {
         "Secondary-school transcript",
         "Counselor recommendation and one teacher recommendation",
     ],
-    "deadlines": {"early_decision": "Nov 1", "early_action": "Nov 1", "regular_decision": "Jan 5"},
+    "deadlines": {"early_decision_i": "Nov 1", "early_decision_ii": "Jan 5", "regular_decision": "Jan 5"},
     "test_policy": "Test-optional",
     "source": "University of Rochester Admissions",
-    "source_url": "https://enrollment.rochester.edu/admissions/",
+    "source_url": "https://admissions.rochester.edu/applying/dates-and-deadlines/",
 }
 _REQ_GRAD = {
     "materials": [
@@ -391,18 +391,21 @@ _OUTCOMES_INSTITUTION = {
 # for programs where a real field-level figure is published. {salary, cip}.
 _FOS_OUTCOMES: dict[str, tuple[int, str]] = {}
 
-_TUITION_UG = 67080  # College Scorecard published undergraduate tuition (UNITID 195030)
-_TUITION_UG_SRC = "https://collegescorecard.ed.gov/school/?195030"
-_TUITION_MD = 75690  # School of Medicine and Dentistry M.D. tuition, 2025-26
-_TUITION_MD_SRC = "https://www.urmc.rochester.edu/education/md/financial-aid"
+_TUITION_UG = 71750  # University of Rochester published undergraduate tuition, 2026-27
+_TUITION_UG_SRC = "https://www.rochester.edu/financial-aid/undergraduate-tuition-expenses/"
+_TUITION_MD = 74050  # School of Medicine and Dentistry M.D. tuition, 2026-27
+_TUITION_MD_SRC = "https://www.urmc.rochester.edu/education/financial-aid-office/medical-students/cost-of-attendance"
 
-# Verified published Simon Business School annual master's tuition (2026-27).
+# Verified published Simon Business School annual full-time master's tuition (2026-27).
+# The part-time Professional MBA (per-credit) and the Executive MBA (a distinct
+# fixed-total program) bill on a different basis than the full-time MBA and are NOT
+# priced at the full-time rate — they carry an honest omission (Simon).
 _SIMON_TUITION: dict[str, int] = {
     "rochester-mba": 60000,
-    "rochester-mba-professional": 60000,
-    "rochester-mba-executive": 60000,
     "rochester-finance-ms": 78000,
     "rochester-business-analytics-ms": 68000,
+    "rochester-marketing-analytics-ms": 68000,
+    "rochester-ai-business-ms": 68000,
     "rochester-accountancy-ms": 49000,
 }
 _SIMON_TUITION_SRC = "https://simon.rochester.edu/programs/full-time-ms/tuition-financial-aid"
@@ -522,7 +525,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             ("Double-helix curriculum", "positive", "Rochester's signature 'double-helix' curriculum interweaves basic and clinical science from the first year, and the school originated the biopsychosocial model of care."),
             ("Integrated academic medical center", "positive", "Students train within the University of Rochester Medical Center (Strong Memorial Hospital), and an MD/PhD (Medical Scientist Training Program) pathway is available."),
             ("Primary-care standing", "mixed", "U.S. News rates Rochester Tier 2 for primary care — solid but below its research tier — a fit consideration for primary-care-focused applicants."),
-            ("Cost", "caution", "M.D. tuition is about $75,690 (2025-26) before living expenses, so applicants should plan financing against a total cost of attendance well into six figures."),
+            ("Cost", "caution", "M.D. tuition is about $74,050 (2026-27) before living expenses, so applicants should plan financing against a total cost of attendance well into six figures."),
         ],
         [
             ("U.S. News — Best Medical Schools (Rochester)", "https://www.usnews.com/best-graduate-schools/top-medical-schools/university-of-rochester-04078"),
@@ -916,7 +919,7 @@ PROGRAMS: list[dict] = [
        "Department of Biomedical Engineering", "14.05",
        "Graduate biomedical engineering with a one-year Medical Technology and Innovation track centered on medical-device design and an eight-week clinical immersion.",
        "Graduates who want advanced biomedical-engineering training, including hands-on medical-device design.",
-       delivery_format="on_campus"),
+       delivery_format="in_person"),
     _p("rochester-biomedical-engineering-phd", _HAJIM, "Doctor of Philosophy in Biomedical Engineering", "Biomedical Engineering", "phd", 60,
        "Department of Biomedical Engineering", "14.05",
        "Lab-rotation-based doctoral research spanning biomedical imaging, biomechanics, and tissue engineering, with an MD/PhD pathway through the School of Medicine and Dentistry.",
@@ -929,7 +932,7 @@ PROGRAMS: list[dict] = [
        "Department of Chemical and Sustainability Engineering", "14.07",
        "A one-to-two-year master's by coursework plus research or coursework-only, with electives tied to faculty groups in catalysis, batteries, and biological systems.",
        "Graduates who want advanced chemical-engineering study aligned to a faculty research area.",
-       delivery_format="on_campus"),
+       delivery_format="in_person"),
     _p("rochester-chemical-engineering-phd", _HAJIM, "Doctor of Philosophy in Chemical Engineering", "Chemical Engineering", "phd", 60,
        "Department of Chemical and Sustainability Engineering", "14.07",
        "Doctoral research spanning catalysis and electrocatalysis, batteries, biological and medical systems, computational fluid dynamics, and AI-driven simulation.",
@@ -942,7 +945,7 @@ PROGRAMS: list[dict] = [
        "Department of Electrical and Computer Engineering", "14.10",
        "Graduate electrical engineering spanning signal and image processing, communications, medical imaging, photonics, and nanoscale electronics.",
        "Graduates who want advanced work in signal processing, photonics, or medical imaging.",
-       delivery_format="on_campus"),
+       delivery_format="in_person"),
     _p("rochester-electrical-engineering-phd", _HAJIM, "Doctor of Philosophy in Electrical Engineering", "Electrical Engineering", "phd", 60,
        "Department of Electrical and Computer Engineering", "14.10",
        "Doctoral research in computer engineering and architecture, signal and image processing, medical imaging, and photonics.",
@@ -951,7 +954,7 @@ PROGRAMS: list[dict] = [
        "Department of Electrical and Computer Engineering", "14.10",
        "A multidisciplinary master's pairing engineering imaging fundamentals with radiological applications in a clinical environment.",
        "Graduates who want to specialize in medical and diagnostic imaging engineering.",
-       delivery_format="on_campus"),
+       delivery_format="in_person"),
     _p("rochester-mechanical-engineering-bs", _HAJIM, "Bachelor of Science in Mechanical Engineering", "Mechanical Engineering", "bachelors", 48,
        "Department of Mechanical Engineering", "14.19",
        "ABET-accredited mechanical engineering with hands-on team projects such as the Baja and Solar Splash competition teams.",
@@ -960,12 +963,12 @@ PROGRAMS: list[dict] = [
        "Department of Mechanical Engineering", "14.19",
        "Graduate mechanical engineering built on two research pillars — solid mechanics and materials science, and fluid mechanics and plasma physics.",
        "Graduates who want advanced study in mechanics, materials, or fluid and plasma physics.",
-       delivery_format="on_campus"),
+       delivery_format="in_person"),
     _p("rochester-aerospace-engineering-ms", _HAJIM, "Master of Science in Aerospace Engineering", "Aerospace Engineering", "masters", 18,
        "Department of Mechanical Engineering", "14.02",
        "Aerospace-focused graduate study within mechanical engineering, covering aerodynamics, propulsion, and structures.",
        "Graduates who want aerospace-focused engineering training.",
-       delivery_format="on_campus"),
+       delivery_format="in_person"),
     _p("rochester-mechanical-engineering-phd", _HAJIM, "Doctor of Philosophy in Mechanical Engineering", "Mechanical Engineering", "phd", 60,
        "Department of Mechanical Engineering", "14.19",
        "Interdisciplinary doctoral research connected to the Laboratory for Laser Energetics and the Rochester Center for Biomedical Ultrasound.",
@@ -999,7 +1002,7 @@ PROGRAMS: list[dict] = [
        "Department of Computer Science", "11.07",
        "A graduate computer-science degree typically completed in three semesters, with part-time enrollment supported.",
        "Graduates who want advanced computer-science coursework and research, full- or part-time.",
-       delivery_format="on_campus"),
+       delivery_format="in_person"),
     _p("rochester-computer-science-phd", _HAJIM, "Doctor of Philosophy in Computer Science", "Computer Science", "phd", 60,
        "Department of Computer Science", "11.07",
        "A funded doctoral program known for competitive stipends, with research across AI, systems, theory, and human-computer interaction.",
@@ -1016,7 +1019,7 @@ PROGRAMS: list[dict] = [
        "Goergen Institute for Data Science and Artificial Intelligence", "30.70",
        "A 30-credit, STEM-designated master's with focus options in computational and statistical methods, health and biomedical science, or business and social science.",
        "Graduates who want a STEM-designated data-science master's with a focus area.",
-       delivery_format="on_campus"),
+       delivery_format="in_person"),
     _p("rochester-audio-music-engineering-bs", _HAJIM, "Bachelor of Science in Audio and Music Engineering", "Audio and Music Engineering", "bachelors", 48,
        "Department of Audio and Music Engineering", "14.10",
        "An ABET-accredited engineering degree in audio and music technology — recording arts, acoustics, audio electronics, and signal processing — with music coursework at Eastman and the Satz Department.",
@@ -1098,7 +1101,7 @@ PROGRAMS: list[dict] = [
        "Simon Business School", "52.02",
        "A part-time, weekday-evening MBA delivering Simon's economics-based curriculum on a self-paced schedule for working professionals.",
        "Working professionals who want Simon's MBA part-time while continuing to work.",
-       delivery_format="on_campus"),
+       delivery_format="in_person"),
     _p("rochester-mba-executive", _SIMON, "Executive Master of Business Administration", "Business Administration", "masters", 22,
        "Simon Business School", "52.02",
        "A high-flex executive MBA combining online and in-class study with a global immersion, for experienced leaders advancing their careers.",
@@ -1224,7 +1227,7 @@ PROGRAMS: list[dict] = [
        "A master's preparing nurses for administrative and systems-leadership roles across health-care organizations.",
        "Nurses moving into administrative and health-systems leadership.",
        delivery_format="hybrid"),
-    _p("rochester-nursing-direct-entry-ms", _SON, "Master of Science (Master's Direct Entry to Nursing Practice)", "Nursing", "masters", 24,
+    _p("rochester-nursing-direct-entry-ms", _SON, "Master of Science (Master's Direct Entry to Nursing Practice)", "Nursing", "masters", 16,
        "School of Nursing", "51.38",
        "An accelerated pathway for non-nurse college graduates to earn RN licensure and a master's, integrating pre-licensure and advanced coursework.",
        "College graduates from other fields entering nursing at the master's level."),
@@ -1341,6 +1344,23 @@ def _tuition_omit_reason(spec: dict) -> str:
     return _TUITION_OMIT_CERT
 
 
+# Research doctorates that carry Rochester's standard full-funding guarantee (tuition
+# waived + stipend): Arts & Sciences, Hajim Engineering, the biomedical-science PhDs of the
+# School of Medicine and Dentistry, and the Simon Business School PhD (5-year fellowship).
+# Eastman and Warner PhD funding is partial-to-full and NOT guaranteed, so those carry an
+# honest tuition omission rather than a $0 that would misrepresent them as free.
+_FUNDED_PHD_SCHOOLS = (_ASE, _HAJIM, _SMD, _SIMON)
+_TUITION_OMIT_PHD_FUNDING = (
+    "Doctoral funding in this school is awarded as scholarships or assistantships that range "
+    "from partial to full tuition and is not guaranteed at admission, so no single annual "
+    "tuition figure is stated here; the scalar is omitted rather than presented as free."
+)
+
+
+def _funded_phd(spec: dict) -> bool:
+    return spec["degree_type"] == "phd" and spec["school"] in _FUNDED_PHD_SCHOOLS
+
+
 def _resolve_tuition(spec: dict) -> int | None:
     if "tuition" in spec:
         return spec["tuition"]
@@ -1350,7 +1370,7 @@ def _resolve_tuition(spec: dict) -> int | None:
     if slug in _SIMON_TUITION:
         return _SIMON_TUITION[slug]
     if dt == "phd":
-        return 0  # funded research doctorate (tuition waived)
+        return 0 if school in _FUNDED_PHD_SCHOOLS else None  # Eastman/Warner PhD → omit
     if slug == "rochester-md":
         return _TUITION_MD
     if dt == "bachelors":
@@ -1379,15 +1399,15 @@ def _cost_data(spec: dict) -> dict:
         return {
             "tuition_usd": _TUITION_MD,
             "funded": False,
-            "source": "University of Rochester School of Medicine and Dentistry (M.D. tuition, 2025-26)",
+            "source": "University of Rochester School of Medicine and Dentistry (M.D. tuition, 2026-27)",
             "source_url": _TUITION_MD_SRC,
-            "year": "2025-26",
+            "year": "2026-27",
         }
-    if dt == "phd":
+    if dt == "phd" and school in _FUNDED_PHD_SCHOOLS:
         return {
             "tuition_usd": 0,
             "funded": True,
-            "note": "Research doctorates at the University of Rochester are funded (tuition waived) with a stipend for admitted students.",
+            "note": "Research doctorates in this school are fully funded (tuition waived) with a stipend for admitted students.",
             "source": "University of Rochester Graduate Education",
             "source_url": _ASE_TUITION_SRC,
             "year": "2026-27",
@@ -1396,17 +1416,18 @@ def _cost_data(spec: dict) -> dict:
         return {
             "tuition_usd": _TUITION_UG,
             "funded": False,
-            "source": "U.S. Dept. of Education College Scorecard (published undergraduate tuition, UNITID 195030)",
+            "source": "University of Rochester (published undergraduate tuition, 2026-27)",
             "source_url": _TUITION_UG_SRC,
-            "year": "2024-25",
+            "year": "2026-27",
         }
     if dt == "masters" and school in (_ASE, _HAJIM, _SMD):
         return _ase_grad_cost(spec)
-    return {"tuition_usd": None, "omitted_reason": _tuition_omit_reason(spec)}
+    reason = _TUITION_OMIT_PHD_FUNDING if dt == "phd" else _tuition_omit_reason(spec)
+    return {"tuition_usd": None, "omitted_reason": reason}
 
 
 def _has_tuition(spec: dict) -> bool:
-    return _resolve_tuition(spec) is not None or spec["degree_type"] == "phd"
+    return _resolve_tuition(spec) is not None or _funded_phd(spec)
 
 
 def _requirements_for(spec: dict) -> dict:
