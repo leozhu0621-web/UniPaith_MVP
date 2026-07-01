@@ -89,6 +89,7 @@ from unipaith.data.columbia_field_descriptions import (
     SLUG_DESCRIPTIONS,
 )
 from unipaith.data.columbia_reviews_depth import DEPTH_REVIEWS
+from unipaith.data.columbia_who_its_for import WHO_BY_SLUG as _WHO_BY_SLUG_SOURCE
 from unipaith.data.profile_catalog_utils import validate_catalog
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
@@ -1402,21 +1403,36 @@ _WHO_GRAD_BASELINE = (
 )
 _HL_GRAD_BASELINE = ["Top-ranked Columbia graduate degree", "World-class faculty", "New York City"]
 
-_WHO_BY_SLUG = {
-    "columbia-computer-science-bs": (
-        "Technically strong students who want a rigorous computer science education — "
-        "offered as the B.S. or the B.A. — at the heart of New York's tech and research "
-        "ecosystem."
-    ),
-    "columbia-mba": (
-        "Aspiring leaders seeking a two-year MBA that connects academic theory to practice "
-        "from the financial and business capital of the world."
-    ),
-    "columbia-journalism-ms": (
-        "Aspiring journalists seeking a rigorous reporting and writing degree at the only "
-        "Ivy League journalism school, home of the Pulitzer Prizes."
-    ),
-}
+# who_its_for is a UNIVERSAL depth field (SKILL.md miss #3): a distinct, field-specific
+# statement per program, sourced from ``columbia_who_its_for.py``. This replaced the
+# type-gamed pair of baselines (``_WHO_BASELINE`` for bachelor's + ``_WHO_GRAD_BASELINE``
+# for graduate, distinctness ≈ 0.10, ~164/167 programs sharing two strings). The baselines
+# are kept only as defensive fallbacks that the build-time gate below (100% coverage)
+# guarantees never fire.
+_WHO_BY_SLUG = dict(_WHO_BY_SLUG_SOURCE)
+
+
+def _assert_who_its_for_complete(programs: list[dict]) -> None:
+    """who_its_for must be 100% covered and program-DISTINCT (no degree-type gaming,
+    SKILL.md miss #3b). Field-specific gold catalogs run distinct/total ≈ 1.0; type-gaming
+    (a few generic strings across the catalog) collapses well under 0.5. This build-time
+    gate makes a regression back to the shared baselines impossible."""
+    missing = [p["slug"] for p in programs if not _WHO_BY_SLUG.get(p["slug"])]
+    if missing:
+        raise ValueError(
+            f"Columbia who_its_for missing on {len(missing)} programs: {missing[:5]}"
+        )
+    values = [_WHO_BY_SLUG[p["slug"]] for p in programs]
+    distinct = len(set(values))
+    if distinct < len(values):
+        dupes = sorted({v for v in values if values.count(v) > 1})
+        raise ValueError(
+            f"Columbia who_its_for is not program-distinct "
+            f"({distinct}/{len(values)}): {dupes[:3]}"
+        )
+
+
+_assert_who_its_for_complete(PROGRAMS)
 _HL_BY_SLUG = {
     "columbia-computer-science-bs": [
         "B.S. & B.A. tracks",
