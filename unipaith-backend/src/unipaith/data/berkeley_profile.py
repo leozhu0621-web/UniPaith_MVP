@@ -74,6 +74,7 @@ from unipaith.data.berkeley_cip_mapping import (
 from unipaith.data.berkeley_field_descriptions import FIELD_DESCRIPTIONS, SLUG_DESCRIPTIONS
 from unipaith.data.berkeley_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.data.berkeley_reviews_depth import DEPTH_REVIEWS
+from unipaith.data.berkeley_who_its_for import WHO_ITS_FOR
 from unipaith.data.profile_catalog_utils import validate_catalog
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
@@ -1764,6 +1765,35 @@ _WHO_BY_SLUG = {
         "world's leading EECS faculties and its research."
     ),
 }
+# Merge the program-DISTINCT ``who_its_for`` depth pass (berkeleywho1, 2026-07-01) over the
+# breadth catalog — every program that fell through to _WHO_BASELINE now names its own
+# field/level/audience (REPAIR_BACKLOG #3b: one undergrad-framed baseline stamped on all
+# 231 programs, distinct/total ≈ 0.05 → ≈ 1.0). The curated flagship string above wins.
+for _who_slug, _who_text in WHO_ITS_FOR.items():
+    _WHO_BY_SLUG.setdefault(_who_slug, _who_text)
+
+
+def _assert_who_its_for_gate() -> None:
+    """Build-time ``who_its_for`` gate — a UNIVERSAL depth field, so a catalog-wide 0% (or a
+    type-gamed one-template-per-tier) is a depth FAILURE (SKILL.md miss #3b). Assert (a) every
+    live program is covered (no fall-through to the shared _WHO_BASELINE) and (b) the assigned
+    strings are PROGRAM-DISTINCT (distinct/total == 1.0), the anti-type-gaming bar."""
+    from collections import Counter
+
+    missing = [p["slug"] for p in PROGRAMS if not _WHO_BY_SLUG.get(p["slug"])]
+    if missing:
+        raise RuntimeError(
+            f"Berkeley who_its_for missing on {len(missing)} programs: {missing[:5]}"
+        )
+    vals = [_WHO_BY_SLUG[p["slug"]] for p in PROGRAMS]
+    dups = [v for v, n in Counter(vals).items() if n > 1]
+    if dups:
+        raise RuntimeError(
+            f"Berkeley who_its_for not program-distinct (type-gamed): {dups[:2]}"
+        )
+    stray = [s for s in WHO_ITS_FOR if s not in {p["slug"] for p in PROGRAMS}]
+    if stray:
+        raise RuntimeError(f"Berkeley who_its_for stray slugs (not in catalog): {stray[:5]}")
 _HL_BY_SLUG = {
     "berkeley-eecs-bs": [
         "Flagship EECS major",
@@ -2087,6 +2117,7 @@ _CIP_BY_SLUG: dict[str, str] = {slug: cip for slug, (_, cip) in _FOS_OUTCOMES.it
 
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 _SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
+_assert_who_its_for_gate()
 
 # Verbatim methodology for the program-scope Scorecard FOS earnings figure.
 _FOS_CONDITIONS = (
