@@ -19,10 +19,14 @@ Sourcing (verified 2026-07-01, cited in ``SCHOOL_OUTCOMES['sources']``):
   published degree name + owning school/department from the BC University Catalog
   and each school's official program pages (never the federal CIP title verbatim).
 - Admissions funnel (Class of 2029): BC Undergraduate Admission first-year profile.
-- Tuition: BC Office of Student Services (undergrad $70,702; graduate billed
-  per-credit at $2,078/credit — no single annual full-time sticker for most
-  academic master's, so those carry an honest ``cost_data`` omission rather than a
-  guessed annual figure), BC Law ($69,600 J.D.), Carroll School ($65,080 MBA).
+- Tuition: BC Office of Student Services. Undergrad $70,702; J.D. $69,600; full-time
+  MBA $65,080; research PhDs funded (0). BC bills graduate tuition PER CREDIT
+  (verified 2026-27 rates by school — GSAS $2,248 · Carroll $2,398 · Lynch $1,908 ·
+  Nursing $1,952 · Social Work $1,494 · Theology $1,424 · Law $3,137 · Woods $1,550),
+  so each master's/professional program's matcher scalar is that rate × the program's
+  published degree credits ÷ its full-time years (the published-rate annual full-time
+  cost, cited per program in ``cost_data``). Only the credit-less Earth & Environmental
+  Sciences M.S. keeps an honest ``cost_data`` omission.
 - Feeds: BC's official Localist university calendar (events.bc.edu) — a live,
   verified feed (RSS + iCal) that populates Events & Updates on every node. BC
   publishes no working public news RSS at author time, so the university calendar
@@ -32,15 +36,20 @@ Honest caveats stamped into ``_standard.omitted``:
 - Boston College is not individually ranked at a value verifiable to two
   independent sources in the QS and Times Higher Education world tables for this
   cycle, so those two ranking fields are omitted with reason; the U.S. News
-  national rank (#37, 2026) is kept.
+  national rank (#36, 2026) is kept.
 - BC does not publish a single university-wide "employed or continuing education"
   placement rate or a uniform top-employer-industries list across all schools, so
   those two institution outcome fields are omitted with reason (the College
   Scorecard institution-wide ten-year median earnings, $103,937, is kept).
-- Most graduate/professional programs bill tuition per-credit ($2,078/credit) with
-  no published single annual figure, so those carry a sourced omission rather than
-  a guessed number; the undergraduate degrees, the J.D., the full-time MBA, and the
-  funded (tuition-waived) research doctorates carry a real scalar.
+- Graduate tuition is billed per-credit, so each master's/professional program carries
+  its verified published per-credit rate × published degree credits ÷ full-time years
+  as the annual matcher scalar (documented in ``cost_data``); research doctorates are
+  funded (0). Only BC's Earth & Environmental Sciences M.S. — which prescribes no fixed
+  credit total — keeps a sourced ``cost_data`` omission rather than a guessed figure.
+- ``external_reviews`` (MBAn shape, gathered → summarized → cited) are attached to the
+  programs with genuine third-party coverage (MBA, MS Finance, MS Accounting, MSW, J.D.,
+  MSN, DNP, Economics PhD); programs without program-specific coverage record an honest
+  ``external_reviews`` omission (coverage-gated).
 - Deeper per-program fields (tracks, class profile, named faculty, review themes,
   program-level employment conditions) are published only for a few flagships; the
   rest are honestly omitted, never guessed — the same breadth-first pattern as the
@@ -82,8 +91,8 @@ RANKING_DATA: dict = {
     "ownership_type": "private_nonprofit",
     "accreditor": "New England Commission of Higher Education (NECHE)",
     "carnegie_classification": "Doctoral Universities: Very High Research Activity (R1)",
-    # U.S. News Best National Universities 2026 (#37, tie).
-    "us_news_national": {"rank": 37, "year": 2026},
+    # U.S. News Best National Universities 2026 (#36, up one from #37 in 2025).
+    "us_news_national": {"rank": 36, "year": 2026},
 }
 
 # school_outcomes is shallow-merged into the existing JSONB; each sub-object below
@@ -249,7 +258,7 @@ DESCRIPTION = (
     "Woods College of Advancing Studies. Roughly 9,500 undergraduates and 4,700 "
     "graduate and professional students study across these units.\n\n"
     "Boston College is highly selective — it admitted 13.9% of the nearly 40,000 "
-    "applicants to the Class of 2029 — and ranks No. 37 among national universities "
+    "applicants to the Class of 2029 — and ranks No. 36 among national universities "
     "in the U.S. News list. Its students graduate at a very high rate (a 91% "
     "six-year graduation rate and a 96% first-year retention rate) and earn a "
     "median income of roughly $104,000 a decade after entry.\n\n"
@@ -905,7 +914,7 @@ PROGRAMS: list[dict] = [
        "Department of Educational Leadership and Higher Education", "13.04",
        "Preparation for leadership in colleges and universities across administration, student affairs, and international education.",
        "Students pursuing careers in student affairs, administration, and leadership in higher education."),
-    _p("bc-educational-leadership-med", _LYNCH, "Master of Education in Educational Leadership and Policy", "Educational Leadership", "masters", 12,
+    _p("bc-educational-leadership-med", _LYNCH, "Master of Education in Educational Leadership and Policy", "Educational Leadership", "masters", 24,
        "Department of Educational Leadership and Higher Education", "13.04",
        "Leadership and policy training for aspiring principals and education administrators.",
        "Educators pursuing school and district leadership or education-policy roles."),
@@ -1035,15 +1044,94 @@ PROGRAMS: list[dict] = [
 
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 
-# Programs whose ordinary tier tuition is intentionally null (per-credit graduate
-# billing with no annual sticker) → omit-with-reason; the reason is recorded per
-# program in _standard. PhDs are funded (tuition 0). Undergrad, J.D., MBA carry a
-# real scalar. This dict is only for building the honest omission reason strings.
-_TUITION_OMIT_REASON = (
-    "Boston College bills graduate tuition per-credit ($2,078/credit, 2024-25) with "
-    "no single published annual full-time rate for this program; see the program's "
-    "cost page — not guessed into the annual matcher field."
+_TUITION_RATES_URL = (
+    "https://www.bc.edu/bc-web/offices/student-services/billing-student-accounts/tuition-fees.html"
 )
+
+# Verified 2026-27 published per-credit graduate tuition rate by school (BC Office of
+# Student Services), each program's degree credit total (its own catalog / program page),
+# and a credits source. BC bills graduate tuition PER CREDIT, so the matcher's annual
+# scalar is the program's total tuition amortized over its real full-time duration
+# (per-credit rate × degree credits ÷ program-years). This is the published-rate annual
+# full-time cost — never a guess and never the undergraduate sticker copied down. Rates:
+# GSAS $2,248 · Carroll $2,398 · Lynch $1,908 · Connell Nursing $1,952 · Social Work
+# $1,494 · Clough Theology $1,424 · Law $3,137 · Law M.S. Cyber $2,236 · Woods (general)
+# $1,550 · Woods M.H.A. $1,570 · Woods M.S. Leadership $1,214 (all 2026-27).
+# slug: (per_credit_usd, degree_credits, credits_source_url)
+_GRAD_TUITION: dict[str, tuple[int, int, str]] = {
+    # ── GSAS / Morrissey academic master's — 30 credits (10 courses) ──
+    "bc-english-ma": (2248, 30, "https://www.bc.edu/bc-web/schools/morrissey/departments/english/graduate/master-of-arts-program/guidelines.html"),
+    "bc-history-ma": (2248, 30, "https://www.bc.edu/bc-web/schools/morrissey/departments/history/graduate/ma-program.html"),
+    "bc-philosophy-ma": (2248, 30, "https://www.bc.edu/bc-web/schools/morrissey/departments/philosophy/graduate/MA-program.html"),
+    "bc-political-science-ma": (2248, 30, "https://www.bc.edu/bc-web/schools/morrissey/departments/political-science/graduate/masters.html"),
+    "bc-sociology-ma": (2248, 30, "https://www.bc.edu/bc-web/schools/morrissey/departments/sociology/graduate/phd-ma.html"),
+    "bc-classical-studies-ma": (2248, 30, "https://www.bc.edu/bc-web/schools/morrissey/departments/classics/graduate.html"),
+    "bc-hispanic-studies-ma": (2248, 30, "https://www.bc.edu/bc-web/schools/morrissey/departments/romance-languages/graduate-programs/masters-programs.html"),
+    # ── Carroll School specialized master's — 30 credits (10 courses) ──
+    "bc-msf": (2398, 30, "https://www.bc.edu/bc-web/academics/sites/university-catalog/graduate/csomgp.html"),
+    "bc-msa": (2398, 30, "https://www.bc.edu/bc-web/schools/carroll-school/graduate/ms-programs/ms-in-accounting.html"),
+    # ── Woods College of Advancing Studies ──
+    "bc-applied-analytics-ms": (1550, 30, "https://www.bc.edu/bc-web/schools/wcas/graduate/masters-programs/ms-applied-analytics.html"),
+    "bc-applied-economics-ms": (1550, 30, "https://www.bc.edu/bc-web/schools/wcas/graduate/masters-programs/ms-applied-economics.html"),
+    "bc-healthcare-admin-ms": (1570, 36, "https://www.bc.edu/bc-web/schools/wcas/graduate/masters-programs/master-of-healthcare-administration.html"),
+    "bc-leadership-ms": (1214, 30, "https://www.bc.edu/bc-web/schools/wcas/graduate/masters-programs/ms-leadership.html"),
+    "bc-sports-admin-ms": (1550, 30, "https://www.bc.edu/bc-web/schools/wcas/graduate/masters-programs/ms-sports-administration.html"),
+    # ── Lynch School of Education and Human Development ──
+    "bc-curriculum-instruction-med": (1908, 30, "https://www.bc.edu/bc-web/academics/sites/university-catalog/graduate/lynch.html"),
+    "bc-educational-leadership-med": (1908, 30, "https://www.bc.edu/bc-web/schools/lynch-school/academics/departments/elhe/educational-leadership-med.html"),
+    "bc-higher-education-ma": (1908, 30, "https://www.bc.edu/bc-web/schools/lynch-school/academics/departments/elhe/ma-higher-education.html"),
+    "bc-mental-health-counseling-ma": (1908, 60, "https://www.bc.edu/bc-web/academics/sites/university-catalog/graduate/lynch.html"),
+    "bc-school-counseling-ma": (1908, 48, "https://www.bc.edu/bc-web/schools/lynch-school/academics/departments/cdep/ma-school-counseling.html"),
+    "bc-applied-statistics-ms": (1908, 30, "https://www.bc.edu/bc-web/schools/lynch-school/academics/departments/mesa/ms-applied-statistics-and-psychometrics.html"),
+    "bc-edd-educational-leadership": (1908, 39, "https://www.bc.edu/bc-web/schools/lynch-school/academics/departments/elhe/edd-educational-leadership.html"),
+    # ── Clough School of Theology and Ministry ──
+    "bc-mdiv": (1424, 82, "https://www.bc.edu/bc-web/schools/stm/academics/degrees-certificates/masters-programs/master-of-divinity-mdiv.html"),
+    "bc-mts": (1424, 48, "https://www.bc.edu/bc-web/academics/sites/university-catalog/graduate/stm.html"),
+    "bc-ma-theology-ministry": (1424, 48, "https://www.bc.edu/bc-web/academics/sites/university-catalog/graduate/stm.html"),
+    "bc-thm": (1424, 24, "https://www.bc.edu/bc-web/academics/sites/university-catalog/graduate/stm.html"),
+    # ── Connell School of Nursing (M.S. 48 cr; DNP post-baccalaureate 73 cr) ──
+    "bc-nursing-ms": (1952, 48, "https://www.bc.edu/bc-web/academics/sites/university-catalog/graduate/csongp.html"),
+    "bc-nursing-dnp": (1952, 73, "https://www.bc.edu/bc-web/academics/sites/university-catalog/graduate/csongp.html"),
+    # ── School of Social Work ──
+    "bc-msw": (1494, 65, "https://www.bc.edu/bc-web/schools/ssw/admission/tuition-aid.html"),
+    # ── Law School (LL.M. at J.D. rate; M.S. Cyber at its own $2,236 rate) ──
+    "bc-llm": (3137, 24, "https://www.bc.edu/bc-web/schools/law/admission-aid/llm-program.html"),
+    "bc-mls-cybersecurity": (2236, 30, "https://www.bc.edu/bc-web/schools/law/admission-aid/mls-cybersecurity.html"),
+}
+
+# The one graduate program with no computable annual: BC's Earth & Environmental Sciences
+# M.S. prescribes no fixed credit total (an individualized course-and-thesis program), so
+# no single annual full-time figure can be stated without guessing. Honest omission.
+_TUITION_OMIT_REASON = (
+    "Boston College's Earth & Environmental Sciences M.S. prescribes no fixed credit "
+    "total (an individualized course-and-thesis program), so no single published annual "
+    "full-time tuition can be stated without guessing; BC bills graduate tuition per "
+    "credit ($2,248/credit, 2026-27). Recorded as an honest omission, never a guess."
+)
+
+
+def _grad_cost(spec: dict) -> dict | None:
+    """Annual grad tuition from the verified per-credit rate × credits ÷ program years."""
+    row = _GRAD_TUITION.get(spec["slug"])
+    if row is None:
+        return None
+    per_credit, credits, credits_url = row
+    years = (spec.get("duration_months") or 12) / 12
+    total = per_credit * credits
+    annual = round(total / years)
+    return {
+        "tuition_usd": annual,
+        "funded": False,
+        "per_credit_usd": per_credit,
+        "degree_credits": credits,
+        "program_years": round(years, 2),
+        "total_program_usd": total,
+        "basis": "Annualized from BC's published per-credit graduate rate x degree credits / program years",
+        "source": "Boston College Office of Student Services (per-credit graduate tuition, 2026-27)",
+        "source_url": _TUITION_RATES_URL,
+        "credits_source_url": credits_url,
+        "year": "2026-27",
+    }
 
 
 def _resolve_tuition(spec: dict) -> int | None:
@@ -1054,11 +1142,171 @@ def _resolve_tuition(spec: dict) -> int | None:
         return _BC_TUITION_UG
     if dt == "phd":
         return 0  # funded research doctorate (tuition waived)
-    return None  # masters / professional / certificate billed per-credit → omit
+    cost = _grad_cost(spec)
+    return cost["tuition_usd"] if cost else None  # Geology M.S. → omit
 
 
 def _has_tuition(spec: dict) -> bool:
     return _resolve_tuition(spec) is not None or spec["degree_type"] == "phd"
+
+
+# ── external_reviews (MBAn shape) — GATHERED → SUMMARIZED → CITED ──────────────
+# Themes are aggregated and paraphrased from real third-party coverage (Poets&Quants,
+# U.S. News, GradReports, MSF HQ, Law School Transparency) plus the school's own
+# published outcomes — never fabricated quotes/ratings, and every source resolves. Cautions
+# are included, not just praise. Only programs with genuine program-specific coverage carry
+# a review; everything else records external_reviews as an honest omission (coverage-gated).
+_REV_DISCLAIMER = (
+    "Themes are aggregated and paraphrased from public third-party coverage and the "
+    "school's own published outcomes — not individual verbatim quotes or ratings."
+)
+
+
+def _reviews(summary: str, themes: list[tuple], sources: list[tuple]) -> dict:
+    return {
+        "summary": summary,
+        "themes": [{"label": lbl, "sentiment": s, "detail": d} for (lbl, s, d) in themes],
+        "sources": [{"label": lbl, "url": u} for (lbl, u) in sources],
+        "disclaimer": _REV_DISCLAIMER,
+    }
+
+
+_REVIEWS_BY_SLUG: dict[str, dict] = {
+    "bc-mba": _reviews(
+        "Boston College's full-time MBA is a small, cohort-based program (~70-90 students) "
+        "known for personalized attention and fast placement into financial services, with an "
+        "analytics-heavy core; recent U.S. News and Poets&Quants editions show ranking volatility.",
+        [
+            ("Small, personalized cohort", "positive", "Classes of ~70-90 move in cohorts of ~40; reviewers cite close faculty and peer relationships and individualized attention."),
+            ("Financial-services placement", "positive", "BC reports 94% of the Class of 2023 accepted offers within three months; financial services is the top destination (~30%), then bio/pharma/healthcare, technology, and consulting."),
+            ("Analytics-forward curriculum", "positive", "The MBA requires three data-analytics courses; U.S. News placed Carroll's MBA specialties Finance #9 and Accounting #9 (2025)."),
+            ("Ranking volatility", "caution", "The full-time MBA held #46 in the 2025 U.S. News edition and fell to #53 in April 2026 — its first drop out of the top 50 in over half a decade; its Poets&Quants rank also slid."),
+            ("Scale trade-off", "mixed", "The intimate size reviewers praise also limits the school's pull with some large-scale recruiters and marquee speakers."),
+        ],
+        [
+            ("Poets&Quants — Carroll MBA profile", "https://poetsandquants.com/school-profile/boston-colleges-carroll-school-management/"),
+            ("GradReports — BC MBA reviews", "https://www.gradreports.com/colleges/boston-college/masters/mba"),
+            ("BC Carroll — Facts & Figures", "https://www.bc.edu/bc-web/schools/carroll-school/about/facts-and-figures.html"),
+            ("Boston Business Journal — MBA falls from top 50", "https://www.nbcboston.com/boston-business-journal/boston-college-falls-from-top-50-in-latest-business-school-rankings/3929124/"),
+        ],
+    ),
+    "bc-msf": _reviews(
+        "BC's MS in Finance is a well-regarded, STEM-designated specialized master's with a strong "
+        "regional brand and a large international cohort; independent observers flag limited "
+        "year-by-year placement transparency.",
+        [
+            ("Respected specialized master's", "positive", "The dedicated MSF HQ review site calls it 'a well established and regarded MSF' at 'a very respected university,' offered in 12-month full-time and ~20-month part-time formats."),
+            ("STEM designation", "positive", "A STEM-designated quantitative-finance track qualifies eligible F-1 students for a 24-month OPT extension; international enrollment is roughly 47%."),
+            ("U.S. News Finance specialty", "positive", "U.S. News lists BC #9 in Finance among its business-school specialty rankings."),
+            ("Placement transparency", "caution", "Third-party observers note BC publishes employer lists cumulatively across years rather than by graduating class, making outcomes harder to assess."),
+            ("Apply early", "mixed", "Admissions are rolling; reviewers advise applying promptly because seats and scholarship funds diminish later in the cycle."),
+        ],
+        [
+            ("MSF HQ — BC MSF update (Mar 2025)", "https://msfhq.com/boston-college-masters-in-finance-program-update-march-2025/"),
+            ("BC Carroll — MS in Finance", "https://www.bc.edu/bc-web/schools/carroll-school/graduate/ms-programs/ms-in-finance.html"),
+            ("Poets&Quants — Carroll specialized master's", "https://poetsandquants.com/specialized-master/boston-colleges-carroll-school-management-ms-finance/"),
+        ],
+    ),
+    "bc-msa": _reviews(
+        "BC's STEM-designated MS in Accounting is a short (9-12 month) program whose graduates post "
+        "a first-time CPA-exam pass rate well above the national average; standalone third-party "
+        "review coverage is thin.",
+        [
+            ("CPA-exam performance", "positive", "BC reports graduates' first-time CPA pass rate is more than 30% above the national average — the program's most-cited distinction."),
+            ("Short, STEM-designated", "positive", "The full program is STEM-designated and completes in 9-12 months (30 credits, 10+ courses) with a September start."),
+            ("U.S. News Accounting specialty", "positive", "U.S. News lists BC #9 in Accounting among its business-school specialty rankings."),
+            ("Thin standalone coverage", "caution", "Program-specific third-party reviews and public placement/salary data for the MSA are limited; BC's Facts & Figures reports MBA outcomes but not MSA employment."),
+        ],
+        [
+            ("BC Carroll — MS in Accounting", "https://www.bc.edu/bc-web/schools/carroll-school/graduate/ms-programs/ms-in-accounting.html"),
+            ("BC Carroll — Facts & Figures", "https://www.bc.edu/bc-web/schools/carroll-school/about/facts-and-figures.html"),
+        ],
+    ),
+    "bc-msw": _reviews(
+        "BC's School of Social Work MSW is a top-ranked, CSWE-accredited program (U.S. News #8, 2024) "
+        "with strong employment outcomes and a structured clinical/macro specialization path; field "
+        "placements and field-typical salaries are the main cautions.",
+        [
+            ("Top-ranked program", "positive", "U.S. News ranked BC #8 in Best Social Work (2024 edition); the school, founded 1936, enrolls ~589 MSW students at an 11:1 ratio."),
+            ("Structured specializations", "positive", "CSWE-accredited; students choose Clinical or Macro practice plus a Field of Practice (e.g., Children/Youth/Families, Health, Mental Health, Latinx Communities, Global Practice)."),
+            ("Employment outcomes", "positive", "BC reports 97% of MSW graduates employed within one year (Class of 2024), with an average job search of 2.2 months."),
+            ("Field-typical salaries", "caution", "Only ~82% of graduates report starting salaries above $60,000 — a realistic ceiling for the field that applicants should weigh against cost."),
+            ("Field-placement burden", "caution", "All students complete unpaid or stipended field placements (the school logged 293,520 field hours in 2024-25); BC notes all admitted MSW students receive a scholarship."),
+        ],
+        [
+            ("BC SSW — Facts & Figures", "https://www.bc.edu/bc-web/schools/ssw/about/facts-and-figures.html"),
+            ("BC SSW — MSW accreditation", "https://www.bc.edu/bc-web/schools/ssw/academics/msw-program/accreditation.html"),
+            ("GradReports — BC Social Work", "https://www.gradreports.com/colleges/boston-college"),
+            ("BC News — U.S. News graduate rankings", "https://www.bc.edu/bc-web/sites/bc-news/articles/2025/spring/bc-graduate-programs-strong-in-us-news-rankings.html"),
+        ],
+    ),
+    "bc-jd": _reviews(
+        "Boston College Law School (U.S. News #20, 2026 — its highest in over three decades) pairs "
+        "strong employment and bar outcomes with big-firm-leaning placement; cost and Boston/New York "
+        "market concentration are the main cautions.",
+        [
+            ("Rising rank and outcomes", "positive", "BC Law rose to U.S. News #20 (2026 edition), reported as its best in 30+ years, driven by employment, bar passage, and admissions metrics; Above the Law ranks it #17 on outcome-weighted measures."),
+            ("Employment strength", "positive", "Class of 2025: 97.2% employed overall and 95.8% in full-time, long-term bar-passage-required/JD-advantage jobs; median salary $215,000."),
+            ("Selective admissions", "positive", "The 2025 entering class had a median LSAT of 168, a median GPA of 3.83, and roughly an 8.5% acceptance rate."),
+            ("Big-firm concentration", "mixed", "About 70% of employed graduates enter law firms, with meaningful public-interest (6.6%), government (7.0%), and judicial-clerkship (8.5%) shares."),
+            ("Cost and market pull", "caution", "Full-time tuition is among the higher tier nationally, and graduates cluster in Massachusetts and New York — a consideration for students targeting other markets."),
+        ],
+        [
+            ("BC Law Magazine — #20 in U.S. News", "https://lawmagazine.bc.edu/2026/04/bc-law-moves-to-20-in-us-news-ranking/"),
+            ("BC Law — Employment statistics", "https://www.bc.edu/bc-web/schools/law/careers/employment-statistics.html"),
+            ("Law School Transparency / LawHub — BC", "https://app.lawhub.org/schools/bc"),
+        ],
+    ),
+    "bc-nursing-ms": _reviews(
+        "The Connell School's MS in Nursing prepares advanced-practice nurses across five NP "
+        "specialties (often via an accelerated Direct-Entry path) with excellent certification "
+        "pass rates; cost and thin standalone review coverage are the cautions.",
+        [
+            ("Advanced-practice focus", "positive", "The 48-credit MS prepares nurse practitioners in five specialties (Adult-Gerontology, Family, Pediatric, Psychiatric/Mental Health, Women's Health), commonly through an accelerated Direct-Entry route for non-nursing bachelor's holders."),
+            ("Certification outcomes", "positive", "BC reports 100% first-time advanced-practice certification pass rates (2024-25) and 99% of graduate students employed or continuing education within one year (school-reported)."),
+            ("Strong U.S. News standing", "positive", "U.S. News ranks the master's nursing program in the #20s nationally (BC pages cite #29 of 147; its April 2025 release cited #26)."),
+            ("Cost", "caution", "Even positive reviewers describe BC nursing as expensive; per-credit graduate billing means budgeting carefully."),
+            ("Thin standalone reviews", "caution", "Aggregators (GradReports, Niche) carry little program-specific review content for BC nursing graduate programs; most detail comes from BC's own reporting."),
+        ],
+        [
+            ("BC Connell — Facts & Figures", "https://www.bc.edu/bc-web/schools/cson/about/facts.html"),
+            ("BC Connell — Master's programs", "https://www.bc.edu/bc-web/schools/cson/academics/masters-program.html"),
+            ("BC News — U.S. News graduate rankings", "https://www.bc.edu/bc-web/sites/bc-news/articles/2025/spring/bc-graduate-programs-strong-in-us-news-rankings.html"),
+        ],
+    ),
+    "bc-nursing-dnp": _reviews(
+        "The Connell School's Doctor of Nursing Practice (launched 2019) is a clinically intensive "
+        "practice doctorate with multiple entry routes and strong certification outcomes; its "
+        "relative youth and cost are the cautions.",
+        [
+            ("Clinically intensive", "positive", "Post-baccalaureate DNP students complete a minimum of 1,000 clinical hours — double the master's requirement — plus a scholarly practice-change project across multiple clinical sites."),
+            ("Multiple entry routes", "positive", "Entry paths include post-baccalaureate, post-master's, and RN-to-DNP, plus a distinct Nurse Anesthesia track."),
+            ("Certification and employment", "positive", "BC reports 100% first-time NP certification pass rates (2024-25) and 99% of graduate students employed or continuing education within a year (school-reported)."),
+            ("U.S. News standing", "positive", "U.S. News ranks the DNP in the mid-teens to low-#20s nationally (BC pages cite #21 of 154; its April 2025 release cited #14)."),
+            ("Newer program, higher cost", "caution", "BC launched the DNP in fall 2019, younger than many peers; per-credit doctoral billing makes cost a real consideration and dedicated third-party reviews are scarce."),
+        ],
+        [
+            ("BC Connell — DNP program", "https://www.bc.edu/bc-web/schools/cson/academics/DNP-program.html"),
+            ("BC Connell — Facts & Figures", "https://www.bc.edu/bc-web/schools/cson/about/facts.html"),
+            ("BC News — U.S. News graduate rankings", "https://www.bc.edu/bc-web/sites/bc-news/articles/2025/spring/bc-graduate-programs-strong-in-us-news-rankings.html"),
+        ],
+    ),
+    "bc-economics-phd": _reviews(
+        "BC's Economics PhD is a solid mid-tier doctoral program (U.S. News #29, 2025) with five-year "
+        "funding and broad placement across academia, policy institutions, and industry; independent "
+        "qualitative review coverage is thin.",
+        [
+            ("Mid-tier doctoral reputation", "positive", "U.S. News ranked BC Economics #29 in its 2025 Best Graduate Schools edition."),
+            ("Funding", "positive", "Admitted PhD students receive five years of stipend plus tuition remission, contingent on academic benchmarks."),
+            ("Broad placement", "positive", "The department's placement record spans ranked universities worldwide, policy institutions (IMF, World Bank, Federal Reserve, ECB), and private-sector economic consulting."),
+            ("Thin third-party reviews", "caution", "There is little independent qualitative review coverage specific to the Economics PhD; aggregated graduate ratings cover all BC programs, not this department."),
+        ],
+        [
+            ("BC News — U.S. News graduate rankings", "https://www.bc.edu/bc-web/sites/bc-news/articles/2025/spring/bc-graduate-programs-strong-in-us-news-rankings.html"),
+            ("BC Economics — PhD placements", "https://www.bc.edu/bc-web/schools/morrissey/departments/economics/graduate/placements.html"),
+        ],
+    ),
+}
 
 
 def _outcomes_kind(spec: dict) -> str:
@@ -1074,8 +1322,11 @@ def _program_standard(spec: dict) -> dict:
     omitted += [
         "class_profile.cohort_size",
         "faculty_contacts.lead",
-        "external_reviews.summary",
     ]
+    # external_reviews omitted only where no third-party coverage exists (miss #8 is
+    # coverage-gated); the coverable programs carry a gathered, cited MBAn-shape review.
+    if spec["slug"] not in _REVIEWS_BY_SLUG:
+        omitted.append("external_reviews.summary")
     if not _has_tuition(spec):
         omitted += ["cost_data.tuition_usd", "cost_data.source"]
     # Woods College hybrid/online programs admit on a rolling basis with no fixed
@@ -1206,17 +1457,21 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.catalog_source = "curated"
         p.content_sources = _program_content(spec)
         p.delivery_format = spec.get("delivery_format", "in_person")
-        # Tuition (2024-25). Undergrad sticker; PhDs funded (0); J.D./MBA their own
-        # published rate; other graduate tiers billed per-credit → null + omit-reason.
+        # Tuition. Undergrad sticker; PhDs funded (0); J.D./MBA their own published
+        # annual rate; other graduate tiers = published per-credit rate × degree credits
+        # ÷ program-years (verified, cited); only the credit-less Geology M.S. is omitted.
         tuition = _resolve_tuition(spec)
         p.tuition = tuition
-        if tuition is not None:
+        grad_cost = _grad_cost(spec)
+        if grad_cost is not None:
+            p.cost_data = grad_cost
+        elif tuition is not None:
             p.cost_data = {
                 "tuition_usd": tuition,
                 "funded": spec["degree_type"] == "phd",
                 "source": "Boston College Office of Student Services",
-                "source_url": "https://www.bc.edu/bc-web/offices/student-services/billing-student-accounts/tuition-fees.html",
-                "year": "2024-25",
+                "source_url": _TUITION_RATES_URL,
+                "year": "2025-26" if spec["degree_type"] == "bachelors" else "2024-25",
             }
         else:
             p.cost_data = {"tuition_usd": None, "omitted_reason": _TUITION_OMIT_REASON}
@@ -1255,7 +1510,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             p.tracks = spec["tracks"]
         p.class_profile = None
         p.faculty_contacts = None
-        p.external_reviews = None
+        p.external_reviews = _REVIEWS_BY_SLUG.get(spec["slug"])
         if dt == "bachelors":
             p.application_deadline = date(2027, 1, 1)
         elif spec["school"] == _LAW and dt == "professional":
