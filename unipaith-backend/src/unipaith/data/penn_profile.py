@@ -81,6 +81,19 @@ designations — Bachelor of Arts/Science, Master of Arts/Science, Doctor of Phi
 the gold-MIT naming form (SKILL miss #2 / REPAIR_BACKLOG #8). Drops residual federal
 rollup buckets (Area Studies, Accounting and Related Services) and resolves Biochemistry
 CIP rollup to the real Penn degree name.
+
+who_its_for + name-dedup + Fels tuition (2026-07-01, pennwhotui1): builds a program-
+DISTINCT ``_WHO_BY_SLUG`` covering all 178 shipping programs (was 12 flagships + a single
+``_WHO_BASELINE`` on the other ~166 → 0.05 distinct; REPAIR_BACKLOG #3b type-gaming), so a
+CS Ph.D. and a Public-Policy Ph.D. no longer read identically (distinct/total ≈ 1.0).
+Drops the two duplicate ``Professional program in {field}`` placeholders (Scorecard Law /
+Veterinary professional-level rows) — the real Juris Doctor / Doctor of Veterinary
+Medicine flagships already ship (REPAIR_BACKLOG #4a). Fills the Fels M.P.A. tuition (a
+one-year, per-c.u. professional degree with a published rate) and names it by the
+conferred M.P.A. designation (REPAIR_BACKLOG #1, matcher-core). The remaining null
+graduate tuitions (the LL.M./ML per-c.u. law masters, the Annenberg submatriculation M.A.,
+funded/specialized Perelman masters, the per-credit certificates, and funded Ph.D.s) stay
+honestly omitted-with-reason — never guessed.
 """
 
 from __future__ import annotations
@@ -105,7 +118,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "University of Pennsylvania"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-25"
+ENRICHED_AT = "2026-07-01"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -1306,6 +1319,15 @@ _ROLLUP_LEVEL_DROP: frozenset[tuple[str, str]] = frozenset({
     ("Research and Experimental Psychology", "bachelors"),
     ("Research and Experimental Psychology", "masters"),
     ("Clinical, Counseling and Applied Psychology", "certificate"),
+    # Penn confers the JD and VMD as its real professional flagships (the curated
+    # penn-jd / penn-vmd rows, correctly named "Juris Doctor (JD)" / "Doctor of
+    # Veterinary Medicine (VMD)"), so the Scorecard professional-LEVEL Law (22.01) and
+    # Veterinary Medicine (01.80) rows are duplicate placeholders that render as the
+    # generic "Professional program in {field}" degree-TYPE-noun name (REPAIR_BACKLOG
+    # #4a). Drop them, mirroring the already-dropped Dental/Med professional rows (Health
+    # Professions CIP 51.04 / 51.12) — the real degrees already ship, so this is a dedupe.
+    ("Law", "professional"),
+    ("Veterinary Medicine", "professional"),
 })
 
 # (rollup title, degree_type) → Penn's real PER-LEVEL degree name, where the conferred
@@ -1351,6 +1373,10 @@ _ROLLUP_FULL_NAME: dict[tuple[str, str], str] = {
     # Penn confers the M.P.H., not a generic "M.S. in Public Health" — name the row by
     # the real conferred degree so it matches the cited MPH tuition (Perelman MPH).
     ("Public Health", "masters"): "Master of Public Health (MPH)",
+    # The Fels Institute of Government (School of Social Policy & Practice) confers the
+    # M.P.A., not an "M.A. in Public Administration" — name the row by the real conferred
+    # designation so it matches the cited Fels MPA tuition.
+    ("Public Administration", "masters"): "Master of Public Administration (MPA)",
 }
 
 # slug → metadata overrides for a resolved row whose real program differs from the
@@ -2182,6 +2208,672 @@ _WHO_BY_SLUG = {
         "Aspiring communication scholars pursuing a research and academic career, admitted "
         "directly into a fully funded five-year PhD with no terminal research master's."
     ),
+    "penn-anthropology-bs": (
+        "Students fascinated by human societies past and present who want to combine "
+        "archaeological fieldwork, biological anthropology, and ethnography with the Penn "
+        "Museum's collections."
+    ),
+    "penn-architecture-bs": (
+        "Undergraduates exploring the built environment through design studios, history and "
+        "theory, and Philadelphia urban-design fieldwork before a professional path in "
+        "architecture or planning."
+    ),
+    "penn-biochemistry-biophysics-and-molecular-biology-bs": (
+        "Pre-medical and research-minded students who want to study protein structure, "
+        "enzymology, and molecular mechanisms in NIH-funded Penn labs."
+    ),
+    "penn-film-video-and-photographic-arts-bs": (
+        "Students who analyze film, video, and screen culture and want to pair critical media "
+        "theory with production in a liberal-arts setting."
+    ),
+    "penn-classics-and-classical-languages-literatures-and-linguistics-bs": (
+        "Students drawn to the ancient Greek and Roman world who want to read classical "
+        "languages and study antiquity's literature, history, and material culture."
+    ),
+    "penn-cognitive-science-bs": (
+        "Students curious about how minds work who want an interdisciplinary path across "
+        "psychology, linguistics, computer science, and neuroscience."
+    ),
+    "penn-communication-and-media-studies-bs": (
+        "Students interested in media, journalism, and public influence who want "
+        "Annenberg-grounded research on how communication shapes society."
+    ),
+    "penn-design-and-applied-arts-bs": (
+        "Creatively driven students who want to develop a studio practice in visual and applied "
+        "design within a research university."
+    ),
+    "penn-geological-and-earth-sciences-geosciences-bs": (
+        "Students concerned with climate, energy, and the planet who want fieldwork and lab "
+        "science across geology, oceans, and the environment."
+    ),
+    "penn-east-asian-languages-literatures-and-linguistics-bs": (
+        "Students engaged with China, Japan, and Korea who want advanced language study "
+        "alongside East Asian literature, history, and thought."
+    ),
+    "penn-fine-and-studio-arts-bs": (
+        "Studio-focused students who want to build a body of work in painting, sculpture, or "
+        "new media while earning a liberal-arts degree."
+    ),
+    "penn-health-and-medical-administrative-services-bs": (
+        "Students aiming at health-sector leadership who want to study the management, policy, "
+        "and economics of healthcare delivery."
+    ),
+    "penn-history-bs": (
+        "Students who want to investigate the past through primary-source research and archival "
+        "methods across regions and eras."
+    ),
+    "penn-international-globalization-studies-bs": (
+        "Globally minded students who want to study diplomacy, development, and world politics "
+        "as preparation for careers in international affairs."
+    ),
+    "penn-international-relations-and-national-security-studies-bs": (
+        "Students focused on security, statecraft, and geopolitics who want a policy-oriented "
+        "path toward government, defense, or intelligence work."
+    ),
+    "penn-linguistic-comparative-and-related-language-studies-and-services-bs": (
+        "Students intrigued by how language works who want to study phonetics, syntax, and "
+        "meaning with experimental and computational methods."
+    ),
+    "penn-mathematics-and-computer-science-bs": (
+        "Quantitatively strong students who want a joint foundation in rigorous mathematics and "
+        "computing for research or technical careers."
+    ),
+    "penn-music-bs": (
+        "Students who want to study music theory, history, and composition — and perform — "
+        "within a liberal-arts curriculum."
+    ),
+    "penn-natural-resources-conservation-and-research-bs": (
+        "Students committed to conservation who want to study ecosystems, sustainability, and "
+        "environmental policy through science and fieldwork."
+    ),
+    "penn-neurobiology-and-neurosciences-bs": (
+        "Students captivated by the brain who want to study neural circuits, behavior, and "
+        "disease in a research-intensive, pre-medical-friendly major."
+    ),
+    "penn-public-policy-analysis-bs": (
+        "Students who want to turn evidence into policy, studying economics, statistics, and "
+        "governance to work in government or the nonprofit sector."
+    ),
+    "penn-religion-religious-studies-bs": (
+        "Students who want to examine the world's religious traditions, texts, and practices "
+        "across history and culture."
+    ),
+    "penn-slavic-baltic-and-albanian-languages-literatures-and-linguistics-bs": (
+        "Students drawn to Russia and Eastern Europe who want to combine language study with "
+        "the region's literature, history, and politics."
+    ),
+    "penn-sociology-bs": (
+        "Students who want to analyze inequality, institutions, and social change using "
+        "empirical and theoretical tools."
+    ),
+    "penn-statistics-bs": (
+        "Data-minded students who want a rigorous grounding in probability, inference, and "
+        "modeling for analytics, research, or industry."
+    ),
+    "penn-drama-theatre-arts-and-stagecraft-bs": (
+        "Students devoted to theater who want to study dramatic literature, performance, and "
+        "production while training on stage."
+    ),
+    "penn-urban-studies-affairs-bs": (
+        "Students who want to understand cities — housing, transit, and community development — "
+        "through Philadelphia as a living laboratory."
+    ),
+    "penn-chemical-engineering-bs": (
+        "Engineering students who want to design processes and materials at the molecular scale "
+        "for energy, pharmaceuticals, and biotechnology."
+    ),
+    "penn-computer-engineering-bs": (
+        "Students who want to build computing systems from silicon to software, spanning "
+        "hardware, embedded systems, and architecture."
+    ),
+    "penn-computer-science-bs": (
+        "Technically strong students who want a rigorous CS foundation with deep access to AI, "
+        "systems, and theory in an Ivy League engineering school."
+    ),
+    "penn-electrical-electronics-and-communications-engineering-bs": (
+        "Students who want to work at the frontier of circuits, signals, and devices — from "
+        "nanoelectronics to communications systems."
+    ),
+    "penn-materials-engineering-bs": (
+        "Students who want to engineer new materials — nanostructures, polymers, and "
+        "semiconductors — at the intersection of physics and chemistry."
+    ),
+    "penn-systems-engineering-bs": (
+        "Students who want to model and optimize complex systems, blending engineering, data "
+        "science, and decision-making."
+    ),
+    "penn-entrepreneurial-and-small-business-operations-bs": (
+        "Wharton undergraduates who want to launch and grow ventures, concentrating in "
+        "entrepreneurship and innovation."
+    ),
+    "penn-finance-and-financial-management-services-bs": (
+        "Wharton undergraduates targeting finance careers who want rigorous training in "
+        "corporate finance, investments, and markets."
+    ),
+    "penn-human-resources-management-and-services-bs": (
+        "Wharton undergraduates interested in people, organizations, and talent strategy for "
+        "management careers."
+    ),
+    "penn-management-sciences-and-quantitative-methods-bs": (
+        "Wharton undergraduates who want a data-driven approach to operations, analytics, and "
+        "managerial decision-making."
+    ),
+    "penn-marketing-bs": (
+        "Wharton undergraduates who want to study consumer behavior, brand strategy, and "
+        "analytics for marketing and product careers."
+    ),
+    "penn-real-estate-bs": (
+        "Wharton undergraduates who want to master real-estate finance, development, and "
+        "investment in the field's leading program."
+    ),
+    "penn-bioengineering-bse": (
+        "Students at the intersection of medicine and engineering who want to design devices, "
+        "biomaterials, and computational tools for human health."
+    ),
+    "penn-biology-ba": (
+        "Students drawn to living systems who want a broad foundation in molecular, cellular, "
+        "and organismal biology for medicine or research."
+    ),
+    "penn-chemistry-ba": (
+        "Students who want to study matter and reactions across organic, inorganic, and "
+        "physical chemistry in NIH-funded labs."
+    ),
+    "penn-economics-ba": (
+        "Students who want to study markets, incentives, and policy through the College's "
+        "rigorous, theory-and-data economics major, distinct from Wharton's business degree."
+    ),
+    "penn-english-ba": (
+        "Students who love literature and want to read across periods and genres while "
+        "sharpening critical writing and interpretation."
+    ),
+    "penn-mathematics-ba": (
+        "Students who want a rigorous grounding in pure and applied mathematics as preparation "
+        "for research, finance, or graduate study."
+    ),
+    "penn-mechanical-engineering-bse": (
+        "Students who want to design machines, robots, and energy systems, grounded in "
+        "mechanics, dynamics, and thermofluids."
+    ),
+    "penn-philosophy-ba": (
+        "Students drawn to fundamental questions of knowledge, ethics, and reality who want "
+        "rigorous training in argument and analysis."
+    ),
+    "penn-ppe-ba": (
+        "Students who want to integrate philosophy, political science, and economics to reason "
+        "about policy, ethics, and institutions."
+    ),
+    "penn-physics-ba": (
+        "Students captivated by the fundamental laws of nature who want a research-oriented "
+        "path across theory and experiment."
+    ),
+    "penn-political-science-ba": (
+        "Students who want to study power, institutions, and public life — from American "
+        "politics to international relations."
+    ),
+    "penn-psychology-ba": (
+        "Students curious about mind and behavior who want empirical training across cognitive, "
+        "social, and clinical psychology."
+    ),
+    "penn-architectural-sciences-and-technology-cert": (
+        "Design and building professionals seeking focused graduate credentials in advanced "
+        "architectural technology and building science."
+    ),
+    "penn-architecture-cert": (
+        "Practitioners and graduates seeking a focused post-professional credential in "
+        "architectural design and theory at Weitzman."
+    ),
+    "penn-atmospheric-sciences-and-meteorology-cert": (
+        "Working scientists and graduates seeking a focused credential in atmospheric science, "
+        "climate, and weather modeling."
+    ),
+    "penn-city-urban-community-and-regional-planning-cert": (
+        "Planners and civic professionals seeking a focused credential in city and regional "
+        "planning at Weitzman."
+    ),
+    "penn-computer-software-and-media-applications-cert": (
+        "Working technologists seeking a focused graduate credential in software and "
+        "interactive media development."
+    ),
+    "penn-engineering-related-fields-cert": (
+        "Engineers and technical professionals seeking a focused, stackable graduate credential "
+        "across applied engineering fields."
+    ),
+    "penn-environmental-design-cert": (
+        "Designers and planners seeking a focused credential in sustainable, environmentally "
+        "responsive design."
+    ),
+    "penn-geography-and-cartography-cert": (
+        "Analysts seeking a focused credential in geographic information systems, spatial "
+        "analysis, and cartography."
+    ),
+    "penn-health-and-medical-administrative-services-cert": (
+        "Healthcare professionals seeking a focused graduate credential in health-system "
+        "management and administration."
+    ),
+    "penn-human-resources-management-and-services-cert": (
+        "HR and organizational professionals seeking a focused graduate credential in talent "
+        "and people strategy."
+    ),
+    "penn-neurobiology-and-neurosciences-cert": (
+        "Clinicians and researchers seeking a focused graduate credential in neuroscience and "
+        "neural systems."
+    ),
+    "penn-physics-cert": (
+        "Scientists and educators seeking a focused graduate credential deepening their physics "
+        "coursework and research foundation."
+    ),
+    "penn-public-policy-analysis-cert": (
+        "Working professionals seeking a focused credential in policy analysis, evaluation, and "
+        "evidence-based governance."
+    ),
+    "penn-real-estate-cert": (
+        "Real-estate and finance professionals seeking a focused graduate credential in "
+        "development, finance, and investment."
+    ),
+    "penn-registered-nursing-nursing-administration-nursing-research-and-clinical-nursing-cert": (
+        "Registered nurses seeking a focused graduate credential to advance into specialized "
+        "clinical, administrative, or research roles."
+    ),
+    "penn-clinical-counseling-and-applied-psychology-ms": (
+        "Working professionals and recent graduates who want to apply the science of "
+        "well-being, resilience, and flourishing in a hybrid one-year MAPP."
+    ),
+    "penn-anthropology-ms": (
+        "Graduates seeking advanced training in anthropological theory and ethnographic method, "
+        "often en route to doctoral study or applied research."
+    ),
+    "penn-applied-mathematics-ms": (
+        "Quantitatively strong graduates who want advanced applied mathematics and computation "
+        "for research, finance, or technical careers."
+    ),
+    "penn-archeology-ms": (
+        "Graduates pursuing archaeological method, material analysis, and fieldwork with access "
+        "to the Penn Museum's collections."
+    ),
+    "penn-behavioral-sciences-ms": (
+        "Graduates who want interdisciplinary training in human behavior across psychology, "
+        "economics, and decision science."
+    ),
+    "penn-biochemistry-biophysics-and-molecular-biology-ms": (
+        "Graduates deepening their grounding in molecular mechanisms and biophysics before "
+        "doctoral study or biomedical research."
+    ),
+    "penn-biology-general-ms": (
+        "Graduates who want advanced coursework and research in molecular, cellular, or "
+        "organismal biology."
+    ),
+    "penn-biotechnology-ms": (
+        "Scientists and graduates targeting the biotech and pharmaceutical industries who want "
+        "applied training across molecular biology and engineering."
+    ),
+    "penn-chemistry-ms": (
+        "Graduates deepening their expertise in synthesis, spectroscopy, or physical chemistry "
+        "before industry or doctoral research."
+    ),
+    "penn-communication-and-media-studies-ms": (
+        "Graduates and communication professionals who want research-grounded study of media, "
+        "influence, and public discourse at Annenberg."
+    ),
+    "penn-demography-ms": (
+        "Graduates who want quantitative training in population, migration, and health dynamics "
+        "at the Population Studies Center."
+    ),
+    "penn-geological-and-earth-sciences-geosciences-ms": (
+        "Graduates who want advanced study of the Earth system — climate, oceans, and geology — "
+        "through research and fieldwork."
+    ),
+    "penn-east-asian-languages-literatures-and-linguistics-ms": (
+        "Graduates with strong East Asian language skills who want advanced study of the "
+        "region's literatures, history, and culture."
+    ),
+    "penn-economics-ms": (
+        "Graduates who want rigorous graduate economics and econometrics as a bridge to "
+        "doctoral study or quantitative careers."
+    ),
+    "penn-english-language-and-literature-general-ms": (
+        "Graduates who want advanced literary study and criticism across periods, often "
+        "preparing for doctoral work."
+    ),
+    "penn-fine-and-studio-arts-ms": (
+        "Practicing artists who want to advance a studio practice and critical framework within "
+        "a research university."
+    ),
+    "penn-geography-and-cartography-ms": (
+        "Graduates who want advanced spatial analysis, GIS, and cartographic methods for "
+        "research or the geospatial industry."
+    ),
+    "penn-history-ms": (
+        "Graduates who want advanced historical research and archival training as a foundation "
+        "for doctoral study or teaching."
+    ),
+    "penn-international-globalization-studies-ms": (
+        "Graduates and professionals who want advanced study of world politics, development, "
+        "and global governance."
+    ),
+    "penn-legal-research-and-advanced-professional-studies-ms": (
+        "Lawyers and legal professionals — often internationally trained — who want advanced "
+        "study of a specialized area of law at Penn Carey Law."
+    ),
+    "penn-mathematics-ms": (
+        "Graduates who want advanced pure or applied mathematics, frequently as a step toward "
+        "doctoral research."
+    ),
+    "penn-middle-near-eastern-and-semitic-languages-literatures-and-linguistics-ms": (
+        "Graduates with Middle Eastern language skills who want advanced study of the region's "
+        "languages, texts, and cultures."
+    ),
+    "penn-natural-resources-conservation-and-research-ms": (
+        "Graduates and professionals who want advanced training in conservation science, "
+        "sustainability, and environmental management."
+    ),
+    "penn-neurobiology-and-neurosciences-ms": (
+        "Graduates deepening their neuroscience foundation before doctoral study, medical "
+        "school, or research roles."
+    ),
+    "penn-non-professional-legal-studies-ms": (
+        "Non-lawyer professionals who want legal fluency for careers in business, compliance, "
+        "or policy through Penn Carey Law's Master in Law."
+    ),
+    "penn-philosophy-ms": (
+        "Graduates who want advanced training in philosophical analysis and argument, often "
+        "preparing for doctoral study."
+    ),
+    "penn-physics-ms": (
+        "Graduates who want advanced physics coursework and research experience before doctoral "
+        "study or technical careers."
+    ),
+    "penn-political-science-and-government-ms": (
+        "Graduates who want advanced training in political analysis and research methods across "
+        "American and comparative politics."
+    ),
+    "penn-psychology-general-ms": (
+        "Graduates deepening their empirical psychology training and research skills before "
+        "doctoral study or applied work."
+    ),
+    "penn-public-administration-ms": (
+        "Aspiring public leaders who want to run agencies and nonprofits, training in "
+        "management, finance, and policy at the Fels Institute of Government."
+    ),
+    "penn-religion-religious-studies-ms": (
+        "Graduates who want advanced study of religious traditions, texts, and theory across "
+        "cultures and history."
+    ),
+    "penn-sociology-ms": (
+        "Graduates who want advanced sociological theory and quantitative method as a "
+        "foundation for doctoral or applied research."
+    ),
+    "penn-statistics-ms": (
+        "Graduates who want advanced statistical modeling and inference for data science, "
+        "research, or industry careers."
+    ),
+    "penn-entrepreneurial-and-small-business-operations-ms": (
+        "MBA candidates who want to concentrate in entrepreneurship and venture-building within "
+        "Wharton's flexible curriculum."
+    ),
+    "penn-finance-and-financial-management-services-ms": (
+        "MBA candidates targeting finance leadership who want depth in corporate finance, "
+        "investments, and capital markets at Wharton."
+    ),
+    "penn-human-resources-management-and-services-ms": (
+        "MBA candidates focused on people strategy and organizational leadership within "
+        "Wharton's management curriculum."
+    ),
+    "penn-management-sciences-and-quantitative-methods-ms": (
+        "MBA candidates who want an analytics-heavy path across operations, decision science, "
+        "and quantitative management."
+    ),
+    "penn-marketing-ms": (
+        "MBA candidates who want to master brand strategy, consumer analytics, and go-to-market "
+        "leadership at Wharton."
+    ),
+    "penn-real-estate-ms": (
+        "MBA candidates who want to specialize in real-estate finance, development, and "
+        "investment in Wharton's flagship program."
+    ),
+    "penn-public-health-ms": (
+        "Graduates and clinicians committed to population health who want interdisciplinary "
+        "training in epidemiology, policy, and practice for an MPH."
+    ),
+    "penn-architectural-sciences-and-technology-ms": (
+        "Designers and engineers who want advanced training in building performance, "
+        "structures, and environmental technology at Weitzman."
+    ),
+    "penn-biomedical-medical-engineering-ms": (
+        "Graduates bridging engineering and medicine who want advanced training in devices, "
+        "imaging, and computational bioengineering."
+    ),
+    "penn-biomathematics-bioinformatics-and-computational-biology-ms": (
+        "Graduates who want rigorous training in biostatistics and the design and analysis of "
+        "clinical and biomedical studies at Perelman."
+    ),
+    "penn-chemical-engineering-ms": (
+        "Engineers who want advanced study of reaction engineering, materials, and energy "
+        "systems for industry or doctoral research."
+    ),
+    "penn-computer-science-ms": (
+        "Technically strong graduates who want advanced CS depth in AI, systems, or theory for "
+        "research or industry careers."
+    ),
+    "penn-computer-software-and-media-applications-ms": (
+        "Graduates who want advanced training in software engineering and interactive-media "
+        "systems."
+    ),
+    "penn-computer-and-information-sciences-general-ms": (
+        "Graduates seeking a broad advanced foundation in computer and information science "
+        "across theory, systems, and applications."
+    ),
+    "penn-curriculum-and-instruction-ms": (
+        "Educators who want to strengthen teaching practice, curriculum design, and "
+        "instructional leadership at Penn GSE."
+    ),
+    "penn-electrical-electronics-and-communications-engineering-ms": (
+        "Engineers who want advanced study of circuits, signals, and systems — from "
+        "nanoelectronics to communications and control."
+    ),
+    "penn-engineering-related-fields-ms": (
+        "Working engineers and graduates who want a flexible, applied advanced credential "
+        "spanning engineering disciplines."
+    ),
+    "penn-health-and-medical-administrative-services-ms": (
+        "Healthcare professionals who want advanced training in health-system management, "
+        "operations, and administration."
+    ),
+    "penn-materials-engineering-ms": (
+        "Engineers who want advanced study of nanomaterials, polymers, and semiconductors for "
+        "research or industry."
+    ),
+    "penn-mechanical-engineering-ms": (
+        "Engineers who want advanced training in mechanics, robotics, and energy systems for "
+        "technical leadership or doctoral study."
+    ),
+    "penn-registered-nursing-nursing-administration-nursing-research-and-clinical-nursing-ms": (
+        "Registered nurses who want advanced practice, leadership, or research preparation at "
+        "the top-ranked Penn Nursing."
+    ),
+    "penn-systems-engineering-ms": (
+        "Graduates who want advanced training in modeling and optimizing complex, data-rich "
+        "engineered systems."
+    ),
+    "penn-anthropology-phd": (
+        "Aspiring anthropology scholars pursuing funded doctoral research in archaeology, "
+        "biological, or sociocultural anthropology toward academic careers."
+    ),
+    "penn-applied-mathematics-phd": (
+        "Aspiring applied mathematicians pursuing funded doctoral research in analysis, "
+        "modeling, and computation for academia or research labs."
+    ),
+    "penn-archeology-phd": (
+        "Aspiring archaeologists pursuing funded doctoral research in material culture and "
+        "fieldwork with the Penn Museum toward academic careers."
+    ),
+    "penn-architecture-phd": (
+        "Aspiring design scholars pursuing funded doctoral research in architectural history, "
+        "theory, and technology at Weitzman."
+    ),
+    "penn-biochemistry-biophysics-and-molecular-biology-phd": (
+        "Aspiring biomedical scientists pursuing funded doctoral research in molecular "
+        "mechanisms and biophysics in NIH-funded Penn labs."
+    ),
+    "penn-biomedical-medical-engineering-phd": (
+        "Aspiring bioengineers pursuing funded doctoral research at the interface of "
+        "engineering, medicine, and computation toward research careers."
+    ),
+    "penn-biology-general-phd": (
+        "Aspiring biologists pursuing funded doctoral research across molecular, cellular, and "
+        "organismal biology toward academic or industry science."
+    ),
+    "penn-chemical-engineering-phd": (
+        "Aspiring chemical engineers pursuing funded doctoral research in catalysis, materials, "
+        "and energy systems."
+    ),
+    "penn-chemistry-phd": (
+        "Aspiring chemists pursuing funded doctoral research in synthesis, spectroscopy, or "
+        "physical chemistry toward academic or industry careers."
+    ),
+    "penn-classics-and-classical-languages-literatures-and-linguistics-phd": (
+        "Aspiring classicists pursuing funded doctoral research in ancient languages, "
+        "literature, and material culture toward academic careers."
+    ),
+    "penn-computer-and-information-sciences-general-phd": (
+        "Aspiring computer scientists pursuing funded doctoral research in AI, systems, or "
+        "theory with access to Penn's GRASP and PRECISE labs."
+    ),
+    "penn-curriculum-and-instruction-phd": (
+        "Aspiring education scholars pursuing funded doctoral research in learning, curriculum, "
+        "and teaching practice at Penn GSE."
+    ),
+    "penn-demography-phd": (
+        "Aspiring demographers pursuing funded doctoral research in population, health, and "
+        "migration at the Population Studies Center."
+    ),
+    "penn-east-asian-languages-literatures-and-linguistics-phd": (
+        "Aspiring East Asia scholars pursuing funded doctoral research in the region's "
+        "languages, literatures, and history toward academic careers."
+    ),
+    "penn-economics-phd": (
+        "Aspiring economists pursuing funded doctoral research in micro, macro, or econometrics "
+        "toward academic and research careers."
+    ),
+    "penn-educational-administration-and-supervision-phd": (
+        "Aspiring education-leadership scholars pursuing funded doctoral research on schools, "
+        "systems, and policy at Penn GSE."
+    ),
+    "penn-electrical-electronics-and-communications-engineering-phd": (
+        "Aspiring electrical and systems engineers pursuing funded doctoral research in "
+        "circuits, signals, robotics, and networked systems."
+    ),
+    "penn-english-language-and-literature-general-phd": (
+        "Aspiring literary scholars pursuing funded doctoral research across literary history, "
+        "theory, and criticism toward academic careers."
+    ),
+    "penn-finance-and-financial-management-services-phd": (
+        "Aspiring finance scholars pursuing funded doctoral research in asset pricing, "
+        "corporate finance, and markets at Wharton."
+    ),
+    "penn-fine-and-studio-arts-phd": (
+        "Aspiring arts scholars pursuing funded doctoral research in the history, theory, and "
+        "practice of the visual arts."
+    ),
+    "penn-biomathematics-bioinformatics-and-computational-biology-phd": (
+        "Aspiring computational biologists pursuing funded doctoral research in genomics and "
+        "bioinformatics in the GCB graduate group."
+    ),
+    "penn-health-and-medical-administrative-services-phd": (
+        "Aspiring health-systems scholars pursuing funded doctoral research in healthcare "
+        "management, policy, and outcomes."
+    ),
+    "penn-history-phd": (
+        "Aspiring historians pursuing funded doctoral research through archival and "
+        "primary-source scholarship toward academic careers."
+    ),
+    "penn-law-phd": (
+        "Legal scholars pursuing an advanced research doctorate (S.J.D./Ph.D.) in law toward "
+        "careers in legal academia at Penn Carey Law."
+    ),
+    "penn-linguistic-comparative-and-related-language-studies-and-services-phd": (
+        "Aspiring linguists pursuing funded doctoral research in phonetics, syntax, and "
+        "computational linguistics toward academic careers."
+    ),
+    "penn-business-administration-management-and-operations-phd": (
+        "Aspiring management scholars pursuing funded doctoral research in strategy, "
+        "organizations, and operations at Wharton."
+    ),
+    "penn-management-sciences-and-quantitative-methods-phd": (
+        "Aspiring scholars pursuing funded doctoral research in operations, analytics, and "
+        "quantitative management at Wharton."
+    ),
+    "penn-marketing-phd": (
+        "Aspiring marketing scholars pursuing funded doctoral research in consumer behavior and "
+        "quantitative marketing at Wharton."
+    ),
+    "penn-materials-engineering-phd": (
+        "Aspiring materials scientists pursuing funded doctoral research in nanomaterials, "
+        "polymers, and semiconductors."
+    ),
+    "penn-mathematics-phd": (
+        "Aspiring mathematicians pursuing funded doctoral research in pure or applied "
+        "mathematics toward academic careers."
+    ),
+    "penn-mechanical-engineering-phd": (
+        "Aspiring mechanical engineers pursuing funded doctoral research in robotics, "
+        "mechanics, and energy systems."
+    ),
+    "penn-microbiological-sciences-and-immunology-phd": (
+        "Aspiring biomedical scientists pursuing funded doctoral research in microbiology, "
+        "virology, and immunology at Perelman."
+    ),
+    "penn-middle-near-eastern-and-semitic-languages-literatures-and-linguistics-phd": (
+        "Aspiring Middle East scholars pursuing funded doctoral research in the region's "
+        "languages, texts, and history toward academic careers."
+    ),
+    "penn-music-phd": (
+        "Aspiring music scholars pursuing funded doctoral research in musicology, theory, or "
+        "composition toward academic careers."
+    ),
+    "penn-neurobiology-and-neurosciences-phd": (
+        "Aspiring neuroscientists pursuing funded doctoral research on neural circuits, "
+        "behavior, and disease at Penn."
+    ),
+    "penn-pharmacology-and-toxicology-phd": (
+        "Aspiring pharmacologists pursuing funded doctoral research on drug action and "
+        "toxicology at Perelman toward biomedical research careers."
+    ),
+    "penn-philosophy-phd": (
+        "Aspiring philosophers pursuing funded doctoral research in metaphysics, ethics, logic, "
+        "or the history of philosophy."
+    ),
+    "penn-physics-phd": (
+        "Aspiring physicists pursuing funded doctoral research across theory and experiment "
+        "toward academic and research careers."
+    ),
+    "penn-political-science-and-government-phd": (
+        "Aspiring political scientists pursuing funded doctoral research in American, "
+        "comparative, or international politics."
+    ),
+    "penn-research-and-experimental-psychology-phd": (
+        "Aspiring psychologists pursuing funded doctoral research in cognitive, social, or "
+        "behavioral science toward academic careers."
+    ),
+    "penn-registered-nursing-nursing-administration-nursing-research-and-clinical-nursing-phd": (
+        "Aspiring nurse-scientists pursuing funded doctoral research in nursing science and "
+        "health outcomes at the top-ranked Penn Nursing."
+    ),
+    "penn-religion-religious-studies-phd": (
+        "Aspiring religion scholars pursuing funded doctoral research across religious "
+        "traditions, texts, and theory toward academic careers."
+    ),
+    "penn-social-work-phd": (
+        "Aspiring social-welfare scholars pursuing funded doctoral research on social problems "
+        "and interventions at SP2."
+    ),
+    "penn-sociology-phd": (
+        "Aspiring sociologists pursuing funded doctoral research on inequality, institutions, "
+        "and social change toward academic careers."
+    ),
+    "penn-statistics-phd": (
+        "Aspiring statisticians pursuing funded doctoral research in statistical theory and "
+        "methodology at Wharton."
+    ),
 }
 _HL_BY_SLUG = {
     "penn-wharton-mba": [
@@ -2639,6 +3331,12 @@ _NURSING_FT_TUITION = _NURSING_CU * 8  # 57,280
 # at that pace). Same per-c.u. × full-time-load derivation as SEAS/GSE/Nursing above.
 _MPH_CU = 5490
 _MPH_FT_TUITION = _MPH_CU * 8  # 43,920
+# Fels MPA (School of Social Policy & Practice / Fels Institute of Government): $7,322 per
+# course unit, 2026-27. Fels bills four c.u. in the fall and four in the spring, so a
+# full-time academic year is 8 c.u. = $58,576 in tuition; the 9-c.u. degree (a one-summer-
+# course one-year program) totals $65,898. Per-year, not degree total (matcher convention).
+_FELS_MPA_CU = 7322
+_FELS_MPA_FT_TUITION = _FELS_MPA_CU * 8  # 58,576
 
 
 def _grad_cost(spec: dict) -> dict | None:
@@ -2674,6 +3372,32 @@ def _grad_cost(spec: dict) -> dict | None:
                 "Master's Program Costs (MPH), 2026-27"
             ),
             "source_url": "https://srfs.upenn.edu/costs-budgeting/med/masters",
+            "year": "2026-27",
+        }
+    # Fels MPA — a distinct, citable per-c.u. Fels Institute rate (slug-keyed: the other
+    # SP2 master's, the Ph.D. in Social Work, and the MSW carry their own handling, so this
+    # cannot be keyed on (SP2, masters)). The MPA is a one-year professional degree with a
+    # published rate, so it is filled rather than omitted (REPAIR_BACKLOG #1, matcher-core).
+    if spec["slug"] == "penn-public-administration-ms":
+        return {
+            "tuition_usd": _FELS_MPA_FT_TUITION,
+            "breakdown": {
+                "tuition_per_course_unit": _FELS_MPA_CU,
+                "full_time_course_units_per_year": 8,
+                "tuition": _FELS_MPA_FT_TUITION,
+                "degree_course_units": 9,
+                "estimated_degree_tuition": _FELS_MPA_CU * 9,
+            },
+            "funded": False,
+            "note": (
+                "The Fels Institute of Government (School of Social Policy & Practice) bills "
+                "the M.P.A. per course unit ($7,322 per c.u., 2026-27) — four c.u. in the fall "
+                "and four in the spring, so a full-time academic year (8 c.u.) is $58,576 in "
+                "tuition; the 9-c.u. degree (one summer course) totals about $65,898. Fels "
+                "awards merit-based scholarships."
+            ),
+            "source": "Fels Institute of Government — Tuition and Financial Aid, 2026-27",
+            "source_url": "https://www.fels.upenn.edu/admissions/tuition-and-financial-aid",
             "year": "2026-27",
         }
     key = (spec["school"], spec["degree_type"])
