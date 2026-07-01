@@ -51,14 +51,20 @@ page" record rather than a guessed number. The post-MSN DNP bills a published
 FLAT per-semester rate ($6,000, residency-independent), so it carries a real
 ANNUAL scalar ($12,000/yr = $6,000 × the standard Fall+Spring year) with the
 $30,000 program total in ``cost_data`` — clearing the professional tier. The
-online CS/DS/AI master's publish only a flexible multi-year program TOTAL
-(~$10,000) with no annual basis, so — since ``program.tuition`` is consumed as
-ANNUAL by the matcher and rendered "/yr" by the UI — their annual scalar is
-honestly omitted (total kept in ``cost_data``), never a multi-year total stuffed
-into the annual field. The Pharm.D. (calculator/PDF-only, unverifiable to two
-sources) and three specialized master's with no separately-published rate (MS
-Energy Management — not admitting; MS Management; the IROM department row, marketed
-as the MSITM filled above) likewise remain honestly omitted. This repair
+online CS/DS/AI master's publish a single FLAT total program tuition of $10,000
+($333/credit × the 30-credit degree, the SAME for residents, non-residents, and
+international students — no residency split); the program is completed flexibly
+part-time, so the flat total IS the de-facto cost basis and it carries the matcher
+budget scalar (the lowest-cost graduate option in the catalog — a blind scalar
+lost the single most-affordable signal there is). The academic MS in Information,
+Risk & Operations Management and the academic MS in Management are each a research
+master's offered only within their McCombs doctoral program (like the MS in
+Accounting), so both bill at UT's STANDARD graduate rate and carry the standard
+graduate scalar. Only two matcher-core tuition scalars now remain honestly omitted:
+the Pharm.D. (UT publishes it only via a login-gated calculator/PDF and the one
+concordant figure is an IPEDS-republisher echo, so it fails the two-independent-
+source gate) and MS Energy Management (an active 10-month professional cohort whose
+premium program tuition McCombs does not publish in a verifiable form). This repair
 (2026-06-30) adds the verified ``news.utexas.edu/feed/`` RSS on every node,
 credential-disambiguated program names, field-specific descriptions, and coverable
 ``external_reviews``.
@@ -5720,11 +5726,13 @@ def _undergrad_cost() -> dict:
 def _grad_cost_fallback(spec: dict) -> dict:
     return {
         "note": (
-            "Tuition for this graduate/professional program is set by UT Austin and is typically "
-            "billed per semester (and varies by residency and program), so a single verified annual "
-            "figure is not published here. Many doctoral students are funded through assistantships "
-            "and fellowships. UT's online master's degrees (MSCS, MSDS, MSAI) have a published total "
-            "tuition of about $10,000. See the program's tuition page for current figures."
+            "Tuition for this graduate/professional program is set by UT Austin and is billed per "
+            "semester (and varies by residency and program), and UT does not publish a single "
+            "verified annual figure for it in a machine-readable form — the Pharm.D. is quoted "
+            "only through a login-gated tuition calculator/PDF, and the MS in Energy Management is "
+            "a premium professional cohort with no separately published rate — so the annual "
+            "scalar is honestly omitted rather than guessed. See the program's tuition page for "
+            "current figures."
         ),
         "source": "UT Austin Texas One Stop / program tuition page",
         "source_url": _website_for(spec),
@@ -5772,12 +5780,14 @@ _MASTERS_TUITION_OVERRIDE: dict[str, dict] = {
 }
 
 # UT's online Computer & Data Science Online master's (MSCS / MSDS / MSAI) publish a single
-# low TOTAL program tuition (~$10,000) — NOT an annual rate. UT publishes no separate annual
-# figure, so ``program.tuition`` (the matcher's budget scalar) carries the verified published
-# TOTAL — the canonical, widely-quoted cost of these programs and a real, conservative budget
-# signal (these are the lowest-cost graduate option in the catalog, so a blind scalar lost the
-# single most-affordable signal there is). The total framing is preserved in
-# ``cost_data.total_program_tuition`` and the note, so the cost card never renders "/yr".
+# FLAT total program tuition of $10,000 — $333/credit for the 30-credit degree, the SAME for
+# Texas residents, non-residents, and international students (no residency split; verified
+# first-party at cdso.utexas.edu). The program is taken part-time and flexibly (18–36 months),
+# so the flat program total IS the de-facto cost basis, and ``program.tuition`` (the matcher's
+# budget scalar) carries this verified total — the canonical, widely-quoted cost and the
+# lowest-cost graduate option in the catalog (leaving it null starved the single most-
+# affordable budget signal there is). The total framing is preserved in
+# ``cost_data.total_program_tuition`` and the note.
 _ONLINE_MASTERS_TOTAL = {
     "ut-austin-computer-science-online-ms": 10000,
     "ut-austin-data-science-ms": 10000,
@@ -5845,16 +5855,20 @@ _MASTERS_TOTAL_TUITION: dict[str, dict] = {
 }
 
 # Remaining specialized master's whose program-specific tuition could NOT be verified on an
-# official UT/McCombs page → the annual scalar is honestly OMITTED rather than guessed. (The
+# official UT/McCombs page → the annual scalar is honestly OMITTED rather than guessed. The
 # academic MS in Accounting is offered only within the accounting doctoral program and bills
 # at UT's STANDARD graduate rate, so it is NOT omitted — it falls through to the graduate
-# scalar below.) MS Energy Management is not currently admitting and publishes no current
-# tuition; MS Management has no separately published McCombs rate; IROM is a McCombs department
-# whose marketed degrees are the MSBA/MSITM filled above.
+# scalar below. The academic MS in Information, Risk & Operations Management ("offered only to
+# students who are enrolled in the doctoral program in information, risk, and operations
+# management" — UT catalog) and the academic MS in Management (research concentrations in
+# organization science / strategic management, alongside the Management PhD) are the SAME case,
+# so both ALSO fall through to the standard graduate scalar rather than being omitted. What
+# remains is MS Energy Management: an active 10-month professional cohort (STEM-certified,
+# summer intensive) whose premium program tuition McCombs does not publish in a verifiable /
+# machine-readable form, so — per the two-source verify gate — its annual scalar stays honestly
+# OMITTED rather than guessed.
 _PREMIUM_MASTERS_OMIT = {
     "ut-austin-energy-management-ms",
-    "ut-austin-information-risk-and-operations-management-ms",
-    "ut-austin-management-ms",
 }
 
 # Professional-program annual tuition — each school's published 2025-26 figure.
@@ -5940,18 +5954,14 @@ _TUITION_OMIT_SLUGS = {
 def _tuition_omitted(slug: str) -> bool:
     """True when this program's annual ``program.tuition`` / ``cost_data.tuition_usd`` is omitted.
 
-    The online CS/DS/AI master's publish only a single FLEXIBLE multi-year program TOTAL (no
-    per-semester or annual basis), so their annual scalar is honestly omitted — the published
-    total is kept in ``cost_data.total_program_tuition``; writing it into the annual field would
-    mis-signal the matcher (consumed as ``tuition_usd_per_year``) and misrender as "/yr". The
-    DNP, by contrast, bills a published flat per-semester rate, so it carries a real annual scalar
-    and is NOT omitted (see ``_PROFESSIONAL_FLAT_ANNUAL``).
+    Only two matcher-core tuition scalars are omitted: the Pharm.D. (``_TUITION_OMIT_SLUGS`` —
+    calculator/PDF-only, unverifiable to two independent sources) and MS Energy Management
+    (``_PREMIUM_MASTERS_OMIT`` — a premium professional cohort whose rate McCombs does not
+    publish in a verifiable form). The online CS/DS/AI master's now carry the verified FLAT
+    $10,000 program total (``_ONLINE_MASTERS_TOTAL``); the academic IROM / Management master's
+    fall through to the standard graduate scalar — none of these is omitted.
     """
-    return (
-        slug in _TUITION_OMIT_SLUGS
-        or slug in _PREMIUM_MASTERS_OMIT
-        or slug in _ONLINE_MASTERS_TOTAL
-    )
+    return slug in _TUITION_OMIT_SLUGS or slug in _PREMIUM_MASTERS_OMIT
 
 
 def _annual_tuition_cost(
@@ -6060,21 +6070,25 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
             "source_url": pr["source_url"],
             "year": pr["year"],
         }
-    if slug in _ONLINE_MASTERS_TOTAL:  # only a flexible multi-year TOTAL → annual scalar omitted
-        return None, {
-            "total_program_tuition": _ONLINE_MASTERS_TOTAL[slug],
+    if slug in _ONLINE_MASTERS_TOTAL:  # flat, residency-independent program total → budget scalar
+        total = _ONLINE_MASTERS_TOTAL[slug]
+        return total, {
+            "tuition_usd": total,
+            "total_program_tuition": total,
+            "breakdown": {"tuition_in_state": total, "tuition_out_of_state": total},
             "funded": False,
             "note": (
-                "UT Austin's online Computer & Data Science Online master's degrees publish a "
-                "single TOTAL program tuition of approximately $10,000 (the program is taken "
-                "part-time and flexibly over multiple years), not a standard annual rate. UT "
-                "publishes no per-semester or annual figure for them, so the per-year scalar is "
-                "omitted (recorded in _standard.omitted) rather than misrepresent the multi-year "
-                "total as an annual rate; the verified total is shown as Total program tuition."
+                "UT Austin's Computer & Data Science Online master's degrees (MSCS, MSDS, MSAI) "
+                "publish a single FLAT total program tuition of $10,000 — $333 per credit hour "
+                "for the 30-credit degree, the SAME for Texas residents, non-residents, and "
+                "international students (no residency split). The program is completed part-time "
+                "and flexibly (typically 18–36 months), so the flat program total is the "
+                "de-facto cost basis; the matcher's budget signal (program.tuition) carries this "
+                "verified total — the lowest-cost graduate option in the catalog."
             ),
-            "source": "UT Austin Computer & Data Science Online",
-            "source_url": _website_for(spec),
-            "year": "2024-25",
+            "source": "UT Austin Computer & Data Science Online — Tuition & Fees",
+            "source_url": "https://cdso.utexas.edu/faq",
+            "year": "2025-26",
         }
     if dt == "professional":  # PharmD / AuD / DNP — rate not separately verified here
         return None, _grad_cost_fallback(spec)

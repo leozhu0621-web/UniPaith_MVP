@@ -243,9 +243,10 @@ def test_professional_and_masters_tuition_filled_or_omitted_with_reason():
     assert "cost_data.tuition_usd" not in u._program_standard(dnp["slug"], dnp)["omitted"], (
         "DNP annual rate is filled, not omitted"
     )
-    # The online CS/DS/AI master's publish only a flexible multi-year TOTAL with no annual basis,
-    # so the per-year scalar is honestly OMITTED rather than misrepresent the total as annual (a
-    # multi-year total in program.tuition would over-fire the budget veto and render "/yr").
+    # The online CS/DS/AI master's publish a single FLAT $10,000 total ($333/credit × 30, the
+    # same for residents, non-residents, and international students), completed flexibly part-time,
+    # so the flat program total IS the de-facto cost basis and carries the matcher budget scalar
+    # (the lowest-cost graduate option in the catalog) — never a silent null (REPAIR_BACKLOG #1).
     for slug in (
         "ut-austin-computer-science-online-ms",
         "ut-austin-data-science-ms",
@@ -253,9 +254,34 @@ def test_professional_and_masters_tuition_filled_or_omitted_with_reason():
     ):
         spec = next(s for s in u.PROGRAMS if s["slug"] == slug)
         scalar, cost = u._program_tuition(spec)
-        assert scalar is None, f"{slug} annual scalar must be omitted (only a flexible total)"
+        assert scalar == 10000, f"{slug} carries the verified flat $10,000 program total"
+        assert cost.get("tuition_usd") == 10000, f"{slug} cost card shows the flat total"
         assert cost.get("total_program_tuition") == 10000, f"{slug} keeps the published total"
-        assert "tuition_usd" not in cost, f"{slug} has no annual rate"
+        assert cost["breakdown"]["tuition_out_of_state"] == 10000, f"{slug} is residency-flat"
+        assert "cost_data.tuition_usd" not in u._program_standard(slug, spec)["omitted"], (
+            f"{slug} tuition is filled, not omitted"
+        )
+    # The academic MS in Information, Risk & Operations Management and MS in Management are
+    # research master's offered only within their McCombs doctoral program (like the MS in
+    # Accounting), so both bill at UT's STANDARD graduate rate and carry that scalar — not omitted.
+    for slug in (
+        "ut-austin-information-risk-and-operations-management-ms",
+        "ut-austin-management-ms",
+    ):
+        spec = next(s for s in u.PROGRAMS if s["slug"] == slug)
+        scalar, _cost = u._program_tuition(spec)
+        assert scalar == u._TUITION_GRAD_OOS, (
+            f"{slug} bills the standard graduate non-resident rate"
+        )
+        assert "cost_data.tuition_usd" not in u._program_standard(slug, spec)["omitted"], (
+            f"{slug} tuition is filled, not omitted"
+        )
+    # Only the Pharm.D. (calculator/PDF-only, unverifiable to two sources) and MS Energy
+    # Management (premium professional cohort, no published rate) remain honestly omitted.
+    for slug in ("ut-austin-pharmacy-pharmd", "ut-austin-energy-management-ms"):
+        spec = next(s for s in u.PROGRAMS if s["slug"] == slug)
+        scalar, _cost = u._program_tuition(spec)
+        assert scalar is None, f"{slug} scalar is honestly omitted"
         assert "cost_data.tuition_usd" in u._program_standard(slug, spec)["omitted"], (
-            f"{slug} annual rate must stay omitted-with-reason"
+            f"{slug} null tuition must be recorded in _standard.omitted"
         )
