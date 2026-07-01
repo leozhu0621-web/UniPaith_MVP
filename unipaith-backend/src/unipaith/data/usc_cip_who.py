@@ -771,6 +771,43 @@ SPECIAL: dict[str, tuple[str, str]] = {
     'One-Year International MBA': ('52.0201', "Experienced professionals who want USC Marshall's one-year international M.B.A."),
     'Online MBA': ('52.0201', "Working professionals who want USC Marshall's online M.B.A. with the same Marshall credential."),
     'Part-Time MBA': ('52.0201', "Working professionals who want USC Marshall's part-time M.B.A. while staying in their careers."),
+    # Names resolved from `_CODE_PREFIX` collisions / redundant "Master of X in X"
+    # doubling (usc_profile `_PROGRAM_NAME_OVERRIDES`). The old names carried " in
+    # {field}", so `_DESIG` matched and CIP/who resolved off the real field; the new
+    # single-designation names have no " in {field}", so they are pinned here with the
+    # SAME field-derived CIP + who (a few who strings cleaned of old-name artifacts).
+    "Master of Building Science": ("14.0801", "Students fascinated by building science and how it explains the natural world and want advanced, specialized graduate coursework aimed at senior professional roles."),
+    "Master of Business Taxation for Working Professionals": ("52.0301", "Students focused on business taxation for working professionals in organizations and markets and want advanced, specialized graduate coursework aimed at senior professional roles."),
+    "Master of Comparative Law": ("22.0201", "Students drawn to comparative law and want advanced, specialized graduate coursework aimed at senior professional roles."),
+    "Master of Construction Management": ("52.20", "Students focused on construction management in organizations and markets and want advanced, specialized graduate coursework aimed at senior professional roles."),
+    "Master of Real Estate Development": ("04.0901", "Students drawn to real estate development — the finance, design, and entitlement of the built environment — who want USC Price's professional graduate degree."),
+    "Master of Management in Library and Information Science": ("25.0101", "Students drawn to the intersection of library and information science and want advanced, specialized graduate coursework aimed at senior professional roles."),
+    "Doctor of Longevity Arts and Sciences": ("30.9999", "Students drawn to the intersection of longevity arts and sciences and want to pursue original doctoral research toward academic or research careers."),
+    "Master of Physician Assistant Practice": ("51.0912", "Students drawn to physician assistant practice and want advanced, specialized graduate coursework aimed at senior professional roles."),
+    "Master of Planning and Development Studies": ("04.0301", "Students drawn to the intersection of planning and development studies and want advanced, specialized graduate coursework aimed at senior professional roles."),
+    "Executive Master of Urban Planning (Online)": ("04.0301", "Working professionals who want USC Price's Master of Urban Planning in an online, executive format — land use, transportation, and housing policy — without leaving their careers."),
+    "Master of Accounting": ("52.03", "Students focused on accounting in organizations and markets and want advanced, specialized graduate coursework aimed at senior professional roles."),
+    "Master of Architecture": ("04.02", "Students who want to design buildings and shape the built environment through studio practice, history, and technology and want advanced, specialized graduate coursework aimed at senior professional roles."),
+    "Master of Business for Veterans": ("52.0201", "Students focused on business for veterans in organizations and markets and want advanced, specialized graduate coursework aimed at senior professional roles."),
+    "Master of Business Taxation": ("52.0301", "Students focused on business taxation in organizations and markets and want advanced, specialized graduate coursework aimed at senior professional roles."),
+    "Master of Communication Management": ("09.0101", "Students focused on communication management in organizations and markets and want advanced, specialized graduate coursework aimed at senior professional roles."),
+    "Master of Dispute Resolution": ("22.0201", "Students drawn to dispute resolution and want advanced, specialized graduate coursework aimed at senior professional roles."),
+    "Master of Health Administration": ("51.0701", "Students committed to improving health through health administration and want advanced, specialized graduate coursework aimed at senior professional roles."),
+    "Master of International Public Policy and Management": ("44.0401", "Students drawn to the intersection of international public policy and management and want advanced, specialized graduate coursework aimed at senior professional roles."),
+    "Master of International Trade Law and Economics": ("52.1301", "Students drawn to the intersection of international trade law and economics and want advanced, specialized graduate coursework aimed at senior professional roles."),
+    "Master of Landscape Architecture": ("04.0601", "Students who want to design landscapes, parks, and public spaces that balance ecology and human use and want advanced, specialized graduate coursework aimed at senior professional roles."),
+    "Master of Management Studies": ("52.0201", "Students focused on management studies in organizations and markets and want advanced, specialized graduate coursework aimed at senior professional roles."),
+    "Master of Nonprofit Leadership and Management": ("44.0401", "Students drawn to the intersection of nonprofit leadership and management and want advanced, specialized graduate coursework aimed at senior professional roles."),
+    "Doctor of Policy, Planning, and Development": ("44.0401", "Students drawn to the intersection of policy, planning, and development and want to pursue original doctoral research toward academic or research careers."),
+    "Master of Public Administration": ("44.04", "Students focused on public administration to address public challenges and want advanced, specialized graduate coursework aimed at senior professional roles."),
+    "Master of Public Diplomacy": ("09.0901", "Students focused on public diplomacy to address public challenges and want advanced, specialized graduate coursework aimed at senior professional roles."),
+    "Master of Public Health": ("51.22", "Students committed to protecting and improving the health of populations through prevention and policy and want advanced, specialized graduate coursework aimed at senior professional roles."),
+    "Master of Public Policy": ("44.05", "Students focused on public policy to address public challenges and want advanced, specialized graduate coursework aimed at senior professional roles."),
+    "Doctor of Regulatory Science": ("26.1201", "Students fascinated by regulatory science and how it explains the natural world and want to pursue original doctoral research toward academic or research careers."),
+    "Doctor of Social Work": ("44.0701", "Practitioner-scholars pursuing USC Suzanne Dworak-Peck's D.S.W. to lead advanced social-work practice, policy, and education."),
+    "Master of Social Work": ("44.0701", "Students preparing for professional clinical and community social-work practice through USC Suzanne Dworak-Peck's M.S.W."),
+    "Master of Urban Planning": ("04.0301", "Students focused on urban planning to address public challenges and want advanced, specialized graduate coursework aimed at senior professional roles."),
+    "Master of Visual Anthropology": ("45.0201", "Students drawn to visual anthropology and want advanced, specialized graduate coursework aimed at senior professional roles."),
 }
 _DESIG = re.compile(
     r"^(?:Bachelor of Arts|Bachelor of Science|Bachelor of Fine Arts|Bachelor of Music|"

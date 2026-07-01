@@ -5575,7 +5575,77 @@ _PROGRAM_NAME_OVERRIDES: dict[str, str] = {
         "Master of Science in Nursing, Family Nurse Practitioner"
     ),
     "usc-heritage-conservation-mhc": "Master of Heritage Conservation",
+    # Second wave of `_CODE_PREFIX` COLLISION victims (REPAIR_BACKLOG structure /
+    # miss #2 — the same "clear the whole class, re-scan → ZERO" family the batch
+    # above fixed, but for slug codes that collide across DIFFERENT USC degrees so a
+    # single `_CODE_PREFIX` entry cannot be right for both). Each rendered the WRONG
+    # designation glued to the real field (e.g. "mcm" → "Master of Communication
+    # Management" stamped onto Construction Management; "mpap" → "Master of Public
+    # Art Studies" onto the Physician Assistant program) — student-facing nonsense.
+    # Resolved to USC's real conferred degree name (verified on catalogue.usc.edu /
+    # the owning school's site); no field/CIP changes — only the credential label.
+    "usc-building-science-mbs": "Master of Building Science",
+    "usc-comparative-law-mcl": "Master of Comparative Law",
+    "usc-construction-management-mcm": "Master of Construction Management",
+    "usc-dollinger-master-of-real-estate-development-mred": "Master of Real Estate Development",
+    "usc-library-and-information-science-mmlis": "Master of Management in Library and Information Science",
+    "usc-longevity-arts-and-sciences-dlas": "Doctor of Longevity Arts and Sciences",
+    "usc-physician-assistant-practice-mpap": "Master of Physician Assistant Practice",
+    "usc-planning-and-development-studies-mpds": "Master of Planning and Development Studies",
+    "usc-urban-planning-executive-mup-online-mup": "Executive Master of Urban Planning (Online)",
+    # Redundant "Master of X in X" doubling (the `_CODE_PREFIX` designation already
+    # NAMES the field, so the appended " in {field}" echoes it — the student read
+    # "Master of Accounting in Accounting", "Master of Public Health in Public
+    # Health"). Rendered to USC's single real conferred degree name.
+    "usc-accounting-macc": "Master of Accounting",
+    "usc-architecture-march": "Master of Architecture",
+    "usc-business-for-veterans-mbv": "Master of Business for Veterans",
+    "usc-business-taxation-data-and-analytics-mbt": "Master of Business Taxation",
+    "usc-business-taxation-for-working-professionals-mbt": (
+        "Master of Business Taxation for Working Professionals"
+    ),
+    "usc-communication-management-mcg": "Master of Communication Management",
+    "usc-dispute-resolution-mdr": "Master of Dispute Resolution",
+    "usc-health-administration-mha": "Master of Health Administration",
+    "usc-international-public-policy-and-management-ippm": (
+        "Master of International Public Policy and Management"
+    ),
+    "usc-international-trade-law-and-economics-mitle": (
+        "Master of International Trade Law and Economics"
+    ),
+    "usc-landscape-architecture-mlarch": "Master of Landscape Architecture",
+    "usc-management-studies-mms": "Master of Management Studies",
+    "usc-nonprofit-leadership-and-management-mnlm": "Master of Nonprofit Leadership and Management",
+    "usc-policy-planning-and-development-dppd": "Doctor of Policy, Planning, and Development",
+    "usc-public-administration-mpa": "Master of Public Administration",
+    "usc-public-diplomacy-mpd": "Master of Public Diplomacy",
+    "usc-public-health-mph": "Master of Public Health",
+    "usc-public-policy-mpp": "Master of Public Policy",
+    "usc-regulatory-science-drsc": "Doctor of Regulatory Science",
+    "usc-social-work-dsw": "Doctor of Social Work",
+    "usc-social-work-msw": "Master of Social Work",
+    "usc-urban-planning-mup": "Master of Urban Planning",
+    "usc-visual-anthropology-mva": "Master of Visual Anthropology",
+    # Concentration-VARIANT members of three renamed bases above. Each carries a
+    # "({concentration})" suffix and collapses into its base via
+    # `_collapse_concentration_variants` (which groups on the concentration-stripped
+    # name). Renaming the base decoupled them, so re-anchor each onto the NEW base
+    # name — "{new base} ({concentration})" strips back to the new base, restoring the
+    # collapse (the variant becomes a `tracks` entry, not a separate program row).
+    "usc-public-diplomacy-practitioner-and-mid-career-professional-mpd": (
+        "Master of Public Diplomacy (Practitioner and Mid-Career Professional)"
+    ),
+    "usc-health-administration-executive-mha-mha": "Master of Health Administration (Executive MHA)",
+    "usc-social-work-integrative-social-work-msw": "Master of Social Work (Integrative Social Work)",
 }
+
+# Real USC school/college names — the ONLY valid `department` values in this module's
+# convention (programs group under their owning school, not a bare field). Any
+# department that is not one of these is a field/program-name echo and is resolved to
+# the program's real school (miss #2 — department must name the real owning unit). This
+# also covers the collision/redundant rows renamed above, whose new single-designation
+# names no longer trip the `dept == _field_key(...)` test.
+_REAL_SCHOOL_NAMES: frozenset[str] = frozenset(SCHOOL_NAME.values())
 
 
 def _slug_code(slug: str) -> str:
@@ -6136,10 +6206,16 @@ def _disambiguate_catalog_descriptions(programs: list[dict]) -> None:
 
 
 def _normalize_department(spec: dict) -> str:
-    """Map field-echo departments to USC's real owning school/college."""
+    """Resolve every department to USC's real owning school/college.
+
+    USC's convention is ``department == the owning school``. Any department that is not
+    one of USC's real school names — a field echo ("Public Health"), a program-name echo
+    ("Full-time MBA Program"), or a bare credential — is resolved to the program's real
+    ``school`` (``SCHOOL_NAME[school_key]``), including the collision/redundant rows
+    renamed above whose new single-designation names no longer trip ``dept == field``.
+    """
     dept = (spec.get("department") or "").strip()
-    field = _field_key(spec["program_name"])
-    if not dept or dept == field or dept == spec.get("program_name"):
+    if not dept or dept not in _REAL_SCHOOL_NAMES:
         return spec["school"]
     return dept
 
