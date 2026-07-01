@@ -2700,7 +2700,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             {
                 "label": "Exceptional affordability, fully online",
                 "sentiment": "positive",
-                "detail": "Total tuition is under $12,000 ($369 per credit-hour × 32 credits), delivered 100% online over two to three years (extendable to six).",
+                "detail": "Total tuition is under $12,000 ($373 per credit-hour × 32 credits), delivered 100% online over two to three years (extendable to six).",
             },
             {
                 "label": "Hands-on, project-based courses",
