@@ -31,7 +31,7 @@ Create Date: 2026-07-01
 
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from alembic import op
@@ -46,15 +46,31 @@ depends_on = None
 
 
 def upgrade() -> None:
+    # Bounded re-apply: run inside a lock_timeout-bounded SAVEPOINT and SKIP rather than
+    # freeze container boot if schools/programs/program_preferences are being written
+    # (matches the bcgradtuition1 / dartfinish1 convention). apply() is idempotent, so a
+    # skipped re-apply is retried on the next deploy — and the run's mandatory verify-LIVE
+    # step re-queries the live API for the new external_reviews to confirm the data landed
+    # (never trusting the green/applied signal alone; SKILL.md §9).
     bind = op.get_bind()
     session = Session(bind=bind)
-    dartmouth_profile.apply(session)
-    inst = session.scalar(
-        select(Institution).where(Institution.name == dartmouth_profile.INSTITUTION_NAME)
-    )
-    if inst is not None:
-        backfill_program_preferences(session, institution_id=inst.id)
-    session.flush()
+    try:
+        session.execute(text("SET LOCAL lock_timeout = '30s'"))
+        with session.begin_nested():
+            dartmouth_profile.apply(session)
+            inst = session.scalar(
+                select(Institution).where(
+                    Institution.name == dartmouth_profile.INSTITUTION_NAME
+                )
+            )
+            if inst is not None:
+                backfill_program_preferences(session, institution_id=inst.id)
+        session.flush()
+    except Exception as exc:  # noqa: BLE001 — never let a data re-apply freeze the deploy
+        print(
+            f"  dartreviews1: data re-apply skipped "
+            f"({type(exc).__name__}: {str(exc)[:140]})"
+        )
 
 
 def downgrade() -> None:

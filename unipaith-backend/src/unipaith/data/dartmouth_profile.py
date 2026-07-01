@@ -1833,11 +1833,12 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
                 ),
             },
             {
-                "label": "Recognized online option",
+                "label": "Recognized engineering school",
                 "sentiment": "positive",
                 "detail": (
-                    "U.S. News ranks Dartmouth (Thayer) among Best Online Master's in "
-                    "Engineering programs, and the degree is also offered on campus."
+                    "U.S. News ranks Dartmouth's Thayer School among its Best Engineering "
+                    "Schools (graduate); the on-campus MEng draws on that faculty and "
+                    "applied-research base."
                 ),
             },
             {
@@ -1856,10 +1857,10 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
                 "url": "https://engineering.dartmouth.edu/graduate/graduate-outcomes",
             },
             {
-                "label": "U.S. News — Dartmouth (Thayer) Online Graduate Engineering",
+                "label": "U.S. News — Dartmouth (Thayer) Best Engineering Schools",
                 "url": (
-                    "https://www.usnews.com/education/online-education/"
-                    "dartmouth-college-OENG0034/engineering"
+                    "https://www.usnews.com/best-graduate-schools/top-engineering-schools/"
+                    "dartmouth-college-02103"
                 ),
             },
         ],
@@ -2219,12 +2220,12 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
                 ),
             },
             {
-                "label": "Five-year path & research scale",
+                "label": "Extra fifth year",
                 "sentiment": "mixed",
                 "detail": (
-                    "The professional B.E. typically adds a year beyond the A.B., and "
-                    "Thayer's graduate-research ranking is mid-range among engineering "
-                    "schools."
+                    "The professional B.E. typically adds a year beyond the four-year A.B. "
+                    "in engineering sciences, so students weigh the added time against the "
+                    "accredited credential."
                 ),
             },
         ],
@@ -2234,10 +2235,10 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
                 "url": "https://engineering.dartmouth.edu/undergraduate/be",
             },
             {
-                "label": "U.S. News — Dartmouth (Thayer) Best Engineering Schools",
+                "label": "The Dartmouth — Two Colleges, Two Degrees: the dual-degree at Dartmouth",
                 "url": (
-                    "https://www.usnews.com/best-graduate-schools/top-engineering-schools/"
-                    "dartmouth-college-02103"
+                    "https://www.thedartmouth.com/article/2025/10/"
+                    "two-colleges-two-degrees-the-dual-degree-at-dartmouth-chowdhury"
                 ),
             },
         ],
