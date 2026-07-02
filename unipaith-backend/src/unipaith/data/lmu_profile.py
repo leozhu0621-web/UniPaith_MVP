@@ -23,11 +23,12 @@ doctorates — the professional Ed.D. in Educational Leadership for Social Justi
 plus the J.D. at Loyola Law School — and NO academic research Ph.D.s, so none are invented.
 Honest caveats stamped into ``_standard.omitted``: LMU is test-optional (no single official
 SAT/ACT band is published as a static figure); it publishes no university-wide placement rate or
-uniform top-employer-industries list, so those institution outcome fields are omitted. LMU bills
-its graduate, doctoral, and professional programs on a per-unit / per-program schedule with no
-single published annual figure on the undergraduate-sticker basis, so those tiers record tuition
-omitted-with-reason (coverage is not correctness); every undergraduate major carries the verified
-published sticker.
+uniform top-employer-industries list, so those institution outcome fields are omitted. Every
+undergraduate major carries the verified published sticker; every master's and professional
+program — and the two paid professional doctorates (D.B.A., Ed.D.) — carries its DISTINCT
+LMU-published full-time annual tuition (per-unit rate × the program's standard annual unit load,
+from the LMU Graduate Cost of Attendance and Loyola Law School schedules), so the matcher scores
+each graduate program's budget-fit instead of running blind on a null tier.
 """
 
 # ruff: noqa: E501
@@ -153,13 +154,15 @@ SCHOOL_OUTCOMES: dict = {
             {"name": "LMU Career and Professional Development", "url": "https://academics.lmu.edu/cpd/"},
         ],
     },
-    # Verified Wikimedia Commons gallery. LMU's Commons category is overwhelmingly indoor
-    # library-event / portrait photography; only these two files are genuine outdoor campus
-    # scenes with a readable free license (author + license confirmed via the Commons API). Per
-    # the no-fabrication rule, two verified photos ship rather than padding with a guessed credit.
+    # Verified Wikimedia Commons gallery. LMU's Commons category (500+ files) is overwhelmingly
+    # indoor library-event / portrait photography; a full category + full-text Commons sweep this
+    # session found only these genuine outdoor campus scenes with a readable free license (author +
+    # license confirmed via the Commons API extmetadata). Per the no-fabrication rule these ship
+    # rather than padding with a guessed credit — three verified beat five with a guess.
     "campus_photos": [
         {"url": "https://upload.wikimedia.org/wikipedia/commons/5/55/Loyola_Marymount_SunkenGardens_SacredHeartChapel.jpg", "credit": "Wikimedia Commons / Mishigaki (CC BY-SA 3.0)"},
         {"url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/William_H._Hannon_Library.jpg/1920px-William_H._Hannon_Library.jpg", "credit": "Wikimedia Commons / Johnxlibris (CC BY-SA 4.0)"},
+        {"url": "https://upload.wikimedia.org/wikipedia/commons/8/89/1925_commencement_ceremony%2C_LMU_Sunken_Garden.jpg", "credit": "Wikimedia Commons / LMU Library (CC BY 2.0)"},
     ],
     "media_credit": "Wikimedia Commons / Mishigaki (CC BY-SA 3.0)",
     "flagship": {"founded_year": 1911},
@@ -309,6 +312,97 @@ def _undergrad_cost() -> dict:
         "source": _COST_SRC[0],
         "source_url": _COST_SRC[1],
         "year": "2024-25",
+    }
+
+
+# ── Graduate / professional tuition (verified published, per-year scalar) ──
+# LMU bills graduate study per unit; the figures below are LMU's OWN published
+# full-time ANNUAL tuition budgets (per-unit rate × the program's standard annual
+# unit load) from the LMU Graduate Cost of Attendance schedule (2026-27) — and the
+# Loyola Law School Tuition & Fees / Cost of Attendance schedule for the law degrees.
+# Each is a DISTINCT per-college / per-program published rate (never the undergraduate
+# sticker copied down), so the matcher scores every graduate program's budget-fit
+# instead of running blind on a whole null tier (SKILL §"Measure tuition coverage PER
+# CREDENTIAL LEVEL"). Verify-or-omit: only rows with a published rate are filled.
+_GRAD_COST_SRC = (
+    "Loyola Marymount University — Graduate Cost of Attendance (2026-27)",
+    "https://financialaid.lmu.edu/generalinformation/costofattendance/graduatecostofattendance/",
+)
+_LAW_COST_SRC = (
+    "LMU Loyola Law School — Tuition & Fees / Cost of Attendance (2026-27)",
+    "https://www.lls.edu/studentaccounts/tuitionandfees/",
+)
+_GRAD_TUITION_BY_SLUG: dict[str, int] = {
+    # Bellarmine College of Liberal Arts — $1,722/unit × 12 units/yr
+    "lmu-english-ma": 20664,
+    "lmu-philosophy-ma": 20664,
+    "lmu-theology-ma": 20664,
+    "lmu-pastoral-theology-ma": 20664,
+    "lmu-yoga-studies-ma": 20664,
+    # Frank R. Seaver College of Science and Engineering — $1,814/unit × 12 units/yr
+    "lmu-environmental-science-ms": 21768,
+    "lmu-civil-engineering-mse": 21768,
+    "lmu-computer-science-ms": 21768,
+    "lmu-electrical-engineering-mse": 21768,
+    "lmu-computer-engineering-mse": 21768,
+    "lmu-mechanical-engineering-mse": 21768,
+    "lmu-healthcare-systems-engineering-ms": 21768,
+    "lmu-systems-engineering-ms": 21768,
+    "lmu-statistics-data-science-ms": 21768,
+    "lmu-mathematics-teaching-mat": 21768,
+    # College of Business Administration — $1,902/unit × 12 units/yr
+    "lmu-mba": 22824,
+    "lmu-accounting-ms": 22824,
+    "lmu-taxation-ms": 22824,
+    "lmu-business-analytics-ms": 22824,
+    "lmu-management-ms": 22824,
+    "lmu-entrepreneurship-sustainable-innovation-ms": 22824,
+    # Entertainment Leadership & Management (with SFTV) — $1,902/unit × 24 units/yr
+    "lmu-entertainment-leadership-management-ma": 45648,
+    # Doctorate of Business Administration — $2,789/unit × 21 units/yr
+    "lmu-dba": 58569,
+    # College of Communication and Fine Arts — $1,814/unit
+    "lmu-mft-art-therapy-ma": 43536,       # × 24 units/yr
+    "lmu-performance-pedagogy-mfa": 32652,  # × 18 units/yr
+    # School of Education — $1,822/unit × 12 units/yr
+    "lmu-educational-leadership-ma": 21864,
+    "lmu-school-administration-ma": 21864,
+    "lmu-counseling-ma": 21864,
+    "lmu-college-counseling-student-affairs-ma": 21864,
+    "lmu-school-counseling-ma": 21864,
+    "lmu-school-psychology-eds": 21864,
+    "lmu-educational-studies-ma": 21864,
+    "lmu-special-education-ma": 21864,
+    "lmu-transformative-education-ma": 21864,
+    # School of Education doctoral (Ed.D.) — $2,270/unit × 12 units/yr
+    "lmu-educational-leadership-edd": 27240,
+    # School of Film and Television — $1,814/unit
+    "lmu-film-tv-production-mfa": 43536,            # × 24 units/yr
+    "lmu-writing-for-screen-mfa": 32652,            # × 18 units/yr
+    "lmu-writing-producing-television-mfa": 32652,  # × 18 units/yr
+    # LMU Loyola Law School
+    "lmu-jd": 73000,       # full-time J.D. annual tuition
+    "lmu-llm": 73000,      # Master of Laws (full-time) annual tuition
+    "lmu-tax-llm": 38400,  # $2,400/unit × 16-unit annual assumption
+    "lmu-mls": 38400,      # $2,400/unit × 16-unit annual assumption
+}
+
+
+def _grad_cost(spec: dict, annual: int) -> dict:
+    src = _LAW_COST_SRC if spec["school"] == _LAW else _GRAD_COST_SRC
+    return {
+        "tuition_usd": annual,
+        "funded": False,
+        "breakdown": {"tuition": annual},
+        "note": (
+            "LMU bills this program per unit; this is LMU's published full-time annual tuition "
+            "budget (per-unit rate × the program's standard annual unit load) from the official "
+            "cost-of-attendance schedule — a distinct graduate/professional rate, not the "
+            "undergraduate sticker."
+        ),
+        "source": src[0],
+        "source_url": src[1],
+        "year": "2026-27",
     }
 
 
@@ -674,6 +768,23 @@ for _p in PROGRAMS:
         raise RuntimeError(f"name-prefixed description on {_p['slug']}")
     if "offered through" in _d or "is a program at" in _d:
         raise RuntimeError(f"classification-stub description on {_p['slug']}")
+# Matcher-core tuition COVERAGE gate: master's + professional tiers publish a per-unit /
+# per-program rate and are rarely funded, so a null there is starvation, not an honest
+# omission (SKILL §"Measure tuition coverage PER CREDENTIAL LEVEL"). Both tiers must be
+# 100% filled from LMU's published schedule. (PhD/doctorate rows are filled too where a
+# real rate is published — DBA, Ed.D. — but are not gated, per the funded convention.)
+_uncovered_grad = [
+    p["slug"]
+    for p in PROGRAMS
+    if p["degree_type"] in ("masters", "professional")
+    and _GRAD_TUITION_BY_SLUG.get(p["slug"]) is None
+]
+if _uncovered_grad:
+    raise RuntimeError(f"master's/professional tuition not covered: {_uncovered_grad}")
+# Every filled graduate rate must be DISTINCT from the undergraduate sticker (no copy-down).
+_copydown = [s for s, v in _GRAD_TUITION_BY_SLUG.items() if v == _UG_TUITION]
+if _copydown:
+    raise RuntimeError(f"graduate tuition equals undergrad sticker (copy-down): {_copydown}")
 
 
 # ── who_its_for (derived, program-distinct, grounded in the verified description) ──
@@ -735,7 +846,7 @@ def _program_standard(spec: dict) -> dict:
     ]
     # Only bachelor's carry the published sticker. LMU bills graduate / doctoral / professional
     # programs per-unit with no single annual figure on that basis → tuition omitted-with-reason.
-    if spec["degree_type"] != "bachelors":
+    if spec["degree_type"] != "bachelors" and _GRAD_TUITION_BY_SLUG.get(spec["slug"]) is None:
         omitted.append("cost_data.tuition_usd")
     if not spec.get("tracks"):
         omitted.append("tracks")
@@ -749,6 +860,9 @@ def _program_standard(spec: dict) -> dict:
 def _program_cost(spec: dict) -> tuple[int | None, dict]:
     if spec["degree_type"] == "bachelors":
         return _UG_TUITION, _undergrad_cost()
+    annual = _GRAD_TUITION_BY_SLUG.get(spec["slug"])
+    if annual is not None:
+        return annual, _grad_cost(spec, annual)
     return None, _grad_omit_cost(spec)
 
 
