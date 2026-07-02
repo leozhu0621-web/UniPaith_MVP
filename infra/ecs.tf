@@ -477,6 +477,12 @@ resource "aws_ecs_service" "backend" {
   launch_type            = "FARGATE"
   enable_execute_command = true # ECS Exec for in-VPC debugging (e.g. curl the Qwen vLLM box)
 
+  # Give a freshly-started task time to run Alembic migrations in the entrypoint
+  # and bind uvicorn BEFORE the ALB health check is allowed to fail it. Without
+  # this, the first replacement task is marked unhealthy mid-migration, ECS kills
+  # it and spins a second — the slow, flaky rollout we kept seeing on deploys.
+  health_check_grace_period_seconds = 120
+
   network_configuration {
     subnets          = aws_subnet.private[*].id
     security_groups  = [aws_security_group.ecs_tasks.id]

@@ -68,9 +68,13 @@ jobs:
           # on one worker, preserving intra-module ordering.
           PYTHONPATH=src pytest tests/ -n auto --dist loadscope --tb=short
 
-  deploy:
-    needs: test
+  # Build runs in PARALLEL with `test` (no `needs`) so the image build is no longer
+  # stacked behind the test suite. `deploy` still gates on BOTH, so a failing test
+  # can never ship — we just overlap the two ~minutes instead of summing them.
+  build:
     runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.image.outputs.image }}
     steps:
       - uses: actions/checkout@v4
 
@@ -102,12 +106,25 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Expose pinned image ref (registry/repo@digest)
+        id: image
+        run: |
+          echo "image=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}@${{ steps.build.outputs.digest }}" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    needs: [test, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.GH_ACTIONS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
       - name: Register new task definition with pinned digest
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          DIGEST: ${{ steps.build.outputs.digest }}
+          NEW_IMAGE: ${{ needs.build.outputs.image }}
         run: |
-          NEW_IMAGE="$ECR_REGISTRY/$ECR_REPOSITORY@$DIGEST"
           echo "Pinning to $NEW_IMAGE"
 
           # Pull current task def, swap image, strip read-only fields, register new revision
@@ -115,12 +132,12 @@ jobs:
             --query 'taskDefinition' > /tmp/td.json
 
           python3 -c "
-          import json
+          import json, os
           td = json.load(open('/tmp/td.json'))
           for k in ['taskDefinitionArn','revision','status','requiresAttributes',
                     'compatibilities','registeredAt','registeredBy']:
               td.pop(k, None)
-          td['containerDefinitions'][0]['image'] = '$NEW_IMAGE'
+          td['containerDefinitions'][0]['image'] = os.environ['NEW_IMAGE']
           json.dump(td, open('/tmp/td-new.json','w'))
           "
 

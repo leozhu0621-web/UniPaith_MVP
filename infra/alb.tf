@@ -57,7 +57,10 @@ resource "aws_lb_target_group" "backend" {
     healthy_threshold   = 2
     unhealthy_threshold = 3
     timeout             = 5
-    interval            = 30
+    # 10s (was 30s): with healthy_threshold 2 a new task registers healthy in
+    # ~20s instead of ~60s, and a bad task is pulled ~3x sooner. /health is
+    # DB-free and 200-always, so the tighter cadence adds negligible load.
+    interval            = 10
     matcher             = "200"
   }
 
