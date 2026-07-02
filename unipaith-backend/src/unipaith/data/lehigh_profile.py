@@ -1067,8 +1067,14 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
         p.who_its_for = _who_its_for(spec)
         p.highlights = None
+        # Only assert True for verified part-time-friendly rows; leave others None (unknown).
+        # part_time_available is projected into the matcher sparse vector, and a stored False is
+        # read as an unmet hard want for wants_part_time students - so an on-campus program with no
+        # explicit negative schedule evidence must stay unknown, not a hard miss.
         p.part_time_available = (
-            spec["delivery_format"] in ("online", "hybrid") or slug in _PART_TIME_SLUGS
+            True
+            if (spec["delivery_format"] in ("online", "hybrid") or slug in _PART_TIME_SLUGS)
+            else None
         )
         p.application_deadline = date(2027, 1, 1) if spec["degree_type"] == "bachelors" else None
     session.flush()
