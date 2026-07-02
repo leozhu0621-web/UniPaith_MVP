@@ -27,19 +27,27 @@ Sourcing (verified 2026-07-01, cited in ``SCHOOL_OUTCOMES['sources']``):
   Engineering / School of Medicine & Dentistry academic master's annualized from the
   published AS&E graduate rate ($2,234/credit, 2026-27) × the standard 30-credit academic
   master's load ÷ program-years. M.D. $74,050 (2026-27). Simon Business School master's at
-  their own published annual rates (MBA $60,000; MS Finance $78,000; MS Business Analytics
-  $68,000; MS Accountancy $49,000, 2026-27). Research doctorates are funded (tuition=0).
+  their own published annual rates (MBA $60,000; MS Finance $78,000; MS Business Analytics /
+  Marketing Analytics / AI in Business $68,000; MS Accountancy $49,000, 2026-27; Executive MBA
+  annualized from its $107,955 total). Eastman graduate degrees at Eastman's published
+  full-time annual rate ($49,148 academic / $53,616 performance-with-lessons, 2026-27). Warner
+  School master's + EdD and School of Nursing master's + DNP annualized from each school's
+  verified published per-credit rate (Warner $1,860; Nursing $1,740, 2026-27) × the program's
+  published credit requirement ÷ program-years. Research doctorates (PhD) that carry Rochester's
+  funding guarantee are $0; Eastman/Warner PhDs (funding not guaranteed) are omitted with reason.
 - Feeds: the University of Rochester News Center RSS (rochester.edu/newscenter/feed) and the
   official Localist events calendar iCal (events.rochester.edu/calendar.xml) — both verified
   live at author time. Schools/programs filter the shared feed by keywords naming the unit.
 
 Honest caveats stamped into ``_standard.omitted``:
-- Graduate tuition rates specific to Eastman (music), the Warner School (education), and the
-  School of Nursing (per-credit $1,740, no single verified program total) are not verified to
-  a single published annual figure this pass, so those programs' tuition scalars are omitted
-  with reason rather than guessed. Certificates are billed per-credit with no fixed total →
-  omitted with reason. Simon's MS in Marketing Analytics and MS in Artificial Intelligence in
-  Business publish no separate annual figure verified this pass → omitted with reason.
+- Every master's, EdD, DNP, DMA, and Simon full-time MS carries its verified published rate —
+  Eastman at its published full-time annual figure, Warner and Nursing annualized from each
+  school's published per-credit rate × the program's published credit requirement. The
+  remaining tuition omissions are genuine: Simon's part-time Professional MBA (per-credit, no
+  verified program total) and DBA (part-time employer-sponsored, no published annual), graduate
+  certificates (per-credit, no fixed total), the School of Nursing RN-to-BS / accelerated
+  completion tracks (per-credit at variable loads), and the Eastman/Warner PhDs whose funding
+  is not guaranteed — none guessed, never the undergrad sticker copied down.
 - Rochester publishes 10-year median earnings (kept, College Scorecard) but no single
   university-wide "employed or continuing education" placement rate or uniform top-industry
   list across all schools, so those two institution outcome fields are omitted with reason.
@@ -66,7 +74,7 @@ from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of Rochester"
-ENRICHED_AT = "2026-07-01"
+ENRICHED_AT = "2026-07-02"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -431,26 +439,70 @@ _ASE_PER_CREDIT = 2234
 _ASE_STD_CREDITS = 30
 _ASE_TUITION_SRC = "https://www.rochester.edu/college/gradstudies/costs-financial-support/cost.html"
 
-# Graduate programs whose tuition is honestly omitted, with the reason class.
-_TUITION_OMIT_EASTMAN = (
-    "Eastman School of Music publishes graduate tuition at its own conservatory rate, not "
-    "verified to a single published annual figure this pass, so the scalar is omitted rather "
-    "than estimated. See Eastman's tuition & fees page."
+# ── Verified per-credit-hour graduate tuition rates (2026-27), by professional school ──
+# Each school publishes a per-credit rate; the program's own catalog page publishes its
+# credit requirement (``_GRAD_CREDITS`` below). We annualize as
+# ``per_credit x credits / (duration_months / 12)`` — the published rate, never the undergrad
+# sticker copied down, never a guessed annual.
+_WARNER_PER_CREDIT = 1860  # Warner School of Education, per credit hour (2026-27)
+_WARNER_TUITION_SRC = "https://www.warner.rochester.edu/admissions/financial-aid/tuition"
+_SON_PER_CREDIT = 1740  # School of Nursing, per credit hour — master's and DNP (2026-27)
+_SON_TUITION_SRC = "https://son.rochester.edu/financial-aid/tuition-fees.html"
+
+# Eastman full-time annual graduate tuition (2026-27), published as full-time examples on
+# Eastman's Graduate Cost of Attendance page (per-unit rate $2,234): academic degrees at the
+# standard 18-unit full-time load; performance degrees (Master of Music, DMA) at the 20-unit
+# load that includes weekly applied lessons.
+_EASTMAN_TUITION_ACADEMIC = 49148
+_EASTMAN_TUITION_PERFORMANCE = 53616
+_EASTMAN_TUITION_SRC = "https://www.esm.rochester.edu/financialaid/cost-of-attendance-graduate/"
+_EASTMAN_PERFORMANCE_SLUGS = {"rochester-eastman-mm", "rochester-eastman-dma"}
+
+# Verified program credit requirements, each read from the program's official catalog page,
+# used to annualize the per-credit-billed Warner / Nursing degrees. Never a guessed count.
+_GRAD_CREDITS: dict[str, int] = {
+    # Warner School of Education — master's (30 unless noted) + EdD (90)
+    "rochester-teaching-curriculum-ms": 30,
+    "rochester-education-policy-ms": 30,
+    "rochester-health-professions-education-ms": 30,
+    "rochester-human-development-ms": 30,
+    "rochester-applied-behavior-analysis-ms": 30,
+    "rochester-k12-educational-leadership-ms": 30,
+    "rochester-higher-education-ms": 36,
+    "rochester-school-counseling-ms": 60,
+    "rochester-mental-health-counseling-ms": 60,
+    "rochester-teaching-curriculum-edd": 90,
+    "rochester-higher-education-edd": 90,
+    # School of Nursing — master's + practice doctorates (DNP)
+    "rochester-nursing-np-ms": 47,  # AGACNP track (NP specialties 45-49 cr)
+    "rochester-nursing-cnl-ms": 35,
+    "rochester-nursing-education-ms": 37,
+    "rochester-nursing-leadership-ms": 31,
+    "rochester-nursing-direct-entry-ms": 70,
+    "rochester-nursing-dnp": 39,  # post-master's DNP coursework
+    "rochester-nursing-crna-dnp": 103,  # DNP Nurse Anesthesia (full-time)
+}
+_PER_CREDIT_BY_SCHOOL = {
+    _WARNER: (_WARNER_PER_CREDIT, "University of Rochester Warner School of Education (per-credit graduate tuition, 2026-27)", _WARNER_TUITION_SRC),
+    _SON: (_SON_PER_CREDIT, "University of Rochester School of Nursing (per-credit graduate tuition, 2026-27)", _SON_TUITION_SRC),
+}
+
+# Graduate programs whose tuition remains an honest omission, with the reason class.
+_TUITION_OMIT_DBA = (
+    "Simon's Doctor of Business Administration is a part-time executive doctorate delivered in "
+    "weekend intensives and commonly employer-sponsored; Simon publishes no single annual "
+    "tuition figure for it, so the scalar is an honest omission rather than a guess. See "
+    "simon.rochester.edu/doctor-business-administration."
 )
-_TUITION_OMIT_WARNER = (
-    "Warner School graduate tuition is billed per credit hour with no single published "
-    "program total verified this pass, so the annual scalar is omitted rather than estimated. "
-    "See the Warner School tuition page."
-)
-_TUITION_OMIT_NURSING = (
-    "School of Nursing graduate tuition is billed at $1,740 per credit hour (verified) with "
-    "no single published program total verified this pass, so the annual scalar is omitted "
-    "rather than estimated. See son.rochester.edu/financial-aid/tuition-fees."
+_TUITION_OMIT_NURSING_BS = (
+    "This RN-to-BS / accelerated bachelor's completion track is billed per credit hour and "
+    "taken at variable part-time loads, so no single annual full-time figure applies; recorded "
+    "as an honest omission rather than a guess. See son.rochester.edu."
 )
 _TUITION_OMIT_SIMON = (
-    "Simon Business School publishes no separate annual tuition figure for this specialized "
-    "master's verified this pass, so the scalar is omitted rather than estimated. See the "
-    "Simon MS tuition & financial-aid page."
+    "The part-time Professional MBA is billed per credit hour ($2,366) with no single published "
+    "program total verified this pass, so the annual scalar is an honest omission rather than a "
+    "guessed credit count. See the Simon MBA tuition & financial-aid page."
 )
 _TUITION_OMIT_CERT = (
     "This graduate certificate is billed per credit hour with no fixed program total, so no "
@@ -474,6 +526,51 @@ def _ase_grad_cost(spec: dict) -> dict:
         "basis": "Annualized from Rochester's published AS&E graduate per-credit rate x standard 30-credit academic master's load / program years",
         "source": "University of Rochester Graduate Education (AS&E graduate tuition, 2026-27)",
         "source_url": _ASE_TUITION_SRC,
+        "year": "2026-27",
+    }
+
+
+def _per_credit_grad_cost(spec: dict) -> dict:
+    """Annualized tuition for a per-credit-billed Warner / Nursing degree.
+
+    ``per_credit`` is the school's verified published rate; ``credits`` is the program's
+    verified published credit requirement (``_GRAD_CREDITS``). Never a guessed total.
+    """
+    per_credit, source, source_url = _PER_CREDIT_BY_SCHOOL[spec["school"]]
+    credits = _GRAD_CREDITS[spec["slug"]]
+    years = (spec.get("duration_months") or 12) / 12
+    total = per_credit * credits
+    annual = round(total / years)
+    return {
+        "tuition_usd": annual,
+        "funded": False,
+        "per_credit_usd": per_credit,
+        "degree_credits": credits,
+        "program_years": round(years, 2),
+        "total_program_usd": total,
+        "basis": "Annualized from the school's published per-credit-hour rate x the program's published credit requirement / program years",
+        "source": source,
+        "source_url": source_url,
+        "year": "2026-27",
+    }
+
+
+def _eastman_grad_cost(spec: dict) -> dict:
+    """Eastman published full-time annual graduate tuition (academic vs. performance load)."""
+    performance = spec["slug"] in _EASTMAN_PERFORMANCE_SLUGS
+    annual = _EASTMAN_TUITION_PERFORMANCE if performance else _EASTMAN_TUITION_ACADEMIC
+    return {
+        "tuition_usd": annual,
+        "funded": False,
+        "per_credit_usd": _ASE_PER_CREDIT,
+        "basis": (
+            "Eastman School of Music published full-time graduate tuition — performance load "
+            "(20 units incl. weekly applied lessons)"
+            if performance
+            else "Eastman School of Music published full-time graduate tuition — standard academic 18-unit load"
+        ),
+        "source": "Eastman School of Music - Graduate Cost of Attendance (2026-27)",
+        "source_url": _EASTMAN_TUITION_SRC,
         "year": "2026-27",
     }
 
@@ -1345,14 +1442,12 @@ def _tuition_omit_reason(spec: dict) -> str:
     school = spec["school"]
     if spec["degree_type"] == "certificate":
         return _TUITION_OMIT_CERT
-    if school == _SON:
-        return _TUITION_OMIT_NURSING
-    if school == _EASTMAN:
-        return _TUITION_OMIT_EASTMAN
-    if school == _WARNER:
-        return _TUITION_OMIT_WARNER
+    if spec["slug"] == "rochester-dba":
+        return _TUITION_OMIT_DBA
+    if school == _SON and spec["degree_type"] == "bachelors":
+        return _TUITION_OMIT_NURSING_BS
     if school == _SIMON:
-        return _TUITION_OMIT_SIMON
+        return _TUITION_OMIT_SIMON  # part-time Professional MBA (per-credit)
     return _TUITION_OMIT_CERT
 
 
@@ -1393,10 +1488,16 @@ def _resolve_tuition(spec: dict) -> int | None:
         if school == _SON:
             return None  # nursing accelerated/completion billed per-credit → omit
         return _TUITION_UG
+    # Eastman graduate degrees at the published full-time annual rate (academic vs. performance).
+    if school == _EASTMAN and dt in ("masters", "professional"):
+        return _eastman_grad_cost(spec)["tuition_usd"]
+    # Warner / Nursing per-credit-billed degrees at the verified rate x published credits.
+    if slug in _GRAD_CREDITS:
+        return _per_credit_grad_cost(spec)["tuition_usd"]
     # Academic master's at the verified AS&E per-credit rate: A&S, Hajim, SMD.
     if dt == "masters" and school in (_ASE, _HAJIM, _SMD):
         return _ase_grad_cost(spec)["tuition_usd"]
-    return None  # Eastman / Warner / Nursing grad, Simon-specialized, DBA → omit-with-reason
+    return None  # Simon Professional MBA/DBA, certificates, nursing completion BS → omit
 
 
 def _cost_data(spec: dict) -> dict:
@@ -1448,6 +1549,10 @@ def _cost_data(spec: dict) -> dict:
             "source_url": _TUITION_UG_SRC,
             "year": "2026-27",
         }
+    if school == _EASTMAN and dt in ("masters", "professional"):
+        return _eastman_grad_cost(spec)
+    if slug in _GRAD_CREDITS:
+        return _per_credit_grad_cost(spec)
     if dt == "masters" and school in (_ASE, _HAJIM, _SMD):
         return _ase_grad_cost(spec)
     reason = _TUITION_OMIT_PHD_FUNDING if dt == "phd" else _tuition_omit_reason(spec)
