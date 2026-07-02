@@ -30,7 +30,7 @@ from unipaith.profile_standard.anti_stub import (
 SCRAPE_DEBRIS_CLEAN = [
     "mit", "usc", "uiuc", "nyu", "columbia", "michigan", "cornell", "bu", "brown",
     "vanderbilt", "dartmouth", "georgetown", "washu", "uva", "unc", "ucdavis", "uci",
-    "boston_college", "tufts", "rochester",
+    "boston_college", "tufts", "rochester", "ucsb",
 ]
 
 # Catalogs whose per-program descriptions have been verified gold-equal (every metric 0).
@@ -187,6 +187,9 @@ CERTIFIED_CLEAN = [
     #             omitted-with-reason) (rochesterprof1)
     # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
     # junk; re-added after stanfordprof11 regeneration matching Michigan/UW repair model.
+    "ucsb",  # bare seed → real 169-program catalog; field-specific per-credential
+    #             descriptions, distinct who_its_for (169/169), non-resident public tuition
+    #             scalar, all anti-stub metrics 0 (ucsbprof1)
 ]
 
 
@@ -258,7 +261,7 @@ _FRAME_STRIPPED_CLEAN = [
     "ut_austin", "columbia", "michigan", "duke", "georgia_tech", "ucla", "berkeley",
     "stanford",     "penn", "cornell", "notre_dame", "bu", "vanderbilt", "ucsd",
     "dartmouth", "georgetown", "washu", "uva", "unc", "ucdavis", "uci",
-    "boston_college", "tufts", "rochester",
+    "boston_college", "tufts", "rochester", "ucsb",
 ]
 
 
@@ -288,7 +291,7 @@ def test_credential_siblings_have_no_frame_stripped_shared_body(name: str):
 _ABS_FLOOR_CLEAN = [
     "nyu", "mit", "columbia", "michigan", "ucla", "jhu", "berkeley", "uf", "stanford",
     "penn", "cornell", "ut_austin", "notre_dame", "bu", "vanderbilt", "ucsd", "dartmouth",
-    "georgetown", "washu", "uva", "unc", "ucdavis", "uci", "tufts", "rochester",
+    "georgetown", "washu", "uva", "unc", "ucdavis", "uci", "tufts", "rochester", "ucsb",
 ]
 
 
