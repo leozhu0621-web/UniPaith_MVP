@@ -47,13 +47,14 @@ Honest caveats stamped into ``_standard.omitted``:
 - Each school's current dean and named faculty are not re-verified per school at author
   time, so ``about_detail.leadership`` and ``about_detail.faculty`` are omitted with
   reason; each school's founding year and — where verified — its research centers are kept.
-- Two specialized School of Law master's (Master of Legal Studies, M.A. in Financial
-  Integrity) are not priced on the Law student-accounts page, and the S.J.D. and D.M.A.
-  research/performance doctorates carry no verifiable full-tuition-waiver convention, so
-  those keep an honest ``cost_data`` tuition omission rather than a guessed figure. Every
-  other graduate/professional program carries its published per-program tuition — the six
-  postdoctoral M.S.D. dental specialties at CWRU's graduate-dental rate, the Physician
-  Assistant M.S., the Weatherhead MBAI/MSLOC, and the School of Law MCRM/Patent Practice.
+- Only the M.A. in Financial Integrity (the one School of Law master's the Law
+  student-accounts page does not price) and the D.M.A. performance doctorate (no published
+  per-program rate) keep an honest ``cost_data`` tuition omission rather than a guessed
+  figure. Every other graduate/professional program carries its published per-program
+  tuition (2026-27 where the school publishes it) — the six postdoctoral M.S.D. dental
+  specialties at CWRU's graduate-dental rate, the Physician Assistant M.S., the Weatherhead
+  MBAI/MSLOC, the School of Law M.C.R.M./Patent Practice/Master of Legal Studies, and the
+  non-funded S.J.D. law doctorate (all priced on CWRU's student-accounts pages).
 - Deeper per-program fields (tracks, class profile, named faculty, review themes) are
   published only for a few programs; the rest are honestly omitted, never guessed — the
   same breadth-first pattern as the MIT gold reference. ``external_reviews`` (MBAn shape,
@@ -1541,13 +1542,16 @@ _PER_CREDIT: dict[str, tuple[int, str]] = {
     "cwru-nonprofit-organizations-mno": (1650, f"{_TUITION_URL}/jack-joseph-and-morton-mandel-school-applied-social"),
     "cwru-laws-llm": (2692, f"{_TUITION_URL}/school-law"),
     "cwru-anesthesia-msa": (2149, f"{_TUITION_URL}/school-medicine"),
-    # Weatherhead specialized master's — per-credit rates published on the Weatherhead
-    # student-accounts page (2025-26): MSLOC $1,602/credit, MBAI $1,716/credit.
-    "cwru-leadership-organizational-change-msloc": (1602, f"{_TUITION_URL}/weatherhead-school-management"),
-    "cwru-business-analytics-mbai": (1716, f"{_TUITION_URL}/weatherhead-school-management"),
+    # M.S. Leadership & Organizational Change — the ENTERING-cohort rate a prospective
+    # applicant pays (2026-27): $1,750/credit at 8 credits/term x 3 terms = 24 credits ->
+    # $42,000 (the Weatherhead page's own full-time cost example). The $1,602 continuing
+    # rate would underprice a new applicant, whom the matcher scores.
+    "cwru-leadership-organizational-change-msloc": (1750, f"{_TUITION_URL}/weatherhead-school-management"),
     # Genetic Counseling: most recent PUBLISHED per-credit rate is 2026-27.
     "cwru-genetic-counseling-ms": (2384, "https://case.edu/medicine/genetics/graduate-programs/genetic-counseling-training-program/tuition-fees-and-financial-aid"),
 }
+# _PER_CREDIT slugs whose published rate is 2026-27 (the default is 2025-26).
+_PER_CREDIT_2627 = {"cwru-genetic-counseling-ms", "cwru-leadership-organizational-change-msloc"}
 
 # Professional / named programs with a published ANNUAL full-time rate.
 # slug -> (annual_usd, source_url, year)
@@ -1558,20 +1562,35 @@ _PROF_ANNUAL: dict[str, tuple[int, str, str]] = {
     # MSW full-time flat semester rate $24,750 x 2 = $49,500/yr (verified 2025-26).
     "cwru-social-work-msw": (49500, f"{_TUITION_URL}/jack-joseph-and-morton-mandel-school-applied-social", "2025-26"),
     # Postdoctoral M.S.D. dental specialties are billed at CWRU's general graduate-dental
-    # rate — $34,794/semester at 12+ credits (2025-26) -> a full-time academic year x2 =
-    # $69,588 (School of Dental Medicine student-accounts page; corroborated by the
-    # Orthodontics M.S.D. bulletin cost figure). Never the D.M.D. sticker or a guess.
-    "cwru-endodontics-msd": (69588, f"{_TUITION_URL}/school-dental-medicine", "2025-26"),
-    "cwru-oral-maxillofacial-surgery-msd": (69588, f"{_TUITION_URL}/school-dental-medicine", "2025-26"),
-    "cwru-oral-medicine-msd": (69588, f"{_TUITION_URL}/school-dental-medicine", "2025-26"),
-    "cwru-orthodontics-msd": (69588, f"{_TUITION_URL}/school-dental-medicine", "2025-26"),
-    "cwru-pediatric-dentistry-msd": (69588, f"{_TUITION_URL}/school-dental-medicine", "2025-26"),
-    "cwru-periodontics-msd": (69588, f"{_TUITION_URL}/school-dental-medicine", "2025-26"),
-    # School of Law specialized master's priced on the Law student-accounts page: the
-    # 10+ credit (full-time) flat rate is $24,400/semester (2026-27) -> $48,800/year —
-    # distinctly below the J.D./LL.M. $33,300/semester tier.
+    # rate — the CURRENT 2026-27 rate is $35,838/semester at 12+ credits -> a full-time
+    # academic year x2 = $71,676 (School of Dental Medicine student-accounts page). The
+    # matcher consumes program.tuition as the current-cycle budget signal, so use the
+    # 2026-27 rate a prospective applicant pays, never the D.M.D. sticker or a guess.
+    "cwru-endodontics-msd": (71676, f"{_TUITION_URL}/school-dental-medicine", "2026-27"),
+    "cwru-oral-maxillofacial-surgery-msd": (71676, f"{_TUITION_URL}/school-dental-medicine", "2026-27"),
+    "cwru-oral-medicine-msd": (71676, f"{_TUITION_URL}/school-dental-medicine", "2026-27"),
+    "cwru-orthodontics-msd": (71676, f"{_TUITION_URL}/school-dental-medicine", "2026-27"),
+    "cwru-pediatric-dentistry-msd": (71676, f"{_TUITION_URL}/school-dental-medicine", "2026-27"),
+    "cwru-periodontics-msd": (71676, f"{_TUITION_URL}/school-dental-medicine", "2026-27"),
+    # School of Law specialized master's priced on the Law student-accounts page (2026-27,
+    # 10+ credit full-time flat rate x2 academic-year semesters):
+    #  - M.C.R.M. + Patent Practice: $24,400/semester -> $48,800/year (the discounted
+    #    professional-master's tier, distinctly below the J.D./LL.M. flat).
+    #  - Master of Legal Studies (ML): grouped with LL.M./S.J.D. at $33,300/semester ->
+    #    $66,600/year (the general Law full-time flat).
     "cwru-compliance-risk-management-mcrm": (48800, f"{_TUITION_URL}/school-law", "2026-27"),
     "cwru-patent-practice-ma": (48800, f"{_TUITION_URL}/school-law", "2026-27"),
+    "cwru-legal-studies-ml": (66600, f"{_TUITION_URL}/school-law", "2026-27"),
+    # S.J.D. — grouped in the SAME priced Law row ($33,300/semester -> $66,600/year, 2026-27).
+    # It sits in the phd degree bucket but is NOT a funded research Ph.D.; it pays the
+    # published Law full-time rate, so it carries that rate (via the _PROF_ANNUAL guard in
+    # _cost_data) rather than the funded tuition=0 default or a false omission.
+    "cwru-juridical-science-sjd": (66600, f"{_TUITION_URL}/school-law", "2026-27"),
+    # M.S. Business Analytics & Intelligence — the Weatherhead page's full-time cost example
+    # is 13.5 credits/term x 2 terms = 27 credits at $1,725/credit (2026-27) = $46,575/year;
+    # its heavier per-year load makes the generic per-credit x24 understate it, so it carries
+    # the published annual total directly.
+    "cwru-business-analytics-mbai": (46575, f"{_TUITION_URL}/weatherhead-school-management", "2026-27"),
     # Physician Assistant M.S.: published annual tuition (stated separately from fees) is
     # $47,022/year for the PA1 and PA2 years (Class of 2028: $47,022 + $47,022 + $15,674
     # summer = $109,718 total program tuition).
@@ -1585,17 +1604,15 @@ _FREE_SLUGS = {"cwru-medicine-md-lerner"}
 # Programs whose per-program tuition CWRU does not publish in a verifiable form → the
 # annual scalar is honestly OMITTED with reason rather than guessed.
 _TUITION_OMIT: dict[str, str] = {
-    # School of Law specialized master's NOT priced on the Law student-accounts page (the
-    # M.C.R.M. and Patent Practice master's ARE priced there and carry their rate; these two
-    # are absent, so the annual scalar is honestly omitted rather than guessed).
-    "cwru-legal-studies-ml": "CWRU School of Law does not publish a separate verifiable per-program tuition for this master's",
+    # M.A. in Financial Integrity — the ONE School of Law master's the Law student-accounts
+    # page does NOT price (the J.D., LL.M., ML, S.J.D., M.C.R.M. and Patent Practice rows ARE
+    # priced and carry their rate), so its annual scalar is honestly omitted rather than guessed.
     "cwru-financial-integrity-ma": "CWRU School of Law does not publish a separate verifiable per-program tuition for this master's",
-    # Non-research doctorates in the phd degree bucket: unlike a funded research Ph.D., the
-    # S.J.D. (research law doctorate) and the D.M.A. (performance doctorate) are NOT covered by
-    # a verifiable full-tuition-waiver-plus-stipend package, so their scalar is omitted-with-reason
-    # rather than asserting tuition=0/funded (which would falsely tell students they are free).
-    "cwru-juridical-science-sjd": "The S.J.D. is a research law doctorate with no verifiable full-tuition-waiver funding convention; tuition omitted rather than marked funded/free",
-    "cwru-historical-performance-practice-dma": "The D.M.A. is a performance doctorate with no verifiable full-tuition-waiver funding convention; tuition omitted rather than marked funded/free",
+    # The D.M.A. (performance doctorate) sits in the phd degree bucket but is NOT covered by a
+    # verifiable full-tuition-waiver-plus-stipend package, and no single published annual rate
+    # exists for it, so its scalar is omitted-with-reason rather than asserting tuition=0/funded
+    # (which would falsely tell students it is free) or guessing a figure.
+    "cwru-historical-performance-practice-dma": "The D.M.A. is a performance doctorate with no verifiable published per-program tuition or full-tuition-waiver funding convention; tuition omitted rather than guessed or marked funded/free",
 }
 
 
@@ -1617,7 +1634,10 @@ def _cost_data(spec: dict) -> dict:
             "source": "CWRU Student Financial Services (undergraduate tuition)",
             "source_url": "https://case.edu/studentaccounts/tuition-fees/undergraduate-tuition-fees", "year": "2025-26",
         }
-    if dt == "phd" or slug == "cwru-mstp-mdphd":
+    if (dt == "phd" or slug == "cwru-mstp-mdphd") and slug not in _PROF_ANNUAL:
+        # Funded research doctorate (tuition waiver + stipend). The one exception is the
+        # S.J.D., a non-funded law doctorate that pays the published Law full-time rate —
+        # it is in _PROF_ANNUAL, so the guard above lets it fall through to that branch.
         return {
             "tuition_usd": 0, "funded": True,
             "note": "Research doctorate — tuition is covered by a full funding package (tuition waiver plus stipend) for admitted students.",
@@ -1628,7 +1648,7 @@ def _cost_data(spec: dict) -> dict:
         return {"tuition_usd": annual, "funded": False, "source": "CWRU Student Financial Services", "source_url": url, "year": year}
     if slug in _PER_CREDIT:
         per_credit, url = _PER_CREDIT[slug]
-        year = "2026-27" if slug == "cwru-genetic-counseling-ms" else "2025-26"
+        year = "2026-27" if slug in _PER_CREDIT_2627 else "2025-26"
         return {
             "tuition_usd": per_credit * _FT_CREDITS, "funded": False,
             "per_credit_usd": per_credit, "full_time_credits_per_year": _FT_CREDITS,
