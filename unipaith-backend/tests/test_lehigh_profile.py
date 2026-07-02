@@ -117,25 +117,53 @@ def test_no_duplicate_or_stub_names():
         assert "(CIP " not in name and "(CIP " not in s["department"]  # no literal CIP code
 
 
-def test_master_tuition_covered_and_distinct_from_undergrad():
-    """Every master's AND the paid professional Ed.D. carries an ANNUAL graduate rate
-    distinct from the undergraduate sticker; research doctorates are funded/omitted."""
+def test_master_and_paid_doctorate_tuition_is_annual_and_distinct():
+    """Every master's AND the paid Ed.D. carries an ANNUAL graduate rate distinct from the
+    undergraduate sticker (per-credit x the 18-credit registrar full-time year); funded
+    research doctorates omit the figure with funded=True."""
     for s in p.PROGRAMS:
-        if s["degree_type"] in ("masters", "professional"):
+        if p._is_paid_grad(s):
             tuition, cost = p._program_cost(s)
             assert tuition is not None and tuition != p._UG_TUITION, s["slug"]
-            # Annual, not whole-degree total: per-credit rate x a 24-credit full-time year.
             rate = p._GRAD_RATE_OVERRIDE.get(s["slug"], p._GRAD_RATE[s["school"]])
-            assert tuition == rate * p._GRAD_ANNUAL_CREDITS, s["slug"]
+            credits = p._ANNUAL_CREDITS_OVERRIDE.get(s["slug"], p._GRAD_ANNUAL_CREDITS)
+            assert tuition == rate * credits, s["slug"]
             assert cost.get("funded") is False, s["slug"]
-        if s["degree_type"] == "phd":
+        elif s["degree_type"] == "phd":
             tuition, cost = p._program_cost(s)
             assert tuition is None and cost.get("funded") is True, s["slug"]
 
 
-def test_edd_is_professional_not_research_phd():
+def test_graduate_full_time_load_matches_registrar():
+    # Lehigh's registrar full-time graduate load is 9 credits/semester = 18/year.
+    assert p._GRAD_ANNUAL_CREDITS == 18
+
+
+def test_accelerated_programs_priced_at_full_year_load():
+    """Programs that finish inside one academic year (<=12 months) charge their FULL degree
+    credits that year, so their annual tuition is the whole program - not the 18-credit minimum."""
+    for slug in p._ANNUAL_CREDITS_OVERRIDE:
+        s = next(x for x in p.PROGRAMS if x["slug"] == slug)
+        assert s["duration_months"] <= 12, slug
+        tuition, _ = p._program_cost(s)
+        rate = p._GRAD_RATE_OVERRIDE.get(slug, p._GRAD_RATE[s["school"]])
+        assert tuition == rate * p._ANNUAL_CREDITS_OVERRIDE[slug] > rate * p._GRAD_ANNUAL_CREDITS
+
+
+def test_edd_duration_is_not_research_phd_default():
     edd = next(s for s in p.PROGRAMS if s["slug"] == "lehigh-educational-leadership-edd")
-    assert edd["degree_type"] == "professional"
+    assert edd["duration_months"] == 48  # not the 60-month research-PhD default
+
+
+def test_edd_is_paid_doctorate_in_doctoral_family():
+    """The Ed.D. stays degree_type 'phd' (so the matcher's doctoral degree-level fit matches an
+    Ed.D. search) but is a PAID professional doctorate (tuition filled, not funded) with
+    non-research fit messaging."""
+    edd = next(s for s in p.PROGRAMS if s["slug"] == "lehigh-educational-leadership-edd")
+    assert edd["degree_type"] == "phd"
+    assert p._is_paid_grad(edd)
+    tuition, cost = p._program_cost(edd)
+    assert tuition is not None and cost.get("funded") is False
     who = p._who_its_for(edd)
     assert "original research" not in who and "national-lab" not in who
 
