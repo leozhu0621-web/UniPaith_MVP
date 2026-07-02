@@ -30,7 +30,7 @@ from unipaith.profile_standard.anti_stub import (
 SCRAPE_DEBRIS_CLEAN = [
     "mit", "usc", "uiuc", "nyu", "columbia", "michigan", "cornell", "bu", "brown",
     "vanderbilt", "dartmouth", "georgetown", "washu", "uva", "unc", "ucdavis", "uci",
-    "boston_college", "tufts", "rochester", "ucsb", "lmu",
+    "boston_college", "tufts", "rochester", "ucsb", "lmu", "case_western",
 ]
 
 # Catalogs whose per-program descriptions have been verified gold-equal (every metric 0).
@@ -198,6 +198,15 @@ CERTIFIED_CLEAN = [
     #             program-distinct who_its_for (101/101); LMU Newsroom RSS feed; 2 verified
     #             Commons campus photos (category is photo-thin); published undergraduate tuition,
     #             per-unit graduate/professional tuition omitted-with-reason (lmuprof1)
+    "case_western",  # bare seed (0 programs) → gold + real 206-program catalog across the eight
+    #             degree-granting schools (Arts & Sciences, Case Engineering, Weatherhead,
+    #             Medicine incl. Cleveland Clinic Lerner, Bolton Nursing, Dental Medicine, Law,
+    #             Mandel Applied Social Sciences); bulletin.case.edu conferred names, real owning
+    #             departments, field-specific per-credential descriptions, cip_code (UNITID 201645)
+    #             + program-distinct who_its_for (206/206); CWRU Newsroom RSS + University Events
+    #             iCal; School of Graduate Studies + named-school published tuition, undergrad
+    #             sticker for bachelor's, funded PhDs, six flagship external_reviews; postdoctoral
+    #             M.S.D. / PA / specialized law-master's tuition omitted-with-reason (casewestprof1)
 ]
 
 
@@ -269,7 +278,7 @@ _FRAME_STRIPPED_CLEAN = [
     "ut_austin", "columbia", "michigan", "duke", "georgia_tech", "ucla", "berkeley",
     "stanford",     "penn", "cornell", "notre_dame", "bu", "vanderbilt", "ucsd",
     "dartmouth", "georgetown", "washu", "uva", "unc", "ucdavis", "uci",
-    "boston_college", "tufts", "rochester", "ucsb", "lmu",
+    "boston_college", "tufts", "rochester", "ucsb", "lmu", "case_western",
 ]
 
 
@@ -300,6 +309,7 @@ _ABS_FLOOR_CLEAN = [
     "nyu", "mit", "columbia", "michigan", "ucla", "jhu", "berkeley", "uf", "stanford",
     "penn", "cornell", "ut_austin", "notre_dame", "bu", "vanderbilt", "ucsd", "dartmouth",
     "georgetown", "washu", "uva", "unc", "ucdavis", "uci", "tufts", "rochester", "ucsb", "lmu",
+    "case_western",
 ]
 
 
