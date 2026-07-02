@@ -30,7 +30,7 @@ from unipaith.profile_standard.anti_stub import (
 SCRAPE_DEBRIS_CLEAN = [
     "mit", "usc", "uiuc", "nyu", "columbia", "michigan", "cornell", "bu", "brown",
     "vanderbilt", "dartmouth", "georgetown", "washu", "uva", "unc", "ucdavis", "uci",
-    "boston_college", "tufts", "rochester", "ucsb",
+    "boston_college", "tufts", "rochester", "ucsb", "lmu",
 ]
 
 # Catalogs whose per-program descriptions have been verified gold-equal (every metric 0).
@@ -190,6 +190,14 @@ CERTIFIED_CLEAN = [
     "ucsb",  # bare seed → real 169-program catalog; field-specific per-credential
     #             descriptions, distinct who_its_for (169/169), non-resident public tuition
     #             scalar, all anti-stub metrics 0 (ucsbprof1)
+    "lmu",  # bare seed (0 programs, 0 photos) → gold + real 101-program catalog across the
+    #             seven colleges/schools (Bellarmine, Seaver, Business, Communication & Fine Arts,
+    #             Education, Film & Television, Loyola Law); bulletin.lmu.edu conferred
+    #             B.A./B.S./B.F.A./B.B.A./B.S.E./M.A./M.S./M.F.A./M.B.A./Ed.D./D.B.A./J.D. names,
+    #             real owning departments, field-specific per-program descriptions, cip_code +
+    #             program-distinct who_its_for (101/101); LMU Newsroom RSS feed; 2 verified
+    #             Commons campus photos (category is photo-thin); published undergraduate tuition,
+    #             per-unit graduate/professional tuition omitted-with-reason (lmuprof1)
 ]
 
 
@@ -261,7 +269,7 @@ _FRAME_STRIPPED_CLEAN = [
     "ut_austin", "columbia", "michigan", "duke", "georgia_tech", "ucla", "berkeley",
     "stanford",     "penn", "cornell", "notre_dame", "bu", "vanderbilt", "ucsd",
     "dartmouth", "georgetown", "washu", "uva", "unc", "ucdavis", "uci",
-    "boston_college", "tufts", "rochester", "ucsb",
+    "boston_college", "tufts", "rochester", "ucsb", "lmu",
 ]
 
 
@@ -291,7 +299,7 @@ def test_credential_siblings_have_no_frame_stripped_shared_body(name: str):
 _ABS_FLOOR_CLEAN = [
     "nyu", "mit", "columbia", "michigan", "ucla", "jhu", "berkeley", "uf", "stanford",
     "penn", "cornell", "ut_austin", "notre_dame", "bu", "vanderbilt", "ucsd", "dartmouth",
-    "georgetown", "washu", "uva", "unc", "ucdavis", "uci", "tufts", "rochester", "ucsb",
+    "georgetown", "washu", "uva", "unc", "ucdavis", "uci", "tufts", "rochester", "ucsb", "lmu",
 ]
 
 
