@@ -362,10 +362,16 @@ _GRAD_ANNUAL_CREDITS = 18
 # their FULL degree credits in that one year, so their annual tuition is the whole program, not the
 # 18-credit registrar minimum. Each value is the program's published degree-credit count.
 _ANNUAL_CREDITS_OVERRIDE = {
-    "lehigh-mba-fulltime": 36,                     # accelerated one-year full-time MBA, 36 credits
+    "lehigh-mba-fulltime": 42,                     # one-year full-time MBA: 27 core + 15 electives
     "lehigh-energy-systems-engineering-meng": 30,  # 10-month professional M.Eng., 30 credits
     "lehigh-structural-engineering-meng": 30,      # ~10-month professional M.Eng., 30 credits
 }
+
+# Programs delivered part-time-friendly. ``Program.part_time_available`` is read by the matcher's
+# schedule-flexibility fit (a student with wants_part_time gets a hard miss when it is falsy), so
+# online/hybrid programs and the part-time professional Ed.D. (modeled for working administrators)
+# are flagged available.
+_PART_TIME_SLUGS = {"lehigh-educational-leadership-edd"}
 
 
 def _grad_annual(spec: dict) -> int:
@@ -1061,6 +1067,9 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
         p.who_its_for = _who_its_for(spec)
         p.highlights = None
+        p.part_time_available = (
+            spec["delivery_format"] in ("online", "hybrid") or slug in _PART_TIME_SLUGS
+        )
         p.application_deadline = date(2027, 1, 1) if spec["degree_type"] == "bachelors" else None
     session.flush()
     for p in session.scalars(select(Program).where(Program.institution_id == inst.id)):

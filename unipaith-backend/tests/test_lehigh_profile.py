@@ -155,6 +155,19 @@ def test_edd_duration_is_not_research_phd_default():
     assert edd["duration_months"] == 48  # not the 60-month research-PhD default
 
 
+def test_part_time_flag_for_flexible_programs():
+    # The part-time professional Ed.D. and online/hybrid programs are part-time-available so a
+    # wants_part_time searcher is not penalized against them.
+    edd = next(s for s in p.PROGRAMS if s["slug"] == "lehigh-educational-leadership-edd")
+    assert edd["slug"] in p._PART_TIME_SLUGS
+    assert any(s["delivery_format"] in ("online", "hybrid") for s in p.PROGRAMS)
+
+
+def test_full_time_mba_uses_published_credit_load():
+    # Lehigh's one-year Full-Time MBA is a 42-credit curriculum (27 core + 15 electives).
+    assert p._ANNUAL_CREDITS_OVERRIDE["lehigh-mba-fulltime"] == 42
+
+
 def test_edd_is_paid_doctorate_in_doctoral_family():
     """The Ed.D. stays degree_type 'phd' (so the matcher's doctoral degree-level fit matches an
     Ed.D. search) but is a PAID professional doctorate (tuition filled, not funded) with
