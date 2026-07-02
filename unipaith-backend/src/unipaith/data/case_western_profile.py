@@ -540,6 +540,30 @@ _REQ_MED = {
     "source": "Case Western Reserve University School of Medicine Admissions",
     "source_url": "https://case.edu/medicine/admissions",
 }
+_REQ_DENTAL = {
+    "materials": [
+        "AADSAS application (ADEA centralized dental application)",
+        "Dental Admission Test (DAT) score",
+        "Official transcripts + prerequisite coursework",
+        "Letters of recommendation",
+        "Interview (by invitation)",
+    ],
+    "deadlines": {"note": "AADSAS operates on a rolling cycle — verify current dates on the School of Dental Medicine admissions page."},
+    "source": "Case Western Reserve University School of Dental Medicine Admissions",
+    "source_url": "https://case.edu/dental/admissions",
+}
+_REQ_PA = {
+    "materials": [
+        "CASPA application (centralized PA-program application)",
+        "Prerequisite coursework",
+        "Patient-care / health-care experience hours",
+        "Letters of recommendation",
+        "Official transcripts",
+    ],
+    "deadlines": {"note": "CASPA deadlines apply — verify on the Physician Assistant program admissions page."},
+    "source": "Case Western Reserve University Physician Assistant Program",
+    "source_url": "https://case.edu/medicine/pa",
+}
 
 # Institution-wide outcome proxy (College Scorecard, all-graduates) used where a
 # program has no separately published employment report.
@@ -1332,7 +1356,7 @@ PROGRAMS: list[dict] = [
        "Applied study of how drugs move from discovery through development, regulation, and clinical use, oriented to the pharmaceutical and biotech industries.",
        "Science graduates targeting drug-development, regulatory, or pharmaceutical-industry careers."),
     # ── Physician Assistant Program ──
-    _p("cwru-physician-assistant-mspas", _MED, "Master of Science in Physician Assistant Studies", "Physician Assistant", "professional", 27,
+    _p("cwru-physician-assistant-mspas", _MED, "Master of Science in Physician Assistant Studies", "Physician Assistant", "masters", 27,
        "Physician Assistant Program", "51.09",
        "An accredited professional program combining basic-science and clinical coursework with supervised clinical rotations, preparing graduates to practice as physician assistants across specialties.",
        "Students pursuing certification and licensure to practice as a physician assistant."),
@@ -1556,6 +1580,12 @@ _TUITION_OMIT: dict[str, str] = {
     "cwru-financial-integrity-ma": "CWRU School of Law does not publish a separate verifiable per-program tuition for this master's",
     "cwru-patent-practice-ma": "CWRU School of Law does not publish a separate verifiable per-program tuition for this master's",
     "cwru-compliance-risk-management-mcrm": "CWRU School of Law does not publish a separate verifiable per-program tuition for this master's",
+    # Non-research doctorates in the phd degree bucket: unlike a funded research Ph.D., the
+    # S.J.D. (research law doctorate) and the D.M.A. (performance doctorate) are NOT covered by
+    # a verifiable full-tuition-waiver-plus-stipend package, so their scalar is omitted-with-reason
+    # rather than asserting tuition=0/funded (which would falsely tell students they are free).
+    "cwru-juridical-science-sjd": "The S.J.D. is a research law doctorate with no verifiable full-tuition-waiver funding convention; tuition omitted rather than marked funded/free",
+    "cwru-historical-performance-practice-dma": "The D.M.A. is a performance doctorate with no verifiable full-tuition-waiver funding convention; tuition omitted rather than marked funded/free",
 }
 
 
@@ -1865,11 +1895,17 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         cost = _cost_data(spec)
         p.tuition = cost.get("tuition_usd")
         p.cost_data = cost
-        # Requirements by tier / school.
+        # Requirements by tier / school. Dental (AADSAS/DAT), PA (CASPA), and MD (AMCAS/MCAT)
+        # each use their own centralized application system — never the medical-school template
+        # on a dental or PA program.
         dt = spec["degree_type"]
         if spec["school"] == _LAW and dt == "professional":
             p.application_requirements = dict(_REQ_LAW)
-        elif spec["school"] in (_MED, _DENT) and dt == "professional":
+        elif spec["slug"] == "cwru-physician-assistant-mspas":
+            p.application_requirements = dict(_REQ_PA)
+        elif spec["school"] == _DENT and dt == "professional":
+            p.application_requirements = dict(_REQ_DENTAL)
+        elif spec["school"] == _MED and dt == "professional":
             p.application_requirements = dict(_REQ_MED)
         elif dt == "bachelors":
             p.application_requirements = dict(_REQ_UNDERGRAD)
