@@ -30,7 +30,7 @@ from unipaith.profile_standard.anti_stub import (
 SCRAPE_DEBRIS_CLEAN = [
     "mit", "usc", "uiuc", "nyu", "columbia", "michigan", "cornell", "bu", "brown",
     "vanderbilt", "dartmouth", "georgetown", "washu", "uva", "unc", "ucdavis", "uci",
-    "boston_college", "tufts", "rochester",
+    "boston_college", "tufts", "rochester", "ucsb",
 ]
 
 # Catalogs whose per-program descriptions have been verified gold-equal (every metric 0).
@@ -185,6 +185,16 @@ CERTIFIED_CLEAN = [
     #             Simon MBA/MS annual rates, AS&E/SMD academic master's per-credit-annualized at
     #             the $2,234/credit rate, funded PhDs=0, Eastman/Warner/Nursing/certificate rows
     #             omitted-with-reason) (rochesterprof1)
+    "ucsb",  # institution seed (0 programs, dead feed) → gold + verified 142-program catalog
+    #             across five colleges (Letters & Science, Robert Mehrabian Engineering, Creative
+    #             Studies, Bren, Gevirtz GSE); conferred degree names resolved from the College
+    #             Scorecard CIP list (UNITID 110705) to UCSB's real degrees (26.07 → "Zoology",
+    #             16.01 → "Linguistics"), real departments, field-specific per-program descriptions
+    #             (142/142 distinct), cip_code + program-distinct who_its_for on every row; UCSB
+    #             news RSS + Campus Calendar iCal feeds, verified 5-photo gallery; public
+    #             NON-RESIDENT tuition scalar (undergrad $50,614, academic-graduate $30,246) with
+    #             in/out-state breakdown, funded PhDs=0, self-supporting M.T.M./M.E.S.M./M.E.D.S.
+    #             omitted-with-reason (ucsbprof1)
     # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
     # junk; re-added after stanfordprof11 regeneration matching Michigan/UW repair model.
 ]
@@ -258,7 +268,7 @@ _FRAME_STRIPPED_CLEAN = [
     "ut_austin", "columbia", "michigan", "duke", "georgia_tech", "ucla", "berkeley",
     "stanford",     "penn", "cornell", "notre_dame", "bu", "vanderbilt", "ucsd",
     "dartmouth", "georgetown", "washu", "uva", "unc", "ucdavis", "uci",
-    "boston_college", "tufts", "rochester",
+    "boston_college", "tufts", "rochester", "ucsb",
 ]
 
 
@@ -288,7 +298,7 @@ def test_credential_siblings_have_no_frame_stripped_shared_body(name: str):
 _ABS_FLOOR_CLEAN = [
     "nyu", "mit", "columbia", "michigan", "ucla", "jhu", "berkeley", "uf", "stanford",
     "penn", "cornell", "ut_austin", "notre_dame", "bu", "vanderbilt", "ucsd", "dartmouth",
-    "georgetown", "washu", "uva", "unc", "ucdavis", "uci", "tufts", "rochester",
+    "georgetown", "washu", "uva", "unc", "ucdavis", "uci", "tufts", "rochester", "ucsb",
 ]
 
 
