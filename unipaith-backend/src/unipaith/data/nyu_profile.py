@@ -6466,6 +6466,592 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
         ],
         "disclaimer": _REVIEWS_DISCLAIMER,
     },
+    "nyu-business-bs": {
+        "summary": (
+            "NYU Stern's undergraduate business program (BS in Business) is one of the strongest "
+            "in the country: Poets&Quants ranked it No. 5 among undergraduate business schools in "
+            "2025 — No. 3 of 110 ranked programs for admission standards and career outcomes — and "
+            "U.S. News lists it among the top undergraduate business programs. Reviewers highlight "
+            "the Greenwich Village location and Wall Street access, near-universal internship and "
+            "employment rates, and a rigorous, quantitative curriculum, while cautioning that "
+            "admission is extremely selective (roughly a 4% admit rate) and that NYC tuition and "
+            "living costs are high."
+        ),
+        "themes": [
+            {
+                "label": "Elite ranking and reputation",
+                "sentiment": "positive",
+                "detail": "Poets&Quants ranked Stern's undergraduate college No. 5 in 2025, and No. 3 among 110 ranked programs for admission standards and career outcomes.",
+            },
+            {
+                "label": "Near-universal placement",
+                "sentiment": "positive",
+                "detail": "For the Class of 2025, Poets&Quants reported a 98.4% internship rate and a 97.99% full-time employment rate, with an average starting salary near $99,555.",
+            },
+            {
+                "label": "NYC and Wall Street access",
+                "sentiment": "positive",
+                "detail": "The Greenwich Village setting gives direct access to finance, consulting, and technology recruiting in a global business capital.",
+            },
+            {
+                "label": "Extremely selective",
+                "sentiment": "mixed",
+                "detail": "Poets&Quants cites an acceptance rate around 4% with an average SAT near 1551 — among the most competitive undergraduate business admits in the U.S.",
+            },
+            {
+                "label": "High cost of attendance",
+                "sentiment": "caution",
+                "detail": "Stern tuition plus New York City living costs make it one of the most expensive undergraduate business educations; reviewers weigh ROI and scholarships.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "Poets&Quants — Best Undergraduate Business Schools of 2025 (Stern No. 5)",
+                "url": "https://poetsandquants.com/2025/03/17/poetsquants-best-undergraduate-business-schools-of-2025/",
+            },
+            {
+                "label": "NYU Stern — Undergraduate College ranked third for admissions and career outcomes (Poets&Quants)",
+                "url": "https://www.stern.nyu.edu/experience-stern/news/stern-s-undergraduate-college-ranking-third-among-top-b-schools-recognized-its-admissions-standards",
+            },
+            {
+                "label": "NYU Stern — U.S. News 2026 Undergraduate Business Programs recognition",
+                "url": "https://www.stern.nyu.edu/experience-stern/news/nyu-sterns-undergraduate-college-recognized-one-best-among-top-b-schools-us-news-2026-undergraduate",
+            },
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "nyu-business-analytics-ai-ms": {
+        "summary": (
+            "The NYU Stern MS in Business Analytics and AI (MSBAi) is a one-year, part-time program "
+            "built for experienced working professionals and delivered in six intensive modules "
+            "(five in New York, one at a rotating global location). It is regarded as a premium "
+            "analytics credential with a strong recruiter network — third-party coverage cites "
+            "hiring by firms such as McKinsey, BCG, Amazon, Google, JPMorgan, and EY — but reviewers "
+            "stress that it is an executive-format program priced accordingly (about $90,400 in "
+            "program fees for the Class of 2026) and aimed at mid-career candidates, not "
+            "early-career applicants."
+        ),
+        "themes": [
+            {
+                "label": "Executive analytics credential",
+                "sentiment": "positive",
+                "detail": "Designed for experienced managers; six concentrated modules over roughly a year while working, with access to Stern's working-professionals career coaching.",
+            },
+            {
+                "label": "Strong recruiter network",
+                "sentiment": "positive",
+                "detail": "Third-party coverage cites graduates hired across leading consulting, technology, and finance firms, with median compensation estimated around $125,000.",
+            },
+            {
+                "label": "Global module",
+                "sentiment": "positive",
+                "detail": "One of the six sessions is held at a rotating international location, adding a global-immersion component.",
+            },
+            {
+                "label": "Premium cost",
+                "sentiment": "caution",
+                "detail": "Program fees of about $90,400 for the Class of 2026, plus New York costs, make it one of the more expensive analytics master's.",
+            },
+            {
+                "label": "Not for early-career applicants",
+                "sentiment": "mixed",
+                "detail": "The executive format assumes significant work experience; applicants seeking a full-time, entry-level analytics master's should weigh Stern's other MS options.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "NYU Stern — MS in Business Analytics and AI (program overview)",
+                "url": "https://www.stern.nyu.edu/programs-admissions/ms-business-analytics-ai",
+            },
+            {
+                "label": "NYU Stern — MSBAi Program Cost and Financial Aid",
+                "url": "https://www.stern.nyu.edu/programs-admissions/ms-business-analytics-ai/admissions/program-cost-and-financial-aid",
+            },
+            {
+                "label": "MIM-Essay — NYU Stern MSBA review (third-party salary and recruiter estimates)",
+                "url": "https://www.mim-essay.com/nyu-stern-msba",
+            },
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "nyu-medicine-md": {
+        "summary": (
+            "NYU Grossman School of Medicine is one of the nation's leading research-oriented "
+            "medical schools and made national news in 2018 as the first top-ranked MD program to "
+            "offer full-tuition scholarships to every enrolled student, regardless of merit or "
+            "financial need. Reviewers praise the tuition-free model, the accelerated three-year MD "
+            "pathway with conditional acceptance into NYU Langone residencies, and its research "
+            "strength, while noting that admission is extraordinarily competitive and that the "
+            "scholarship covers tuition only — New York City living costs remain the student's "
+            "responsibility."
+        ),
+        "themes": [
+            {
+                "label": "Full-tuition scholarship for all students",
+                "sentiment": "positive",
+                "detail": "Since 2018, every student in good standing receives a full-tuition scholarship, letting graduates choose residencies on fit rather than debt.",
+            },
+            {
+                "label": "Top-ranked research medicine",
+                "sentiment": "positive",
+                "detail": "NYU Grossman is consistently ranked among the very top U.S. medical schools for research by U.S. News.",
+            },
+            {
+                "label": "Accelerated three-year MD pathway",
+                "sentiment": "positive",
+                "detail": "An optional three-year MD offers early conditional acceptance into one of 21 NYU Langone residency programs, with outcomes shown to match four-year graduates.",
+            },
+            {
+                "label": "Extraordinarily selective",
+                "sentiment": "caution",
+                "detail": "The tuition-free model has made admission among the most competitive in the country.",
+            },
+            {
+                "label": "Tuition-free is not cost-free",
+                "sentiment": "mixed",
+                "detail": "The scholarship covers tuition, but New York City housing and living expenses in the cost of attendance are the student's responsibility.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "NYU Langone — The first top-ranked med school with full-tuition scholarships",
+                "url": "https://nyulangone.org/our-story/our-advertising/better-health-system/free-tuition",
+            },
+            {
+                "label": "U.S. News — NYU (Grossman) medical school profile",
+                "url": "https://www.usnews.com/best-graduate-schools/top-medical-schools/new-york-university-04073",
+            },
+            {
+                "label": "NYU Langone — MD Cost of Attendance (scholarship covers tuition, not living costs)",
+                "url": "https://med.nyu.edu/education/md-degree/affordability-financial-aid/cost-attendance",
+            },
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "nyu-mathematics-finance-ms": {
+        "summary": (
+            "The NYU Courant MS in Mathematics in Finance is one of the longest-running and most "
+            "respected quantitative-finance master's programs, founded in 1998 at the Courant "
+            "Institute of Mathematical Sciences (the top-ranked U.S. department for applied math). "
+            "On QuantNet's financial-engineering ranking it has historically placed in the top ten "
+            "and sits at No. 13 in the most recent ranking. Reviewers cite its rigorous quant "
+            "curriculum, small cohorts, engaged Wall Street alumni network, and strong placement — "
+            "the program reports about three-quarters of full-time students have offers before "
+            "graduation — while noting a recent ranking slide and an intense, math-heavy workload."
+        ),
+        "themes": [
+            {
+                "label": "Elite quant-finance pedigree",
+                "sentiment": "positive",
+                "detail": "Run by the Courant Institute (a global leader in applied mathematics) since 1998, with deep ties to New York's quant, trading, and risk desks.",
+            },
+            {
+                "label": "Strong placement",
+                "sentiment": "positive",
+                "detail": "The program reports roughly 75% of full-time students have jobs lined up before graduation, and virtually all the rest shortly after.",
+            },
+            {
+                "label": "Small, connected cohort",
+                "sentiment": "positive",
+                "detail": "Small class sizes and an engaged alumni network aid interview preparation and hiring at top financial firms.",
+            },
+            {
+                "label": "Recent ranking slide",
+                "sentiment": "mixed",
+                "detail": "QuantNet places the program at No. 13 in its latest ranking, down from the top ten in prior years.",
+            },
+            {
+                "label": "Highly demanding",
+                "sentiment": "caution",
+                "detail": "The curriculum is intensely mathematical and competitive; reviewers stress strong prior preparation in probability, stochastic calculus, and programming.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "QuantNet — NYU MS in Mathematics in Finance (program page)",
+                "url": "https://quantnet.com/resources/new-york-university-ms-in-mathematics-in-finance.2/",
+            },
+            {
+                "label": "QuantNet — Ranking of Best Financial Engineering Programs",
+                "url": "https://quantnet.com/mfe-programs-rankings/",
+            },
+            {
+                "label": "QuantNet — NYU MSMF student reviews",
+                "url": "https://quantnet.com/resources/new-york-university-ms-in-mathematics-in-finance.2/reviews",
+            },
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "nyu-public-nonprofit-management-policy-mpa": {
+        "summary": (
+            "NYU's Robert F. Wagner Graduate School of Public Service is a top public-affairs "
+            "school, ranked No. 1 in the nation for urban policy by U.S. News (2025) and top-ten in "
+            "several other specialties (No. 3 health policy & management, No. 7 nonprofit management "
+            "and public finance). Its MPA in Public and Nonprofit Management and Policy draws praise "
+            "for NYC access, specialization breadth, and strong placement — about 95% of graduates "
+            "are employed within ten months — with the common caution that public- and "
+            "nonprofit-sector salaries are modest relative to New York City's cost of living."
+        ),
+        "themes": [
+            {
+                "label": "No. 1 in urban policy",
+                "sentiment": "positive",
+                "detail": "U.S. News (2025) ranks Wagner first for urban policy and top-ten in health policy & management, nonprofit management, and public finance.",
+            },
+            {
+                "label": "Strong placement across sectors",
+                "sentiment": "positive",
+                "detail": "94.8% of graduates were employed within ten months (2023), at organizations from the United Nations and the U.S. House to EY, the American Red Cross, and NY Green Bank.",
+            },
+            {
+                "label": "Specialization breadth",
+                "sentiment": "positive",
+                "detail": "The MPA offers concentrations spanning management, policy analysis, finance, and health.",
+            },
+            {
+                "label": "Overall rank vs specialty strength",
+                "sentiment": "mixed",
+                "detail": "Wagner ranks 11th overall among public-affairs schools even as several of its specialties rank in the national top ten.",
+            },
+            {
+                "label": "Public-sector pay vs NYC cost",
+                "sentiment": "caution",
+                "detail": "Government and nonprofit salaries are lower than private-sector roles — a real consideration against NYC tuition and living costs.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "NYU Wagner — No. 1 in Urban Policy, top-ten in six specialties (U.S. News 2025)",
+                "url": "https://wagner.nyu.edu/news/story/nyu-wagner-remains-no-1-urban-policy-retains-top-10-rankings-six-specialties-latest-us",
+            },
+            {
+                "label": "U.S. News — NYU public affairs school profile",
+                "url": "https://www.usnews.com/best-graduate-schools/top-public-affairs-schools/new-york-university-193900",
+            },
+            {
+                "label": "NYU Wagner — MPA in Public & Nonprofit Management & Policy",
+                "url": "https://wagner.nyu.edu/education/degrees/mpa-public-nonprofit-management-policy",
+            },
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "nyu-social-work-msw": {
+        "summary": (
+            "NYU Silver School of Social Work's MSW is a nationally ranked program (No. 12 by U.S. "
+            "News in 2024) known for its clinical social-work focus and New York City field "
+            "placements. Reviewers point to strong employment outcomes — about 93% of graduates are "
+            "employed or continuing their education within six months, with a Class of 2024 median "
+            "starting salary near $69,000 — and to CSWE accreditation and solid New York State "
+            "licensing-exam performance, while cautioning that social-work salaries are modest "
+            "relative to the cost of an NYC graduate degree."
+        ),
+        "themes": [
+            {
+                "label": "Nationally ranked, clinically focused",
+                "sentiment": "positive",
+                "detail": "U.S. News ranked the MSW No. 12 nationally in 2024; Silver is a national leader in clinical (direct-practice) social work training.",
+            },
+            {
+                "label": "Strong placement",
+                "sentiment": "positive",
+                "detail": "About 93% of MSW graduates are employed or in further study within six months; the Class of 2024 median starting salary was about $69,162.",
+            },
+            {
+                "label": "NYC field education and licensure",
+                "sentiment": "positive",
+                "detail": "Extensive New York field placements and strong New York State LMSW/LCSW exam performance; the program is CSWE-accredited.",
+            },
+            {
+                "label": "Flexible formats",
+                "sentiment": "positive",
+                "detail": "Full-time, part-time, and online options broaden access for working students.",
+            },
+            {
+                "label": "Modest pay vs cost",
+                "sentiment": "caution",
+                "detail": "Social-work salaries are lower than many other master's fields, a key consideration against NYC tuition and living costs.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "NYU Silver — Master of Social Work (MSW) program",
+                "url": "https://socialwork.nyu.edu/a-silver-education/degree-programs/msw.html",
+            },
+            {
+                "label": "NYU Silver School of Social Work — Wikipedia (U.S. News No. 12, 2024)",
+                "url": "https://en.wikipedia.org/wiki/New_York_University_Silver_School_of_Social_Work",
+            },
+            {
+                "label": "Niche — NYU Silver School of Social Work graduate reviews",
+                "url": "https://www.niche.com/graduate-schools/silver-school-of-social-work/",
+            },
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "nyu-public-health-mph": {
+        "summary": (
+            "The NYU School of Global Public Health MPH is a CEPH-accredited program (full "
+            "accreditation through 2031) that U.S. News ranks No. 27 among the nation's "
+            "public-health schools and programs. Reviewers value its global-health orientation, NYC "
+            "and international practicum opportunities (a required 180-hour practicum), and strong "
+            "employment outcomes — the school reports 99% of alumni employed or in further study "
+            "within a year — while noting that, like other NYC graduate degrees, it carries a high "
+            "cost of attendance."
+        ),
+        "themes": [
+            {
+                "label": "CEPH-accredited school of public health",
+                "sentiment": "positive",
+                "detail": "NYU GPH holds full CEPH accreditation through 2031, meeting rigorous standards for educational quality, faculty, and resources.",
+            },
+            {
+                "label": "Global-health orientation",
+                "sentiment": "positive",
+                "detail": "Concentrations and practica emphasize global and urban health, with NYC and international field sites.",
+            },
+            {
+                "label": "Strong employment",
+                "sentiment": "positive",
+                "detail": "The school reports 99% of alumni employed or seeking further education within one year of graduation.",
+            },
+            {
+                "label": "Applied practicum",
+                "sentiment": "positive",
+                "detail": "A required 180-hour practicum builds real-world public-health experience.",
+            },
+            {
+                "label": "Mid-tier rank at premium cost",
+                "sentiment": "caution",
+                "detail": "U.S. News ranks NYU GPH No. 27; combined with NYC costs, reviewers weigh program fit and funding carefully.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "NYU School of Global Public Health — CEPH accreditation (through 2031)",
+                "url": "https://publichealth.nyu.edu/about/accreditation",
+            },
+            {
+                "label": "U.S. News — NYU health schools profile (public health No. 27)",
+                "url": "https://www.usnews.com/best-graduate-schools/top-health-schools/new-york-university-193900",
+            },
+            {
+                "label": "NYU School of Global Public Health — Fast Facts (99% employed/further study)",
+                "url": "https://publichealth.nyu.edu/fast-facts",
+            },
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "nyu-dentistry-dds": {
+        "summary": (
+            "NYU College of Dentistry, founded in 1865, is the largest dental school in the United "
+            "States and educates roughly one in ten American dentists. It is widely regarded as a "
+            "top U.S. dental program — QS ranks it among the world's leading dental schools — and is "
+            "prized for the scale and diversity of its clinical training and patient pool, though "
+            "reviewers describe an intense, fast-paced curriculum and note that NYU dental tuition "
+            "is among the highest in the country. (Formal dental-school rankings are contested — NYU "
+            "faculty have even argued against ranking systems — so reputation rests mainly on size, "
+            "clinical exposure, and outcomes.)"
+        ),
+        "themes": [
+            {
+                "label": "Largest U.S. dental school",
+                "sentiment": "positive",
+                "detail": "About 380 students per class educate nearly 10% of the nation's dentists, at the country's third-oldest dental program (founded 1865).",
+            },
+            {
+                "label": "Exceptional clinical exposure",
+                "sentiment": "positive",
+                "detail": "A large, diverse New York City patient population and extensive lab and clinic time from the first year build broad clinical skill.",
+            },
+            {
+                "label": "Strong global reputation",
+                "sentiment": "positive",
+                "detail": "NYU Dentistry is consistently cited among the world's top dental schools (for example, in QS subject rankings).",
+            },
+            {
+                "label": "Intense and fast-paced",
+                "sentiment": "mixed",
+                "detail": "Students describe a demanding, time-intensive program requiring strong hand skills and constant study.",
+            },
+            {
+                "label": "High cost",
+                "sentiment": "caution",
+                "detail": "NYU dental tuition is among the most expensive in the U.S.; reviewers stress careful financial planning.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "predenting — Best Dental Schools in the U.S. (NYU top-ten)",
+                "url": "https://www.predenting.com/blog/best-dental-schools-in-the-us",
+            },
+            {
+                "label": "Student Doctor Network — NYU College of Dentistry admissions and student feedback",
+                "url": "https://www.studentdoctor.net/schools-database/school/detail/NYUCD/new-york-university-college-of-dentistry",
+            },
+            {
+                "label": "Niche — NYU College of Dentistry graduate reviews",
+                "url": "https://www.niche.com/graduate-schools/nyu-college-of-dentistry/",
+            },
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "nyu-computer-science-courant-ms": {
+        "summary": (
+            "The NYU Courant MS in Computer Science, housed in the Courant Institute of Mathematical "
+            "Sciences (founded 1969), offers advanced training across artificial intelligence, "
+            "machine learning, systems, security, graphics, and theory. U.S. News ranks NYU No. 30 "
+            "for computer science, and reviewers value Courant's applied-math strength, faculty "
+            "research, and New York City industry access, while noting that the general CS ranking "
+            "sits below the top CS-specialist schools and that NYC costs are high."
+        ),
+        "themes": [
+            {
+                "label": "Courant applied-math heritage",
+                "sentiment": "positive",
+                "detail": "Part of the Courant Institute (a global leader in applied mathematics), with strong faculty across AI, ML, systems, security, and theory.",
+            },
+            {
+                "label": "Broad, foundational curriculum",
+                "sentiment": "positive",
+                "detail": "Students master core CS topics and then specialize, preparing for either research or industry roles.",
+            },
+            {
+                "label": "NYC industry access",
+                "sentiment": "positive",
+                "detail": "Proximity to New York's technology, finance, and media employers supports internships and hiring.",
+            },
+            {
+                "label": "General CS rank below the top tier",
+                "sentiment": "mixed",
+                "detail": "U.S. News ranks NYU computer science No. 30 — respected, but below the CS-specialist leaders.",
+            },
+            {
+                "label": "High cost",
+                "sentiment": "caution",
+                "detail": "New York City tuition and living costs are a significant consideration for the program.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "U.S. News — NYU computer science school profile (No. 30)",
+                "url": "https://www.usnews.com/best-graduate-schools/top-computer-science-schools/new-york-university-43064",
+            },
+            {
+                "label": "NYU Department of Computer Science — Master's overview",
+                "url": "https://cs.nyu.edu/dynamic/masters/prospective-overview/",
+            },
+            {
+                "label": "NYU Bulletins — Computer Science, Courant (MS)",
+                "url": "https://bulletins.nyu.edu/graduate/arts-science/programs/computer-science-courant-ms/",
+            },
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "nyu-data-science-ms": {
+        "summary": (
+            "The NYU Center for Data Science MS in Data Science is a highly selective 36-credit "
+            "program (average admitted GPA around 3.81; GRE optional) taught by faculty who are "
+            "leaders in machine learning and AI. The Center's own reporting shows strong outcomes — "
+            "a median starting salary near $120,000 (up to about $210,000), concentrated in "
+            "technology and finance — while student reviews praise the electives and faculty but "
+            "note that some foundational courses feel basic and that employment at graduation is "
+            "market-sensitive."
+        ),
+        "themes": [
+            {
+                "label": "Highly selective, strong cohort",
+                "sentiment": "positive",
+                "detail": "Holistic admissions with an average admitted GPA around 3.81 in 2024; the GRE is optional.",
+            },
+            {
+                "label": "Leading ML/AI faculty",
+                "sentiment": "positive",
+                "detail": "Instructors include researchers who have worked at firms such as Google, Meta, and Bloomberg.",
+            },
+            {
+                "label": "Strong compensation",
+                "sentiment": "positive",
+                "detail": "The Center reports a median starting salary around $120,000 (up to about $210,000), mainly in technology and finance.",
+            },
+            {
+                "label": "Foundational courses feel basic to some",
+                "sentiment": "mixed",
+                "detail": "Reviewers with strong prior CS or statistics backgrounds find some early courses repetitive.",
+            },
+            {
+                "label": "Market-sensitive placement at premium cost",
+                "sentiment": "caution",
+                "detail": "Employment at graduation (about two-thirds in 2022-23) rises afterward but is cycle-dependent, against a high NYC cost of attendance.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "NYU Center for Data Science — MS admissions requirements",
+                "url": "https://cds.nyu.edu/admissions/masters-in-data-science-admissions-req/admissions-requirements/",
+            },
+            {
+                "label": "NYU Center for Data Science — By the Numbers: MS career outcomes",
+                "url": "https://nyudatascience.medium.com/by-the-numbers-career-outcomes-student-success-at-nyu-cds-d66e295858ef",
+            },
+            {
+                "label": "NYU Center for Data Science — Master's admissions FAQ",
+                "url": "https://cds.nyu.edu/masters-in-data-science-faq/",
+            },
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "nyu-nursing-traditional-4-year-bs": {
+        "summary": (
+            "NYU Rory Meyers College of Nursing offers one of the country's top-ranked undergraduate "
+            "nursing programs — U.S. News placed its BS in the top ten nationally (No. 9 in 2022). "
+            "Its traditional four-year BS prepares students for the NCLEX-RN and clinical placements "
+            "at leading New York City hospitals, with an NCLEX-RN pass rate around 92% (above the "
+            "New York state average). Reviewers praise the clinical access and reputation while "
+            "noting the demanding workload and high NYC cost."
+        ),
+        "themes": [
+            {
+                "label": "Top-ten undergraduate nursing",
+                "sentiment": "positive",
+                "detail": "U.S. News ranked NYU Meyers' BS No. 9 nationally in 2022, among the best undergraduate nursing programs.",
+            },
+            {
+                "label": "Strong NCLEX outcomes",
+                "sentiment": "positive",
+                "detail": "About a 92% NCLEX-RN pass rate, above the New York state average of roughly 88%.",
+            },
+            {
+                "label": "NYC clinical placements",
+                "sentiment": "positive",
+                "detail": "Clinical rotations at leading New York City medical institutions give strong hands-on experience.",
+            },
+            {
+                "label": "Flexible pathways",
+                "sentiment": "positive",
+                "detail": "Traditional four-year and 15-month accelerated BS options broaden access.",
+            },
+            {
+                "label": "Demanding and high cost",
+                "sentiment": "caution",
+                "detail": "Nursing coursework and clinicals are intense, and NYU tuition plus NYC living costs are high.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "NYU Rory Meyers College of Nursing — Undergraduate programs",
+                "url": "https://nursing.nyu.edu/academics/undergraduate",
+            },
+            {
+                "label": "Nurse.org — Is NYU School of Nursing worth it? (review, NCLEX pass rate)",
+                "url": "https://nurse.org/education/NYU-nursing-review/",
+            },
+            {
+                "label": "RNCareers — NYU Rory Meyers nursing programs, rankings and awards",
+                "url": "https://www.rncareers.org/rn-programs/new-york/new-york-university_193900/",
+            },
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
 }
 
 # ── Admissions requirement sets ────────────────────────────────────────────
