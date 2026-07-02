@@ -118,12 +118,38 @@ def test_no_duplicate_or_stub_names():
 
 
 def test_master_tuition_covered_and_distinct_from_undergrad():
-    """Every master's carries a computed published graduate rate distinct from the
-    undergraduate sticker (matcher budget signal); doctorates are funded/omitted."""
+    """Every master's AND the paid professional Ed.D. carries an ANNUAL graduate rate
+    distinct from the undergraduate sticker; research doctorates are funded/omitted."""
     for s in p.PROGRAMS:
-        if s["degree_type"] == "masters":
-            tuition, _ = p._program_cost(s)
+        if s["degree_type"] in ("masters", "professional"):
+            tuition, cost = p._program_cost(s)
             assert tuition is not None and tuition != p._UG_TUITION, s["slug"]
+            # Annual, not whole-degree total: per-credit rate x a 24-credit full-time year.
+            rate = p._GRAD_RATE_OVERRIDE.get(s["slug"], p._GRAD_RATE[s["school"]])
+            assert tuition == rate * p._GRAD_ANNUAL_CREDITS, s["slug"]
+            assert cost.get("funded") is False, s["slug"]
+        if s["degree_type"] == "phd":
+            tuition, cost = p._program_cost(s)
+            assert tuition is None and cost.get("funded") is True, s["slug"]
+
+
+def test_edd_is_professional_not_research_phd():
+    edd = next(s for s in p.PROGRAMS if s["slug"] == "lehigh-educational-leadership-edd")
+    assert edd["degree_type"] == "professional"
+    who = p._who_its_for(edd)
+    assert "original research" not in who and "national-lab" not in who
+
+
+def test_one_year_mba_duration():
+    mba = next(s for s in p.PROGRAMS if s["slug"] == "lehigh-mba-fulltime")
+    assert mba["duration_months"] == 12
+
+
+def test_ranking_data_overwrites_stale_seed_facts():
+    # The bulk seed shipped acceptance_rate 0.3698 / graduation_rate 1.0; the enrichment must
+    # overwrite those keys (institution cards + match fallback read them directly).
+    assert p.RANKING_DATA["acceptance_rate"] == 0.2593
+    assert p.RANKING_DATA["graduation_rate"] == 0.8791
 
 
 def test_cip_on_every_program():

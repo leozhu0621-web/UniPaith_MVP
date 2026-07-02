@@ -63,6 +63,12 @@ RANKING_DATA: dict = {
     "ownership_type": "private",
     "accreditor": "Middle States Commission on Higher Education (MSCHE)",
     "carnegie_classification": "Doctoral Universities: Very High Research Activity (R1)",
+    # Overwrite the stale bulk-seed values (the seed shipped acceptance_rate 0.3698 and
+    # graduation_rate 1.0). The institution-browse cards and the student match fallback read
+    # ranking_data.acceptance_rate / graduation_rate directly, so these must carry the current,
+    # cited facts (Common Data Set 2024-25 / College Scorecard), not the seed's stale numbers.
+    "acceptance_rate": 0.2593,
+    "graduation_rate": 0.8791,
     "us_news_national": {
         "rank": 46,
         "year": 2025,
@@ -307,20 +313,15 @@ _GRAD_RATE_OVERRIDE = {
     "lehigh-mba-educational-leadership": 1160,
     "lehigh-financial-engineering-ms": 1660,
 }
-_GRAD_CREDITS = {
-    "lehigh-public-health-mph": 42,
-    "lehigh-public-policy-mpp": 36,
-    "lehigh-mba-fulltime": 36,
-    "lehigh-mba-flex": 36,
-    "lehigh-mba-executive": 30,
-    "lehigh-mba-engineering": 36,
-    "lehigh-mba-educational-leadership": 36,
-    "lehigh-school-counseling-med": 50,
-    "lehigh-mental-health-counseling-med": 60,
-    "lehigh-international-school-counseling-med": 48,
-    "lehigh-elementary-education-med": 42,
-    "lehigh-secondary-education-med": 33,
-    "lehigh-educational-leadership-upal-med": 40,
+# Real full-time program length (months). Most master's run ~24 months; the accelerated
+# one-year MBA, the ~10-month professional M.Eng. tracks, and the ~16-month Executive MBA
+# are shorter. duration_months is rendered directly on the student detail page and read by
+# the desired-time-to-degree matcher, so these are set to the program's published length.
+_DURATION_OVERRIDE = {
+    "lehigh-mba-fulltime": 12,       # accelerated one-year full-time MBA
+    "lehigh-mba-executive": 16,      # Executive MBA, ~16 months
+    "lehigh-energy-systems-engineering-meng": 10,  # 10-month professional M.Eng.
+    "lehigh-structural-engineering-meng": 10,      # ~10-month professional M.Eng.
 }
 _GRAD_SRC = (
     "Lehigh University Finance & Administration - FY2025-26 Graduate Tuition Fee Schedule",
@@ -345,24 +346,34 @@ def _undergrad_cost() -> dict:
     }
 
 
+# A full-time graduate academic year at Lehigh (semester system) is 24 credits (12 credits
+# per semester). ``Program.tuition`` is consumed as an ANNUAL figure (program_features exposes
+# it as ``tuition_usd_per_year``, the matcher compares it to the student's annual budget, and the
+# student page labels it "tuition / yr"), so the scalar stored here is the published per-credit
+# rate x this full-time annual load - the amount a full-time student pays in one academic year -
+# NOT the whole-degree total (which would overstate the annual budget signal by the number of
+# program years).
+_GRAD_ANNUAL_CREDITS = 24
+
+
 def _grad_annual(spec: dict) -> int:
     slug, school = spec["slug"], spec["school"]
     rate = _GRAD_RATE_OVERRIDE.get(slug, _GRAD_RATE[school])
-    return rate * _GRAD_CREDITS.get(slug, 30)
+    return rate * _GRAD_ANNUAL_CREDITS
 
 
 def _grad_cost(spec: dict, annual: int) -> dict:
     slug, school = spec["slug"], spec["school"]
     rate = _GRAD_RATE_OVERRIDE.get(slug, _GRAD_RATE[school])
-    credits = _GRAD_CREDITS.get(slug, 30)
     return {
         "tuition_usd": annual,
         "funded": False,
         "breakdown": {"tuition": annual},
         "note": (
             f"Lehigh bills graduate study per credit hour; this is the published FY2025-26 "
-            f"{school} rate (${rate:,}/credit) x the program's standard {credits}-credit load "
-            "- a distinct graduate rate, not the undergraduate sticker."
+            f"{school} rate (${rate:,}/credit) x a full-time academic year of "
+            f"{_GRAD_ANNUAL_CREDITS} credits (12 credits/semester) - the annual full-time tuition, "
+            "a distinct graduate rate, not the undergraduate sticker."
         ),
         "source": _GRAD_SRC[0],
         "source_url": _GRAD_SRC[1],
@@ -753,7 +764,7 @@ _CATALOG: list[dict] = [
      "description": 'A program building a core foundation in leadership, organizational development, and change management, supporting PK-12 principal, supervisor, and superintendent certification.'},
     {"slug": 'lehigh-educational-leadership-upal-med', "school": _EDU, "program_name": 'Master of Education in Educational Leadership (Urban Principals Academy at Lehigh)', "degree_type": 'masters', "department": 'Educational Leadership Program', "cip": '13.0401', "delivery_format": 'hybrid',
      "description": 'A cohort program developing urban school leaders with an emphasis on creativity and imagination, delivered online with summer sessions on campus.'},
-    {"slug": 'lehigh-educational-leadership-edd', "school": _EDU, "program_name": 'Doctor of Education in Educational Leadership', "degree_type": 'phd', "department": 'Educational Leadership Program', "cip": '13.0401', "delivery_format": 'on_campus',
+    {"slug": 'lehigh-educational-leadership-edd', "school": _EDU, "program_name": 'Doctor of Education in Educational Leadership', "degree_type": 'professional', "department": 'Educational Leadership Program', "cip": '13.0401', "delivery_format": 'on_campus',
      "description": "A post-master's professional doctorate developing the leadership of administrators in educational institutions, with paths toward superintendent or principal certification."},
     {"slug": 'lehigh-special-education-med', "school": _EDU, "program_name": 'Master of Education in Special Education', "degree_type": 'masters', "department": 'Special Education Program', "cip": '13.1001', "delivery_format": 'on_campus',
      "description": 'A program emphasizing evidence-based practices for students with disabilities, with concentrations from intensive academic intervention to low-incidence disabilities.'},
@@ -789,7 +800,10 @@ _CATALOG: list[dict] = [
 _DEFAULT_DURATION = {"bachelors": 48, "masters": 24, "phd": 60, "professional": 36}
 for _p in _CATALOG:
     _p.setdefault("delivery_format", "on_campus")
-    _p.setdefault("duration_months", _DEFAULT_DURATION.get(_p["degree_type"], 24))
+    _p.setdefault(
+        "duration_months",
+        _DURATION_OVERRIDE.get(_p["slug"], _DEFAULT_DURATION.get(_p["degree_type"], 24)),
+    )
 
 PROGRAMS: list[dict] = _CATALOG
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
@@ -812,13 +826,14 @@ for _p in PROGRAMS:
         raise RuntimeError(f"name-prefixed description on {_p['slug']}")
     if "offered through" in _d or "is a program at" in _d:
         raise RuntimeError(f"classification-stub description on {_p['slug']}")
-# Matcher-core tuition COVERAGE gate: every master's must carry a computed published graduate
-# rate (Lehigh has no professional-degree_type programs). Doctorates are funded/omitted.
-_uncovered = [p["slug"] for p in PROGRAMS if p["degree_type"] == "masters"
+# Matcher-core tuition COVERAGE gate: every master's AND every paid professional doctorate
+# (the Ed.D.) must carry a computed published graduate rate. Research doctorates are funded/omitted.
+_PAID_GRAD = ("masters", "professional")
+_uncovered = [p["slug"] for p in PROGRAMS if p["degree_type"] in _PAID_GRAD
               and _grad_annual(p) is None]
 if _uncovered:
-    raise RuntimeError(f"master's tuition not covered: {_uncovered}")
-_copydown = [p["slug"] for p in PROGRAMS if p["degree_type"] == "masters"
+    raise RuntimeError(f"master's/professional tuition not covered: {_uncovered}")
+_copydown = [p["slug"] for p in PROGRAMS if p["degree_type"] in _PAID_GRAD
              and _grad_annual(p) == _UG_TUITION]
 if _copydown:
     raise RuntimeError(f"graduate tuition equals undergrad sticker (copy-down): {_copydown}")
@@ -858,6 +873,11 @@ def _who_its_for(spec: dict) -> str:
             f"Students pursuing Lehigh's {name} to conduct original research in {focus}, "
             "aiming for academic, national-lab, or industry research careers."
         )
+    if dt == "professional":
+        return (
+            f"Working professionals pursuing Lehigh's {name} for advanced practice in {focus}, "
+            "aiming for senior leadership and applied roles in the field."
+        )
     return (
         f"Graduate students in Lehigh's {name} seeking advanced, applied study of {focus}. "
         "Best for professional practice, specialization, or further graduate work."
@@ -872,7 +892,7 @@ if len(set(_who_values)) != len(_who_values):
 def _program_standard(spec: dict) -> dict:
     slug = spec["slug"]
     omitted: list[str] = ["outcomes_data.employment_rate", "outcomes_data.top_industries"]
-    if spec["degree_type"] not in ("bachelors", "masters"):
+    if spec["degree_type"] not in ("bachelors", "masters", "professional"):
         omitted.append("cost_data.tuition_usd")
     if not spec.get("tracks"):
         omitted.append("tracks")
@@ -886,7 +906,10 @@ def _program_standard(spec: dict) -> dict:
 def _program_cost(spec: dict) -> tuple[int | None, dict]:
     if spec["degree_type"] == "bachelors":
         return _UG_TUITION, _undergrad_cost()
-    if spec["degree_type"] == "masters":
+    # Master's AND professional doctorates (the paid Ed.D.) bill per credit at a published
+    # rate and are not funded, so they carry a computed annual scalar. Research doctorates
+    # (degree_type "phd") are funded / no single annual figure → omitted-with-reason.
+    if spec["degree_type"] in ("masters", "professional"):
         annual = _grad_annual(spec)
         return annual, _grad_cost(spec, annual)
     return None, _doctoral_omit_cost(spec)
